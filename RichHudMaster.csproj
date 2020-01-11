@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{8D5F9B25-A1FA-4914-8830-C0CB2FC98D15}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>RichHudFramework</RootNamespace>
+    <AssemblyName>RichHudFramework</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
+    <Reference Include="Sandbox.Common">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\Sandbox.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Sandbox.Game">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="SpaceEngineers.Game">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\SpaceEngineers.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="SpaceEngineers.ObjectBuilders">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="VRage">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Game">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Input">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Input.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Library">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Library.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Math">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Render">
+      <HintPath>F:\Steam\SteamApps\common\SpaceEngineers\Bin64\VRage.Render.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\FontData\AbhayaLibreMedium.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\FontData\BitstreamVeraSans.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\FontData\Monospace.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\FontData\SpaceEngineers.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\FontData\SpaceEngineersShadowed.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\RichHudClient.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\RichHudMaster.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\Bind.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\BindClient.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\BindGroup.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\BindManager.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\Control.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\RebindMenu.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\HudCursor.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\HudMain.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\FormattedTextBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\Line.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\LinedText.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\RichChar.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\TextBuilder.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\UnlinedText.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\WrappedText.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBoard.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\TextEditor.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\UiTestPattern.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\ControlCategory.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\Checkbox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\ColorPicker.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\DragBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\DropdownControl.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\ListControl.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\OnOffButton.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\SliderSetting.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\TerminalButton.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\TerminalControlBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\TextField.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\ControlTile.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\ModControlRoot.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Pages\ControlPage.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Pages\RebindPage.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Pages\TerminalPageBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Pages\TextPage.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\SettingsMenu.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\ApiContainers.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\Collections.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\Extensions.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\LocalPlayer.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\TaskPool.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\Utilities.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\IO\ConfigIO.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\IO\LocalFileIO.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\IO\LogIO.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\ModBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\MsgEnums.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\SettingsMenu\SettingsInterfaces.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindDefinition.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindInterfaces.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\CmdManager.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\ApiElementWrappers\HudNodeData.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\ApiElementWrappers\HudParentData.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementBases\HudElementBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementBases\HudNodeBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementBases\HudParentBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementBases\LabelBoxBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementBases\WindowBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementEnums.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementInterfaces\IClickableElement.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementInterfaces\IHudElement.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementInterfaces\IHudNode.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementInterfaces\IHudParent.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\BorderBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\Button.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\ClickableElement.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\Dropdown.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\LabelBoxButton.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\LabelButton.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\ListBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\ScrollBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\SliderBar.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\SliderBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\TextBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\TreeBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\DoubleTextBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\HudChain.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\Label.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\LabelBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\LabelListBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ScrollBar.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\TextList.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\TexturedBox.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\ICursor.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\Rendering\IFontMin.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\Rendering\MatBoard.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\Rendering\TextBuilderIntefaces.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\RichText\GlyphFormat.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\RichText\RichString.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\RichText\RichText.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\SharedBinds.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\TextInput.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RichHudMaster\Data\Scripts\FontResources\AbhayaLibreMedium.sbc" />
+    <None Include="RichHudMaster\Data\Scripts\FontResources\BitstreamVeraSans.sbc" />
+    <None Include="RichHudMaster\Data\Scripts\FontResources\Monospace.sbc" />
+    <None Include="RichHudMaster\Data\Scripts\FontResources\SpaceEngineers.sbc" />
+    <None Include="RichHudMaster\Data\Scripts\FontResources\SpaceEngineersShadowed.sbc" />
+    <None Include="RichHudMaster\Data\Scripts\richHudMats.sbc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="RichHudMaster\Fonts\AbhayaLibreMedium\AbhayaLibreMedium-0-0.dds" />
+    <Content Include="RichHudMaster\Fonts\AbhayaLibreMedium\SIL Open Font License.txt" />
+    <Content Include="RichHudMaster\Fonts\BitstreamVeraSans\Bitstream Vera License.txt" />
+    <Content Include="RichHudMaster\Fonts\BitstreamVeraSans\BitstreamVeraSans-0-0.dds" />
+    <Content Include="RichHudMaster\Fonts\Monospace\RichHudMonospace0.dds" />
+    <Content Include="RichHudMaster\Fonts\Monospace\RichHudMonospace1.dds" />
+    <Content Include="RichHudMaster\Fonts\Monospace\RichHudMonospace2.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow1.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow10.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow2.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow3.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow4.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow5.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow6.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow7.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow8.dds" />
+    <Content Include="RichHudMaster\Fonts\SeShadowed\RichHudSeShadow9.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe1.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe10.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe2.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe3.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe4.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe5.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe6.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe7.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe8.dds" />
+    <Content Include="RichHudMaster\Fonts\SpaceEngineers\RichHudSe9.dds" />
+    <Content Include="RichHudMaster\Textures\blank.dds" />
+    <Content Include="RichHudMaster\Textures\closeButton.dds" />
+    <Content Include="RichHudMaster\Textures\downArrow.dds" />
+    <Content Include="RichHudMaster\Textures\rightArrow.dds" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
