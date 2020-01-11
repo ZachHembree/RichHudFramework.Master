@@ -19,7 +19,7 @@ namespace RichHudFramework.Server
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation, 1)]
     internal sealed partial class RichHudMaster : ModBase
     {
-        private const long modID = 0112358132134, queueID = 1314086443; // replace this with the real mod ID when you're done
+        private const long modID = 1965654081, queueID = 1314086443; // replace this with the real mod ID when you're done
         private static new RichHudMaster Instance { get; set; }
         private readonly List<RichHudClient> clients;
         private CmdManager.Group rhdCommands;
