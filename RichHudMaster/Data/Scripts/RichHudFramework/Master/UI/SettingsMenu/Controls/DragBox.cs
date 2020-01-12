@@ -64,7 +64,8 @@ namespace RichHudFramework.UI.Server
         private void Open()
         {
             ModMenu.Open = false;
-            window.Visible = true;            
+            window.Visible = true;
+            window.GetFocus();
         }
 
         private void Close()
