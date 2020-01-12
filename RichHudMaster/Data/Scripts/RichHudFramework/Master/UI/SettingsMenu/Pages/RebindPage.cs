@@ -7,6 +7,7 @@ using VRageMath;
 using RichHudFramework.UI.Rendering;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using BindDefinitionData = VRage.MyTuple<string, string[]>;
 
 namespace RichHudFramework
 {
@@ -49,6 +50,12 @@ namespace RichHudFramework
                 bindGroups.AddToList(bindBox);
             }
 
+            public void Add(IBindGroup bindGroup, BindDefinition[] defaultBinds)
+            {
+                var bindBox = new BindGroupBox() { BindGroup = bindGroup, DefaultBinds = defaultBinds };
+                bindGroups.AddToList(bindBox);
+            }
+
             public IEnumerator<IBindGroup> GetEnumerator() =>
                 BindGroups.GetEnumerator();
 
@@ -62,8 +69,16 @@ namespace RichHudFramework
                     switch ((RebindPageAccessors)memberEnum)
                     {
                         case RebindPageAccessors.Add:
-                            Add(data as IBindGroup);
-                            break;
+                            {
+                                var args = (MyTuple<object, BindDefinitionData[]>)data;
+                                BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
+
+                                for (int n = 0; n < defaults.Length; n++)
+                                    defaults[n] = args.Item2[n];
+
+                                Add(args.Item1 as IBindGroup, defaults);
+                                break;
+                            }
                     }
 
                     return null;
@@ -99,12 +114,23 @@ namespace RichHudFramework
                     }
                 }
 
+                public BindDefinition[] DefaultBinds 
+                {
+                    get { return defaultBinds; } 
+                    set 
+                    { 
+                        defaultBinds = value;
+                        resetButton.Visible = defaultBinds != null;
+                    }
+                }
+
                 private readonly Label name;
                 private readonly TerminalButton resetButton;
                 private readonly ScrollBox<BindBox> scrollBox;
                 private readonly HudChain<HudElementBase> layout;
 
                 private IBindGroup bindGroup;
+                private BindDefinition[] defaultBinds;
 
                 public BindGroupBox(IHudParent parent = null) : base(parent)
                 {
@@ -121,9 +147,11 @@ namespace RichHudFramework
                         Name = "Defaults",
                         Size = new Vector2(234f, 44f),
                         ParentAlignment = ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.Inner,
+                        Visible = false,
                     };
 
                     resetButton.border.Thickness = 1f;
+                    resetButton.MouseInput.OnLeftClick += ResetBinds;
 
                     scrollBox = new ScrollBox<BindBox>()
                     {
@@ -164,6 +192,15 @@ namespace RichHudFramework
                 {
                     for (int n = 0; n < scrollBox.List.Count; n++)
                         scrollBox.List[n].Width = Width - scrollBox.scrollBar.Width;
+                }
+
+                private void ResetBinds()
+                {
+                    if (DefaultBinds != null)
+                    {
+                        BindGroup.TryLoadBindData(DefaultBinds);
+                        UpdateBindGroup();
+                    }
                 }
 
                 private void UpdateBindGroup()
