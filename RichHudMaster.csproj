@@ -72,6 +72,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\IBindClient.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\CustomControls.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\IBind.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\IBindGroup.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\IControl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\FontData\AbhayaLibreMedium.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\FontData\BitstreamVeraSans.cs" />
@@ -85,7 +90,7 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\BindGroup.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\BindManager.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\Control.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\RebindMenu.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\RebindDialog.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\HudCursor.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\HudMain.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager.cs" />
@@ -130,7 +135,6 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\MsgEnums.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\SettingsMenu\SettingsInterfaces.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindDefinition.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindInterfaces.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\CmdManager.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\ApiElementWrappers\HudNodeData.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\ApiElementWrappers\HudParentData.cs" />
@@ -215,5 +219,6 @@
     <Content Include="RichHudMaster\Textures\downArrow.dds" />
     <Content Include="RichHudMaster\Textures\rightArrow.dds" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

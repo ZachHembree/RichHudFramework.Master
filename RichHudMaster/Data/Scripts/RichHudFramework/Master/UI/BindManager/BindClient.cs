@@ -24,28 +24,11 @@ namespace RichHudFramework
     namespace UI.Server
     {
         using BindClientMembers = MyTuple<
-            MyTuple<Func<int, ControlMembers>, Func<int>>, // Control List
+            MyTuple<Func<int, ControlMembers?>, Func<int>>, // Control List
             Action, // HandleInput
             ApiMemberAccessor, // GetOrSetMember
             Action // Unload
         >;
-
-        public interface IBindClient
-        {
-            ReadOnlyCollection<IControl> Controls { get; }
-            ReadOnlyCollection<IBindGroup> Groups { get; }
-
-            BindClientMembers GetApiData();
-            IBindGroup GetBindGroup(string name);
-            IBindGroup[] GetBindGroups();
-            IControl[] GetCombo(IList<int> indices);
-            int[] GetComboIndices(IList<IControl> controls);
-            IControl GetControl(string name);
-            BindGroupMembers[] GetGroupData();
-            IBindGroup GetOrCreateGroup(string name);
-            void HandleInput();
-            void Unload();
-        }
 
         public sealed partial class BindManager
         {
@@ -147,6 +130,8 @@ namespace RichHudFramework
                         case BindClientAccessors.Unload:
                             Unload();
                             break;
+                        case BindClientAccessors.SeKeyMax:
+                            return seKeyMax;
                     }
 
                     return null;
@@ -156,7 +141,7 @@ namespace RichHudFramework
                 {
                     BindClientMembers apiData = new BindClientMembers()
                     {
-                        Item1 = new MyTuple<Func<int, ControlMembers>, Func<int>>(x => BindManager.Controls[x].GetApiData(), () => BindManager.Controls.Count),
+                        Item1 = new MyTuple<Func<int, ControlMembers?>, Func<int>>(x => BindManager.Controls[x]?.GetApiData(), () => BindManager.Controls.Count),
                         Item2 = HandleInput,
                         Item3 = GetOrsetMember,
                         Item4 = Unload,

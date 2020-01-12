@@ -267,7 +267,7 @@ namespace RichHudFramework
                 private void GetNewControl(int index)
                 {
                     ModMenu.Open = false;
-                    RebindMenu.UpdateBind(bind, index, UpdateBindText);
+                    RebindDialog.UpdateBind(bind, index, UpdateBindText);
                 }
 
                 private void RemoveControl(int index)

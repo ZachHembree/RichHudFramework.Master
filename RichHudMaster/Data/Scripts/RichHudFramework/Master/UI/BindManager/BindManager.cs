@@ -30,6 +30,7 @@ namespace RichHudFramework
             private static readonly Control[] controls;
             private static readonly Dictionary<string, IControl> controlDict, controlDictDisp;
             private static readonly List<MyKeys> controlBlacklist;
+            private static int seKeyMax;
 
             private readonly BindClient mainClient;
 
@@ -48,8 +49,8 @@ namespace RichHudFramework
                     MyKeys.RightWindows
                 };
 
-                controlDict = new Dictionary<string, IControl>(200);
-                controlDictDisp = new Dictionary<string, IControl>(200);
+                controlDict = new Dictionary<string, IControl>(250);
+                controlDictDisp = new Dictionary<string, IControl>(250);
 
                 controls = GenerateControls();
                 Controls = new ReadOnlyCollection<IControl>(controls as IControl[]);
@@ -76,17 +77,30 @@ namespace RichHudFramework
                 Instance = null;
             }
 
+            /// <summary>
+            /// Returns a new bind client for Framework clients.
+            /// </summary>
             public static IBindClient GetNewBindClient()
             {
                 return new BindClient();
             }
 
+            /// <summary>
+            /// Returns the bind group with the given name and/or creates one with the name given
+            /// if one doesn't exist.
+            /// </summary>
             public static IBindGroup GetOrCreateGroup(string name) =>
                 Instance.mainClient.GetOrCreateGroup(name);
 
+            /// <summary>
+            /// Returns the bind group with the name igven.
+            /// </summary>
             public static IBindGroup GetBindGroup(string name) =>
                 Instance.mainClient.GetBindGroup(name);
 
+            /// <summary>
+            /// Returns the control associated with the given name.
+            /// </summary>
             public static IControl GetControl(string name)
             {
                 IControl con;
@@ -98,43 +112,76 @@ namespace RichHudFramework
 
                 return null;
             }
+
+            /// <summary>
+            /// Returns the control associated with the given <see cref="MyKeys"/> enum.
+            /// </summary>
+            public static IControl GetControl(MyKeys seKey) =>
+                Controls[(int)seKey];
+
+            /// <summary>
+            /// Returns the control associated with the given custom <see cref="RichHudControls"/> enum.
+            /// </summary>
+            public static IControl GetControl(RichHudControls rhdKey) =>
+                Controls[seKeyMax + (int)rhdKey];
+
             /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
             /// </summary>
             private static Control[] GenerateControls()
             {
-                List<Control> controlList = new List<Control>(200);
+                var keys = Enum.GetValues(typeof(MyKeys)) as MyKeys[];
+                seKeyMax = 0;
 
-                controlList.Add(new Control("MousewheelUp", "MwUp", controlList.Count,
-                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0, true));
-                controlList.Add(new Control("MousewheelDown", "MwDn", controlList.Count,
-                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() < 0, true));
-
-                controlDict.Add("mousewheelup", controlList[0]);
-                controlDict.Add("mousewheeldown", controlList[1]);
-
-                controlDictDisp.Add("mwup", controlList[0]);
-                controlDictDisp.Add("mwdn", controlList[1]);
-
-                foreach (MyKeys seKey in Enum.GetValues(typeof(MyKeys)))
+                for (int n = 0; n < keys.Length; n++)
                 {
+                    var value = (int)keys[n];
+
+                    if (value > seKeyMax)
+                        seKeyMax = value;
+                }
+
+                Control[] controls = new Control[seKeyMax + 3];
+
+                for (int n = 0; n < keys.Length; n++)
+                {
+                    var index = (int)keys[n];
+                    var seKey = keys[n];
+
                     if (!controlBlacklist.Contains(seKey))
                     {
-                        Control con = new Control(seKey, controlList.Count);
+                        Control con = new Control(seKey, index);
                         string name = con.Name.ToLower(), disp = con.DisplayName.ToLower();
 
                         if (!controlDict.ContainsKey(name))
                         {
                             controlDict.Add(name, con);
                             controlDictDisp.Add(name, con);
-                            controlList.Add(con);
+                            controls[index] = con;
                         }
                     }
                 }
 
-                return controlList.ToArray();
+                controls[seKeyMax + 1] = new Control("MousewheelUp", "MwUp", seKeyMax + 1,
+                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0, true);
+
+                controls[seKeyMax + 2] = new Control("MousewheelDown", "MwDn", seKeyMax + 2,
+                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() < 0, true);
+
+                int last = controls.Length - 1;
+
+                controlDict.Add("mousewheelup", controls[last - 1]);
+                controlDict.Add("mousewheeldown", controls[last]);
+
+                controlDictDisp.Add("mwup", controls[last - 1]);
+                controlDictDisp.Add("mwdn", controls[last]);
+
+                return controls;
             }
 
+            /// <summary>
+            /// Generates a list of controls from a list of control names.
+            /// </summary>
             public static IControl[] GetCombo(IList<string> names)
             {
                 IControl[] combo = new IControl[names.Count];
@@ -145,6 +192,9 @@ namespace RichHudFramework
                 return combo;
             }
 
+            /// <summary>
+            /// Generates a list of control indices using a list of control names.
+            /// </summary>
             public static int[] GetComboIndices(IList<string> names)
             {
                 int[] combo = new int[names.Count];
@@ -155,6 +205,9 @@ namespace RichHudFramework
                 return combo;
             }
 
+            /// <summary>
+            /// Generates a combo array using the corresponding control indices.
+            /// </summary>
             public static IControl[] GetCombo(IList<int> indices)
             {
                 IControl[] combo = new IControl[indices.Count];
@@ -165,6 +218,9 @@ namespace RichHudFramework
                 return combo; ;
             }
 
+            /// <summary>
+            /// Generates a list of control indices from a list of controls.
+            /// </summary>
             public static int[] GetComboIndices(IList<IControl> controls)
             {
                 int[] indices = new int[controls.Count];
@@ -176,7 +232,7 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Tries to get a key combo using a list of control names.
+            /// Tries to generate a combo from a list of control names.
             /// </summary>
             public static bool TryGetCombo(IList<string> controlNames, out IControl[] newCombo)
             {

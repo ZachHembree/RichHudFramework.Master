@@ -8,14 +8,14 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// GUI used to change binds in <see cref="BindManager.Group"/>s.
     /// </summary>
-    internal sealed class RebindMenu : ModBase.ComponentBase
+    internal sealed class RebindDialog : ModBase.ComponentBase
     {
-        private static RebindMenu Instance
+        private static RebindDialog Instance
         {
             get { Init(); return instance; }
             set { instance = value; }
         }
-        private static RebindMenu instance;
+        private static RebindDialog instance;
         private static readonly List<int> blacklist;
         private const long inputWaitTime = 200;
 
@@ -30,7 +30,7 @@ namespace RichHudFramework.UI.Server
         private int controlIndex;
         private bool open;
 
-        static RebindMenu()
+        static RebindDialog()
         {
             blacklist = new List<int>
             {
@@ -38,7 +38,7 @@ namespace RichHudFramework.UI.Server
             };
         }
 
-        private RebindMenu() : base(false, true)
+        private RebindDialog() : base(false, true)
         {
             stopwatch = new Utils.Stopwatch();
             menu = new RebindHud();
@@ -49,7 +49,7 @@ namespace RichHudFramework.UI.Server
         private static void Init()
         {
             if (instance == null)
-                instance = new RebindMenu();
+                instance = new RebindDialog();
         }
 
         public override void Close()
@@ -92,7 +92,7 @@ namespace RichHudFramework.UI.Server
             {
                 for (int n = 0; (n < BindManager.Controls.Count && newControl == null); n++)
                 {
-                    if (BindManager.Controls[n].IsPressed)
+                    if (BindManager.Controls[n] != null && BindManager.Controls[n].IsPressed)
                     {
                         if (!blacklist.Contains(BindManager.Controls[n].Index) && !combo.Contains(BindManager.Controls[n]))
                         {
@@ -131,7 +131,7 @@ namespace RichHudFramework.UI.Server
         }
 
         /// <summary>
-        /// Generates the UI for the <see cref="RebindMenu"/>
+        /// Generates the UI for the <see cref="RebindDialog"/>
         /// </summary>
         private class RebindHud : HudElementBase
         {
