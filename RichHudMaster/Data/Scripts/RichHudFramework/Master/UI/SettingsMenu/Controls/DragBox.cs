@@ -9,6 +9,7 @@ namespace RichHudFramework.UI.Server
     internal enum DragBoxAccessors : int
     {
         BoxSize = 16,
+        AlignToEdge = 17,
     }
 
     public class DragBox : TerminalValue<Vector2, DragBox>
@@ -28,6 +29,7 @@ namespace RichHudFramework.UI.Server
         public override Vector2 Value { get { return window.Value; } set { window.Value = value; } }
         public override Func<Vector2> CustomValueGetter { get { return window.CustomValueGetter; } set { window.CustomValueGetter = value; } }
         public override Action<Vector2> CustomValueSetter { get { return window.CustomValueSetter; } set { window.CustomValueSetter = value; } }
+        public bool AlignToEdge { get { return window.AlignToEdge; } set { window.AlignToEdge = value; } }
 
         public Vector2 BoxSize
         {
@@ -101,6 +103,15 @@ namespace RichHudFramework.UI.Server
 
                             break;
                         }
+                    case DragBoxAccessors.AlignToEdge:
+                        {
+                            if (data == null)
+                                return AlignToEdge;
+                            else
+                                AlignToEdge = (bool)data;
+
+                            break;
+                        }
                 }
 
                 return null;
@@ -112,21 +123,28 @@ namespace RichHudFramework.UI.Server
             public event Action OnConfirm;
             public Vector2 Value
             {
-                get { return HudMain.GetRelativeVector(Offset); }
-                set { Offset = HudMain.GetPixelVector(value); }
+                get { return HudMain.GetRelativeVector(base.Offset); }
+                set { base.Offset = HudMain.GetPixelVector(value); }
             }
+
+            public override Vector2 Offset 
+            {
+                get { return base.Offset + alignment; }
+            }
+
             public Func<Vector2> CustomValueGetter { get; set; }
             public Action<Vector2> CustomValueSetter { get; set; }
+            public bool AlignToEdge { get; set; }
 
             private readonly TerminalButton confirm;
-            private Vector2 lastValue;
+            private Vector2 lastValue, alignment;
 
             public DragWindow() : base(HudMain.Root)
             {
                 MinimumSize = new Vector2(100f);
                 AllowResizing = false;
 
-                BodyColor = new Color(41, 54, 62, 230);
+                BodyColor = new Color(41, 54, 62, 150);
                 BorderColor = new Color(58, 68, 77);
 
                 Title.Format = ModMenu.ControlText.WithAlignment(TextAlignment.Center);
@@ -141,6 +159,14 @@ namespace RichHudFramework.UI.Server
                 confirm.button.MouseInput.OnLeftClick += () => OnConfirm?.Invoke();
             }
 
+            protected override void BeforeDraw()
+            {
+                base.BeforeDraw();
+
+                if (canMoveWindow)
+                    Offset = HudMain.Cursor.Origin + cursorOffset - Origin - alignment;
+            }
+
             protected override void Draw()
             {
                 base.Draw();
@@ -153,6 +179,21 @@ namespace RichHudFramework.UI.Server
 
                 if (CustomValueGetter != null && Value != CustomValueGetter())
                     Value = CustomValueGetter();
+
+                if (AlignToEdge)
+                {
+                    if (base.Offset.X < 0)
+                        alignment.X = Width / 2f;
+                    else
+                        alignment.X = -Width / 2f;
+
+                    if (base.Offset.Y < 0)
+                        alignment.Y = Height / 2f;
+                    else
+                        alignment.Y = -Height / 2f;
+                }
+                else
+                    alignment = Vector2.Zero;
             }
 
             protected override void HandleInput()
