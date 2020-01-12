@@ -63,7 +63,7 @@ namespace RichHudFramework.UI.Server
 
         private void Open()
         {
-            ModMenu.Open = false;
+            RichHudTerminal.Open = false;
             window.Visible = true;
             window.GetFocus();
         }
@@ -71,7 +71,7 @@ namespace RichHudFramework.UI.Server
         private void Close()
         {
             window.Visible = false;
-            ModMenu.Open = true;
+            RichHudTerminal.Open = true;
         }
 
         protected override void Draw()
@@ -148,7 +148,7 @@ namespace RichHudFramework.UI.Server
                 BodyColor = new Color(41, 54, 62, 150);
                 BorderColor = new Color(58, 68, 77);
 
-                Title.Format = ModMenu.ControlText.WithAlignment(TextAlignment.Center);
+                Title.Format = RichHudTerminal.ControlText.WithAlignment(TextAlignment.Center);
                 header.Height = 40f;
 
                 confirm = new TerminalButton(this)

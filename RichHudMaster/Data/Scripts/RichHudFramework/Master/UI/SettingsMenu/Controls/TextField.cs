@@ -63,7 +63,7 @@ namespace RichHudFramework.UI.Server
         {
             name = new Label(this)
             {
-                Format = ModMenu.ControlText,
+                Format = RichHudTerminal.ControlText,
                 Text = "NewTextField",
                 AutoResize = false,
                 Height = 22f,
@@ -86,7 +86,7 @@ namespace RichHudFramework.UI.Server
 
             textBox = new TextBox(background)
             {
-                Format = ModMenu.ControlText,
+                Format = RichHudTerminal.ControlText,
                 AutoResize = false,
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
                 Padding = new Vector2(24f, 0f),

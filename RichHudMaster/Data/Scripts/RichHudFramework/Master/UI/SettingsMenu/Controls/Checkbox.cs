@@ -34,7 +34,7 @@ namespace RichHudFramework.UI.Server
         {
             name = new Label()
             {
-                Format = ModMenu.ControlText.WithAlignment(TextAlignment.Right),
+                Format = RichHudTerminal.ControlText.WithAlignment(TextAlignment.Right),
                 Text = "NewCheckbox",
             };
 

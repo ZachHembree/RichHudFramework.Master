@@ -33,30 +33,37 @@ namespace RichHudFramework
             Func<int, ControlMembers> // GetNewModPage
         >;
 
-        public sealed partial class ModMenu : ModBase.ComponentBase
+        public sealed partial class RichHudTerminal : ModBase.ComponentBase
         {
             public static readonly GlyphFormat HeaderText = new GlyphFormat(Color.White, TextAlignment.Center, 1.15f);
             public static readonly GlyphFormat ControlText = GlyphFormat.Blueish.WithSize(1.08f);
 
-            private static ModMenu Instance
+            private static RichHudTerminal Instance
             {
                 get { Init(); return instance; }
                 set { instance = value; }
             }
             public static bool Open { get { return Instance.settingsMenu.Visible; } set { Instance.settingsMenu.Visible = value; } }
-            private static ModMenu instance;
+            private static RichHudTerminal instance;
             private readonly SettingsMenu settingsMenu;
 
-            private ModMenu() : base(false, true)
+            private RichHudTerminal() : base(false, true)
             {
                 settingsMenu = new SettingsMenu(HudMain.Root);
+                MyAPIGateway.Utilities.MessageEntered += MessageHandler;
+            }
+
+            private void MessageHandler(string message, ref bool sendToOthers)
+            {
+                if (Open)
+                    sendToOthers = false;
             }
 
             public static void Init()
             {
                 if (instance == null)
                 {
-                    instance = new ModMenu();
+                    instance = new RichHudTerminal();
                 }
             }
 
@@ -237,6 +244,7 @@ namespace RichHudFramework
                     modList.Width = 200f;
                     Size = new Vector2(1320, 850f);
                     Offset = new Vector2(252f, 103f);
+                    Visible = false;
                 }
 
                 public ModControlRoot AddModRoot(string clientName)
@@ -285,6 +293,12 @@ namespace RichHudFramework
                     Selection = selection;
                     UpdateSelectionVisibilty();
                     OnSelectionChanged?.Invoke();
+
+                    for (int n = 0; n < modList.scrollBox.List.Count; n++)
+                    {
+                        if (modList.scrollBox.List[n] != Selection)
+                            modList.scrollBox.List[n].ClearSelection();
+                    }
                 }
 
                 private void UpdateSelectionVisibilty()
@@ -300,26 +314,26 @@ namespace RichHudFramework
                 {
                     public override float Width
                     {
-                        get { return list.Width; }
+                        get { return scrollBox.Width; }
                         set
                         {
                             header.Width = value;
-                            list.Width = value;
+                            scrollBox.Width = value;
                         }
                     }
 
                     public override float Height
                     {
-                        get { return list.Height + header.Height; }
-                        set { list.Height = value - header.Height; }
+                        get { return scrollBox.Height + header.Height; }
+                        set { scrollBox.Height = value - header.Height; }
                     }
 
-                    private readonly LabelBox header;
-                    private readonly ScrollBox<ModControlRoot> list;
+                    public readonly LabelBox header;
+                    public readonly ScrollBox<ModControlRoot> scrollBox;
 
                     public ModList(IHudParent parent = null) : base(parent)
                     {
-                        list = new ScrollBox<ModControlRoot>(this)
+                        scrollBox = new ScrollBox<ModControlRoot>(this)
                         {
                             AlignVertical = true,
                             FitToChain = false,
@@ -327,7 +341,7 @@ namespace RichHudFramework
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
                         };
 
-                        header = new LabelBox(list)
+                        header = new LabelBox(scrollBox)
                         {
                             AutoResize = false,
                             Format = ControlText,
@@ -348,12 +362,12 @@ namespace RichHudFramework
 
                     public void AddToList(ModControlRoot modSettings)
                     {
-                        list.AddToList(modSettings);
+                        scrollBox.AddToList(modSettings);
                     }
 
                     protected override void Draw()
                     {
-                        header.Width = list.Width;
+                        header.Width = scrollBox.Width;
                     }
                 }
             }

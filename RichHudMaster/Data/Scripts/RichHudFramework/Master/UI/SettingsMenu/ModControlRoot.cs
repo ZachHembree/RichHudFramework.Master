@@ -25,7 +25,7 @@ namespace RichHudFramework
             object // ID
         >;
 
-        public sealed partial class ModMenu : ModBase.ComponentBase
+        public sealed partial class RichHudTerminal : ModBase.ComponentBase
         {
             private class ModControlRoot : HudElementBase, IModControlRoot, IListBoxEntry
             {
@@ -64,6 +64,11 @@ namespace RichHudFramework
                 {
                     OnSelectionChanged?.Invoke();
                     OnModUpdate?.Invoke(this);
+                }
+
+                public void ClearSelection()
+                {
+                    pageControl.ClearSelection();
                 }
 
                 public void Add(TerminalPageBase page)

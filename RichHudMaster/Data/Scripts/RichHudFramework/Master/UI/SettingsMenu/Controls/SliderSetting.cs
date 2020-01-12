@@ -87,7 +87,7 @@ namespace RichHudFramework.UI.Server
 
             name = new Label(this)
             {
-                Format = ModMenu.ControlText,
+                Format = RichHudTerminal.ControlText,
                 Text = "NewSlideBox",
                 Offset = new Vector2(0f, -18f),
                 ParentAlignment = ParentAlignments.InnerH | ParentAlignments.Top | ParentAlignments.Left | ParentAlignments.UsePadding
@@ -95,7 +95,7 @@ namespace RichHudFramework.UI.Server
 
             current = new Label(this)
             {
-                Format = ModMenu.ControlText,
+                Format = RichHudTerminal.ControlText,
                 Text = "Value",
                 Offset = new Vector2(0f, -18f),
                 ParentAlignment = ParentAlignments.InnerH | ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.UsePadding

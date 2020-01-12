@@ -62,7 +62,7 @@ namespace RichHudFramework.UI.Server
             Size = new Vector2(253f, 50f);
             MouseInput.OnLeftClick += () => OnControlChanged?.Invoke();
 
-            Format = ModMenu.ControlText.WithAlignment(TextAlignment.Center);
+            Format = RichHudTerminal.ControlText.WithAlignment(TextAlignment.Center);
             Name = "NewTerminalButton";
         }
     }

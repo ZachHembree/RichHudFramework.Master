@@ -29,7 +29,7 @@ namespace RichHudFramework.Server
                 UnloadAction = data.Item3;
 
                 bindClient = BindManager.GetNewBindClient();
-                menuData = ModMenu.GetClientData(debugName);
+                menuData = RichHudTerminal.GetClientData(debugName);
                 registered = true;
 
                 SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => RunSafeAction(Unregister), GetApiData));
