@@ -267,7 +267,13 @@ namespace RichHudFramework
                 private void GetNewControl(int index)
                 {
                     RichHudTerminal.Open = false;
-                    RebindDialog.UpdateBind(bind, index, UpdateBindText);
+                    RebindDialog.UpdateBind(bind, index, DialogClosed);
+                }
+
+                private void DialogClosed()
+                {
+                    UpdateBindText();
+                    RichHudTerminal.Open = true;
                 }
 
                 private void RemoveControl(int index)
@@ -316,8 +322,6 @@ namespace RichHudFramework
                         con2.Name = "none";
                         con3.Name = "none";
                     }
-
-                    RichHudTerminal.Open = true;
                 }
             }
         }

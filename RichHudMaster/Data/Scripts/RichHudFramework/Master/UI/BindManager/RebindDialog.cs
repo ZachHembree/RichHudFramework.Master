@@ -94,11 +94,13 @@ namespace RichHudFramework.UI.Server
                 {
                     if (BindManager.Controls[n] != null && BindManager.Controls[n].IsPressed)
                     {
-                        if (!blacklist.Contains(BindManager.Controls[n].Index) && !combo.Contains(BindManager.Controls[n]))
+                        if (!blacklist.Contains(BindManager.Controls[n].Index))
                         {
                             newControl = BindManager.Controls[n];
                             Confirm();
                         }
+                        else if (combo.Contains(BindManager.Controls[n]))
+                            Exit();
                     }
                 }
             }

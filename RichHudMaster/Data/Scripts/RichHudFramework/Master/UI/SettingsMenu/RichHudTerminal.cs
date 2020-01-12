@@ -64,6 +64,7 @@ namespace RichHudFramework
                 if (instance == null)
                 {
                     instance = new RichHudTerminal();
+                    Open = false;
                 }
             }
 
@@ -244,7 +245,6 @@ namespace RichHudFramework
                     modList.Width = 200f;
                     Size = new Vector2(1320, 850f);
                     Offset = new Vector2(252f, 103f);
-                    Visible = false;
                 }
 
                 public ModControlRoot AddModRoot(string clientName)
