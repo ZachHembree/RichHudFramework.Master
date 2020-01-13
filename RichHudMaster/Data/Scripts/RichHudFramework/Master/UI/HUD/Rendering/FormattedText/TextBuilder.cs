@@ -56,7 +56,7 @@ namespace RichHudFramework
                 /// Gets or sets the maximum line width before text will wrap to the next line. Word wrapping must be enabled for
                 /// this to apply.
                 /// </summary>
-                public float LineWrapWidth { get { return formatter.MaxLineWidth; } set { SetWrapWidth(value); } }
+                public float LineWrapWidth { get { return wrapWidth; } set { wrapWidth = value; SetWrapWidth(value); } }
                 
                 /// <summary>
                 /// Determines the formatting mode of the text.
@@ -81,6 +81,7 @@ namespace RichHudFramework
                             else if (value == TextBuilderModes.Wrapped)
                             {
                                 wrappedText = new WrappedText(lines);
+                                wrappedText.SetWrapWidth(wrapWidth);
                                 formatter = wrappedText;
                             }
 
@@ -94,6 +95,7 @@ namespace RichHudFramework
 
                 private FormattedTextBase formatter;
                 private WrappedText wrappedText;
+                private float wrapWidth;
 
                 public TextBuilder()
                 {
@@ -454,7 +456,7 @@ namespace RichHudFramework
 
                     public int Count => lines.Count;
 
-                    private readonly List<Line> lines;
+                    public readonly List<Line> lines;
 
                     public LineList()
                     {
@@ -469,17 +471,17 @@ namespace RichHudFramework
                             lines.TrimExcess();
                     }
 
-                    public void AddRange(List<Line> lines)
+                    public void AddRange(IEnumerable<Line> collection)
                     {
-                        lines.InsertRange(Count, lines);
+                        lines.AddRange(collection);
 
                         if (lines.Capacity > 9 * lines.Count)
                             lines.TrimExcess();
                     }
 
-                    public void InsertRange(int index, List<Line> lines)
+                    public void InsertRange(int index, IEnumerable<Line> collection)
                     {
-                        lines.InsertRange(index, lines);
+                        lines.InsertRange(index, collection);
 
                         if (lines.Capacity > 9 * lines.Count)
                             lines.TrimExcess();

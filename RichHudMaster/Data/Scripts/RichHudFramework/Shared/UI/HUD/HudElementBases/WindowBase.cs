@@ -12,7 +12,8 @@ namespace RichHudFramework.UI
     /// </summary>
     public abstract class WindowBase : HudElementBase
     {
-        public ITextBuilder Title { get { return header.TextBoard; } }
+        public RichText HeaderText { get { return Header.GetText(); } set { Header.SetText(value); } }
+        public ITextBuilder Header => header.TextBoard;
 
         /// <summary>
         /// Determines the color of both the header and the border.

@@ -51,7 +51,7 @@ namespace RichHudFramework.UI.Server
         {
             name = new Label(this)
             {
-                Format = RichHudTerminal.ControlText,
+                Format = RichHudTerminal.ControlFormat,
                 Text = "NewDropdown",
                 AutoResize = false,
                 Height = 24f,

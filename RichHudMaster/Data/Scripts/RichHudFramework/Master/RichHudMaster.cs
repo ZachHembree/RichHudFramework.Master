@@ -46,6 +46,12 @@ namespace RichHudFramework.Server
 
             RegisterClientHandler();
             CheckClientQueue();
+
+            var testEditor = new TextEditor(HudMain.Root) 
+            { 
+                HeaderText = "Text Editor",
+                Size = new Vector2(500f, 300f),
+            };
         }
 
         private void RegisterClientHandler() =>

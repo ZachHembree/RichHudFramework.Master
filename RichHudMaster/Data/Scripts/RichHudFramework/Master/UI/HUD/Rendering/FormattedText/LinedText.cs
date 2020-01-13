@@ -65,6 +65,11 @@ namespace RichHudFramework.UI.Rendering.Server
                 }
 
                 List<Line> newLines = GetLines(chars);
+                string contents = "";
+
+                for (int n = 0; n < newLines[0].Count; n++)
+                    contents += newLines[0][n].Ch;
+
                 InsertLines(newLines, splitStart.X);
             }
 

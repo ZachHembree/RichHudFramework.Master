@@ -35,8 +35,8 @@ namespace RichHudFramework
 
         public sealed partial class RichHudTerminal : ModBase.ComponentBase
         {
-            public static readonly GlyphFormat HeaderText = new GlyphFormat(Color.White, TextAlignment.Center, 1.15f);
-            public static readonly GlyphFormat ControlText = GlyphFormat.Blueish.WithSize(1.08f);
+            public static readonly GlyphFormat HeaderFormat = new GlyphFormat(Color.White, TextAlignment.Center, 1.15f);
+            public static readonly GlyphFormat ControlFormat = GlyphFormat.Blueish.WithSize(1.08f);
 
             private static RichHudTerminal Instance
             {
@@ -55,7 +55,7 @@ namespace RichHudFramework
 
             private void MessageHandler(string message, ref bool sendToOthers)
             {
-                if (Open)
+                if (settingsMenu.Visible)
                     sendToOthers = false;
             }
 
@@ -181,8 +181,8 @@ namespace RichHudFramework
                 {
                     pages = new List<TerminalPageBase>();
 
-                    Title.Format = HeaderText;
-                    Title.SetText("Rich HUD Terminal");
+                    Header.Format = HeaderFormat;
+                    Header.SetText("Rich HUD Terminal");
 
                     header.Height = 60f;
                     header.Background.Visible = false;
@@ -344,7 +344,7 @@ namespace RichHudFramework
                         header = new LabelBox(scrollBox)
                         {
                             AutoResize = false,
-                            Format = ControlText,
+                            Format = ControlFormat,
                             Text = "Mod List:",
                             Color = new Color(32, 39, 45, 230),
                             TextPadding = new Vector2(30f, 0f),

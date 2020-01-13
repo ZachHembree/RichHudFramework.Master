@@ -66,7 +66,7 @@ namespace RichHudFramework.UI.Server
         {
             name = new Label(this)
             {
-                Format = RichHudTerminal.ControlText,
+                Format = RichHudTerminal.ControlFormat,
                 Text = "NewListBox",
                 AutoResize = false,
                 Height = 24f,

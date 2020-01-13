@@ -77,9 +77,9 @@ namespace RichHudFramework.UI.Server
                 ChildContainer = { name, display }
             };
 
-            rText = new Label() { AutoResize = false, Format = RichHudTerminal.ControlText, Height = 47f };
-            gText = new Label() { AutoResize = false, Format = RichHudTerminal.ControlText, Height = 47f };
-            bText = new Label() { AutoResize = false, Format = RichHudTerminal.ControlText, Height = 47f };
+            rText = new Label() { AutoResize = false, Format = RichHudTerminal.ControlFormat, Height = 47f };
+            gText = new Label() { AutoResize = false, Format = RichHudTerminal.ControlFormat, Height = 47f };
+            bText = new Label() { AutoResize = false, Format = RichHudTerminal.ControlFormat, Height = 47f };
 
             colorText = new HudChain<HudElementBase>()
             {

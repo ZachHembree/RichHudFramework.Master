@@ -18,10 +18,10 @@ namespace RichHudFramework.UI.Server
 
         public override RichText Name
         {
-            get { return window.Title.GetText(); }
+            get { return window.Header.GetText(); }
             set
             {
-                window.Title.SetText(value);
+                window.Header.SetText(value);
                 openButton.Name = value;
             }
         }
@@ -148,7 +148,7 @@ namespace RichHudFramework.UI.Server
                 BodyColor = new Color(41, 54, 62, 150);
                 BorderColor = new Color(58, 68, 77);
 
-                Title.Format = RichHudTerminal.ControlText.WithAlignment(TextAlignment.Center);
+                Header.Format = RichHudTerminal.ControlFormat.WithAlignment(TextAlignment.Center);
                 header.Height = 40f;
 
                 confirm = new TerminalButton(this)
