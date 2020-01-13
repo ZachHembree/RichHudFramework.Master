@@ -279,11 +279,11 @@ namespace RichHudFramework
                 {
                     base.BeforeDraw();
 
-                    chain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
-                    modList.Width = 250f;
-
                     if (CurrentPage != null)
                         CurrentPage.Width = Width - Padding.X - modList.Width - chain.Spacing;
+
+                    chain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
+                    modList.Width = 250f;
 
                     BodyColor = BodyColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
                 }

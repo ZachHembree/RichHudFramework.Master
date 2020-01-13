@@ -60,7 +60,7 @@ namespace RichHudFramework
 
                 subheader = new Label()
                 {
-                    AutoResize = true,
+                    AutoResize = false,
                     VertCenterText = false,
                     Height = 20f,
                     Padding = new Vector2(0f, 10f),
