@@ -72,6 +72,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager\FontStyle.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager\Font.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager\Glyph.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager\IFont.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager\IFontStyle.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\IBindClient.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\CustomControls.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\IBind.cs" />
@@ -93,7 +98,7 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\BindManager\RebindDialog.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\HudCursor.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\HudMain.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager\FontManager.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\FormattedTextBase.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\Line.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\LinedText.cs" />

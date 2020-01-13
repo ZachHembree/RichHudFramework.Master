@@ -29,7 +29,10 @@ namespace RichHudFramework.UI
             };
 
             foreach (IFontMin font in FontManager.Fonts)
-                fontList.Add(new RichText(font.Name, new GlyphFormat(fontStyle: new Vector2I(font.Index, 0), color: Color.White)), font.Index);
+            {
+                
+                fontList.Add(new RichText(font.Name, new GlyphFormat(Color.White, fontStyle: font.Regular)), font.Index);
+            }
 
             for (int n = 0; n < textSizes.Length; n++)
                 sizeList.Add(new RichText(textSizes[n].ToString(), GlyphFormat.Black.WithColor(Color.White)), n);

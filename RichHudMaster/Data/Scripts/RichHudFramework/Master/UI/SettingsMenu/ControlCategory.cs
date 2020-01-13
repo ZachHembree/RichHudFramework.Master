@@ -60,7 +60,7 @@ namespace RichHudFramework
 
                 subheader = new Label()
                 {
-                    AutoResize = false,
+                    AutoResize = true,
                     VertCenterText = false,
                     Height = 20f,
                     Padding = new Vector2(0f, 10f),
@@ -89,7 +89,7 @@ namespace RichHudFramework
                 Tiles = new ReadOnlyCollectionData<IControlTile>(x => scrollBox.Members.List[x], () => scrollBox.Members.List.Count);
 
                 HeaderText = "NewSettingsCategory";
-                SubheaderText = "Subheading";
+                SubheaderText = "Subheading\nLine 1\nLine 2\nLine 3\nLine 4";
 
                 scrollBox.Members.AutoResize = false;
                 Enabled = true;
