@@ -475,7 +475,7 @@ namespace RichHudFramework
                     {
                         lines.AddRange(collection);
 
-                        if (lines.Capacity > 9 * lines.Count)
+                        if (lines.Count > 0 && lines.Capacity > 9 * lines.Count)
                             lines.TrimExcess();
                     }
 
@@ -483,7 +483,7 @@ namespace RichHudFramework
                     {
                         lines.InsertRange(index, collection);
 
-                        if (lines.Capacity > 9 * lines.Count)
+                        if (lines.Count > 0 && lines.Capacity > 9 * lines.Count)
                             lines.TrimExcess();
                     }
 

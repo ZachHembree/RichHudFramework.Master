@@ -116,18 +116,23 @@ namespace RichHudFramework.UI.Rendering.Server
                 {
                     if (end.X > start.X)
                     {
-                        lines[start.X].RemoveRange(start.Y, lines[start.X].Count - start.Y);
-                        lines[start.X].UpdateSize();
-
-                        if (start.X + 1 < end.X)
-                            lines.RemoveRange(start.X + 1, end.X - start.X - 1);
-
                         if (end.Y == (lines[end.X].Count - 1))
                             lines.RemoveAt(end.X);
                         else
                         {
                             lines[end.X].RemoveRange(0, lines[end.X].Count - end.Y);
                             lines[end.X].UpdateSize();
+                        }
+
+                        if (start.X + 1 < end.X)
+                            lines.RemoveRange(start.X + 1, end.X - start.X - 1);
+
+                        if (start.X > 0)
+                            lines.RemoveAt(start.X);
+                        else
+                        {
+                            lines[start.X].RemoveRange(start.Y, lines[start.X].Count - start.Y);
+                            lines[start.X].UpdateSize();
                         }
                     }
                     else
