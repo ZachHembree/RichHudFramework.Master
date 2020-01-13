@@ -3,7 +3,7 @@ using System;
 
 namespace RichHudFramework.UI
 {
-    public class ScrollBox<T> : HudElementBase,IListBoxEntry where T : class, IListBoxEntry
+    public class ScrollBox<T> : HudElementBase, IListBoxEntry where T : class, IListBoxEntry
     {
         public HudChain<T> Members { get; }
         public ReadOnlyCollection<T> List => Members.List;

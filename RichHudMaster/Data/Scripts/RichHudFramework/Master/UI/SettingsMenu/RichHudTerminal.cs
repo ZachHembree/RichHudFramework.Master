@@ -240,7 +240,7 @@ namespace RichHudFramework
                     BorderColor = new Color(84, 98, 107);
 
                     Padding = new Vector2(80f, 40f);
-                    MinimumSize = new Vector2(700f, 500f);
+                    MinimumSize = new Vector2(1024f, 500f);
 
                     modList.Width = 200f;
                     Size = new Vector2(1320, 850f);
