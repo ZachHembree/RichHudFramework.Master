@@ -76,6 +76,12 @@ namespace RichHudFramework.UI
 
             if (acceptInput)
             {
+                if (!selectionBox.Visible && !SharedBinds.LeftButton.IsPressed)
+                {
+                    caret.Visible = true;
+                    selectionBox.Visible = true;
+                }
+
                 textInput.HandleInput();
 
                 if (SharedBinds.Copy.IsNewPressed && !selectionBox.Empty)
@@ -104,22 +110,11 @@ namespace RichHudFramework.UI
                     }
                 }
             }
-        }
-
-        protected override void Draw()
-        {
-            if (acceptInput)
-            {
-                caret.Visible = true;
-                selectionBox.Visible = true;
-            }
             else if (caret.Visible || selectionBox.Visible)
             {
                 caret.Visible = false;
                 selectionBox.Visible = false;
             }
-
-            base.Draw();
         }
 
         /// <summary>
