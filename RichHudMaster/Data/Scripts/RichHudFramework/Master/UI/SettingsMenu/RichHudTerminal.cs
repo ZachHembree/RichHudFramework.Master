@@ -168,8 +168,6 @@ namespace RichHudFramework
 
                 public override bool Visible => base.Visible && MyAPIGateway.Gui.ChatEntryVisible;
 
-                public override float Scale => HudMain.ResScale;
-
                 private readonly ModList modList;
                 private readonly HudChain<HudElementBase> chain;
                 private readonly TexturedBox topDivider, middleDivider, bottomDivider;
@@ -277,13 +275,15 @@ namespace RichHudFramework
 
                 protected override void BeforeDraw()
                 {
+                    Scale = HudMain.ResScale;
+
                     base.BeforeDraw();
 
                     if (CurrentPage != null)
                         CurrentPage.Width = Width - Padding.X - modList.Width - chain.Spacing;
 
                     chain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
-                    modList.Width = 250f;
+                    modList.Width = 250f * Scale;
 
                     BodyColor = BodyColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
                 }
