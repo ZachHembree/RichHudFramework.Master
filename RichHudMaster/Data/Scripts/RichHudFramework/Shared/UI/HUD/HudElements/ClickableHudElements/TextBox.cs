@@ -129,7 +129,7 @@ namespace RichHudFramework.UI
         {
             DeleteSelection();
             TextBoard.Insert(ch.ToString(), caret.Index + new Vector2I(0, caret.Prepend ? 0 : 1));
-            caret.Move(new Vector2I(0, 1));
+            caret.Move(new Vector2I(0, 1), true);
         }
 
         /// <summary>
@@ -213,14 +213,14 @@ namespace RichHudFramework.UI
 
                     Prepend = prependNext;
                 }
-                else
+                else if (dir.X == 0)
                     Prepend = false;
 
                 int newOffset = Math.Max(caretOffset + dir.Y, 0);
                 Vector2I newIndex = GetIndexFromOffset(newOffset) + new Vector2I(dir.X, 0);
                 newIndex = ClampIndex(newIndex);
 
-                if (dir.X == 0 && dir.Y != 0 && newIndex.X != Index.X)
+                if (dir.X == 0 && dir.Y != 0 && newIndex.X != Index.X && !ignorePrepend)
                 {
                     if (newIndex.X < Index.X)
                         Prepend = false;
