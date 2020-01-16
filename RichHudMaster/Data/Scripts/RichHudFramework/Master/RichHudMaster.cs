@@ -14,12 +14,14 @@ namespace RichHudFramework.Server
 {
     using UI.Server;
     using UI.Rendering.Server;
-    using ClientData = MyTuple<string, Action<int, object>, Action>;
+    using ClientData = MyTuple<string, Action<int, object>, Action, int>;
 
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation, 1)]
     internal sealed partial class RichHudMaster : ModBase
     {
-        private const long modID = 1965654081, queueID = 1314086443; // replace this with the real mod ID when you're done
+        private const long modID = 1965654081, queueID = 1314086443;
+        private const int versionID = 1;
+
         private static new RichHudMaster Instance { get; set; }
         private readonly List<RichHudClient> clients;
         private CmdManager.Group rhdCommands;
@@ -83,12 +85,19 @@ namespace RichHudFramework.Server
                 Utils.Debug.AssertNotNull(clientData.Item1);
                 RichHudClient client = clients.Find(x => (x.debugName == clientData.Item1));
 
-                if (client == null)
+                if (client == null && clientData.Item4 <= versionID)
                 {
                     clients.Add(new RichHudClient(clientData));
                 }
                 else
-                    client.SendData(MsgTypes.RegistrationFailed, "Client already registered.");
+                {
+                    Action<int, object> SendMsgAction = clientData.Item2;
+
+                    if (clientData.Item4 > versionID)
+                        SendMsgAction((int)MsgTypes.RegistrationFailed, $"Client version mismatch. Server vID: {versionID}, Client vID: {clientData.Item4}");
+                    else
+                        SendMsgAction((int)MsgTypes.RegistrationFailed, "Client already registered.");
+                }
             }
         }
 

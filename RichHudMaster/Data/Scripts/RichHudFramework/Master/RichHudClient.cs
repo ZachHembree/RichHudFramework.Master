@@ -6,14 +6,15 @@ namespace RichHudFramework.Server
     using UI;
     using UI.Server;
     using UI.Rendering.Server;
-    using ClientData = MyTuple<string, Action<int, object>, Action>;
-    using ServerData = MyTuple<Action, Func<int, object>>;
+    using ClientData = MyTuple<string, Action<int, object>, Action, int>;
+    using ServerData = MyTuple<Action, Func<int, object>, int>;
 
     internal sealed partial class RichHudMaster
     {
         private class RichHudClient
         {
             public readonly string debugName;
+            public readonly int versionID;
 
             private readonly IBindClient bindClient;
 
@@ -27,12 +28,13 @@ namespace RichHudFramework.Server
                 debugName = data.Item1;
                 SendMsgAction = data.Item2;
                 UnloadAction = data.Item3;
+                versionID = data.Item4;
 
                 bindClient = BindManager.GetNewBindClient();
                 menuData = RichHudTerminal.GetClientData(debugName);
                 registered = true;
 
-                SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => RunSafeAction(Unregister), GetApiData));
+                SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => RunSafeAction(Unregister), GetApiData, versionID));
             }
 
             /// <summary>
