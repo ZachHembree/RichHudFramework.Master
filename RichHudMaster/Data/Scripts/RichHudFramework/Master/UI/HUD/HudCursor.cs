@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using VRage;
 using VRage.Utils;
 using VRageMath;
+using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
-using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
@@ -105,6 +105,8 @@ namespace RichHudFramework
                     if (Visible)
                     {
                         shadow.Scale = ResScale;
+
+                        shadow.BeforeDrawStart();
                         shadow.DrawStart();
                     }
                 }
@@ -114,7 +116,7 @@ namespace RichHudFramework
                     if (Visible)
                     {
                         Vector2 pos = MyAPIGateway.Input.GetMousePosition();
-                        shadow.Offset = new Vector2(pos.X - ScreenWidth / 2f, -(pos.Y - ScreenHeight / 2f)) + new Vector2(12f, -12f) * ResScale;
+                        shadow.Offset = new Vector2(-ScreenWidth / 2f, ScreenHeight / 2f) + (new Vector2(pos.X, -pos.Y) + new Vector2(12f, -12f)) * ResScale;
                     }
                 }
 

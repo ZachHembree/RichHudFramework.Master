@@ -162,6 +162,8 @@ namespace RichHudFramework.UI.Server
 
             protected override void BeforeDraw()
             {
+                Scale = HudMain.ResScale;
+
                 base.BeforeDraw();
 
                 if (canMoveWindow)
