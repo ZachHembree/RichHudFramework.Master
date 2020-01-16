@@ -48,6 +48,9 @@ namespace RichHudFramework.Server
 
             RegisterClientHandler();
             CheckClientQueue();
+
+            if (MenuUtilities.CanAddElements)
+                MenuUtilities.AddMenuElements(GetModMenuButton());
         }
 
         private void RegisterClientHandler() =>
@@ -58,6 +61,16 @@ namespace RichHudFramework.Server
 
         private void CheckClientQueue() =>
             MyAPIUtilities.Static.SendModMessage(queueID, modID);
+
+        private static List<MenuUtilities.IMenuElement> GetModMenuButton()
+        {
+            return new List<MenuUtilities.IMenuElement>()
+            {
+                new MenuUtilities.MenuButton(
+                        $"Open Rich Hud Terminal",
+                        () => RichHudTerminal.Open = true)
+            };
+        }
 
         private List<CmdManager.Command> GetChatCommands()
         {
