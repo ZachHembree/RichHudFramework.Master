@@ -167,7 +167,7 @@ namespace RichHudFramework
 
                     foreach (Bind bind in controlMap[con.Index])
                     {
-                        if (bind.bindHits > 0 && (longest == null || bind.length > longest.length || (longest.beingReleased && !bind.beingReleased)))
+                        if (bind.bindHits > 0 && (longest == null || bind.length > longest.length || (longest.beingReleased && !bind.beingReleased && longest.length == bind.length)))
                             longest = bind;
                     }
 
