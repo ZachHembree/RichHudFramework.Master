@@ -242,7 +242,13 @@ namespace RichHudFramework
 
                     modList.Width = 200f;
                     Size = new Vector2(1320, 850f);
-                    Offset = new Vector2(252f, 103f);
+                    Offset = new Vector2(252f, 70f);
+
+                    if (HudMain.ScreenWidth < 1920)
+                        Width = MinimumSize.X;
+
+                    if (HudMain.ScreenHeight < 1050)
+                        Height = MinimumSize.Y;
                 }
 
                 public ModControlRoot AddModRoot(string clientName)
