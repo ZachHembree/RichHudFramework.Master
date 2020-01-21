@@ -181,7 +181,7 @@ namespace RichHudFramework
                 private float GetCharRangeOffset(Vector2I index)
                 {
                     Line line = lines[index.X];
-                    float newOffset = columnOffset;
+                    float offset = columnOffset;
 
                     if (line.Count > 0)
                     {
@@ -189,22 +189,17 @@ namespace RichHudFramework
                         {
                             UpdateLineOffsets(index.X, 0f, true);
 
-                            float dist = line[index.Y].Offset.X + (fixedSize.X - line[index.Y].Size.X) / 2f;
+                            RichChar ch = line[index.Y];
+                            float maxOffset = ch.Offset.X - (ch.Size.X / 2f) + fixedSize.X / 2f,
+                                minOffset = maxOffset - fixedSize.X + ch.Size.X;
 
-                            if (dist > (newOffset + fixedSize.X + line[index.Y].Size.X / 2f))
-                            {
-                                newOffset = dist - fixedSize.X;
-                            }
-                            else if (dist - line[index.Y].Size.X / 2f < newOffset)
-                            {
-                                newOffset = dist - line[index.Y].Size.X;
-                            }
+                            offset = Utils.Math.Clamp(offset, minOffset, maxOffset);
                         }
                         else
-                            newOffset = 0f;
+                            offset = 0f;
                     }
 
-                    return newOffset;
+                    return offset;
                 }
 
                 /// <summary>
@@ -387,7 +382,8 @@ namespace RichHudFramework
                 private void UpdateLineOffsets(int line, float height, bool ignoreBounds = false)
                 {
                     RichChar leftChar = null, rightChar;
-                    float width = -columnOffset, xAlign = GetLineAlignment(lines[line]);
+                    float width = ignoreBounds ? 0f: -columnOffset, 
+                        xAlign = GetLineAlignment(lines[line]);
 
                     height -= GetBaseline(line);
 

@@ -22,16 +22,12 @@ namespace RichHudFramework.UI
         {
             textBox = new TextBox(body)
             {
-                ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV,
-                DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+                ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
                 Padding = new Vector2(8f, 8f),
-                Offset = new Vector2(0f, -60f),
                 Format = new GlyphFormat(Color.White, textSize: 1.1f),
                 VertCenterText = false,
                 AutoResize = false
             };
-
-            textBox.TextBoard.Append("Test");
 
             fontList = new Dropdown<int>()
             {
@@ -117,6 +113,12 @@ namespace RichHudFramework.UI
 
             Header.Format = new GlyphFormat(GlyphFormat.Blueish.Color, TextAlignment.Center, 1.08f);
             header.Height = 30f;
+        }
+
+        protected override void Draw()
+        {
+            textBox.Width = Width;
+            textBox.Height = Height - header.Height - toolbar.Height;
         }
 
         protected void UpdateFont()
