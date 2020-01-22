@@ -255,7 +255,7 @@ namespace RichHudFramework.UI
                 {
                     IRichChar ch = text[Index];
                     Height = text[Index.X].Size.Y - 2f;
-                    offset = text[Index].Offset;
+                    offset = text[Index].Offset + text.TextOffset;
 
                     // If prepending, then draw the caret on the left side
                     if (Prepend)

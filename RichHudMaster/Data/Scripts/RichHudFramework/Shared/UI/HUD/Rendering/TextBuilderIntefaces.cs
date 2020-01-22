@@ -199,6 +199,11 @@ namespace RichHudFramework
                 Vector2 TextSize { get; }
 
                 /// <summary>
+                /// Used to change the position of the text within the text element. AutoResize must be disabled for this to work.
+                /// </summary>
+                Vector2 TextOffset { get; set; }
+
+                /// <summary>
                 /// Size of the text box when AutoResize is set to false. Does nothing otherwise.
                 /// </summary>
                 Vector2 FixedSize { get; set; }

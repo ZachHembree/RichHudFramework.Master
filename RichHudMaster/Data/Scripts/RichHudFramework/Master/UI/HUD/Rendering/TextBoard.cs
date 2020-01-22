@@ -7,10 +7,10 @@ using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Colo
 
 namespace RichHudFramework
 {
+    using BoolProp = MyTuple<Func<bool>, Action<bool>>;
+    using FloatProp = MyTuple<Func<float>, Action<float>>;
     using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
     using Vec2Prop = MyTuple<Func<Vector2>, Action<Vector2>>;
-    using FloatProp = MyTuple<Func<float>, Action<float>>;
-    using BoolProp = MyTuple<Func<bool>, Action<bool>>;
 
     namespace UI
     {
@@ -45,10 +45,12 @@ namespace RichHudFramework
                 {
                     set
                     {
-                        Size *= (value / base.Scale);
-                        TextSize *= (value / base.Scale);
-                        FixedSize *= (value / base.Scale);
-                        columnOffset *= (value / base.Scale);
+                        float scale = (value / base.Scale);
+
+                        Size *= scale;
+                        TextSize *= scale;
+                        FixedSize *= scale;
+                        textOffset *= scale;
 
                         if (base.Scale != value)
                         {
@@ -80,7 +82,25 @@ namespace RichHudFramework
                         {
                             fixedSize = value;
                             LineWrapWidth = fixedSize.X;
-                            AfterTextUpdate();
+                            UpdateOffsets();
+                        }
+                    }
+                }
+
+                /// <summary>
+                /// Used to change the position of the text within the text element. AutoResize must be disabled for this to work.
+                /// </summary>
+                public Vector2 TextOffset
+                {
+                    get { return textOffset; }
+                    set
+                    {
+                        if (!AutoResize)
+                        {
+                            if (value != textOffset)
+                                UpdateOffsets();
+
+                            textOffset = value;
                         }
                     }
                 }
@@ -96,10 +116,9 @@ namespace RichHudFramework
                 public bool VertCenterText { get; set; }
 
                 private int startLine, endLine;
-                private float columnOffset;
                 private bool updateEvent;
-                private Vector2 fixedSize;
-                private Utils.Stopwatch eventTimer;
+                private Vector2 fixedSize, textOffset;
+                private readonly Utils.Stopwatch eventTimer;
 
                 public TextBoard()
                 {
@@ -124,14 +143,14 @@ namespace RichHudFramework
                     if (!AutoResize)
                     {
                         if (BuilderMode != TextBuilderModes.Unlined)
-                            startLine = GetFirstVisibleLine(index.X);
+                            UpdateVerticalOffset(index.X);
                         else
-                            startLine = 0;
+                            textOffset.Y = 0f;
 
                         if (BuilderMode != TextBuilderModes.Wrapped)
-                            columnOffset = GetCharRangeOffset(index);
+                            textOffset.X = GetCharRangeOffset(index);
                         else
-                            columnOffset = 0f;
+                            textOffset.X = 0f;
 
                         UpdateOffsets();
                     }
@@ -140,38 +159,47 @@ namespace RichHudFramework
                 /// <summary>
                 /// Finds the first line visible in the range that includes the given line index.
                 /// </summary>
-                private int GetFirstVisibleLine(int line)
+                private void UpdateVerticalOffset(int line)
                 {
-                    int newStart = startLine;
-
                     if (line > endLine)
-                        newStart = GetStartFromEnd(line);
+                        UpdateLineOffsetFromEnd(line);
                     else if (line < startLine)
-                        newStart = line;
-
-                    return newStart;
+                        UpdateLineOffsetFromStart(line);
                 }
 
                 /// <summary>
-                /// Finds the first visible line given the index of the last visible line.
+                /// Calculates the vertical text offset given the index of the last visible line.
                 /// </summary>
-                private int GetStartFromEnd(int end)
+                private void UpdateLineOffsetFromStart(int start)
                 {
-                    int start = end;
-                    float height = 0f;
+                    float dist = 0f;
+
+                    for (int line = 0; line < start; line++)
+                    {
+                        dist += lines[line].Size.Y;
+                    }
+
+                    textOffset.Y = dist;
+                }
+
+                /// <summary>
+                /// Calculates the vertical text offset given the index of the last visible line.
+                /// </summary>
+                private void UpdateLineOffsetFromEnd(int end)
+                {
+                    float height = 0f, bottom = 0f;
 
                     for (int line = end; line >= 0; line--)
                     {
                         if (height <= (FixedSize.Y - lines[line].Size.Y))
                         {
                             height += lines[line].Size.Y;
-                            start = line;
                         }
-                        else
-                            break;
+
+                        bottom += lines[line].Size.Y;
                     }
 
-                    return start;
+                    textOffset.Y = bottom - height;
                 }
 
                 /// <summary>
@@ -181,17 +209,15 @@ namespace RichHudFramework
                 private float GetCharRangeOffset(Vector2I index)
                 {
                     Line line = lines[index.X];
-                    float offset = columnOffset;
+                    float offset = textOffset.X;
 
                     if (line.Count > 0)
                     {
                         if (index.Y != 0)
                         {
-                            UpdateLineOffsets(index.X, 0f, true);
-
                             RichChar ch = line[index.Y];
-                            float maxOffset = ch.Offset.X - (ch.Size.X / 2f) + fixedSize.X / 2f,
-                                minOffset = maxOffset - fixedSize.X + ch.Size.X;
+                            float minOffset = -ch.Offset.X + ch.Size.X / 2f - fixedSize.X / 2f,
+                                maxOffset = minOffset - ch.Size.X + fixedSize.X;
 
                             offset = Utils.Math.Clamp(offset, minOffset, maxOffset);
                         }
@@ -294,18 +320,23 @@ namespace RichHudFramework
                         updateEvent = false;
                     }
 
+                    if (AutoResize)
+                        textOffset = Vector2.Zero;
+
+                    float min = -Size.X / 2f - 2f, max = -min;
+
                     for (int line = startLine; line <= endLine && line < lines.Count; line++)
                     {
                         for (int ch = 0; ch < lines[line].Count; ch++)
                         {
                             MatBoard glyphBoard = lines[line][ch].GlyphBoard;
+                            float 
+                                xPos = glyphBoard.offset.X + textOffset.X,
+                                edge = lines[line][ch].Size.X / 2f;
 
-                            if (glyphBoard.offset != -Vector2.PositiveInfinity)
+                            if ((xPos - edge) >= min && (xPos + edge) <= max)
                             {
-                                if (glyphBoard.offset != Vector2.PositiveInfinity)
-                                    glyphBoard.Draw(origin);
-                                else
-                                    break;
+                                glyphBoard.Draw(origin + textOffset);
                             }
                         }
                     }
@@ -323,12 +354,21 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateOffsets()
                 {
-                    TextSize = GetSize();
-
                     if (AutoResize)
+                    {
+                        startLine = 0;
+                        endLine = lines.Count - 1;
+
+                        TextSize = GetTextSize();
                         Size = TextSize;
+                    }
                     else
+                    {
+                        UpdateLineRange();
+
+                        TextSize = GetTextSize();
                         Size = fixedSize;
+                    }
 
                     if (lines.Count > 0)
                     {
@@ -339,38 +379,62 @@ namespace RichHudFramework
                         else
                             height = Size.Y / 2f;
 
-                        for (int line = startLine; line <= endLine; line++)
+                        for (int line = 0; line <= endLine; line++)
                         {
-                            if (lines[line].Count > 0)
+                            if (line >= startLine && lines[line].Count > 0)
                             {
                                 UpdateLineOffsets(line, height);
-                                height -= lines[line].Size.Y;
                             }
+
+                            height -= lines[line].Size.Y;
                         }
                     }
                 }
 
                 /// <summary>
-                /// Calculates the current size of the text box. If AutoResize == true, then the
-                /// size of the text box will not be limited to the FixedSize and it will be allowed 
-                /// to resize freely.
+                /// Updates the visible range of lines based on the current text offset.
                 /// </summary>
-                private Vector2 GetSize()
+                private void UpdateLineRange()
+                {
+                    float height = textOffset.Y;
+
+                    startLine = 0;
+                    endLine = -1;
+
+                    for (int line = 0; line < lines.Count; line++)
+                    {
+                        if (height <= 2f)
+                        {
+                            if (endLine == -1)
+                            {
+                                startLine = line;
+                                endLine = line;
+                            }
+                            else if (height > -FixedSize.Y + lines[line].Size.Y)
+                            {
+                                endLine = line;
+                            }
+                            else
+                                break;
+                        }
+
+                        height -= lines[line].Size.Y;
+                    }
+                }
+
+                /// <summary>
+                /// Calculates the current size of the text box.
+                /// </summary>
+                private Vector2 GetTextSize()
                 {
                     float width = 0f, height = 0f;
 
-                    for (int line = startLine; line < lines.Count; line++)
+                    for (int line = startLine; line <= endLine; line++)
                     {
-                        if (AutoResize || height <= (FixedSize.Y - lines[line].Size.Y))
-                        {
-                            if (lines[line].Size.X > width)
-                                width = lines[line].Size.X;
+                        if (lines[line].Size.X > width)
+                            width = lines[line].Size.X;
 
-                            height += lines[line].Size.Y;
-                            endLine = line;
-                        }
-                        else
-                            break;
+                        height += lines[line].Size.Y;
                     }
 
                     return new Vector2(width, height);
@@ -379,10 +443,10 @@ namespace RichHudFramework
                 /// <summary>
                 /// Updates the position of each character in the given line.
                 /// </summary>
-                private void UpdateLineOffsets(int line, float height, bool ignoreBounds = false)
+                private void UpdateLineOffsets(int line, float height)
                 {
                     RichChar leftChar = null, rightChar;
-                    float width = ignoreBounds ? 0f: -columnOffset, 
+                    float width = 0f,
                         xAlign = GetLineAlignment(lines[line]);
 
                     height -= GetBaseline(line);
@@ -390,23 +454,9 @@ namespace RichHudFramework
                     for (int ch = 0; ch < lines[line].Count; ch++)
                     {
                         rightChar = lines[line][ch];
+                        width = UpdateCharOffset(rightChar, leftChar, new Vector2(width, height), xAlign);
 
-                        if (width < 0 && !ignoreBounds) // Any characters before this point will not be drawn
-                        {
-                            rightChar.GlyphBoard.offset = -Vector2.PositiveInfinity;
-                            width += rightChar.Size.X;
-                            leftChar = rightChar;
-                        }
-                        else if (AutoResize || ignoreBounds || width + rightChar.Size.X <= fixedSize.X)
-                        {
-                            width = UpdateCharOffset(rightChar, leftChar, new Vector2(width, height), xAlign);
-                            leftChar = rightChar;
-                        }
-                        else if (!ignoreBounds) // Any characters after this point will not be drawn
-                        {
-                            rightChar.GlyphBoard.offset = Vector2.PositiveInfinity;
-                            break;
-                        }
+                        leftChar = rightChar;
                     }
                 }
 
