@@ -72,13 +72,18 @@ namespace RichHudFramework
                             stopwatch.Start();
                         }
 
-                        IsPressedAndHeld = IsNewPressed || (IsPressed && stopwatch.ElapsedTicks > holdTime);
+                        if (IsPressed && stopwatch.ElapsedTicks > holdTime)
+                        {
+                            if (!IsPressedAndHeld)
+                                OnPressAndHold?.Invoke();
+
+                            IsPressedAndHeld = true;
+                        }
+                        else
+                            IsPressedAndHeld = false;
 
                         if (IsReleased)
                             OnRelease?.Invoke();
-
-                        if (IsPressedAndHeld)
-                            OnPressAndHold?.Invoke();
                     }
 
                     public IList<IControl> GetCombo()

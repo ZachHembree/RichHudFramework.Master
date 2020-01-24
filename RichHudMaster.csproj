@@ -171,7 +171,7 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\Label.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\LabelBox.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\LabelListBox.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ScrollBar.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\ScrollBar.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\TextList.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\TexturedBox.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\ICursor.cs" />

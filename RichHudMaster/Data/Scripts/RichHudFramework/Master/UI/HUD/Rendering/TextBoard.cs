@@ -97,9 +97,7 @@ namespace RichHudFramework
                     {
                         if (!AutoResize)
                         {
-                            if (value.Y != textOffset.Y)
-                                UpdateLineRange();
-
+                            UpdateLineRange();
                             textOffset = value;
                         }
                     }
@@ -149,7 +147,7 @@ namespace RichHudFramework
                             else
                                 textOffset.Y = 0f;
 
-                            UpdateOffsets();
+                            UpdateLineRange();
                         }
 
                         if (BuilderMode != TextBuilderModes.Wrapped)
@@ -369,11 +367,11 @@ namespace RichHudFramework
 
                         if (range.X != startLine || range.Y != endLine)
                         {
-                            UpdateVisibleRange();
-                        }
+                            startLine = range.X;
+                            endLine = range.Y;
 
-                        startLine = range.X;
-                        endLine = range.Y;
+                            UpdateVisibleRange();
+                        }                  
                     }
                 }
 

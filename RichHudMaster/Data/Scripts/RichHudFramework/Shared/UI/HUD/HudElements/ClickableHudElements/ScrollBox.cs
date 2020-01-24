@@ -419,7 +419,6 @@ namespace RichHudFramework.UI
                 divider.Height = scrollBar.Height;
 
                 scrollBar.slide.button.Height = ((Height - Padding.Y) / totalSize) * scrollBar.Height;
-                scrollBar.slide.button.Visible = scrollBar.slide.button.Height < scrollBar.slide.bar.Height;
             }
             else
             {
@@ -427,7 +426,6 @@ namespace RichHudFramework.UI
                 divider.Width = scrollBar.Width;
 
                 scrollBar.slide.button.Width = ((Width - Padding.X) / totalSize) * scrollBar.Width;
-                scrollBar.slide.button.Visible = scrollBar.slide.button.Width < scrollBar.slide.bar.Width;
             }
         }
 

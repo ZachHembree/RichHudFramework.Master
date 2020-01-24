@@ -66,10 +66,12 @@ namespace RichHudFramework.UI
             if (Vertical)
             {
                 slide.button.Width = slide.bar.Width;
+                slide.button.Visible = slide.button.Height < slide.bar.Height;
             }
             else
             {
                 slide.bar.Height = slide.button.Height;
+                slide.button.Visible = slide.button.Width < slide.bar.Width;
             }
         }
     }    

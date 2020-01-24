@@ -89,7 +89,7 @@ namespace RichHudFramework
             bool IsPressed { get; }
 
             /// <summary>
-            /// True on new press and after being held for more than 500ms.
+            /// True after being held for more than 500ms.
             /// </summary>
             bool IsPressedAndHeld { get; }
 

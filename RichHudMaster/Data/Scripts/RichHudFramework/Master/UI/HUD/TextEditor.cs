@@ -1,4 +1,5 @@
 ﻿using VRageMath;
+using System;
 using RichHudFramework.UI.Rendering;
 
 namespace RichHudFramework.UI
@@ -15,6 +16,7 @@ namespace RichHudFramework.UI
 
         private readonly HudChain<HudElementBase> toolbar;
         private readonly Dropdown<int> fontList, sizeList;
+        private readonly ScrollBar scrollVert, scrollHorz;
         private readonly Dropdown<TextBuilderModes> textBuilderModes;
         private static readonly float[] textSizes = new float[] { .75f, .875f, 1f, 1.125f, 1.25f, 1.375f, 1.5f };
 
@@ -22,12 +24,31 @@ namespace RichHudFramework.UI
         {
             textBox = new TextBox(body)
             {
-                ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
+                ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.Inner,
                 Padding = new Vector2(8f, 8f),
                 Format = new GlyphFormat(Color.White, textSize: 1.1f),
                 VertCenterText = false,
                 AutoResize = false
             };
+
+            scrollVert = new ScrollBar(textBox)
+            {
+                Width = 26f,
+                Padding = new Vector2(4f),
+                DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
+                ParentAlignment = ParentAlignments.Right,
+            };
+
+            scrollHorz = new ScrollBar(textBox)
+            {
+                Height = 26f,
+                Padding = new Vector2(4f),
+                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                ParentAlignment = ParentAlignments.Bottom,
+                Vertical = false,
+            };
+
+            scrollHorz.slide.Reverse = true;
 
             fontList = new Dropdown<int>()
             {
@@ -115,10 +136,39 @@ namespace RichHudFramework.UI
             header.Height = 30f;
         }
 
+        protected override void HandleInput()
+        {
+            base.HandleInput();
+
+            ITextBoard textBoard = textBox.TextBoard;
+            IClickableElement horzControl = scrollHorz.slide.button.MouseInput,
+                vertControl = scrollVert.slide.button.MouseInput;
+
+            scrollHorz.Min = -Math.Max(0f, textBoard.TextSize.X - textBoard.Size.X);
+            scrollVert.Max = Math.Max(0f, textBoard.TextSize.Y - textBoard.Size.Y);
+
+            if (!horzControl.IsLeftClicked)
+                scrollHorz.Current = textBoard.TextOffset.X;
+
+            if (!vertControl.IsLeftClicked)
+                scrollVert.Current = textBoard.TextOffset.Y;
+
+            //vertControl.OnLeftClick += () =>
+            //   Game.ModBase.SendChatMessage($"Clicked. Max: {scrollVert.Max}, Current: {scrollVert.Current}, TextSize: {textBoard.TextSize.Y}, Size: {textBoard.Size.Y}");
+
+            textBoard.TextOffset = new Vector2(scrollHorz.Current, scrollVert.Current);
+        }
+
         protected override void Draw()
         {
-            textBox.Width = Width;
-            textBox.Height = Height - header.Height - toolbar.Height;
+            ITextBoard textBoard = textBox.TextBoard;
+
+            scrollHorz.slide.button.Width = (textBoard.Size.X / textBoard.TextSize.X) * scrollHorz.Width;
+            scrollVert.slide.button.Height = (textBoard.Size.Y / textBoard.TextSize.Y) * scrollVert.Height;
+
+            textBox.Offset = new Vector2(0f, scrollHorz.Height);
+            textBox.Width = Width - scrollVert.Width;
+            textBox.Height = Height - header.Height - toolbar.Height - scrollHorz.Height;
         }
 
         protected void UpdateFont()
