@@ -105,6 +105,9 @@ namespace RichHudFramework
                     Scale = 1f;
                 }
 
+                /// <summary>
+                /// Facilitates general purpose access to TextBuilder members.
+                /// </summary>
                 protected virtual object GetOrSetMember(object data, int memberEnum)
                 {
                     switch ((TextBuilderAccessors)memberEnum)
@@ -160,6 +163,9 @@ namespace RichHudFramework
                     return null;
                 }
 
+                /// <summary>
+                /// Facilitates access to Line members.
+                /// </summary>
                 protected object GetLineMember(int index, int memberEnum)
                 {
                     switch ((LineAccessors)memberEnum)
@@ -173,6 +179,9 @@ namespace RichHudFramework
                     return null;
                 }
 
+                /// <summary>
+                /// Facilitates access to RichChar members.
+                /// </summary>
                 protected object GetRichCharMember(Vector2I index, int memberEnum)
                 {
                     switch ((RichCharAccessors)memberEnum)

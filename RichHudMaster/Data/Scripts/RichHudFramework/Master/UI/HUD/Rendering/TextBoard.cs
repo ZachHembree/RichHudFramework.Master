@@ -97,8 +97,8 @@ namespace RichHudFramework
                     {
                         if (!AutoResize)
                         {
-                            if (value != textOffset)
-                                UpdateOffsets();
+                            if (value.Y != textOffset.Y)
+                                UpdateLineRange();
 
                             textOffset = value;
                         }
@@ -142,17 +142,20 @@ namespace RichHudFramework
                 {
                     if (!AutoResize)
                     {
-                        if (BuilderMode != TextBuilderModes.Unlined)
-                            UpdateVerticalOffset(index.X);
-                        else
-                            textOffset.Y = 0f;
+                        if (index.X < startLine || index.X > endLine)
+                        {
+                            if (BuilderMode != TextBuilderModes.Unlined)
+                                UpdateVerticalOffset(index.X);
+                            else
+                                textOffset.Y = 0f;
+
+                            UpdateOffsets();
+                        }
 
                         if (BuilderMode != TextBuilderModes.Wrapped)
                             textOffset.X = GetCharRangeOffset(index);
                         else
                             textOffset.X = 0f;
-
-                        UpdateOffsets();
                     }
                 }
 
@@ -348,27 +351,41 @@ namespace RichHudFramework
                     updateEvent = true;
                 }
 
+                
+                private void UpdateOffsets()
+                {
+                    Vector2I range = GetLineRange();
+
+                    startLine = range.X;
+                    endLine = range.Y;
+
+                    UpdateVisibleRange();
+                }
+
+                private void UpdateLineRange()
+                {
+                    if (!AutoResize)
+                    {
+                        Vector2I range = GetLineRange();
+
+                        if (range.X != startLine || range.Y != endLine)
+                        {
+                            UpdateVisibleRange();
+                        }
+
+                        startLine = range.X;
+                        endLine = range.Y;
+                    }
+                }
+
                 /// <summary>
                 /// Updates the offsets for characters within the visible range of text and updates the
                 /// current size of the text box.
                 /// </summary>
-                private void UpdateOffsets()
+                private void UpdateVisibleRange()
                 {
-                    if (AutoResize)
-                    {
-                        startLine = 0;
-                        endLine = lines.Count - 1;
-
-                        TextSize = GetTextSize();
-                        Size = TextSize;
-                    }
-                    else
-                    {
-                        UpdateLineRange();
-
-                        TextSize = GetTextSize();
-                        Size = fixedSize;
-                    }
+                    TextSize = GetTextSize();
+                    Size = AutoResize ? TextSize : fixedSize;
 
                     if (lines.Count > 0)
                     {
@@ -394,32 +411,39 @@ namespace RichHudFramework
                 /// <summary>
                 /// Updates the visible range of lines based on the current text offset.
                 /// </summary>
-                private void UpdateLineRange()
+                private Vector2I GetLineRange()
                 {
-                    float height = textOffset.Y;
-
-                    startLine = 0;
-                    endLine = -1;
-
-                    for (int line = 0; line < lines.Count; line++)
+                    if (AutoResize)
                     {
-                        if (height <= 2f)
+                        float height = textOffset.Y;
+
+                        int start = 0;
+                        int end = -1;
+
+                        for (int line = 0; line < lines.Count; line++)
                         {
-                            if (endLine == -1)
+                            if (height <= 2f)
                             {
-                                startLine = line;
-                                endLine = line;
+                                if (end == -1)
+                                {
+                                    start = line;
+                                    end = line;
+                                }
+                                else if (height > -FixedSize.Y + lines[line].Size.Y)
+                                {
+                                    end = line;
+                                }
+                                else
+                                    break;
                             }
-                            else if (height > -FixedSize.Y + lines[line].Size.Y)
-                            {
-                                endLine = line;
-                            }
-                            else
-                                break;
+
+                            height -= lines[line].Size.Y;
                         }
 
-                        height -= lines[line].Size.Y;
+                        return new Vector2I(start, end);
                     }
+                    else
+                        return new Vector2I(0, lines.Count - 1);
                 }
 
                 /// <summary>
@@ -570,6 +594,15 @@ namespace RichHudFramework
                                         OnTextChanged += args.Item2;
                                     else
                                         OnTextChanged -= args.Item2;
+
+                                    break;
+                                }
+                            case TextBoardAccessors.TextOffset:
+                                {
+                                    if (data == null)
+                                        return TextOffset;
+                                    else
+                                        TextOffset = (Vector2)data;
 
                                     break;
                                 }

@@ -21,7 +21,7 @@ namespace RichHudFramework
         MyTuple<
             Func<object, bool>, // TryCapture
             Func<object, bool>, // TryRelease
-            ApiMemberAccessor
+            ApiMemberAccessor  // GetOrSetMembers
         >
     >;
     using HudElementMembers = MyTuple<
@@ -64,23 +64,67 @@ namespace RichHudFramework
                 Func<float>, // FovScale
                 MyTuple<Func<IList<RichStringMembers>>, Action<IList<RichStringMembers>>>,
                 Func<TextBoardMembers>, // GetNewTextBoard
-                ApiMemberAccessor
+                ApiMemberAccessor // GetOrSetMembers
             >
         >;
 
         public sealed partial class HudMain : ModBase.ComponentBase
         {
+            /// <summary>
+            /// Root parent for all HUD elements.
+            /// </summary>
             public static IHudParent Root => Instance.root;
+
+            /// <summary>
+            /// Cursor shared between mods.
+            /// </summary>
             public static ICursor Cursor => Instance.cursor;
+
+            /// <summary>
+            /// Shared clipboard.
+            /// </summary>
             public static RichText ClipBoard { get; set; }
+
+            /// <summary>
+            /// Resolution scale normalized to 1080p for resolutions over 1080p. Returns a scale of 1f
+            /// for lower resolutions.
+            /// </summary>
             public static float ResScale { get; private set; }
+
+            /// <summary>
+            /// Debugging element used to test scaling and positioning of members.
+            /// </summary>
             public static UiTestPattern TestPattern { get; private set; }
+
+            /// <summary>
+            /// The current horizontal screen resolution in pixels.
+            /// </summary>
             public static float ScreenWidth => Instance.screenWidth;
+
+            /// <summary>
+            /// The current vertical resolution in pixels.
+            /// </summary>
             public static float ScreenHeight => Instance.screenHeight;
+
+            /// <summary>
+            /// The current field of view
+            /// </summary>
             public static float Fov => Instance.fov;
+
+            /// <summary>
+            /// The current aspect ratio (ScreenWidth/ScreenHeight).
+            /// </summary>
             public static float AspectRatio => Instance.aspectRatio;
-            public static float InvTextApiScale => Instance.invTextApiScale;
+
+            /// <summary>
+            /// Scaling used by MatBoards to compensate for changes in apparent size and position as a result
+            /// of changes to Fov.
+            /// </summary>
             public static float FovScale => Instance.fovScale;
+
+            /// <summary>
+            /// The current opacity for the in-game menus as configured.
+            /// </summary>
             public static float UiBkOpacity => Instance.uiBkOpacity;
 
             private static HudMain Instance
@@ -92,7 +136,7 @@ namespace RichHudFramework
             private readonly HudRoot root;
             private readonly HudCursor cursor;
             private readonly Utils.Stopwatch cacheTimer;
-            private float screenWidth, screenHeight, aspectRatio, invTextApiScale, fov, fovScale, uiBkOpacity;
+            private float screenWidth, screenHeight, aspectRatio, fov, fovScale, uiBkOpacity;
 
             private HudMain() : base(false, true)
             {
@@ -156,7 +200,7 @@ namespace RichHudFramework
                 screenHeight = MyAPIGateway.Session.Camera.ViewportSize.Y;
                 aspectRatio = (screenWidth / screenHeight);
 
-                invTextApiScale = 1080f / screenHeight;
+                //invTextApiScale = 1080f / screenHeight;
                 ResScale = (screenHeight > 1080f) ? screenHeight / 1080f : 1f;
             }
 
