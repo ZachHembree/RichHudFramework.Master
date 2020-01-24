@@ -66,7 +66,7 @@ namespace RichHudFramework
                 public Vector2 Size { get; protected set; }
 
                 /// <summary>
-                /// Full text size beginning with the StartLine
+                /// Full text size including any text outside the visible range.
                 /// </summary>
                 public Vector2 TextSize { get; protected set; }
 
@@ -350,8 +350,7 @@ namespace RichHudFramework
                     UpdateOffsets();
                     updateEvent = true;
                 }
-
-                
+               
                 private void UpdateOffsets()
                 {
                     Vector2I range = GetLineRange();
@@ -413,7 +412,7 @@ namespace RichHudFramework
                 /// </summary>
                 private Vector2I GetLineRange()
                 {
-                    if (AutoResize)
+                    if (!AutoResize)
                     {
                         float height = textOffset.Y;
 
@@ -453,7 +452,7 @@ namespace RichHudFramework
                 {
                     float width = 0f, height = 0f;
 
-                    for (int line = startLine; line <= endLine; line++)
+                    for (int line = 0; line < lines.Count; line++)
                     {
                         if (lines[line].Size.X > width)
                             width = lines[line].Size.X;

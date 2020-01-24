@@ -68,23 +68,29 @@ namespace RichHudFramework
                     {
                         if (value != builderMode)
                         {
+                            FormattedTextBase newFormatter = null;
+
                             if (value == TextBuilderModes.Unlined)
                             {
                                 wrappedText = null;
-                                formatter = new UnlinedText(lines);
+                                newFormatter = new UnlinedText(lines);
                             }
                             else if (value == TextBuilderModes.Lined)
                             {
                                 wrappedText = null;
-                                formatter = new LinedText(lines);
+                                newFormatter = new LinedText(lines);
                             }
                             else if (value == TextBuilderModes.Wrapped)
                             {
                                 wrappedText = new WrappedText(lines);
                                 wrappedText.SetWrapWidth(wrapWidth);
-                                formatter = wrappedText;
+                                newFormatter = wrappedText;                             
                             }
 
+                            if (formatter != null)
+                                AfterTextUpdate();
+
+                            formatter = newFormatter;
                             builderMode = value;
                         }
                     }
