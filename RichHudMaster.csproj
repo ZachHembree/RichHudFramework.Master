@@ -72,6 +72,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindGroupData.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\ModMenuClient\TextHudApiMin.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\ModMenuClient\MenuUtilitiesMin.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager\FontStyle.cs" />

@@ -141,8 +141,8 @@ namespace RichHudFramework.UI
             base.HandleInput();
 
             ITextBoard textBoard = textBox.TextBoard;
-            IClickableElement horzControl = scrollHorz.slide.button.MouseInput,
-                vertControl = scrollVert.slide.button.MouseInput;
+            IClickableElement horzControl = scrollHorz.slide.mouseInput,
+                vertControl = scrollVert.slide.mouseInput;
 
             scrollHorz.Min = -Math.Max(0f, textBoard.TextSize.X - textBoard.Size.X);
             scrollVert.Max = Math.Max(0f, textBoard.TextSize.Y - textBoard.Size.Y);
@@ -153,9 +153,6 @@ namespace RichHudFramework.UI
             if (!vertControl.IsLeftClicked)
                 scrollVert.Current = textBoard.TextOffset.Y;
 
-            //vertControl.OnLeftClick += () =>
-            //   Game.ModBase.SendChatMessage($"Clicked. Max: {scrollVert.Max}, Current: {scrollVert.Current}, TextSize: {textBoard.TextSize.Y}, Size: {textBoard.Size.Y}");
-
             textBoard.TextOffset = new Vector2(scrollHorz.Current, scrollVert.Current);
         }
 
@@ -163,8 +160,8 @@ namespace RichHudFramework.UI
         {
             ITextBoard textBoard = textBox.TextBoard;
 
-            scrollHorz.slide.button.Width = (textBoard.Size.X / textBoard.TextSize.X) * scrollHorz.Width;
-            scrollVert.slide.button.Height = (textBoard.Size.Y / textBoard.TextSize.Y) * scrollVert.Height;
+            scrollHorz.slide.slider.Width = (textBoard.Size.X / textBoard.TextSize.X) * scrollHorz.Width;
+            scrollVert.slide.slider.Height = (textBoard.Size.Y / textBoard.TextSize.Y) * scrollVert.Height;
 
             textBox.Offset = new Vector2(0f, scrollHorz.Height);
             textBox.Width = Width - scrollVert.Width;

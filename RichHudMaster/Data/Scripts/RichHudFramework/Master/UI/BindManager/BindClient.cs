@@ -130,8 +130,6 @@ namespace RichHudFramework
                         case BindClientAccessors.Unload:
                             Unload();
                             break;
-                        case BindClientAccessors.SeKeyMax:
-                            return seKeyMax;
                     }
 
                     return null;

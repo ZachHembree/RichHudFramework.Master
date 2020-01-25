@@ -12,6 +12,7 @@ using BindMembers = VRage.MyTuple<
 >;
 using ControlMembers = VRage.MyTuple<string, int, System.Func<bool>, bool>;
 using ApiMemberAccessor = System.Func<object, int, object>;
+using System.Collections;
 
 namespace RichHudFramework
 {
@@ -27,8 +28,7 @@ namespace RichHudFramework
         public sealed partial class BindManager
         {
             /// <summary>
-            /// Contains a set of keybinds independent of other groups and determines when/if those binds can be pressed. 
-            /// While a group's own binds cannot conflict with oneanother, binds in other groups may.
+            /// A collection of unique keybinds.
             /// </summary>
             private partial class BindGroup : IBindGroup
             {
@@ -65,7 +65,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Updates bind presses each time its called. Key binds will not work if this isn't being run.
+                /// Updates input state
                 /// </summary>
                 public void HandleInput()
                 {
@@ -174,7 +174,72 @@ namespace RichHudFramework
                     return longest;
                 }
 
-                public bool TryRegisterBind(string bindName, out IBind bind, string[] combo = null, bool silent = false)
+                /// <summary>
+                /// Attempts to register a set of binds with the given names.
+                /// </summary>
+                public void RegisterBinds(IList<string> bindNames)
+                {
+                    IBind newBind;
+
+                    foreach (string name in bindNames)
+                        TryRegisterBind(name, out newBind, silent: true);
+                }
+
+                /// <summary>
+                /// Attempts to register a set of binds with the given names.
+                /// </summary>
+                public void RegisterBinds(IEnumerable<MyTuple<string, IList<int>>> bindData)
+                {
+                    foreach (var bind in bindData)
+                        AddBind(bind.Item1, bind.Item2);
+                }
+
+                /// <summary>
+                /// Attempts to register a set of binds using the names and controls specified in the definitions.
+                /// </summary>
+                public void RegisterBinds(IList<BindDefinition> bindData)
+                {
+                    IBind newBind;
+
+                    foreach (BindDefinition bind in bindData)
+                        TryRegisterBind(bind.name, out newBind, bind.controlNames, true);
+                }
+
+                /// <summary>
+                /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
+                /// </summary>
+                public IBind AddBind(string bindName, IList<string> combo) =>
+                    AddBind(bindName, GetCombo(combo));
+
+                /// <summary>
+                /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
+                /// </summary>
+                public IBind AddBind(string bindName, IList<int> combo) =>
+                    AddBind(bindName, GetCombo(combo));
+
+                /// <summary>
+                /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
+                /// </summary>
+                public IBind AddBind(string bindName, IList<IControl> combo = null)
+                {
+                    IBind bind;
+
+                    if (TryRegisterBind(bindName, combo, out bind, true))
+                        return bind;
+                    else
+                        throw new Exception($"Bind {Name}.{bindName} is invalid. Bind names and key combinations must be unique.");
+                }
+
+                /// <summary>
+                /// Tries to register a bind using the given name and the given key combo. Shows an error message in chat upon failure.
+                /// </summary>
+                public bool TryRegisterBind(string bindName, IList<int> combo, out IBind newBind, bool silent = false) =>
+                    TryRegisterBind(bindName, GetCombo(combo), out newBind, silent);
+
+                /// <summary>
+                /// Tries to register a bind using the given name and the given key combo. Shows an error message in chat upon failure.
+                /// </summary>
+                public bool TryRegisterBind(string bindName, out IBind bind, IList<string> combo = null, bool silent = false)
                 {
                     string[] uniqueControls = combo?.GetUnique();
                     IControl[] newCombo = null;
@@ -188,7 +253,10 @@ namespace RichHudFramework
                     return false;
                 }
 
-                public bool TryRegisterBind(string bindName, IControl[] combo, out IBind newBind, bool silent = false)
+                /// <summary>
+                /// Tries to register a bind using the given name and the given key combo. Shows an error message in chat upon failure.
+                /// </summary>
+                public bool TryRegisterBind(string bindName, IList<IControl> combo, out IBind newBind, bool silent = false)
                 {
                     newBind = null;
 
@@ -209,7 +277,10 @@ namespace RichHudFramework
                     return false;
                 }
 
-                private BindMembers? TryRegisterBind(string name, string[] combo, bool silent)
+                /// <summary>
+                /// Attempts to register a bind using the name and controls. Returns API data.
+                /// </summary>
+                private BindMembers? TryRegisterBind(string name, IList<string> combo, bool silent)
                 {
                     IBind bind;
 
@@ -219,7 +290,10 @@ namespace RichHudFramework
                         return null;
                 }
 
-                private BindMembers? TryRegisterBind(string name, int[] combo, bool silent)
+                /// <summary>
+                /// Attempts to register a bind using the name and controls. Returns API data.
+                /// </summary>
+                private BindMembers? TryRegisterBind(string name, IList<int> combo, bool silent)
                 {
                     IBind bind;
                     IControl[] controls = combo != null ? GetCombo(combo) : null;
@@ -231,7 +305,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Replaces current bind combos with combos based on the given <see cref="BindDefinition"/>[].
+                /// Replaces current bind combos with combos based on the given <see cref="BindDefinition"/>[]. Does not register new binds.
                 /// </summary>
                 public bool TryLoadBindData(IList<BindDefinition> bindData)
                 {
@@ -276,6 +350,9 @@ namespace RichHudFramework
                     }
                 }
 
+                /// <summary>
+                /// Replaces current key combinations with those specified by the BindDefinitionData. Does not register new binds.
+                /// </summary>
                 private BindMembers[] TryLoadApiBindData(IList<BindDefinitionData> data)
                 {
                     BindDefinition[] definitions = new BindDefinition[data.Count];
@@ -296,22 +373,6 @@ namespace RichHudFramework
                         return null;
                 }
 
-                public void RegisterBinds(IList<string> bindNames)
-                {
-                    IBind newBind;
-
-                    foreach (string name in bindNames)
-                        TryRegisterBind(name, out newBind, silent: true);
-                }
-
-                public void RegisterBinds(IList<BindDefinition> bindData)
-                {
-                    IBind newBind;
-
-                    foreach (BindDefinition bind in bindData)
-                        TryRegisterBind(bind.name, out newBind, bind.controlNames, true);
-                }
-
                 private void ReregisterControls()
                 {
                     for (int n = 0; n < usedControls.Count; n++)
@@ -328,7 +389,7 @@ namespace RichHudFramework
                 /// Unregisters a given bind from its current key combination and registers it to a
                 /// new one.
                 /// </summary>
-                private void RegisterBindToCombo(Bind bind, IControl[] newCombo)
+                private void RegisterBindToCombo(Bind bind, IList<IControl> newCombo)
                 {
                     if (bind != null && newCombo != null)
                     {
@@ -350,7 +411,7 @@ namespace RichHudFramework
                                 bind.Analog = true;
                         }
 
-                        bind.length = newCombo.Length;
+                        bind.length = newCombo.Count;
                     }
                 }
 
@@ -391,7 +452,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Retrieves the set of key binds as an array of KeyBindData
+                /// Retrieves the set of key binds as an array of BindDefinition
                 /// </summary>
                 public BindDefinition[] GetBindDefinitions()
                 {
@@ -414,7 +475,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Retrieves the set of key binds as an array of KeyBindData
+                /// Retrieves the set of key binds as an array of BindDefinition
                 /// </summary>
                 private BindDefinitionData[] GetBindData()
                 {
@@ -447,7 +508,7 @@ namespace RichHudFramework
                             }
                         case BindGroupAccessors.TryRegisterBind:
                             {
-                                var args = (MyTuple<string, int[], bool>)data;
+                                var args = (MyTuple<string, IList<int>, bool>)data;
                                 return TryRegisterBind(args.Item1, args.Item2, args.Item3);
                             }
                         case BindGroupAccessors.TryLoadBindData:
@@ -457,7 +518,7 @@ namespace RichHudFramework
                             }
                         case BindGroupAccessors.TryRegisterBind2:
                             {
-                                var args = (MyTuple<string, string[], bool>)data;
+                                var args = (MyTuple<string, IList<string>, bool>)data;
                                 return TryRegisterBind(args.Item1, args.Item2, args.Item3);
                             }
                         case BindGroupAccessors.GetBindData:
@@ -472,6 +533,9 @@ namespace RichHudFramework
                     return null;
                 }
 
+                /// <summary>
+                /// Retreives information needed to access the BindGroup via the API.
+                /// </summary>
                 public BindGroupMembers GetApiData()
                 {
                     BindMembers[] bindData = new BindMembers[keyBinds.Count];
@@ -490,6 +554,9 @@ namespace RichHudFramework
                     return apiData;
                 }
 
+                /// <summary>
+                /// Returns true if the given list of controls conflicts with any existing binds.
+                /// </summary>
                 public bool DoesComboConflict(IList<IControl> newCombo, IBind exception = null) =>
                     DoesComboConflict(BindManager.GetComboIndices(newCombo), (exception != null) ? exception.Index : -1);
 

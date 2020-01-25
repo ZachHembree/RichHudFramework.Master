@@ -25,14 +25,54 @@ namespace RichHudFramework
                 /// </summary>
                 private class Bind : IBind
                 {
-                    public event Action OnNewPress, OnPressAndHold, OnRelease;
+                    /// <summary>
+                    /// Invoked when the bind is first pressed.
+                    /// </summary>
+                    public event Action OnNewPress;
 
+                    /// <summary>
+                    /// Invoked after the bind has been held and pressed for at least 500ms.
+                    /// </summary>
+                    public event Action OnPressAndHold;
+
+                    /// <summary>
+                    /// Invoked after the bind has been released.
+                    /// </summary>
+                    public event Action OnRelease;
+
+                    /// <summary>
+                    /// Name of the keybind
+                    /// </summary>
                     public string Name { get; }
+
+                    /// <summary>
+                    /// Index of the bind within its group
+                    /// </summary>
                     public int Index { get; }
+
+                    /// <summary>
+                    /// True if any controls in the bind are marked analog. For these types of binds, IsPressed == IsNewPressed.
+                    /// </summary>
                     public bool Analog { get; set; }
+
+                    /// <summary>
+                    /// True if currently pressed.
+                    /// </summary>
                     public bool IsPressed { get; private set; }
+
+                    /// <summary>
+                    /// True if just pressed.
+                    /// </summary>
                     public bool IsNewPressed { get { return IsPressed && (!wasPressed || Analog); } }
+
+                    /// <summary>
+                    /// True after being held for more than 500ms.
+                    /// </summary>
                     public bool IsPressedAndHeld { get; private set; }
+
+                    /// <summary>
+                    /// True if just released.
+                    /// </summary>
                     public bool IsReleased { get { return !IsPressed && wasPressed; } }
 
                     public bool beingReleased;
@@ -86,6 +126,9 @@ namespace RichHudFramework
                             OnRelease?.Invoke();
                     }
 
+                    /// <summary>
+                    /// Returns a list of the current key combo for this bind.
+                    /// </summary>
                     public IList<IControl> GetCombo()
                     {
                         List<IControl> combo = new List<IControl>();
@@ -112,18 +155,27 @@ namespace RichHudFramework
                         return combo;
                     }
 
+                    /// <summary>
+                    /// Tries to update a key bind using the given control combination.
+                    /// </summary>
+                    public bool TrySetCombo(IList<int> combo, bool strict = true, bool silent = false) =>
+                        TrySetCombo(BindManager.GetCombo(combo), strict, silent);
+
+                    /// <summary>
+                    /// Tries to update a key bind using the given control combination.
+                    /// </summary>
                     public bool TrySetCombo(IList<string> combo, bool strict = true, bool silent = false) =>
                         TrySetCombo(BindManager.GetCombo(combo), strict, silent);
 
                     /// <summary>
-                    /// Tries to update a key bind using the names of the controls to be bound.
+                    /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IControl[] combo, bool strict = true, bool silent = false)
+                    public bool TrySetCombo(IList<IControl> combo, bool strict = true, bool silent = false)
                     {
                         if (combo == null)
                             combo = new IControl[0];
 
-                        if (combo.Length <= maxBindLength && (!strict || combo.Length > 0))
+                        if (combo.Count <= maxBindLength && (!strict || combo.Count > 0))
                         {
                             if (!strict || !group.DoesComboConflict(combo, this))
                             {
@@ -135,7 +187,7 @@ namespace RichHudFramework
                         }
                         else if (!silent)
                         {
-                            if (combo.Length > 0)
+                            if (combo.Count > 0)
                                 ModBase.SendChatMessage($"Invalid key bind. No more than {maxBindLength} keys in a bind are allowed.");
                             else
                                 ModBase.SendChatMessage("Invalid key bind. There must be at least one control in a key bind.");
@@ -144,19 +196,15 @@ namespace RichHudFramework
                         return false;
                     }
 
-                    private bool TrySetCombo(IList<int> indices, bool strict = true, bool silent = false)
-                    {
-                        IControl[] combo = new IControl[indices.Count];
-
-                        for (int n = 0; n < indices.Count; n++)
-                            combo[n] = BindManager.Controls[indices[n]];
-
-                        return TrySetCombo(combo, strict, silent);
-                    }
-
+                    /// <summary>
+                    /// Clears all controls from the bind.
+                    /// </summary>
                     public void ClearCombo() =>
                         group.UnregisterBindFromCombo(this);
 
+                    /// <summary>
+                    /// Clears all even subscribers from the bind.
+                    /// </summary>
                     public void ClearSubscribers()
                     {
                         OnNewPress = null;
@@ -224,6 +272,9 @@ namespace RichHudFramework
                         return null;
                     }
 
+                    /// <summary>
+                    /// Returns information needed to access the bind via the API.
+                    /// </summary>
                     public BindMembers GetApiData()
                     {
                         return new BindMembers()

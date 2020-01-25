@@ -30,7 +30,6 @@ namespace RichHudFramework
             private static readonly Control[] controls;
             private static readonly Dictionary<string, IControl> controlDict, controlDictDisp;
             private static readonly List<MyKeys> controlBlacklist;
-            private static int seKeyMax;
 
             private readonly BindClient mainClient;
 
@@ -49,8 +48,8 @@ namespace RichHudFramework
                     MyKeys.RightWindows
                 };
 
-                controlDict = new Dictionary<string, IControl>(250);
-                controlDictDisp = new Dictionary<string, IControl>(250);
+                controlDict = new Dictionary<string, IControl>(300);
+                controlDictDisp = new Dictionary<string, IControl>(300);
 
                 controls = GenerateControls();
                 Controls = new ReadOnlyCollection<IControl>(controls as IControl[]);
@@ -123,7 +122,7 @@ namespace RichHudFramework
             /// Returns the control associated with the given custom <see cref="RichHudControls"/> enum.
             /// </summary>
             public static IControl GetControl(RichHudControls rhdKey) =>
-                Controls[seKeyMax + (int)rhdKey];
+                Controls[(int)rhdKey];
 
             /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
@@ -131,17 +130,7 @@ namespace RichHudFramework
             private static Control[] GenerateControls()
             {
                 var keys = Enum.GetValues(typeof(MyKeys)) as MyKeys[];
-                seKeyMax = 0;
-
-                for (int n = 0; n < keys.Length; n++)
-                {
-                    var value = (int)keys[n];
-
-                    if (value > seKeyMax)
-                        seKeyMax = value;
-                }
-
-                Control[] controls = new Control[seKeyMax + 3];
+                Control[] controls = new Control[258];
 
                 for (int n = 0; n < keys.Length; n++)
                 {
@@ -162,19 +151,17 @@ namespace RichHudFramework
                     }
                 }
 
-                controls[seKeyMax + 1] = new Control("MousewheelUp", "MwUp", seKeyMax + 1,
+                controls[256] = new Control("MousewheelUp", "MwUp", 256,
                     () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0, true);
 
-                controls[seKeyMax + 2] = new Control("MousewheelDown", "MwDn", seKeyMax + 2,
+                controls[257] = new Control("MousewheelDown", "MwDn", 257,
                     () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() < 0, true);
 
-                int last = controls.Length - 1;
+                controlDict.Add("mousewheelup", controls[256]);
+                controlDict.Add("mousewheeldown", controls[257]);
 
-                controlDict.Add("mousewheelup", controls[last - 1]);
-                controlDict.Add("mousewheeldown", controls[last]);
-
-                controlDictDisp.Add("mwup", controls[last - 1]);
-                controlDictDisp.Add("mwdn", controls[last]);
+                controlDictDisp.Add("mwup", controls[256]);
+                controlDictDisp.Add("mwdn", controls[257]);
 
                 return controls;
             }
@@ -213,9 +200,14 @@ namespace RichHudFramework
                 IControl[] combo = new IControl[indices.Count];
 
                 for (int n = 0; n < indices.Count; n++)
-                    combo[n] = Controls[indices[n]];
+                {
+                    int index = indices[n];
 
-                return combo; ;
+                    if (index < Controls.Count)
+                        combo[n] = Controls[index];
+                }
+
+                return combo;
             }
 
             /// <summary>
