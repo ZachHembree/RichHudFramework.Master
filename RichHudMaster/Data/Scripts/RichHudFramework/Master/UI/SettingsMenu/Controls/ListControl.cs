@@ -49,11 +49,6 @@ namespace RichHudFramework.UI.Server
         public Color Color { get { return List.Color; } set { List.Color = value; } }
 
         /// <summary>
-        /// Color of the border box
-        /// </summary>
-        public Color BorderColor { get { return List.BorderColor; } set { List.BorderColor = value; } }
-
-        /// <summary>
         /// Default format for member text;
         /// </summary>
         public GlyphFormat Format { get { return List.Format; } set { List.Format = value; name.Format = value; } }

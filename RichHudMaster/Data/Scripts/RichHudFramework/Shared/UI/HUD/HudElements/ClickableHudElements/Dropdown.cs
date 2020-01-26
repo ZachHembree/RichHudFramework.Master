@@ -9,32 +9,9 @@ namespace RichHudFramework.UI
     public class Dropdown<T> : HudElementBase, IListBoxEntry
     {
         public event Action OnSelectionChanged { add { list.OnSelectionChanged += value; } remove { list.OnSelectionChanged -= value; } }
-        public ReadOnlyCollection<ListBoxEntry<T>> Members => list.Members;
+        public ReadOnlyCollection<ListBoxEntry<T>> List => list.List;
 
-        public override float Width
-        {
-            get { return display.Width; }
-            set
-            {
-                display.Width = value;
-                list.Width = value;
-
-                foreach (ListBoxEntry<T> member in list.Members)
-                    member.Width = value;
-            }
-        }
-
-        public override float Height
-        {
-            get { return display.Height; }
-            set
-            {
-                display.Height = value;
-
-                foreach (ListBoxEntry<T> member in list.Members)
-                    member.Height = value;
-            }
-        }
+        public float LineHeight { get { return list.LineHeight; } set { list.LineHeight = value; } }
 
         /// <summary>
         /// Default format for member text;
@@ -53,35 +30,49 @@ namespace RichHudFramework.UI
 
         public IClickableElement MouseInput => display.MouseInput;
 
-        private readonly DropdownDisplay display;
-        private readonly ListBox<T> list;
+        protected readonly DropdownDisplay display;
+        protected readonly ListBox<T> list;
 
         public Dropdown(IHudParent parent = null) : base(parent)
         {
             display = new DropdownDisplay(this)
             {
-                Padding = new Vector2(16f, 0f),
+                Padding = new Vector2(10f, 0f),
+                DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
             };
 
             list = new ListBox<T>(display)
             {
                 TabColor = new Color(0, 0, 0, 0),
                 MinimumVisCount = 4,
-                Offset = new Vector2(0f, -2f),
+                Offset = new Vector2(0f, -1f),
+                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                 ParentAlignment = ParentAlignments.Bottom,
                 Visible = false,
             };
 
             Size = new Vector2(331f, 43f);
-            display.TextBoard.SetText("Empty");
+            display.Text = "Empty";
+
             display.MouseInput.OnLeftClick += ToggleList;
             OnSelectionChanged += UpdateDisplay;
+        }
+
+        protected override void HandleInput()
+        {
+            if (SharedBinds.LeftButton.IsNewPressed && !(display.IsMousedOver || list.IsMousedOver))
+            {
+                CloseList();
+            }
         }
 
         private void UpdateDisplay()
         {
             if (Selection != null)
-                display.TextBoard.SetText(Selection.TextBoard.GetText());
+            {
+                display.Text = Selection.TextBoard.GetText();
+                CloseList();
+            }
         }
 
         private void ToggleList()
@@ -148,66 +139,70 @@ namespace RichHudFramework.UI
         public new object GetOrSetMember(object data, int memberEnum) =>
             list.GetOrSetMember(data, memberEnum);
 
-        private class DropdownDisplay : TextBoxButton
+        protected class DropdownDisplay : HudElementBase
         {
-            public override float Width
-            {
-                get { return base.Width + arrow.Width; }
-                set { base.Width = value - arrow.Width; }
-            }
+            private static readonly Material arrowMat = new Material("RichHudDownArrow", new Vector2(64f, 64f));
 
-            public override float Height
-            {
-                set
-                {
-                    base.Height = value;
-                    arrow.Height = value;
-                    verticalBar.Height = value;
-                }
-            }
+            public RichText Text { get { return name.Text; } set { name.Text = value; } }
+            public GlyphFormat Format { get { return name.Format; } set { name.Format = value; } }
+            public Color Color { get { return background.Color; } set { background.Color = value; } }
+            public override bool IsMousedOver => mouseInput.IsMousedOver;
+            public IClickableElement MouseInput => mouseInput;
 
-            public override Vector2 Padding
-            {
-                set
-                {
-                    base.Padding = value;
-                    textElement.Offset = new Vector2(value.X, 0f);
-                }
-            }
-
-            private readonly TexturedBox arrow, verticalBar;
-            private readonly BorderBox border;
+            public readonly Label name;
+            public readonly TexturedBox arrow, divider, background;
+            private readonly ClickableElement mouseInput;
+            private readonly HudChain<HudElementBase> layout;
 
             public DropdownDisplay(IHudParent parent = null) : base(parent)
             {
-                AutoResize = false;
-                Format = GlyphFormat.White;
-                Color = new Color(41, 54, 62);
-                textElement.ParentAlignment = ParentAlignments.Left | ParentAlignments.InnerH;
-
-                arrow = new TexturedBox(textElement)
+                name = new Label()
                 {
-                    Width = 39f,
-                    Color = new Color(227, 230, 233),
-                    ParentAlignment = ParentAlignments.Right,
-                    MatAlignment = MaterialAlignment.FitHorizontal,
-                    Material = new Material("RichHudDownArrow", new Vector2(64f, 64f)),
+                    AutoResize = false,   
                 };
 
-                verticalBar = new TexturedBox(arrow)
+                arrow = new TexturedBox()
+                {
+                    Width = 38f,
+                    Color = new Color(227, 230, 233),
+                    MatAlignment = MaterialAlignment.FitVertical,
+                    Material = arrowMat,
+                };
+
+                divider = new TexturedBox()
                 {
                     Padding = new Vector2(0f, 17f),
                     Size = new Vector2(2f, 39f),
                     Color = new Color(104, 113, 120),
-                    ParentAlignment = ParentAlignments.Left
+                    DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
                 };
 
-                border = new BorderBox(this)
+                background = new TexturedBox(this)
                 {
-                    Color = new Color(94, 103, 110),
-                    Thickness = 2f,
                     DimAlignment = DimAlignments.Both,
                 };
+
+                layout = new HudChain<HudElementBase>(this)
+                {
+                    AlignVertical = false,
+                    AutoResize = true,
+                    DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
+                    ChildContainer = { name, divider, arrow }
+                };
+
+                mouseInput = new ClickableElement(this) 
+                { 
+                    DimAlignment = DimAlignments.Both
+                };
+
+                Color = new Color(41, 54, 62);
+                Format = GlyphFormat.White;
+                Text = "NewDropdown";
+            }
+
+            protected override void Draw()
+            {
+                name.Width = (Width - Padding.X) - divider.Width - arrow.Width;
             }
         }
     }

@@ -15,9 +15,11 @@ namespace RichHudFramework.UI
         public readonly TextBox textBox;
 
         private readonly HudChain<HudElementBase> toolbar;
-        private readonly Dropdown<int> fontList, sizeList;
+        private readonly EditorDropdown<int> fontList;
+        private readonly EditorDropdown<float> sizeList;
+        private readonly EditorDropdown<TextBuilderModes> textBuilderModes;
         private readonly ScrollBar scrollVert, scrollHorz;
-        private readonly Dropdown<TextBuilderModes> textBuilderModes;
+
         private static readonly float[] textSizes = new float[] { .75f, .875f, 1f, 1.125f, 1.25f, 1.375f, 1.5f };
 
         public TextEditor(IHudParent parent = null) : base(parent)
@@ -50,7 +52,7 @@ namespace RichHudFramework.UI
 
             scrollHorz.slide.Reverse = true;
 
-            fontList = new Dropdown<int>()
+            fontList = new EditorDropdown<int>()
             {
                 Height = 24f,
                 Width = 140f,
@@ -63,7 +65,7 @@ namespace RichHudFramework.UI
             fontList.SetSelection(0);
             fontList.OnSelectionChanged += UpdateFont;
 
-            sizeList = new Dropdown<int>()
+            sizeList = new EditorDropdown<float>()
             {
                 Height = 24f,
                 Width = 60f,
@@ -71,12 +73,12 @@ namespace RichHudFramework.UI
             };
 
             for (int n = 0; n < textSizes.Length; n++)
-                sizeList.Add(textSizes[n].ToString(), n);
+                sizeList.Add(textSizes[n].ToString(), textSizes[n]);
 
             sizeList.SetSelection(2);
             sizeList.OnSelectionChanged += UpdateFontSize;
 
-            textBuilderModes = new Dropdown<TextBuilderModes>()
+            textBuilderModes = new EditorDropdown<TextBuilderModes>()
             {
                 Height = 24f,
                 Width = 140f,
@@ -99,7 +101,8 @@ namespace RichHudFramework.UI
                     Format = buttonFormat,
                     Text = "B",
                     AutoResize = false,
-                    Size = new Vector2(32f, 24f),
+                    VertCenterText = true,
+                    Size = new Vector2(32f, 30f),
                     Color = new Color(41, 54, 62),
                 },
                 italic = new TextBoxButton()
@@ -107,14 +110,16 @@ namespace RichHudFramework.UI
                     Format = buttonFormat,
                     Text = "I",
                     AutoResize = false,
-                    Size = new Vector2(32f, 24f),
+                    VertCenterText = true,
+                    Size = new Vector2(32f, 30f),
                     Color = new Color(41, 54, 62),
                 };
 
             toolbar = new HudChain<HudElementBase>(header)
             {
-                Height = 24f,
+                Height = 26f,
                 ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.InnerH,
+                AutoResize = true,
                 AlignVertical = false,
                 ChildContainer =
                 {
@@ -182,7 +187,7 @@ namespace RichHudFramework.UI
 
         private void UpdateFontSize()
         {
-            textBox.Format = textBox.Format.WithSize(textSizes[sizeList.Selection.AssocMember]);
+            textBox.Format = textBox.Format.WithSize(sizeList.Selection.AssocMember);
         }
 
         private void UpdateBuilderMode()
@@ -219,6 +224,20 @@ namespace RichHudFramework.UI
 
             if (FontManager.Fonts[index.X].IsStyleDefined(index.Y))
                 textBox.Format = format.WithFont(index);
+        }
+
+        private class EditorDropdown<T> : Dropdown<T>
+        {
+            public EditorDropdown(IHudParent parent = null) : base(parent)
+            {
+                ScrollBar scrollBar = list.scrollBox.scrollBar;
+
+                scrollBar.Padding = new Vector2(12f, 8f);
+                scrollBar.Width = 20f;
+
+                display.divider.Padding = new Vector2(4f, 8f);
+                display.arrow.Width = 22f;
+            }
         }
     }
 }
