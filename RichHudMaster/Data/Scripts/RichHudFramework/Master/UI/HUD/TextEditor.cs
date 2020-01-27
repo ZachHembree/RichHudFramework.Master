@@ -26,11 +26,12 @@ namespace RichHudFramework.UI
         {
             textBox = new TextBox(body)
             {
-                ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.Inner,
-                Padding = new Vector2(8f, 8f),
+                BuilderMode = TextBuilderModes.Wrapped,
                 Format = new GlyphFormat(Color.White, textSize: 1.1f),
                 VertCenterText = false,
-                AutoResize = false
+                AutoResize = false,
+                ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.Inner,
+                Padding = new Vector2(8f, 8f),
             };
 
             scrollVert = new ScrollBar(textBox)
@@ -75,7 +76,7 @@ namespace RichHudFramework.UI
             for (int n = 0; n < textSizes.Length; n++)
                 sizeList.Add(textSizes[n].ToString(), textSizes[n]);
 
-            sizeList.SetSelection(2);
+            sizeList.SetSelection(1f);
             sizeList.OnSelectionChanged += UpdateFontSize;
 
             textBuilderModes = new EditorDropdown<TextBuilderModes>()
@@ -89,7 +90,7 @@ namespace RichHudFramework.UI
             textBuilderModes.Add("Lined", TextBuilderModes.Lined);
             textBuilderModes.Add("Wrapped", TextBuilderModes.Wrapped);
 
-            textBuilderModes.SetSelection(TextBuilderModes.Unlined);
+            textBuilderModes.SetSelection(TextBuilderModes.Wrapped);
             textBuilderModes.OnSelectionChanged += UpdateBuilderMode;
 
             IFontMin abhaya = FontManager.GetFont("AbhayaLibreMedium");
