@@ -27,8 +27,11 @@ namespace RichHudFramework.UI.Server
         private readonly HudChain<HudElementBase> chain;
         private readonly Label name;
         private readonly Button button;
-        private readonly TexturedBox box;
+        private readonly TexturedBox box, highlight;
+        private readonly BorderBox border;
         private bool lastValue;
+
+        private static readonly Color BoxColor = new Color(114, 121, 139);
 
         public Checkbox(IHudParent parent = null) : base(parent)
         {
@@ -43,20 +46,28 @@ namespace RichHudFramework.UI.Server
                 Size = new Vector2(37f, 36f),
                 Color = new Color(39, 52, 60),
                 highlightColor = new Color(50, 60, 70),
+                highlightEnabled = false,
             };
 
-            var buttonBorder = new BorderBox(button)
+            border = new BorderBox(button)
             {
-                Color = new Color(53, 66, 75),
-                Thickness = 2f,
+                Color = RichHudTerminal.BorderColor,
+                Thickness = 1f,
                 DimAlignment = DimAlignments.Both,
+            };
+
+            highlight = new TexturedBox(button)
+            {
+                Color = RichHudTerminal.HighlightOverlayColor,
+                DimAlignment = DimAlignments.Both,
+                Visible = false,
             };
 
             box = new TexturedBox(button)
             {
                 DimAlignment = DimAlignments.Both,
                 Padding = new Vector2(16f, 16f),
-                Color = new Color(114, 121, 139)
+                Color = BoxColor,
             };
 
             chain = new HudChain<HudElementBase>(this)
@@ -85,6 +96,20 @@ namespace RichHudFramework.UI.Server
 
             if (CustomValueGetter != null && Value != CustomValueGetter())
                 Value = CustomValueGetter();
+        }
+
+        protected override void HandleInput()
+        {
+            if (button.IsMousedOver)
+            {
+                highlight.Visible = true;
+                box.Color = RichHudTerminal.HighlightColor;
+            }
+            else
+            {
+                highlight.Visible = false;
+                box.Color = BoxColor;
+            }
         }
 
         private void ToggleValue()

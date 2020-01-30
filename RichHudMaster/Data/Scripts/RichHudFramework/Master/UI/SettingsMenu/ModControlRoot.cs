@@ -50,14 +50,25 @@ namespace RichHudFramework
                 {
                     this.menu = menu;
 
-                    pageControl = new TreeBox<TerminalPageBase>(this);
-                    Pages = new ReadOnlyCollectionData<ITerminalPage>(x => pageControl.Members[x].AssocMember, () => pageControl.Members.Count);
+                    pageControl = new TreeBox<TerminalPageBase>(this) 
+                    { 
+                        HeaderColor = TileColor,
+                    };
 
+
+                    Pages = new ReadOnlyCollectionData<ITerminalPage>(x => pageControl.Members[x].AssocMember, () => pageControl.Members.Count);
                     pageControl.MouseInput.OnLeftClick += UpdateSelection;
                     pageControl.OnSelectionChanged += () => UpdateSelection();
 
                     Enabled = true;
                     Visible = true;
+                }
+
+                protected override void Draw()
+                {
+                    pageControl.HeaderColor = pageControl.HeaderColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+
+                    base.Draw();
                 }
 
                 private void UpdateSelection()

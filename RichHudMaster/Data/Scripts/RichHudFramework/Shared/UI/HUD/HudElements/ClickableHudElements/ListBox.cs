@@ -120,7 +120,7 @@ namespace RichHudFramework.UI
             {
                 DimAlignment = DimAlignments.Both,
                 Color = new Color(58, 68, 77),
-                Thickness = 2f,
+                Thickness = 1f,
             };
 
             selectionBox = new HighlightBox(scrollBox.Members)
@@ -162,6 +162,7 @@ namespace RichHudFramework.UI
             {
                 member = new ListBoxEntry<T>(assocMember)
                 {
+                    Format = Format,
                     Height = lineHeight,
                 };
 

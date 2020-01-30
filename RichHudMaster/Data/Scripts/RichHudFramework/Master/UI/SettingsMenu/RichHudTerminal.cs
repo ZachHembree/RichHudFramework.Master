@@ -37,6 +37,16 @@ namespace RichHudFramework
         {
             public static readonly GlyphFormat HeaderFormat = new GlyphFormat(Color.White, TextAlignment.Center, 1.15f);
             public static readonly GlyphFormat ControlFormat = GlyphFormat.Blueish.WithSize(1.08f);
+            public static readonly Color
+                ScrollBarColor = new Color(41, 51, 61),
+                TileColor = new Color(39, 50, 57),
+                ListHeaderColor = new Color(32, 39, 45),
+                ListBgColor = new Color(41, 54, 62),
+                BorderColor = new Color(53, 66, 75),
+                SelectionBgColor = new Color(34, 44, 53),
+                HighlightOverlayColor = new Color(255, 255, 255, 40),
+                HighlightColor = new Color(214, 213, 218),
+                AccentHighlightColor = new Color(181, 185, 190);
 
             private static RichHudTerminal Instance
             {
@@ -183,7 +193,6 @@ namespace RichHudFramework
                     Header.SetText("Rich HUD Terminal");
 
                     header.Height = 60f;
-                    header.Background.Visible = false;
 
                     topDivider = new TexturedBox(header)
                     {
@@ -292,6 +301,7 @@ namespace RichHudFramework
                     modList.Width = 250f * Scale;
 
                     BodyColor = BodyColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+                    header.Color = BodyColor;
                 }
 
                 private void UpdateSelection(ModControlRoot selection)
@@ -343,25 +353,36 @@ namespace RichHudFramework
                         {
                             AlignVertical = true,
                             FitToChain = false,
-                            Color = new Color(41, 54, 62, 230),
+                            Color = ListBgColor,
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
                         };
+
+                        //scrollBox.Members.Padding = new Vector2(8f, 8f);
 
                         header = new LabelBox(scrollBox)
                         {
                             AutoResize = false,
                             Format = ControlFormat,
                             Text = "Mod List:",
-                            Color = new Color(32, 39, 45, 230),
                             TextPadding = new Vector2(30f, 0f),
+                            Color = new Color(32, 39, 45),
                             Size = new Vector2(200f, 36f),
                             ParentAlignment = ParentAlignments.Top,
+                            DimAlignment = DimAlignments.Width
+                        };
+
+                        var listDivider = new TexturedBox(header)
+                        {
+                            Color = new Color(53, 66, 75),
+                            Height = 1f,
+                            ParentAlignment = ParentAlignments.Bottom,
+                            DimAlignment = DimAlignments.Width,
                         };
 
                         var listBorder = new BorderBox(this)
                         {
                             Color = new Color(53, 66, 75),
-                            Thickness = 2f,
+                            Thickness = 1f,
                             DimAlignment = DimAlignments.Both,
                         };
                     }
@@ -374,6 +395,12 @@ namespace RichHudFramework
                     protected override void Draw()
                     {
                         header.Width = scrollBox.Width;
+
+                        header.Color = ListHeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        scrollBox.Color = ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
+
+                        SliderBar slider = scrollBox.scrollBar.slide;
+                        slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
                     }
                 }
             }

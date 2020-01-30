@@ -39,6 +39,7 @@ namespace RichHudFramework.UI.Server
 
         public readonly TextBoxButton button;
         public readonly BorderBox border;
+        private readonly TexturedBox highlight;
 
         public TerminalButton(IHudParent parent = null) : base(parent)
         {
@@ -47,15 +48,21 @@ namespace RichHudFramework.UI.Server
                 AutoResize = false,
                 Color = new Color(42, 55, 63),
                 TextPadding = new Vector2(32f, 0f),
-                HighlightColor = new Color(66, 75, 82),
-                HighlightEnabled = true,
+                HighlightEnabled = false,
             };
 
             border = new BorderBox(button)
             {
-                Color = new Color(53, 66, 75),
+                Color = RichHudTerminal.BorderColor,
                 Thickness = 1f,
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+            };
+
+            highlight = new TexturedBox(button)
+            {
+                Color = RichHudTerminal.HighlightOverlayColor,
+                DimAlignment = DimAlignments.Both,
+                Visible = false,
             };
 
             Padding = new Vector2(37f, 0f);
@@ -64,6 +71,18 @@ namespace RichHudFramework.UI.Server
 
             Format = RichHudTerminal.ControlFormat.WithAlignment(TextAlignment.Center);
             Name = "NewTerminalButton";
+        }
+
+        protected override void HandleInput()
+        {
+            if (button.IsMousedOver)
+            {
+                highlight.Visible = true;
+            }
+            else
+            {
+                highlight.Visible = false;
+            }
         }
     }
 }

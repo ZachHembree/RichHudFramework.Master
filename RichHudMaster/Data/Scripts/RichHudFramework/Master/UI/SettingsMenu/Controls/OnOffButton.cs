@@ -33,46 +33,28 @@ namespace RichHudFramework.UI.Server
         public RichText OnText { get { return on.Name; } set { on.Name = value; } }
         public RichText OffText { get { return off.Name; } set { off.Name = value; } }
 
-        public override float Width
-        {
-            get { return buttonChain.Width; }
-            set
-            {
-                name.Width = value;
-                value = Math.Max(value - buttonChain.Padding.X - buttonChain.Spacing, 8f) / 2f;
-
-                on.Width = value;
-                off.Width = value;
-            }
-        }
-        public override float Height
-        {
-            get { return buttonChain.Height + name.Height; }
-            set { buttonChain.Height = value - name.Height; }
-        }
-
         private readonly Label name;
         private readonly TerminalButton on, off;
         private readonly BorderBox selectionHighlight;
-        private readonly HudChain<HudElementBase> buttonChain;
+        private readonly HudChain<HudElementBase> layout, buttonChain;
         private bool lastValue;
 
         public OnOffButton(IHudParent parent = null) : base(parent)
         {
-            name = new Label(this)
+            name = new Label()
             {
                 Format = RichHudTerminal.ControlFormat,
                 Text = "NewOnOffButton",
                 AutoResize = false,
                 Height = 22f,
-                Padding = new Vector2(0f, 0f),
-                ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV
             };
 
             on = new TerminalButton()
             {
                 Name = "On",
-                HighlightEnabled = false
+                Padding = Vector2.Zero,
+                Size = new Vector2(71f, 49f),
+                HighlightEnabled = false,
             };
 
             on.border.Thickness = 2f;
@@ -80,25 +62,37 @@ namespace RichHudFramework.UI.Server
             off = new TerminalButton()
             {
                 Name = "Off",
-                HighlightEnabled = false
+                Padding = Vector2.Zero,
+                Size = new Vector2(71f, 49f),
+                HighlightEnabled = false,
             };
 
             off.border.Thickness = 2f;
 
-            buttonChain = new HudChain<HudElementBase>(name)
+            buttonChain = new HudChain<HudElementBase>()
             {
-                AutoResize = true,
-                ParentAlignment = ParentAlignments.Bottom,
-                Padding = new Vector2(164f, 0f),
+                AlignVertical = false,
                 Spacing = 9f,
                 ChildContainer = { on, off }
             };
 
             on.MouseInput.OnLeftClick += ToggleValue;
             off.MouseInput.OnLeftClick += ToggleValue;
-            selectionHighlight = new BorderBox(buttonChain) { Color = Color.White };
 
-            Size = new Vector2(319f, 72f);
+            selectionHighlight = new BorderBox(buttonChain) 
+            { Color = Color.White };
+
+            layout = new HudChain<HudElementBase>(this) 
+            { 
+                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                AutoResize = true,
+                AlignVertical = true,
+                Spacing = 8f,
+                ChildContainer = { name, buttonChain }
+            };
+
+            Padding = new Vector2(20f, 0f);
+            Size = new Vector2(250f, 72f);
         }
 
         private void ToggleValue()

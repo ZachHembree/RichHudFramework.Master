@@ -163,8 +163,6 @@ namespace RichHudFramework.UI
                 Min = 0,
             };
 
-            scrollBar.slide.slider.highlightColor = new Color(137, 140, 149);
-
             divider = new TexturedBox(scrollBar)
             {
                 Color = new Color(53, 66, 75),
@@ -435,14 +433,14 @@ namespace RichHudFramework.UI
                 scrollBar.Height = Height;
                 divider.Height = scrollBar.Height;
 
-                scrollBar.slide.slider.Height = ((Height - Padding.Y) / totalSize) * scrollBar.Height;
+                scrollBar.slide.SliderSize = new Vector2(scrollBar.slide.SliderSize.X, ((Height - Padding.Y) / totalSize) * scrollBar.Height);
             }
             else
             {
                 scrollBar.Width = Width;
                 divider.Width = scrollBar.Width;
 
-                scrollBar.slide.slider.Width = ((Width - Padding.X) / totalSize) * scrollBar.Width;
+                scrollBar.slide.SliderSize = new Vector2(((Width - Padding.X) / totalSize) * scrollBar.Width, scrollBar.slide.SliderSize.Y);
             }
         }
 

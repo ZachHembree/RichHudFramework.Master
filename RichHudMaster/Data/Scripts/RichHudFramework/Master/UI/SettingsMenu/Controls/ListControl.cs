@@ -59,7 +59,7 @@ namespace RichHudFramework.UI.Server
 
         public ListControl(IHudParent parent = null) : base(parent)
         {
-            name = new Label(this)
+            name = new Label()
             {
                 Format = RichHudTerminal.ControlFormat,
                 Text = "NewListBox",
@@ -67,15 +67,20 @@ namespace RichHudFramework.UI.Server
                 Height = 24f,
             };
 
-            List = new ListBox<T>(name)
-            { };
+            List = new ListBox<T>()
+            {
+                Format = RichHudTerminal.ControlFormat,
+            };
 
-            hudChain = new HudChain<HudElementBase>()
+            hudChain = new HudChain<HudElementBase>(this)
             {
                 AutoResize = true,
                 AlignVertical = true,
                 ChildContainer = { name, List },
             };
+
+            Padding = new Vector2(20f, 0f);
+            Size = new Vector2(250f, 200f);
         }
 
         protected override void Draw()
@@ -89,6 +94,11 @@ namespace RichHudFramework.UI.Server
 
             if (CustomValueGetter != null && Value != CustomValueGetter())
                 Value = CustomValueGetter();
+
+            List.Color = RichHudTerminal.ListBgColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+
+            SliderBar slider = List.scrollBox.scrollBar.slide;
+            slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
 
             base.Draw();
         }

@@ -45,6 +45,9 @@ namespace RichHudFramework
             {
                 for (int n = 0; n < catBox.List.Count; n++)
                     catBox.List[n].Width = Width - catBox.scrollBar.Width;
+
+                SliderBar slider = catBox.scrollBar.slide;
+                slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
             }
 
             public void Add(ControlCategory category)

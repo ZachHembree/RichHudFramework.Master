@@ -278,33 +278,31 @@ namespace RichHudFramework
                 /// </summary>
                 private int GetCharAt(int line, float offset)
                 {
-                    float last, next;
+                    float last, next, min = -Size.X / 2f - 2f, max = -min;
                     int ch = 0;
 
                     for (int n = 0; n < lines[line].Count; n++)
                     {
                         MatBoard glyphBoard = lines[line][n].GlyphBoard;
+                        float
+                            xPos = glyphBoard.offset.X + textOffset.X,
+                            edge = lines[line][ch].Size.X / 2f;
 
-                        if (glyphBoard.offset != -Vector2.PositiveInfinity)
+                        if ((xPos - edge) >= min && (xPos + edge) <= max)
                         {
-                            if (glyphBoard.offset != Vector2.PositiveInfinity)
-                            {
-                                ch = n;
+                            ch = n;
 
-                                if (n - 1 >= 0) // Make sure the index is in range
-                                    last = lines[line][n - 1].Offset.X;
-                                else
-                                    last = float.MinValue;
-
-                                if (n + 1 < lines[line].Count)
-                                    next = lines[line][n + 1].Offset.X;
-                                else
-                                    next = float.MaxValue;
-
-                                if (offset > last && offset < next)
-                                    break;
-                            }
+                            if (n - 1 >= 0) // Make sure the index is in range
+                                last = lines[line][n - 1].Offset.X + textOffset.X;
                             else
+                                last = float.MinValue;
+
+                            if (n + 1 < lines[line].Count)
+                                next = lines[line][n + 1].Offset.X + textOffset.X;
+                            else
+                                next = float.MaxValue;
+
+                            if (offset > last && offset < next)
                                 break;
                         }
                     }
@@ -426,7 +424,7 @@ namespace RichHudFramework
                                     start = line;
                                     end = line;
                                 }
-                                else if (height > -FixedSize.Y + lines[line].Size.Y)
+                                else if (height > -FixedSize.Y + lines[line].Size.Y - 2f)
                                 {
                                     end = line;
                                 }

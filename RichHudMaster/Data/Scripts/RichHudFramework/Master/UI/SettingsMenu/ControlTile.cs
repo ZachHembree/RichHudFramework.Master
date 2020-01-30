@@ -30,12 +30,13 @@ namespace RichHudFramework
             public bool Enabled { get; set; }
 
             private readonly HudChain<TerminalControlBase> controls;
+            private readonly TexturedBox background;
 
             public ControlTile(IHudParent parent = null) : base(parent)
             {
-                var background = new TexturedBox(this)
+                background = new TexturedBox(this)
                 {
-                    Color = new Color(41, 54, 62, 230),
+                    Color = RichHudTerminal.TileColor,
                     DimAlignment = DimAlignments.Both,
                 };
 
@@ -43,7 +44,7 @@ namespace RichHudFramework
                 {
                     DimAlignment = DimAlignments.Both,
                     Color = new Color(58, 68, 77),
-                    Thickness = 2f,
+                    Thickness = 1f,
                 };
 
                 controls = new HudChain<TerminalControlBase>(this)
@@ -58,6 +59,13 @@ namespace RichHudFramework
                 Padding = new Vector2(16f);
                 Size = new Vector2(300f, 250f);
                 Enabled = true;
+            }
+
+            protected override void Draw()
+            {
+                background.Color = background.Color.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+
+                base.Draw();
             }
 
             public void Add(TerminalControlBase newControl)

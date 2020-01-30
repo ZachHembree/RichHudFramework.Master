@@ -45,11 +45,13 @@ namespace RichHudFramework.UI.Server
 
         private readonly Label name;
         private readonly HudChain<HudElementBase> hudChain;
+        private readonly TexturedBox highlight;
+        private readonly BorderBox border;
         private ListBoxEntry<T> lastValue;
 
         public DropdownControl(IHudParent parent = null) : base(parent)
         {
-            name = new Label(this)
+            name = new Label()
             {
                 Format = RichHudTerminal.ControlFormat,
                 Text = "NewDropdown",
@@ -57,15 +59,36 @@ namespace RichHudFramework.UI.Server
                 Height = 24f,
             };
 
-            List = new Dropdown<T>(name)
-            { };
+            List = new Dropdown<T>()
+            {
+                Format = RichHudTerminal.ControlFormat,
+            };
 
-            hudChain = new HudChain<HudElementBase>()
+            List.listBox.scrollBox.MinimumSize = Vector2.Zero;
+
+            border = new BorderBox(List)
+            {
+                Color = RichHudTerminal.BorderColor,
+                Thickness = 1f,
+                DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+            };
+
+            highlight = new TexturedBox(List)
+            {
+                Color = RichHudTerminal.HighlightOverlayColor,
+                DimAlignment = DimAlignments.Both,
+                Visible = false,
+            };
+
+            hudChain = new HudChain<HudElementBase>(this)
             {
                 AutoResize = true,
                 AlignVertical = true,
                 ChildContainer = { name, List },
             };
+
+            Padding = new Vector2(20f, 0f);
+            Size = new Vector2(250f, 66f);
         }
 
         protected override void Draw()
@@ -81,6 +104,18 @@ namespace RichHudFramework.UI.Server
                 Value = CustomValueGetter();
 
             base.Draw();
+        }
+
+        protected override void HandleInput()
+        {
+            if (List.IsMousedOver || List.Open)
+            {
+                highlight.Visible = true;
+            }
+            else
+            {
+                highlight.Visible = false;
+            }
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

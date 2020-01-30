@@ -8,30 +8,34 @@ namespace RichHudFramework.UI
 
     public class Dropdown<T> : HudElementBase, IListBoxEntry
     {
-        public event Action OnSelectionChanged { add { list.OnSelectionChanged += value; } remove { list.OnSelectionChanged -= value; } }
-        public ReadOnlyCollection<ListBoxEntry<T>> List => list.List;
+        public event Action OnSelectionChanged { add { listBox.OnSelectionChanged += value; } remove { listBox.OnSelectionChanged -= value; } }
+        public ReadOnlyCollection<ListBoxEntry<T>> List => listBox.List;
 
-        public float LineHeight { get { return list.LineHeight; } set { list.LineHeight = value; } }
+        public float LineHeight { get { return listBox.LineHeight; } set { listBox.LineHeight = value; } }
 
         /// <summary>
         /// Default format for member text;
         /// </summary>
-        public GlyphFormat Format { get { return list.Format; } set { list.Format = value; } }
+        public GlyphFormat Format { get { return listBox.Format; } set { listBox.Format = value; } }
 
         /// <summary>
         /// Current selection. Null if empty.
         /// </summary>
-        public ListBoxEntry<T> Selection => list.Selection;
+        public ListBoxEntry<T> Selection => listBox.Selection;
 
         /// <summary>
         /// Indicates whether or not the element will appear in the list
         /// </summary>
-        public bool Enabled { get { return list.Enabled; } set { list.Enabled = value; } }
+        public bool Enabled { get { return listBox.Enabled; } set { listBox.Enabled = value; } }
 
         public IClickableElement MouseInput => display.MouseInput;
 
+        public override bool IsMousedOver => display.IsMousedOver || listBox.IsMousedOver;
+
+        public bool Open => listBox.Visible;
+
         protected readonly DropdownDisplay display;
-        protected readonly ListBox<T> list;
+        public readonly ListBox<T> listBox;
 
         public Dropdown(IHudParent parent = null) : base(parent)
         {
@@ -41,7 +45,7 @@ namespace RichHudFramework.UI
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
             };
 
-            list = new ListBox<T>(display)
+            listBox = new ListBox<T>(display)
             {
                 TabColor = new Color(0, 0, 0, 0),
                 MinimumVisCount = 4,
@@ -60,7 +64,7 @@ namespace RichHudFramework.UI
 
         protected override void HandleInput()
         {
-            if (SharedBinds.LeftButton.IsNewPressed && !(display.IsMousedOver || list.IsMousedOver))
+            if (SharedBinds.LeftButton.IsNewPressed && !IsMousedOver)
             {
                 CloseList();
             }
@@ -77,7 +81,7 @@ namespace RichHudFramework.UI
 
         private void ToggleList()
         {
-            if (!list.Visible)
+            if (!listBox.Visible)
                 OpenList();
             else
                 CloseList();
@@ -86,12 +90,12 @@ namespace RichHudFramework.UI
         private void OpenList()
         {
             GetFocus();
-            list.Visible = true;
+            listBox.Visible = true;
         }
 
         private void CloseList()
         {
-            list.Visible = false;
+            listBox.Visible = false;
         }
 
         /// <summary>
@@ -99,45 +103,45 @@ namespace RichHudFramework.UI
         /// object.
         /// </summary>
         public ListBoxEntry<T> Add(string name, T assocMember) =>
-            list.Add(name, assocMember);
+            listBox.Add(name, assocMember);
 
         /// <summary>
         /// Adds a new member to the list box with the given name and associated
         /// object.
         /// </summary>
         public ListBoxEntry<T> Add(RichString name, T assocMember) =>
-            list.Add(name, assocMember);
+            listBox.Add(name, assocMember);
 
         /// <summary>
         /// Adds a new member to the list box with the given name and associated
         /// object.
         /// </summary>
         public ListBoxEntry<T> Add(RichText name, T assocMember) =>
-            list.Add(name, assocMember);
+            listBox.Add(name, assocMember);
 
         /// <summary>
         /// Removes the given member from the list box.
         /// </summary>
         public void Remove(ListBoxEntry<T> member) =>
-            list.Remove(member);
+            listBox.Remove(member);
 
         /// <summary>
         /// Clears the current contents of the list.
         /// </summary>
         public void Clear() =>
-            list.Clear();
+            listBox.Clear();
 
         /// <summary>
         /// Sets the selection to the member associated with the given object.
         /// </summary>
         public void SetSelection(T assocMember) =>
-            list.SetSelection(assocMember);
+            listBox.SetSelection(assocMember);
 
         public void SetSelection(ListBoxEntry<T> member) =>
-            list.SetSelection(member);
+            listBox.SetSelection(member);
 
         public new object GetOrSetMember(object data, int memberEnum) =>
-            list.GetOrSetMember(data, memberEnum);
+            listBox.GetOrSetMember(data, memberEnum);
 
         protected class DropdownDisplay : HudElementBase
         {

@@ -95,6 +95,14 @@ namespace RichHudFramework
                 Enabled = true;
             }
 
+            protected override void Draw()
+            {
+                SliderBar slider = scrollBox.scrollBar.slide;
+                slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+
+                base.Draw();
+            }
+
             public void Add(ControlTile tile)
             {
                 scrollBox.AddToList(tile);

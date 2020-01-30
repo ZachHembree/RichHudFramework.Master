@@ -147,8 +147,8 @@ namespace RichHudFramework.UI
             base.HandleInput();
 
             ITextBoard textBoard = textBox.TextBoard;
-            IClickableElement horzControl = scrollHorz.slide.mouseInput,
-                vertControl = scrollVert.slide.mouseInput;
+            IClickableElement horzControl = scrollHorz.slide.MouseInput,
+                vertControl = scrollVert.slide.MouseInput;
 
             scrollHorz.Min = -Math.Max(0f, textBoard.TextSize.X - textBoard.Size.X);
             scrollVert.Max = Math.Max(0f, textBoard.TextSize.Y - textBoard.Size.Y);
@@ -166,8 +166,8 @@ namespace RichHudFramework.UI
         {
             ITextBoard textBoard = textBox.TextBoard;
 
-            scrollHorz.slide.slider.Width = (textBoard.Size.X / textBoard.TextSize.X) * scrollHorz.Width;
-            scrollVert.slide.slider.Height = (textBoard.Size.Y / textBoard.TextSize.Y) * scrollVert.Height;
+            scrollHorz.slide.SliderWidth = (textBoard.Size.X / textBoard.TextSize.X) * scrollHorz.Width;
+            scrollVert.slide.SliderHeight = (textBoard.Size.Y / textBoard.TextSize.Y) * scrollVert.Height;
 
             textBox.Offset = new Vector2(0f, scrollHorz.Height);
             textBox.Width = Width - scrollVert.Width;
@@ -231,7 +231,7 @@ namespace RichHudFramework.UI
         {
             public EditorDropdown(IHudParent parent = null) : base(parent)
             {
-                ScrollBar scrollBar = list.scrollBox.scrollBar;
+                ScrollBar scrollBar = listBox.scrollBox.scrollBar;
 
                 scrollBar.Padding = new Vector2(12f, 8f);
                 scrollBar.Width = 20f;

@@ -55,7 +55,7 @@ namespace RichHudFramework.UI.Server
 
         private readonly Label name;
         private readonly TextBox textBox;
-        private readonly TexturedBox background;
+        private readonly TexturedBox background, highlight;
         private readonly BorderBox border;
         private readonly Utils.Stopwatch refreshTimer;
 
@@ -79,7 +79,7 @@ namespace RichHudFramework.UI.Server
 
             border = new BorderBox(background)
             {
-                Color = new Color(53, 66, 75),
+                Color = RichHudTerminal.BorderColor,
                 Thickness = 1f,
                 DimAlignment = DimAlignments.Both,
             };
@@ -90,6 +90,13 @@ namespace RichHudFramework.UI.Server
                 AutoResize = false,
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
                 Padding = new Vector2(24f, 0f),
+            };
+
+            highlight = new TexturedBox(background)
+            {
+                Color = RichHudTerminal.HighlightOverlayColor,
+                DimAlignment = DimAlignments.Both,
+                Visible = false,
             };
 
             textBox.TextBoard.SetText("TextBox");
@@ -115,6 +122,18 @@ namespace RichHudFramework.UI.Server
                     Value = CustomValueGetter();
 
                 refreshTimer.Reset();
+            }
+        }
+
+        protected override void HandleInput()
+        {
+            if (textBox.IsMousedOver)
+            {
+                highlight.Visible = true;
+            }
+            else
+            {
+                highlight.Visible = false;
             }
         }
 
