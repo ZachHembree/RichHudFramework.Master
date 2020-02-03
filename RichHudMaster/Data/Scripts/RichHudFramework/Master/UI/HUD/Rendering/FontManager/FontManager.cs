@@ -150,6 +150,18 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
+                /// Retrieves the font with the given name.
+                /// </summary>
+                public static IFont GetFont(int index) =>
+                    fonts[index];
+
+                /// <summary>
+                /// Retrieves the font with the given name.
+                /// </summary>
+                public static IFontStyle GetFontStyle(Vector2I index) =>
+                    fonts[index.X][index.Y];
+
+                /// <summary>
                 /// Retrieves the font style index of the font with the given name and style.
                 /// </summary>
                 public static Vector2I GetStyleIndex(string name, FontStyleEnum style = FontStyleEnum.Regular)

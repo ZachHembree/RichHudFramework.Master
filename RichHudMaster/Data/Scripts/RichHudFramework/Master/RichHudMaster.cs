@@ -51,11 +51,6 @@ namespace RichHudFramework.Server
 
             if (MenuUtilities.CanAddElements)
                 MenuUtilities.AddMenuElements(GetModMenuButton());
-
-            var textEditor = new TextEditor(HudMain.Root) 
-            { 
-                Size = new Vector2(500f, 300f),
-            };
         }
 
         private void RegisterClientHandler() =>

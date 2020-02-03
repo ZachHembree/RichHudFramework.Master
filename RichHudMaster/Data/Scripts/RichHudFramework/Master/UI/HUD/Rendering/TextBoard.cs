@@ -216,7 +216,7 @@ namespace RichHudFramework
                     {
                         if (index.Y != 0)
                         {
-                            RichChar ch = line[index.Y];
+                            IRichCharFull ch = line[index.Y];
                             float minOffset = -ch.Offset.X + ch.Size.X / 2f - fixedSize.X / 2f,
                                 maxOffset = minOffset - ch.Size.X + fixedSize.X;
 
@@ -283,9 +283,11 @@ namespace RichHudFramework
 
                     for (int n = 0; n < lines[line].Count; n++)
                     {
-                        MatBoard glyphBoard = lines[line][n].GlyphBoard;
+                        IRichCharFull richChar = lines[line][n];
+                        QuadBoard glyphBoard = richChar.GlyphBoard;
+
                         float
-                            xPos = glyphBoard.offset.X + textOffset.X,
+                            xPos = richChar.Offset.X + textOffset.X,
                             edge = lines[line][ch].Size.X / 2f;
 
                         if ((xPos - edge) >= min && (xPos + edge) <= max)
@@ -328,14 +330,15 @@ namespace RichHudFramework
                     {
                         for (int ch = 0; ch < lines[line].Count; ch++)
                         {
-                            MatBoard glyphBoard = lines[line][ch].GlyphBoard;
+                            IRichCharFull richChar = lines[line][ch];
+
                             float 
-                                xPos = glyphBoard.offset.X + textOffset.X,
+                                xPos = richChar.Offset.X + textOffset.X,
                                 edge = lines[line][ch].Size.X / 2f;
 
                             if ((xPos - edge) >= min && (xPos + edge) <= max)
                             {
-                                glyphBoard.Draw(origin + textOffset);
+                                richChar.GlyphBoard.Draw(richChar.BbSize, origin + richChar.Offset + textOffset);
                             }
                         }
                     }
@@ -464,7 +467,7 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateLineOffsets(int line, float height)
                 {
-                    RichChar leftChar = null, rightChar;
+                    IRichCharFull leftChar = null, rightChar;
                     float width = 0f,
                         xAlign = GetLineAlignment(lines[line]);
 
@@ -521,19 +524,19 @@ namespace RichHudFramework
                 /// <summary>
                 /// Updates the position of the right character.
                 /// </summary>
-                private float UpdateCharOffset(RichChar rightChar, RichChar leftChar, Vector2 pos, float xAlign)
+                private float UpdateCharOffset(IRichCharFull rightChar, IRichCharFull leftChar, Vector2 pos, float xAlign)
                 {
                     GlyphFormat format = rightChar.Format;
                     IFontStyle fontStyle = FontManager.Fonts[format.StyleIndex.X][format.StyleIndex.Y];
                     float scale = format.TextSize * fontStyle.FontScale * Scale;
 
-                    if (leftChar != null && CanUseKernings(leftChar, rightChar))
+                    if (leftChar != null && CanUseKernings(leftChar.Format, format))
                         pos.X += fontStyle.GetKerningAdjustment(leftChar.Ch, rightChar.Ch) * scale;
 
-                    rightChar.GlyphBoard.offset = new Vector2()
+                    rightChar.Offset = new Vector2()
                     {
-                        X = pos.X + rightChar.GlyphBoard.Size.X / 2f + (rightChar.Glyph.leftSideBearing * scale) + xAlign,
-                        Y = pos.Y - (rightChar.GlyphBoard.Size.Y / 2f) + (fontStyle.BaseLine * scale)
+                        X = pos.X + rightChar.BbSize.X / 2f + (rightChar.Glyph.leftSideBearing * scale) + xAlign,
+                        Y = pos.Y - (rightChar.BbSize.Y / 2f) + (fontStyle.BaseLine * scale)
                     };
 
                     pos.X += rightChar.Size.X;
@@ -543,8 +546,8 @@ namespace RichHudFramework
                 /// <summary>
                 /// Determines whether the formatting of the characters given allows for the use of kerning pairs.
                 /// </summary>
-                private bool CanUseKernings(RichChar left, RichChar right) =>
-                     left.Format.StyleIndex == right.Format.StyleIndex && left.Format.TextSize == right.Format.TextSize;
+                private bool CanUseKernings(GlyphFormat left, GlyphFormat right) =>
+                     left.StyleIndex == right.StyleIndex && left.TextSize == right.TextSize;
 
                 /// <summary>
                 /// General purpose method used to allow the API to access various members not included in this type's

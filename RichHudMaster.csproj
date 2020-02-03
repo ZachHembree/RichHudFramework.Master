@@ -72,6 +72,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\GlyphData.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\LinePool.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindGroupData.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\ModMenuClient\TextHudApiMin.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\ModMenuClient\MenuUtilitiesMin.cs" />
@@ -101,13 +103,13 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\HudCursor.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\HudMain.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FontManager\FontManager.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\FormattedTextBase.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\Line.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\LinedText.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\RichChar.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\TextBuilder.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\UnlinedText.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\FormattedText\WrappedText.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\FormattedText\FormattedTextBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\Line.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\FormattedText\LinedText.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\RichChar.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\TextBuilder.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\FormattedText\UnlinedText.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\FormattedText\WrappedText.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBoard.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\TextEditor.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\UiTestPattern.cs" />
@@ -140,6 +142,9 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\IO\LogIO.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\ModBase.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\MsgEnums.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\Rendering\Material.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\Rendering\MaterialFrame.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\Rendering\QuadBoard.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\SettingsInterfaces.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindDefinition.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\CmdManager.cs" />

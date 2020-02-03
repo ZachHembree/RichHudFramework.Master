@@ -12,7 +12,7 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private class LinedText : FormattedTextBase
         {
-            public LinedText(LineList lines) : base(lines)
+            public LinedText(LinePool lines) : base(lines)
             { }
 
             /// <summary>
@@ -22,13 +22,13 @@ namespace RichHudFramework.UI.Rendering.Server
             public override void Insert(IList<RichStringMembers> text, Vector2I start)
             {
                 start = ClampIndex(start);
-                List<RichChar> chars = new List<RichChar>(((text.Count + 3) * 130) / 10);
                 GlyphFormat previous = GetPreviousFormat(start);
+                charBuffer.Clear();
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], chars, previous, Scale, x => (x >= ' ' || x == '\n'));
+                    GetRichChars(text[n], charBuffer, previous, Scale, x => (x >= ' ' || x == '\n'));
 
-                InsertChars(chars, start);
+                InsertChars(start);
             }
 
             /// <summary>
@@ -38,33 +38,33 @@ namespace RichHudFramework.UI.Rendering.Server
             public override void Insert(RichStringMembers text, Vector2I start)
             {
                 start = ClampIndex(start);
-                List<RichChar> chars = new List<RichChar>(((text.Item1.Length + 3) * 11) / 10);
                 GlyphFormat previous = GetPreviousFormat(start);
+                charBuffer.Clear();
 
                 if (lines.Count > 0)
                 {
-                    for (int n = 0; n < start.Y; n++)
-                        chars.Add(lines[start.X][n]);
+                    for (int n = 0; n < start.Y; n++) 
+                        charBuffer.AddCharFromLine(n, lines[start.X]);
                 }
 
-                GetRichChars(text, chars, previous, Scale, x => (x >= ' ' || x == '\n'));
-                InsertChars(chars, start);
+                GetRichChars(text, charBuffer, previous, Scale, x => (x >= ' ' || x == '\n'));
+                InsertChars(start);
             }
 
             /// <summary>
-            /// Inserts a list of <see cref="RichChar"/> at a given index as a list of <see cref="Line"/>s.
+            /// Inserts the contents of the character buffer at the index specified.
             /// </summary>
-            private void InsertChars(List<RichChar> chars, Vector2I splitStart)
+            private void InsertChars(Vector2I splitStart)
             {
                 if (lines.Count > 0)
                 {
                     for (int y = splitStart.Y; y < lines[splitStart.X].Count; y++)
-                        chars.Add(lines[splitStart.X][y]);
+                        charBuffer.AddCharFromLine(y, lines[splitStart.X]);
 
                     lines.RemoveAt(splitStart.X);
                 }
 
-                List<Line> newLines = GetLines(chars);
+                List<Line> newLines = GetLines();
                 string contents = "";
 
                 for (int n = 0; n < newLines[0].Count; n++)
@@ -74,22 +74,22 @@ namespace RichHudFramework.UI.Rendering.Server
             }
 
             /// <summary>
-            /// Generates a list of lines separated only by line breaks.
+            /// Generates a list of lines from the contents of the character buffer.
             /// </summary>
-            private static List<Line> GetLines(List<RichChar> chars)
+            private List<Line> GetLines()
             {
                 Line currentLine = null;
                 List<Line> newLines = new List<Line>();
 
-                for (int a = 0; a < chars.Count; a++)
+                for (int n = 0; n < charBuffer.Count; n++)
                 {
-                    if (currentLine == null || (chars[a].IsLineBreak && currentLine.Count > 0))
+                    if (currentLine == null || (charBuffer[n].IsLineBreak && currentLine.Count > 0))
                     {
-                        currentLine = new Line();
+                        currentLine = lines.GetNewLine();
                         newLines.Add(currentLine);
                     }
 
-                    currentLine.Add(chars[a]);
+                    currentLine.AddCharFromLine(n, charBuffer);
                 }
 
                 return newLines;
@@ -104,6 +104,7 @@ namespace RichHudFramework.UI.Rendering.Server
                     newLines[n].UpdateSize();
 
                 lines.InsertRange(start, newLines);
+                charBuffer.Clear();
             }
         }
     }

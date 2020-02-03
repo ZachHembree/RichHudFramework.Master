@@ -40,15 +40,28 @@ namespace RichHudFramework
             /// </summary>
             public class Glyph
             {
-                public readonly Material material;
+                public Material Material => matFrame.material;
                 public readonly float advanceWidth, leftSideBearing;
+
+                private readonly MaterialFrame matFrame;
 
                 public Glyph(Material atlas, Vector2 size, Vector2 origin, float aw, float lsb)
                 {
-                    material = new Material(atlas.TextureID, atlas.size, origin, size);
                     advanceWidth = aw;
                     leftSideBearing = lsb;
+
+                    matFrame = new MaterialFrame()
+                    {
+                        material = new Material(atlas.TextureID, atlas.size, origin, size),
+                        alignment = MaterialAlignment.FitHorizontal,
+                    };
                 }
+
+                internal QuadBoard GetQuadBoard(float scale, Color color) =>
+                    new QuadBoard(Material.TextureID, GetMaterialAlignment(Material.size * scale), color);
+
+                internal FlatQuad GetMaterialAlignment(Vector2 bbSize) =>
+                    matFrame.GetMaterialAlignment(bbSize);
             }
         }
     }

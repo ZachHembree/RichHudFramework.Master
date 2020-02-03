@@ -1,13 +1,7 @@
 ﻿using RichHudFramework.Game;
 using Sandbox.ModAPI;
 using System;
-using System.Text;
 using VRage;
-using VRage.Input;
-using VRage.ModAPI;
-using VRage.Utils;
-using VRageMath;
-using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum;
 
 namespace RichHudFramework.UI.TextHudApi
 {
@@ -80,10 +74,12 @@ namespace RichHudFramework.UI.TextHudApi
             m_onRegisteredAction = null;
             Instance = null;
         }
+
         private enum RegistrationEnum : int
         {
             OnScreenUpdate = 2000
         }
+
         private void RegisterComponents(object obj)
         {
             if (registered)
@@ -94,15 +90,14 @@ namespace RichHudFramework.UI.TextHudApi
                 MessageFactory = Handlers.Item1;
                 MessageSetter = Handlers.Item2;
                 MessageGetter = Handlers.Item3;
-
                 registered = true;
-                if (m_onRegisteredAction != null)
-                    m_onRegisteredAction();
+
+                m_onRegisteredAction?.Invoke();
                 MessageSet(null, (int)RegistrationEnum.OnScreenUpdate, new MyTuple<Action>(ScreenChangedHandle));
             }
         }
 
-        #region Intercomm
+        // Intercomm
         private object CreateMessage(MessageTypes type)
         {
             return MessageFactory((int)type);
@@ -128,7 +123,6 @@ namespace RichHudFramework.UI.TextHudApi
 
         private void ScreenChangedHandle()
         { }
-        #endregion
 
         private enum MessageTypes : int
         {
@@ -137,8 +131,7 @@ namespace RichHudFramework.UI.TextHudApi
             MenuRootCategory = 22,
         }
 
-        #region Menu
-
+        // Menu
         public abstract class MenuItemBase
         {
             private enum MenuItemBaseMembers : int
@@ -164,6 +157,7 @@ namespace RichHudFramework.UI.TextHudApi
                     Instance.MessageSet(BackingObject, (int)MenuItemBaseMembers.Text, value);
                 }
             }
+
             /// <summary>
             /// User can select this item. true by default
             /// </summary>
@@ -179,6 +173,7 @@ namespace RichHudFramework.UI.TextHudApi
                 }
             }
         }
+
         public class MenuItem : MenuItemBase
         {
             private enum MenuItemMembers : int
@@ -186,6 +181,7 @@ namespace RichHudFramework.UI.TextHudApi
                 OnClickAction = 100,
                 Parent
             }
+
             /// <summary>
             /// On click event that will be fired if the user selects this item.
             /// </summary>
@@ -200,6 +196,7 @@ namespace RichHudFramework.UI.TextHudApi
                     Instance.MessageSet(BackingObject, (int)MenuItemMembers.OnClickAction, value);
                 }
             }
+
             /// <summary>
             /// Must be either a MenuRootCategory or MenuSubCategory object
             /// </summary>
@@ -210,6 +207,7 @@ namespace RichHudFramework.UI.TextHudApi
                     Instance.MessageSet(BackingObject, (int)MenuItemMembers.Parent, value.BackingObject);
                 }
             }
+
             /// <summary>
             /// Basic toggle. You can use this to create on/off toggles, checkbox lists or option lists. 
             /// </summary>
@@ -235,6 +233,7 @@ namespace RichHudFramework.UI.TextHudApi
             {
                 Header = 100
             }
+
             /// <summary>
             /// Header text of the menu list.
             /// </summary>
@@ -259,11 +258,13 @@ namespace RichHudFramework.UI.TextHudApi
                 PlayerMenu = 1,
                 AdminMenu = 2
             }
+
             private enum MenuRootCategoryMembers : int
             {
                 MenuFlag = 200
 
             }
+
             /// <summary>
             /// Which menu to attach to, either Player or Admin menus. 
             /// </summary>
@@ -278,6 +279,7 @@ namespace RichHudFramework.UI.TextHudApi
                     Instance.MessageSet(BackingObject, (int)MenuRootCategoryMembers.MenuFlag, (int)value);
                 }
             }
+
             /// <summary>
             /// Create only one of these per mod. Automatically attaches to parent lists. 
             /// </summary>
@@ -293,6 +295,7 @@ namespace RichHudFramework.UI.TextHudApi
                 Menu = AttachedMenu;
             }
         }
+
         public class MenuSubCategory : MenuCategoryBase
         {
             private enum MenuSubCategoryMembers : int
@@ -326,7 +329,5 @@ namespace RichHudFramework.UI.TextHudApi
                 this.Parent = Parent;
             }
         }
-
-        #endregion
     }
 }

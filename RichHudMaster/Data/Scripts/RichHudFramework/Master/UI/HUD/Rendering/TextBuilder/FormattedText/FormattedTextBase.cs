@@ -18,15 +18,17 @@ namespace RichHudFramework.UI.Rendering.Server
             public virtual float MaxLineWidth { get; protected set; }
             public float Scale { get { return scale; } set { RescaleText(value / scale); scale = value; } }
 
-            protected RichChar this[Vector2I index] => lines[index.X][index.Y];
-            protected readonly LineList lines;
+            protected IRichCharFull this[Vector2I index] => lines[index.X][index.Y];
+            protected readonly LinePool lines;
+            protected readonly Line charBuffer;
             private float scale;
 
-            protected FormattedTextBase(LineList lines)
+            protected FormattedTextBase(LinePool lines)
             {
                 this.lines = lines;
                 scale = 1f;
                 MaxLineWidth = 0f;
+                charBuffer = lines.GetNewLine();
             }
 
             /// <summary>
@@ -84,22 +86,16 @@ namespace RichHudFramework.UI.Rendering.Server
                 {
                     if (end.X > start.X)
                     {
-                        for (int y = start.Y; y < lines[start.X].Count; y++)
-                            lines[start.X][y].SetFormatting(formatting, Scale);
+                        lines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting, Scale);
 
                         for (int x = start.X + 1; x < end.X; x++)
-                        {
-                            for (int y = 0; y < lines[x].Count; y++)
-                                lines[x][y].SetFormatting(formatting, Scale);
-                        }
+                            lines[x].SetFormatting(formatting, Scale);
 
-                        for (int y = 0; y <= end.Y; y++)
-                            lines[end.X][y].SetFormatting(formatting, Scale);
+                        lines[start.X].SetFormatting(0, end.Y, formatting, Scale);
                     }
                     else
                     {
-                        for (int y = start.Y; y <= end.Y; y++)
-                            lines[start.X][y].SetFormatting(formatting, Scale);
+                        lines[start.X].SetFormatting(start.Y, end.Y, formatting, Scale);
                     }
 
                     for (int n = start.X; n <= end.X; n++)
@@ -149,9 +145,9 @@ namespace RichHudFramework.UI.Rendering.Server
             }
 
             /// <summary>
-            /// Builds a list of <see cref="RichChar"/>s from RichString data.
+            /// Builds a list of <see cref="IRichCharFull"/>s from RichString data.
             /// </summary>
-            protected static void GetRichChars(RichStringMembers richString, List<RichChar> chars, GlyphFormat previous, float scale, Func<char, bool> FilterFunc)
+            protected static void GetRichChars(RichStringMembers richString, Line charBuffer, GlyphFormat previous, float scale, Func<char, bool> FilterFunc)
             {
                 StringBuilder text = richString.Item1;
                 GlyphFormat format;
@@ -161,10 +157,12 @@ namespace RichHudFramework.UI.Rendering.Server
                 else
                     format = previous;
 
+                charBuffer.EnsureCapacity(charBuffer.Count + text.Length);
+
                 for (int n = 0; n < text.Length; n++)
                 {
                     if (FilterFunc(text[n]))
-                        chars.Add(new RichChar(text[n], format, scale));
+                        charBuffer.AddNew(text[n], format, scale);
                 }
             }
 
@@ -179,6 +177,10 @@ namespace RichHudFramework.UI.Rendering.Server
                 }
             }
 
+            /// <summary>
+            /// Returns the glyph formatting of the character immediately preceding the one
+            /// at the index given, if it exists.
+            /// </summary>
             protected GlyphFormat GetPreviousFormat(Vector2I index)
             {
                 if (TryGetLastIndex(index, out index))
@@ -198,6 +200,10 @@ namespace RichHudFramework.UI.Rendering.Server
                 return index;
             }
 
+            /// <summary>
+            /// Retrieves the index of the character immediately preceeding the index given. Returns
+            /// true if successful. Otherwise, the beginning of the collection has been reached.
+            /// </summary>
             protected virtual bool TryGetLastIndex(Vector2I index, out Vector2I lastIndex)
             {
                 if (index.Y > 0)
@@ -213,6 +219,10 @@ namespace RichHudFramework.UI.Rendering.Server
                 return true;
             }
 
+            /// <summary>
+            /// Retrieves the index of the character immediately following the index given. Returns
+            /// true if successful. Otherwise, the end of the collection has been reached.
+            /// </summary>
             protected virtual bool TryGetNextIndex(Vector2I index, out Vector2I nextIndex)
             {
                 if (index.X < lines.Count && index.Y + 1 < lines[index.X].Count)

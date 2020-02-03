@@ -96,7 +96,7 @@ namespace RichHudFramework
                     }
                 }
 
-                protected readonly LineList lines;
+                protected readonly LinePool lines;
                 protected TextBuilderModes builderMode;
 
                 private FormattedTextBase formatter;
@@ -105,7 +105,7 @@ namespace RichHudFramework
 
                 public TextBuilder()
                 {
-                    lines = new LineList();
+                    lines = new LinePool();
                     BuilderMode = TextBuilderModes.Unlined;
                     Format = GlyphFormat.White;
                     Scale = 1f;
@@ -164,6 +164,8 @@ namespace RichHudFramework
 
                                 break;
                             }
+                        case TextBuilderAccessors.ToString:
+                            return ToString();
                     }
 
                     return null;
@@ -465,58 +467,11 @@ namespace RichHudFramework
                     };
                 }
 
-                protected class LineList : IIndexedCollection<Line>
-                {
-                    public Line this[int index] => lines[index];
-
-                    public int Count => lines.Count;
-
-                    public readonly List<Line> lines;
-
-                    public LineList()
-                    {
-                        lines = new List<Line>();
-                    }
-
-                    public void Add(Line line)
-                    {
-                        lines.Add(line);
-
-                        if (lines.Capacity > 9 * lines.Count)
-                            lines.TrimExcess();
-                    }
-
-                    public void AddRange(IEnumerable<Line> collection)
-                    {
-                        lines.AddRange(collection);
-
-                        if (lines.Count > 0 && lines.Capacity > 9 * lines.Count)
-                            lines.TrimExcess();
-                    }
-
-                    public void InsertRange(int index, IEnumerable<Line> collection)
-                    {
-                        lines.InsertRange(index, collection);
-
-                        if (lines.Count > 0 && lines.Capacity > 9 * lines.Count)
-                            lines.TrimExcess();
-                    }
-
-                    public void RemoveAt(int index)
-                    {
-                        lines.RemoveAt(index);
-                    }
-
-                    public void RemoveRange(int index, int count)
-                    {
-                        lines.RemoveRange(index, count);
-                    }
-
-                    public void Clear()
-                    {
-                        lines.Clear();
-                    }
-                }
+                /// <summary>
+                /// Returns the contents of the <see cref="ITextBuilder"/> as an unformatted string.
+                /// </summary>
+                public override string ToString() =>
+                    lines.ToString();
             }
         }
     }

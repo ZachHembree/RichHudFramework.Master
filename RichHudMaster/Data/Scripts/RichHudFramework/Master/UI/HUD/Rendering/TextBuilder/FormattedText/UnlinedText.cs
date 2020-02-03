@@ -12,11 +12,15 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private class UnlinedText : FormattedTextBase
         {
-            public UnlinedText(LineList lines) : base(lines)
+            public UnlinedText(LinePool lines) : base(lines)
             {
-                FlattenText();
+                if (lines.Count > 1)
+                    FlattenText();
             }
 
+            /// <summary>
+            /// Appends any text after the first line to the first line and removes any line breaks.
+            /// </summary>
             private void FlattenText()
             {
                 int charCount = 0;
@@ -24,22 +28,21 @@ namespace RichHudFramework.UI.Rendering.Server
                 for (int n = 0; n < Count; n++)
                     charCount += lines[n].Count;
 
-                List<RichChar> chars = new List<RichChar>(charCount);
+                Line chars = lines.GetNewLine(charCount);
 
                 for (int line = 0; line < Count; line++)
                 {
                     for (int ch = 0; ch < lines[line].Count; ch++)
                     {
                         if (lines[line][ch].Ch >= ' ')
-                            chars.Add(lines[line][ch]);
+                            chars.AddCharFromLine(ch, lines[line]);
                     }
                 }
 
-                lines.Clear();
-                lines.Add(new Line(chars.Count));
+                chars.UpdateSize();
 
-                lines[0].AddRange(chars);
-                lines[0].UpdateSize();
+                lines.Clear();
+                lines.Add(chars);
             }
 
             /// <summary>
@@ -49,18 +52,19 @@ namespace RichHudFramework.UI.Rendering.Server
             public override void Insert(IList<RichStringMembers> text, Vector2I start)
             {
                 if (lines.Count == 0)
-                    lines.Add(new Line());
+                    lines.AddNewLine();
 
                 start.X = 0;
                 start = ClampIndex(start);
-                List<RichChar> chars = new List<RichChar>(((text.Count + 3) * 130) / 10);
                 GlyphFormat previous = GetPreviousFormat(start);
+                charBuffer.Clear();
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], chars, previous, Scale, x => x >= ' ');
+                    GetRichChars(text[n], charBuffer, previous, Scale, x => x >= ' ');
 
-                lines[0].InsertRange(start.Y, chars);
+                lines[0].InsertRange(start.Y, charBuffer);
                 lines[0].UpdateSize();
+                charBuffer.Clear();
             }
 
             /// <summary>
@@ -70,17 +74,18 @@ namespace RichHudFramework.UI.Rendering.Server
             public override void Insert(RichStringMembers text, Vector2I start)
             {
                 if (lines.Count == 0)
-                    lines.Add(new Line());
+                    lines.AddNewLine();
 
                 start.X = 0;
                 start = ClampIndex(start);
-                List<RichChar> chars = new List<RichChar>(((text.Item1.Length + 3) * 11) / 10);
                 GlyphFormat previous = GetPreviousFormat(start);
 
-                GetRichChars(text, chars, previous, Scale, x => x >= ' ');
+                charBuffer.Clear();
+                GetRichChars(text, charBuffer, previous, Scale, x => x >= ' ');
 
-                lines[0].InsertRange(start.Y, chars);
+                lines[0].InsertRange(start.Y, charBuffer);
                 lines[0].UpdateSize();
+                charBuffer.Clear();
             }
         }
     }
