@@ -31,6 +31,8 @@ namespace RichHudFramework.Server
         {
             ModName = "Rich HUD Master";
             LogFileName = "RichHudMasterLog.txt";
+
+            InitializeFonts();
         }
 
         public RichHudMaster() : base(false, true)
@@ -38,11 +40,19 @@ namespace RichHudFramework.Server
             clients = new List<RichHudClient>();
         }
 
+        private static void InitializeFonts()
+        {
+            FontManager.TryAddFont(SeFont.fontData);
+            FontManager.TryAddFont(SeFontShadowed.fontData);
+            FontManager.TryAddFont(MonoFont.fontData);
+            FontManager.TryAddFont(AbhayaLibreMedium.fontData);
+            FontManager.TryAddFont(BitstreamVeraSans.fontData);
+        }
+
         protected override void AfterInit()
         {
             Instance = this;
             rhdCommands = CmdManager.AddOrGetCmdGroup("/rhd", GetChatCommands());
-            InitializeFonts();
             BindManager.Init();
             HudMain.Init();
 
@@ -79,15 +89,6 @@ namespace RichHudFramework.Server
                 new CmdManager.Command ("reload",
                     () => Instance.unload = true),
             };
-        }
-
-        private void InitializeFonts()
-        {
-            FontManager.TryAddFont(SeFont.fontData);
-            FontManager.TryAddFont(SeFontShadowed.fontData);
-            FontManager.TryAddFont(MonoFont.fontData);
-            FontManager.TryAddFont(AbhayaLibreMedium.fontData);
-            FontManager.TryAddFont(BitstreamVeraSans.fontData);
         }
 
         private void ClientHandler(object message)

@@ -66,7 +66,7 @@ namespace RichHudFramework.UI
         public void OpenInput()
         {
             InputOpen = true;
-            caret.Move(new Vector2I(int.MaxValue));
+            caret.SetPosition(new Vector2I(int.MaxValue, int.MaxValue));
         }
 
         public void CloseInput()
@@ -241,6 +241,12 @@ namespace RichHudFramework.UI
 
                 blink = true;
                 blinkTimer.Reset();
+            }
+
+            public void SetPosition(Vector2I index)
+            {
+                Index = ClampIndex(index);
+                caretOffset = Math.Max(GetOffsetFromIndex(Index), 0);
             }
 
             public void ClampIndex()
