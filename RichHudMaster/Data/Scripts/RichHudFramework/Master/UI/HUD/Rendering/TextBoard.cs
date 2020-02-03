@@ -220,7 +220,7 @@ namespace RichHudFramework
                             float minOffset = -ch.Offset.X + ch.Size.X / 2f - fixedSize.X / 2f,
                                 maxOffset = minOffset - ch.Size.X + fixedSize.X;
 
-                            offset = Utils.Math.Clamp(offset, minOffset, maxOffset);
+                            offset = MathHelper.Clamp(offset, minOffset, maxOffset);
                         }
                         else
                             offset = 0f;

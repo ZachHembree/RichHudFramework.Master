@@ -10,6 +10,9 @@ namespace RichHudFramework
         {
             public class MatBoard
             {
+                /// <summary>
+                /// Coloring applied to the material.
+                /// </summary>
                 public Color Color
                 {
                     get { return color; }
@@ -22,6 +25,9 @@ namespace RichHudFramework
                     }
                 }
 
+                /// <summary>
+                /// Size of the billboard.
+                /// </summary>
                 public Vector2 Size
                 {
                     get { return size; }
@@ -34,6 +40,9 @@ namespace RichHudFramework
                     }
                 }
 
+                /// <summary>
+                /// Width of the billboard.
+                /// </summary>
                 public float Width
                 {
                     get { return size.X; }
@@ -46,6 +55,9 @@ namespace RichHudFramework
                     }
                 }
 
+                /// <summary>
+                /// Height of the billboard.
+                /// </summary>
                 public float Height
                 {
                     get { return size.Y; }
@@ -58,52 +70,68 @@ namespace RichHudFramework
                     }
                 }
 
+                /// <summary>
+                /// Distance of the material from the MatBoard's center.
+                /// </summary>
                 public Vector2 MatOffset
                 {
                     get { return matFrame.offset; }
                     set
                     {
                         if (value != matFrame.offset)
+                        {
                             updateMatFit = true;
-
-                        matFrame.offset = value;
+                            matFrame.offset = value;
+                        }
                     }
                 }
 
+                /// <summary>
+                /// Material scale.
+                /// </summary>
                 public float MatScale
                 {
                     get { return matFrame.scale; }
                     set
                     {
                         if (value != matFrame.scale)
+                        {
                             updateMatFit = true;
-
-                        matFrame.scale = value;
+                            matFrame.scale = value;
+                        }
                     }
                 }
 
+                /// <summary>
+                /// Texture applied to the billboard.
+                /// </summary>
                 public Material Material
                 {
                     get { return matFrame.material; }
                     set
                     {
                         if (value != matFrame.material)
+                        {
                             updateMatFit = true;
-
-                        matFrame.material = value;
-                        minBoard.textureID = value.TextureID;
+                            matFrame.material = value;
+                            minBoard.textureID = value.TextureID;
+                        }
                     }
                 }
 
+                /// <summary>
+                /// Determines how the texture scales with the MatBoard's dimensions.
+                /// </summary>
                 public MaterialAlignment MatAlignment
                 {
                     get { return matFrame.alignment; }
                     set
                     {
                         if (value != matFrame.alignment)
+                        {
                             updateMatFit = true;
-
-                        matFrame.alignment = value;
+                            matFrame.alignment = value;
+                        }
                     }
                 }
 
@@ -130,7 +158,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(Size);
+                        minBoard.matFit = matFrame.GetMaterialAlignment(size);
                         updateMatFit = false;
                     }
 

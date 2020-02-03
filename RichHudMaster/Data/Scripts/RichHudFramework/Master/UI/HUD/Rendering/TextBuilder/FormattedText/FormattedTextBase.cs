@@ -194,8 +194,8 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             protected Vector2I ClampIndex(Vector2I index)
             {
-                index.X = Utils.Math.Clamp(index.X, 0, lines.Count);
-                index.Y = Utils.Math.Clamp(index.Y, 0, (lines.Count > 0) ? lines[index.X].Count : 0);
+                index.X = MathHelper.Clamp(index.X, 0, lines.Count);
+                index.Y = MathHelper.Clamp(index.Y, 0, (lines.Count > 0) ? lines[index.X].Count : 0);
 
                 return index;
             }

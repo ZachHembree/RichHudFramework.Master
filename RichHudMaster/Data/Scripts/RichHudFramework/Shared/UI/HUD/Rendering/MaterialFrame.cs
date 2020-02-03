@@ -90,18 +90,18 @@ namespace RichHudFramework
                         max = matOrigin + matStep,
                         scaledOffset = new Vector2()
                         {
-                            X = Utils.Math.Clamp(offset.X / material.size.X, -1f, 1f) * material.scaledSize.X,
-                            Y = Utils.Math.Clamp(offset.Y / material.size.Y, -1f, 1f) * material.scaledSize.Y
+                            X = MathHelper.Clamp(offset.X / material.size.X, -1f, 1f) * material.scaledSize.X,
+                            Y = MathHelper.Clamp(offset.Y / material.size.Y, -1f, 1f) * material.scaledSize.Y
                         } * scale;
 
                     matOrigin += scaledOffset;
-
+                   
                     return new FlatQuad
                     (
-                        Utils.Math.Clamp(matOrigin - matStep, min, max), // Bottom left
-                        Utils.Math.Clamp(matOrigin + new Vector2(-matStep.X, matStep.Y), min, max), // Upper left
-                        Utils.Math.Clamp(matOrigin + matStep, min, max), // Upper right
-                        Utils.Math.Clamp(matOrigin + new Vector2(matStep.X, -matStep.Y), min, max) // Bottom right
+                        Vector2.Clamp(matOrigin - matStep, min, max), // Bottom left
+                        Vector2.Clamp(matOrigin + new Vector2(-matStep.X, matStep.Y), min, max), // Upper left
+                        Vector2.Clamp(matOrigin + matStep, min, max), // Upper right
+                        Vector2.Clamp(matOrigin + new Vector2(matStep.X, -matStep.Y), min, max) // Bottom right
                     );
                 }
             }

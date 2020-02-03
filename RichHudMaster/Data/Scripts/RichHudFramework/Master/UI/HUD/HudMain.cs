@@ -169,7 +169,7 @@ namespace RichHudFramework
 
             public override void Draw()
             {
-                if (cacheTimer.ElapsedMilliseconds > 1000)
+                if (cacheTimer.ElapsedMilliseconds > 2000)
                 {
                     if (screenHeight != MyAPIGateway.Session.Camera.ViewportSize.Y || screenWidth != MyAPIGateway.Session.Camera.ViewportSize.X)
                         UpdateResScaling();

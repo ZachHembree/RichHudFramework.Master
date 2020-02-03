@@ -71,7 +71,7 @@ namespace RichHudFramework.UI.Server
             this.CallbackFunc = CallbackFunc;
 
             combo = bind.GetCombo();
-            controlIndex = Utils.Math.Clamp(bindPos, 0, combo.Count);
+            controlIndex = MathHelper.Clamp(bindPos, 0, combo.Count);
         }
 
         public override void Draw()
