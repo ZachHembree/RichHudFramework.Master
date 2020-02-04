@@ -18,7 +18,6 @@ namespace RichHudFramework.UI.Rendering.Server
             public virtual float MaxLineWidth { get; protected set; }
             public float Scale { get { return scale; } set { RescaleText(value / scale); scale = value; } }
 
-            protected IRichCharFull this[Vector2I index] => lines[index.X][index.Y];
             protected readonly LinePool lines;
             protected readonly Line charBuffer;
             private float scale;
@@ -181,10 +180,10 @@ namespace RichHudFramework.UI.Rendering.Server
             /// Returns the glyph formatting of the character immediately preceding the one
             /// at the index given, if it exists.
             /// </summary>
-            protected GlyphFormat GetPreviousFormat(Vector2I index)
+            protected GlyphFormat GetPreviousFormat(Vector2I i)
             {
-                if (lines.TryGetLastIndex(index, out index))
-                    return this[index].Format;
+                if (lines.TryGetLastIndex(i, out i))
+                    return lines[i.X].extFormattedGlyphs[i.Y].format;
                 else
                     return null;
             }
@@ -198,6 +197,28 @@ namespace RichHudFramework.UI.Rendering.Server
                 index.Y = MathHelper.Clamp(index.Y, 0, (lines.Count > 0) ? lines[index.X].Count : 0);
 
                 return index;
+            }
+
+            /// <summary>
+            /// Determines whether the two characters at the indices provided indicate a word break.
+            /// </summary>
+            protected bool IsWordBreak(Vector2I iLeft, Vector2I iRight)
+            {
+                char left = lines[iLeft.X].extChars[iLeft.Y], 
+                    right = lines[iRight.X].extChars[iRight.Y];
+
+                return (left == ' ' || left == '-' || left == '_') && !(right == ' ' || right == '-' || right == '_');
+            }
+
+            /// <summary>
+            /// Determines whether the two characters at the charBuffer indices provided indicate a word break.
+            /// </summary>
+            protected bool IsWordBreak(int iLeft, int iRight)
+            {
+                char left = charBuffer.extChars[iLeft],
+                    right = charBuffer.extChars[iRight];
+
+                return (left == ' ' || left == '-' || left == '_') && !(right == ' ' || right == '-' || right == '_');
             }
         }
     }

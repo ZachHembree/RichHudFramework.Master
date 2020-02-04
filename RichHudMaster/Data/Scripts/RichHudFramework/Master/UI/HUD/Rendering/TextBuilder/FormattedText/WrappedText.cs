@@ -184,7 +184,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 for (int start = 0; TryGetWordEnd(start, out end, out wordWidth); start = end + 1)
                 {
-                    bool wrapWord = (spaceRemaining < wordWidth && wordWidth <= MaxLineWidth) || charBuffer[start].IsLineBreak;
+                    bool wrapWord = (spaceRemaining < wordWidth && wordWidth <= MaxLineWidth) || charBuffer.extChars[start] == '\n';
 
                     for (int n = start; n <= end; n++)
                     {
@@ -232,7 +232,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 float spaceRemaining = MaxLineWidth - lines[line].Size.X;
                 Vector2I i = new Vector2I(line + 1, 0), wordEnd, end = new Vector2I();
 
-                while (TryGetWordEnd(i, out wordEnd, ref spaceRemaining) && !this[i].IsLineBreak)
+                while (TryGetWordEnd(i, out wordEnd, ref spaceRemaining) && lines[i.X].extChars[i.Y] != '\n')
                 {
                     end = wordEnd;
 
@@ -281,7 +281,7 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 Vector2I start;
 
-                while (lines.TryGetLastIndex(end, out start) && !(this[end].IsLineBreak || this[start].IsWordBreak(this[end])))
+                while (lines.TryGetLastIndex(end, out start) && !(lines[end.X].extChars[end.Y] == '\n' || IsWordBreak(start, end)))
                     end = start;
 
                 return start;
@@ -294,11 +294,11 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <param name="end">Somewhere to the right of or equal to the start.</param>
             private bool TryGetWordEnd(Vector2I start, out Vector2I end, ref float spaceRemaining)
             {
-                spaceRemaining -= this[start].Size.X;
+                spaceRemaining -= lines[start.X].extLocData[start.Y].chSize.X;
 
-                while (lines.TryGetNextIndex(start, out end) && spaceRemaining > 0f && !(this[end].IsLineBreak || this[start].IsWordBreak(this[end])))
+                while (lines.TryGetNextIndex(start, out end) && spaceRemaining > 0f && !(lines[end.X].extChars[end.Y] == '\n' || IsWordBreak(start, end)))
                 {
-                    spaceRemaining -= this[end].Size.X;
+                    spaceRemaining -= lines[end.X].extLocData[end.Y].chSize.X;
                     start = end;
                 }
 
@@ -318,7 +318,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 {
                     width += charBuffer[n].Size.X;
 
-                    if (n == (charBuffer.Count - 1) || charBuffer[n + 1].IsLineBreak || charBuffer[n].IsWordBreak(charBuffer[n + 1]))
+                    if (n == (charBuffer.Count - 1) || charBuffer.extChars[n + 1] == '\n' || IsWordBreak(n, n + 1))
                     {
                         wordEnd = n;
                         return true;

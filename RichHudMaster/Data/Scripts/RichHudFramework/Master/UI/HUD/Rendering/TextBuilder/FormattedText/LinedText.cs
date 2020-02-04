@@ -70,7 +70,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 for (int n = 0; n < charBuffer.Count; n++)
                 {
-                    if (currentLine == null || (charBuffer[n].IsLineBreak && currentLine.Count > 0))
+                    if (currentLine == null || (charBuffer.extChars[n] == '\n' && currentLine.Count > 0))
                     {
                         currentLine = lines.GetNewLine();
                         newLines.Add(currentLine);

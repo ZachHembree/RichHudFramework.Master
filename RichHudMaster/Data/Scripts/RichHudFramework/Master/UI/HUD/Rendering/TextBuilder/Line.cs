@@ -21,8 +21,7 @@ namespace RichHudFramework
                 /// </summary>
                 protected abstract partial class Line : ILine
                 {
-                    IRichChar IIndexedCollection<IRichChar>.this[int index] => new RichChar(this, index);
-                    internal RichChar this[int index] => new RichChar(this, index);
+                    public IRichChar this[int index] => new RichChar(this, index);
 
                     /// <summary>
                     /// The number of rich characters currently in the collection.
@@ -49,9 +48,24 @@ namespace RichHudFramework
                     /// </summary>
                     public Vector2 Size => size;
 
+                    /// <summary>
+                    /// Read-only list of the characters in the line.
+                    /// </summary>
                     public readonly IReadOnlyList<char> extChars;
+
+                    /// <summary>
+                    /// Read-only list of the formatted glyphs for each character in the line.
+                    /// </summary>
                     public readonly IReadOnlyList<FormattedGlyph> extFormattedGlyphs;
+
+                    /// <summary>
+                    /// Read-only list of the location and size information for each character in the line.
+                    /// </summary>
                     public readonly IReadOnlyList<GlyphLocData> extLocData;
+
+                    /// <summary>
+                    /// Read-only list of the QuadBoards for each character in the line.
+                    /// </summary>
                     internal readonly IReadOnlyList<QuadBoard> extGlyphBoards;
 
                     private readonly List<char> chars;
@@ -129,6 +143,12 @@ namespace RichHudFramework
                             locData[index] = new GlyphLocData(glyph.material.size * scale, glyphSize);
                             glyphBoards[index] = glyph.GetQuadBoard(scale, format.Color);
                         }
+                    }
+
+                    public void SetOffsetAt(int index, Vector2 offset)
+                    {
+                        var oldData = locData[index];
+                        locData[index] = new GlyphLocData(oldData.bbSize, oldData.chSize, offset);
                     }
 
                     /// <summary>
