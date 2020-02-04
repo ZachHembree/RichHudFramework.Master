@@ -22,7 +22,7 @@ namespace RichHudFramework
             Func<Vector2I, int, object>, // GetCharMember
             Func<object, int, object>, // GetOrSetMember
             Action<IList<RichStringMembers>, Vector2I>, // Insert
-            Action<RichStringMembers, Vector2I>, // Insert
+            Action<IList<RichStringMembers>>, // SetText
             Action // Clear
         >;
 
@@ -190,18 +190,18 @@ namespace RichHudFramework
                 /// <summary>
                 /// Facilitates access to RichChar members.
                 /// </summary>
-                protected object GetRichCharMember(Vector2I index, int memberEnum)
+                protected object GetRichCharMember(Vector2I i, int memberEnum)
                 {
                     switch ((RichCharAccessors)memberEnum)
                     {
                         case RichCharAccessors.Ch:
-                            return this[index].Ch;
+                            return lines[i.X].extChars[i.Y];
                         case RichCharAccessors.Format:
-                            return this[index].Format.data;
+                            return lines[i.X].extFormattedGlyphs[i.Y].format.data;
                         case RichCharAccessors.Offset:
-                            return this[index].Offset;
+                            return lines[i.X].extLocData[i.Y].bbOffset;
                         case RichCharAccessors.Size:
-                            return this[index].Size;
+                            return lines[i.X].extLocData[i.Y].chSize;
                     }
 
                     return null;
@@ -222,48 +222,24 @@ namespace RichHudFramework
                 /// <summary>
                 /// Clears current text and appends the text given.
                 /// </summary>
-                public void SetText(RichString text)
-                {
-                    Clear();
-                    Append(text);
-                }
-
-                /// <summary>
-                /// Clears current text and appends the text given.
-                /// </summary>
                 public void SetText(RichText text)
                 {
-                    Clear();
-                    Append(text);
+                    RichStringMembers[] data = text.GetApiData();
+
+                    if (!IsTextEqual(data))
+                    {
+                        Clear();
+                        AppendData(data);
+                    }
                 }
 
-                /// <summary>
-                /// Clears current text and appends the text given.
-                /// </summary>
-                public void SetText(string text)
+                protected void SetData(IList<RichStringMembers> text)
                 {
-                    Clear();
-                    Append(text);
-                }
-
-                /// <summary>
-                /// Appends the given <see cref="string"/> to the end of the text using the default <see cref="GlyphFormat"/>.
-                /// </summary>
-                public void Append(string text)
-                {
-                    formatter.Append(new RichStringMembers(new StringBuilder(text), Format.data));
-                    AfterTextUpdate();
-                }
-
-                /// <summary>
-                /// Appends the given text to the end of the text using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichString"/>.
-                /// </summary>
-                public void Append(RichString text)
-                {
-                    if (text.format == GlyphFormat.Empty)
-                        text.format = Format;
-
-                    AppendData(text.GetApiData());
+                    if (!IsTextEqual(text))
+                    {
+                        Clear();
+                        AppendData(text);
+                    }
                 }
 
                 protected void AppendData(RichStringMembers text)
@@ -324,35 +300,6 @@ namespace RichHudFramework
                     }
 
                     formatter.Insert(text, start);
-                    AfterTextUpdate();
-                }
-
-                /// <summary>
-                /// Inserts the given text to the end of the text at the specified starting index using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichString"/>.
-                /// </summary>
-                public void Insert(RichString text, Vector2I start)
-                {
-                    if (text.format == GlyphFormat.Empty)
-                        text.format = Format;
-
-                    InsertData(text.GetApiData(), start);
-                }
-
-                public void InsertData(RichStringMembers text, Vector2I start)
-                {
-                    if (text.Item2.Equals(GlyphFormat.Empty.data))
-                        text.Item2 = Format.data;
-
-                    formatter.Insert(text, start);
-                    AfterTextUpdate();
-                }
-
-                /// <summary>
-                /// Inserts the given <see cref="string"/> at the given starting index using the default <see cref="GlyphFormat"/>.
-                /// </summary>
-                public void Insert(string text, Vector2I start)
-                {
-                    formatter.Insert(new RichStringMembers(new StringBuilder(text), Format.data), start);
                     AfterTextUpdate();
                 }
 
@@ -454,6 +401,49 @@ namespace RichHudFramework
                     }
                 }
 
+                protected bool IsTextEqual(IList<RichStringMembers> text)
+                {
+                    if (IsTextLengthEqual(text))
+                    {
+                        Vector2I i = Vector2I.Zero;
+
+                        for (int x = 0; x < text.Count; x++)
+                        {
+                            StringBuilder newChars = text[x].Item1;
+                            GlyphFormatMembers newFormat = text[x].Item2;
+                            Vector2I nextIndex;
+
+                            for (int y = 0; (y < newChars.Length && lines.TryGetNextIndex(i, out nextIndex)); y++)
+                            {
+                                char ch = lines[i.X].extChars[i.Y];
+                                GlyphFormatMembers format = lines[i.X].extFormattedGlyphs[i.Y].format.data;
+
+                                if (!((ch == newChars[y]) && (format.Equals(newFormat))))
+                                    return false;
+
+                                i = nextIndex;
+                            }
+                        }
+
+                        return true;
+                    }
+                    else
+                        return false;
+                }
+
+                private bool IsTextLengthEqual(IList<RichStringMembers> text)
+                {
+                    int newTextLength = 0, currentLength = 0;
+
+                    for (int n = 0; n < text.Count; n++)
+                        newTextLength += text[n].Item1.Length;
+
+                    for (int n = 0; n < lines.Count; n++)
+                        currentLength += lines[n].extChars.Count;
+
+                    return newTextLength == currentLength;
+                }
+
                 public TextBuilderMembers GetApiData()
                 {
                     return new TextBuilderMembers()
@@ -462,7 +452,7 @@ namespace RichHudFramework
                         Item2 = GetRichCharMember,
                         Item3 = GetOrSetMember,
                         Item4 = InsertData,
-                        Item5 = InsertData,
+                        Item5 = SetData,
                         Item6 = Clear
                     };
                 }

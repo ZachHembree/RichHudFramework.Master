@@ -199,6 +199,44 @@ namespace RichHudFramework
                         return sb.ToString();
                     }
 
+                    /// <summary>
+                    /// Retrieves the index of the character immediately preceeding the index given. Returns
+                    /// true if successful. Otherwise, the beginning of the collection has been reached.
+                    /// </summary>
+                    public bool TryGetLastIndex(Vector2I index, out Vector2I lastIndex)
+                    {
+                        if (index.Y > 0)
+                            lastIndex = new Vector2I(index.X, index.Y - 1);
+                        else if (index.X > 0)
+                            lastIndex = new Vector2I(index.X - 1, lines[index.X - 1].Count - 1);
+                        else
+                        {
+                            lastIndex = index;
+                            return false;
+                        }
+
+                        return true;
+                    }
+
+                    /// <summary>
+                    /// Retrieves the index of the character immediately following the index given. Returns
+                    /// true if successful. Otherwise, the end of the collection has been reached.
+                    /// </summary>
+                    public bool TryGetNextIndex(Vector2I index, out Vector2I nextIndex)
+                    {
+                        if (index.X < Count && index.Y + 1 < lines[index.X].Count)
+                            nextIndex = new Vector2I(index.X, index.Y + 1);
+                        else if (index.X + 1 < Count)
+                            nextIndex = new Vector2I(index.X + 1, 0);
+                        else
+                        {
+                            nextIndex = index;
+                            return false;
+                        }
+
+                        return true;
+                    }
+
                     private class PooledLine : Line
                     {
                         public PooledLine(int capacity = 6) : base(6)

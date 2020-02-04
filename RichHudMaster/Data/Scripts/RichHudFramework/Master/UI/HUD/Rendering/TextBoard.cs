@@ -19,7 +19,7 @@ namespace RichHudFramework
             Func<Vector2I, int, object>, // GetCharMember
             Func<object, int, object>, // GetOrSetMember
             Action<IList<RichStringMembers>, Vector2I>, // Insert
-            Action<RichStringMembers, Vector2I>, // Insert
+            Action<IList<RichStringMembers>>, // SetText
             Action // Clear
         >;
 

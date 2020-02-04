@@ -54,17 +54,8 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <summary>
             /// Inserts a string starting on a given line at a given position.
             /// </summary>
-            public override void Insert(RichStringMembers text, Vector2I start)
-            {
-                start = ClampIndex(start);
-                GlyphFormat previous = GetPreviousFormat(start);
-
-                charBuffer.Clear();
-                int insertStart = GetInsertStart(start);
-
-                GetRichChars(text, charBuffer, previous, Scale, x => (x >= ' ' || x == '\n'));
-                InsertChars(insertStart, start);
-            }
+            public override void Insert(RichStringMembers text, Vector2I start) =>
+                Insert(new RichStringMembers[] { text }, start);
 
             /// <summary>
             /// Applies glyph formatting to a range of characters.
@@ -143,7 +134,7 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 Vector2I splitEnd;
 
-                if (TryGetLastIndex(splitStart, out splitEnd))
+                if (lines.TryGetLastIndex(splitStart, out splitEnd))
                 {
                     // Retrieve the index of the first character in the word just before
                     // the split.
@@ -156,7 +147,7 @@ namespace RichHudFramework.UI.Rendering.Server
                     {
                         charBuffer.AddCharFromLine(i.Y, lines[i.X]);
                     }
-                    while (TryGetNextIndex(i, out i) && (i.X < splitEnd.X || (i.X == splitEnd.X && i.Y <= splitEnd.Y)));
+                    while (lines.TryGetNextIndex(i, out i) && (i.X < splitEnd.X || (i.X == splitEnd.X && i.Y <= splitEnd.Y)));
                 }
 
                 return splitStart.X;
@@ -249,7 +240,7 @@ namespace RichHudFramework.UI.Rendering.Server
                     {
                         lines[line].AddCharFromLine(i.Y, lines[i.X]);
                     }
-                    while (TryGetNextIndex(i, out i) && (i.X < wordEnd.X || (i.X == wordEnd.X && i.Y <= wordEnd.Y)));
+                    while (lines.TryGetNextIndex(i, out i) && (i.X < wordEnd.X || (i.X == wordEnd.X && i.Y <= wordEnd.Y)));
                 }
 
                 if (end.X > line)
@@ -290,7 +281,7 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 Vector2I start;
 
-                while (TryGetLastIndex(end, out start) && !(this[end].IsLineBreak || this[start].IsWordBreak(this[end])))
+                while (lines.TryGetLastIndex(end, out start) && !(this[end].IsLineBreak || this[start].IsWordBreak(this[end])))
                     end = start;
 
                 return start;
@@ -305,7 +296,7 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 spaceRemaining -= this[start].Size.X;
 
-                while (TryGetNextIndex(start, out end) && spaceRemaining > 0f && !(this[end].IsLineBreak || this[start].IsWordBreak(this[end])))
+                while (lines.TryGetNextIndex(start, out end) && spaceRemaining > 0f && !(this[end].IsLineBreak || this[start].IsWordBreak(this[end])))
                 {
                     spaceRemaining -= this[end].Size.X;
                     start = end;

@@ -19,7 +19,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Defines a line of formatted characters in a TextBuidler.
                 /// </summary>
-                protected abstract partial class Line : IIndexedCollection<IRichChar>, ILine
+                protected abstract partial class Line : ILine
                 {
                     IRichChar IIndexedCollection<IRichChar>.this[int index] => new RichChar(this, index);
                     internal RichChar this[int index] => new RichChar(this, index);
@@ -49,6 +49,11 @@ namespace RichHudFramework
                     /// </summary>
                     public Vector2 Size => size;
 
+                    public readonly IReadOnlyList<char> extChars;
+                    public readonly IReadOnlyList<FormattedGlyph> extFormattedGlyphs;
+                    public readonly IReadOnlyList<GlyphLocData> extLocData;
+                    internal readonly IReadOnlyList<QuadBoard> extGlyphBoards;
+
                     private readonly List<char> chars;
                     private readonly List<FormattedGlyph> formattedGlyphs;
                     private readonly List<GlyphLocData> locData;
@@ -65,6 +70,11 @@ namespace RichHudFramework
                         formattedGlyphs = new List<FormattedGlyph>(capacity);
                         locData = new List<GlyphLocData>(capacity);
                         glyphBoards = new List<QuadBoard>(capacity);
+
+                        extChars = chars;
+                        extFormattedGlyphs = formattedGlyphs;
+                        extLocData = locData;
+                        extGlyphBoards = glyphBoards;
                     }
 
                     /// <summary>
@@ -96,26 +106,29 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormattingAt(int index, GlyphFormat format, float scale)
                     {
-                        IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
-                        Vector2 glyphSize;
-                        Glyph glyph;
-
-                        scale *= format.TextSize * fontStyle.FontScale;
-
-                        if (chars[index] == '\n')
+                        if (!formattedGlyphs[index].format.data.Equals(format.data))
                         {
-                            glyph = fontStyle[' '];
-                            glyphSize = new Vector2(0f, fontStyle.Height) * scale;
-                        }
-                        else
-                        {
-                            glyph = fontStyle[chars[index]];
-                            glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * scale;
-                        }
+                            IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
+                            Vector2 glyphSize;
+                            Glyph glyph;
 
-                        formattedGlyphs[index] = new FormattedGlyph(glyph, format);
-                        locData[index] = new GlyphLocData(glyph.material.size * scale, glyphSize);
-                        glyphBoards[index] = glyph.GetQuadBoard(scale, format.Color);
+                            scale *= format.TextSize * fontStyle.FontScale;
+
+                            if (chars[index] == '\n')
+                            {
+                                glyph = fontStyle[' '];
+                                glyphSize = new Vector2(0f, fontStyle.Height) * scale;
+                            }
+                            else
+                            {
+                                glyph = fontStyle[chars[index]];
+                                glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * scale;
+                            }
+
+                            formattedGlyphs[index] = new FormattedGlyph(glyph, format);
+                            locData[index] = new GlyphLocData(glyph.material.size * scale, glyphSize);
+                            glyphBoards[index] = glyph.GetQuadBoard(scale, format.Color);
+                        }
                     }
 
                     /// <summary>

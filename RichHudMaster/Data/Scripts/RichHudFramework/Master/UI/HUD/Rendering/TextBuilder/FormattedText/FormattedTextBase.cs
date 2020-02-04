@@ -183,7 +183,7 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             protected GlyphFormat GetPreviousFormat(Vector2I index)
             {
-                if (TryGetLastIndex(index, out index))
+                if (lines.TryGetLastIndex(index, out index))
                     return this[index].Format;
                 else
                     return null;
@@ -198,44 +198,6 @@ namespace RichHudFramework.UI.Rendering.Server
                 index.Y = MathHelper.Clamp(index.Y, 0, (lines.Count > 0) ? lines[index.X].Count : 0);
 
                 return index;
-            }
-
-            /// <summary>
-            /// Retrieves the index of the character immediately preceeding the index given. Returns
-            /// true if successful. Otherwise, the beginning of the collection has been reached.
-            /// </summary>
-            protected virtual bool TryGetLastIndex(Vector2I index, out Vector2I lastIndex)
-            {
-                if (index.Y > 0)
-                    lastIndex = new Vector2I(index.X, index.Y - 1);
-                else if (index.X > 0)
-                    lastIndex = new Vector2I(index.X - 1, lines[index.X - 1].Count - 1);
-                else
-                {
-                    lastIndex = index;
-                    return false;
-                }
-
-                return true;
-            }
-
-            /// <summary>
-            /// Retrieves the index of the character immediately following the index given. Returns
-            /// true if successful. Otherwise, the end of the collection has been reached.
-            /// </summary>
-            protected virtual bool TryGetNextIndex(Vector2I index, out Vector2I nextIndex)
-            {
-                if (index.X < lines.Count && index.Y + 1 < lines[index.X].Count)
-                    nextIndex = new Vector2I(index.X, index.Y + 1);
-                else if (index.X + 1 < lines.Count)
-                    nextIndex = new Vector2I(index.X + 1, 0);
-                else
-                {
-                    nextIndex = index;
-                    return false;
-                }
-
-                return true;
             }
         }
     }

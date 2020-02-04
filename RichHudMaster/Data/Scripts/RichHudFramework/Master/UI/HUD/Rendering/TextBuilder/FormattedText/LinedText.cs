@@ -35,21 +35,8 @@ namespace RichHudFramework.UI.Rendering.Server
             /// Inserts a string starting on a given line at a given position.
             /// </summary>
             /// <param name="start">X = line; Y = ch</param>
-            public override void Insert(RichStringMembers text, Vector2I start)
-            {
-                start = ClampIndex(start);
-                GlyphFormat previous = GetPreviousFormat(start);
-                charBuffer.Clear();
-
-                if (lines.Count > 0)
-                {
-                    for (int n = 0; n < start.Y; n++) 
-                        charBuffer.AddCharFromLine(n, lines[start.X]);
-                }
-
-                GetRichChars(text, charBuffer, previous, Scale, x => (x >= ' ' || x == '\n'));
-                InsertChars(start);
-            }
+            public override void Insert(RichStringMembers text, Vector2I start) =>
+                Insert(new RichStringMembers[] { text }, start);
 
             /// <summary>
             /// Inserts the contents of the character buffer at the index specified.
