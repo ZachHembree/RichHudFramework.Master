@@ -1,14 +1,12 @@
 ﻿using RichHudFramework.Game;
+using RichHudFramework.Server;
 using RichHudFramework.UI.Rendering;
+using Sandbox.ModAPI;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using VRage;
 using VRageMath;
-using Sandbox.ModAPI;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
 using ControlMembers = VRage.MyTuple<
     System.Func<object, int, object>, // GetOrSetMember
     object // ID
@@ -21,7 +19,6 @@ namespace RichHudFramework
         MyTuple<object, Func<int>>, // Member List
         object // ID
     >;
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
 
     namespace UI.Server
     {
@@ -53,13 +50,19 @@ namespace RichHudFramework
                 get { Init(); return instance; }
                 set { instance = value; }
             }
+
             public static bool Open { get { return Instance.settingsMenu.Visible; } set { Instance.settingsMenu.Visible = value; } }
+
+            public static IModControlRoot Root => Instance.root;
+
             private static RichHudTerminal instance;
+            private readonly IModControlRoot root;
             private readonly SettingsMenu settingsMenu;
 
             private RichHudTerminal() : base(false, true)
             {
                 settingsMenu = new SettingsMenu(HudMain.Root);
+                root = settingsMenu.AddModRoot("Rich HUD Master");
                 MyAPIGateway.Utilities.MessageEntered += MessageHandler;
             }
 
@@ -82,6 +85,9 @@ namespace RichHudFramework
             {
                 instance = null;
             }
+
+            public static IModControlRoot AddModRoot(string name) =>
+                Instance.settingsMenu.AddModRoot(name);
 
             public static MyTuple<object, IHudElement> GetClientData(string clientName)
             {
@@ -176,6 +182,8 @@ namespace RichHudFramework
 
                 public TerminalPageBase CurrentPage => Selection?.SelectedElement;
 
+                public ReadOnlyCollection<ModControlRoot> ModRoots => modList.scrollBox.List;
+
                 public override bool Visible => base.Visible && MyAPIGateway.Gui.ChatEntryVisible;
 
                 private readonly ModList modList;
@@ -241,7 +249,7 @@ namespace RichHudFramework
 
                     closeButton.MouseInput.OnLeftClick += CloseMenu;
                     SharedBinds.Escape.OnNewPress += CloseMenu;
-                    SharedBinds.Tilde.OnNewPress += ToggleMenu;
+                    MasterBinds.ToggleTerminal.OnNewPress += ToggleMenu;
 
                     BodyColor = new Color(37, 46, 53);
                     BorderColor = new Color(84, 98, 107);

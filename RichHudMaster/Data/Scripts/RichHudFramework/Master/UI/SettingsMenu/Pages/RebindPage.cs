@@ -19,7 +19,7 @@ namespace RichHudFramework
         {
             public IReadOnlyCollection<IBindGroup> BindGroups { get; }
 
-            public IRebindPage BindContainer => this;
+            public RebindPage GroupContainer => this;
 
             private readonly ScrollBox<BindGroupBox> bindGroups;
 

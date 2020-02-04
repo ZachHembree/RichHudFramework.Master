@@ -1,0 +1,29 @@
+﻿using RichHudFramework.Game;
+using RichHudFramework.UI;
+using RichHudFramework.UI.Server;
+using RichHudFramework;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using VRage;
+using VRageMath;
+
+namespace RichHudFramework.Server
+{
+    internal sealed partial class RichHudMaster
+    {
+        private void InitSettingsMenu()
+        {
+            RichHudTerminal.Root.Enabled = true;
+
+            RichHudTerminal.Root.Add(new RebindPage()
+            {
+                Name = "Binds",
+                GroupContainer =
+                {
+                    { MasterBinds.BindGroup, BindsConfig.DefaultBinds },
+                }
+            });
+        }
+    }
+}

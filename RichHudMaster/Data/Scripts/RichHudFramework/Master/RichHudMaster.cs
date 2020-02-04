@@ -31,6 +31,7 @@ namespace RichHudFramework.Server
         {
             ModName = "Rich HUD Master";
             LogFileName = "RichHudMasterLog.txt";
+            MasterConfig.FileName = "RichHudMasterConfig.xml";
 
             InitializeFonts();
         }
@@ -55,6 +56,8 @@ namespace RichHudFramework.Server
             rhdCommands = CmdManager.AddOrGetCmdGroup("/rhd", GetChatCommands());
             BindManager.Init();
             HudMain.Init();
+            MasterConfig.LoadStart(true);
+            InitSettingsMenu();
 
             RegisterClientHandler();
             CheckClientQueue();
@@ -79,15 +82,6 @@ namespace RichHudFramework.Server
                 new MenuUtilities.MenuButton(
                         $"Open Rich Hud Terminal",
                         () => RichHudTerminal.Open = true)
-            };
-        }
-
-        private List<CmdManager.Command> GetChatCommands()
-        {
-            return new List<CmdManager.Command>
-            {
-                new CmdManager.Command ("reload",
-                    () => Instance.unload = true),
             };
         }
 
@@ -131,6 +125,8 @@ namespace RichHudFramework.Server
             for (int n = 0; n < clients.Count; n++)
                 clients[n].Unregister();
 
+            MasterConfig.Save();
+            MasterConfig.ClearSubscribers();
             Instance = null;
         }
     }
