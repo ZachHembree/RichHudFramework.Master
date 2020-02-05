@@ -56,6 +56,7 @@ namespace RichHudFramework
             public static IModControlRoot Root => Instance.root;
 
             private static RichHudTerminal instance;
+
             private readonly IModControlRoot root;
             private readonly SettingsMenu settingsMenu;
 

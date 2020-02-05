@@ -16,9 +16,9 @@ namespace RichHudFramework.UI.Server
             set { instance = value; }
         }
         private static RebindDialog instance;
-        private static readonly List<int> blacklist;
         private const long inputWaitTime = 200;
 
+        private readonly List<int> blacklist;
         private readonly RebindHud menu;
         private readonly Utils.Stopwatch stopwatch;
 
@@ -30,18 +30,15 @@ namespace RichHudFramework.UI.Server
         private int controlIndex;
         private bool open;
 
-        static RebindDialog()
-        {
-            blacklist = new List<int>
-            {
-                BindManager.GetControl("escape").Index,
-            };
-        }
-
         private RebindDialog() : base(false, true)
         {
             stopwatch = new Utils.Stopwatch();
             menu = new RebindHud();
+
+            blacklist = new List<int>
+            {
+                BindManager.GetControl("escape").Index,
+            };
 
             SharedBinds.Escape.OnNewPress += Exit;
         }

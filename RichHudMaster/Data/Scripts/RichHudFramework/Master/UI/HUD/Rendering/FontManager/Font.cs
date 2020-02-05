@@ -35,7 +35,7 @@ namespace RichHudFramework
 
         namespace Rendering.Server
         {
-            public static partial class FontManager
+            public sealed partial class FontManager
             {
                 /// <summary>
                 /// Defines a collection of font styles.

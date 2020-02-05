@@ -28,14 +28,12 @@ namespace RichHudFramework
 
 			public static class AbhayaLibreMedium
 			{
-				public static readonly FontMembers fontData;
-
-				static AbhayaLibreMedium()
+				public static FontMembers GetFontData()
 				{
 					FontStyleMembers[] styles = new FontStyleMembers[4];
 					styles[0] = GetAbhayaLibreMedium0();
 
-					fontData = new FontMembers("AbhayaLibreMedium", 24f, styles);
+					return new FontMembers("AbhayaLibreMedium", 24f, styles);
 				}
 
 				private static FontStyleMembers GetAbhayaLibreMedium0()

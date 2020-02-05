@@ -18,7 +18,7 @@ namespace RichHudFramework
         public sealed partial class BindManager : ModBase.ComponentBase
         {
             public static IReadOnlyCollection<IBindGroup> Groups => Instance.mainClient.Groups;
-            public static ReadOnlyCollection<IControl> Controls { get; }
+            public static ReadOnlyCollection<IControl> Controls => Instance.extControls;
 
             private static BindManager Instance
             {
@@ -27,13 +27,14 @@ namespace RichHudFramework
             }
             private static BindManager instance;
 
-            private static readonly Control[] controls;
-            private static readonly Dictionary<string, IControl> controlDict, controlDictDisp;
-            private static readonly List<MyKeys> controlBlacklist;
+            private readonly Control[] controls;
+            private readonly ReadOnlyCollection<IControl> extControls;
+            private readonly Dictionary<string, IControl> controlDict, controlDictDisp;
+            private readonly List<MyKeys> controlBlacklist;
 
             private readonly BindClient mainClient;
 
-            static BindManager()
+            private BindManager() : base(false, true)
             {
                 controlBlacklist = new List<MyKeys>()
                 {
@@ -52,11 +53,8 @@ namespace RichHudFramework
                 controlDictDisp = new Dictionary<string, IControl>(300);
 
                 controls = GenerateControls();
-                Controls = new ReadOnlyCollection<IControl>(controls as IControl[]);
-            }
+                extControls = new ReadOnlyCollection<IControl>(controls as IControl[]);
 
-            private BindManager() : base(false, true)
-            {
                 mainClient = new BindClient();
             }
 
@@ -64,6 +62,8 @@ namespace RichHudFramework
             {
                 if (instance == null)
                     instance = new BindManager();
+                else if (!instance.Registered)
+                    instance.RegisterComponent();
             }
 
             public override void HandleInput()
@@ -73,7 +73,10 @@ namespace RichHudFramework
 
             public override void Close()
             {
-                Instance = null;
+                mainClient.Unload();
+
+                if (ModBase.Unloading)
+                    instance = null;
             }
 
             /// <summary>
@@ -104,9 +107,9 @@ namespace RichHudFramework
             {
                 IControl con;
 
-                if (controlDict.TryGetValue(name.ToLower(), out con))
+                if (Instance.controlDict.TryGetValue(name.ToLower(), out con))
                     return con;
-                else if (controlDictDisp.TryGetValue(name.ToLower(), out con))
+                else if (Instance.controlDictDisp.TryGetValue(name.ToLower(), out con))
                     return con;
 
                 return null;
@@ -127,7 +130,7 @@ namespace RichHudFramework
             /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
             /// </summary>
-            private static Control[] GenerateControls()
+            private Control[] GenerateControls()
             {
                 var keys = Enum.GetValues(typeof(MyKeys)) as MyKeys[];
                 Control[] controls = new Control[258];

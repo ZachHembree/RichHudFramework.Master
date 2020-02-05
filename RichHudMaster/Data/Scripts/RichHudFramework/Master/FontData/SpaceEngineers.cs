@@ -28,14 +28,12 @@ namespace RichHudFramework
 
 			public static class SeFont
 			{
-				public static readonly FontMembers fontData;
-
-				static SeFont()
+				public static FontMembers GetFontData()
 				{
 					FontStyleMembers[] styles = new FontStyleMembers[4];
 					styles[0] = GetSpaceEngineers0();
 
-					fontData = new FontMembers("SpaceEngineers", 23f, styles);
+					return new FontMembers("SpaceEngineers", 23f, styles);
 				}
 
 				private static FontStyleMembers GetSpaceEngineers0()

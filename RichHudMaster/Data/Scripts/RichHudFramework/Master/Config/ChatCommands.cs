@@ -29,7 +29,7 @@ namespace RichHudFramework.Server
                 new CmdManager.Command ("close",
                     () => RichHudTerminal.Open = false),
                 new CmdManager.Command ("reload",
-                    () => Instance.unload = true),
+                    () => Instance.Reload()),
             };
         }
     }

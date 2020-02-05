@@ -28,14 +28,12 @@ namespace RichHudFramework
 
 			public static class BitstreamVeraSans
 			{
-				public static readonly FontMembers fontData;
-
-				static BitstreamVeraSans()
+				public static FontMembers GetFontData()
 				{
 					FontStyleMembers[] styles = new FontStyleMembers[4];
 					styles[0] = GetBitstreamVeraSans0();
 
-					fontData = new FontMembers("BitstreamVeraSans", 24f, styles);
+					return  new FontMembers("BitstreamVeraSans", 24f, styles);
 				}
 
 				private static FontStyleMembers GetBitstreamVeraSans0()

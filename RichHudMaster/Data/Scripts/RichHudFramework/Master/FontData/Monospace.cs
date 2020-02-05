@@ -28,14 +28,12 @@ namespace RichHudFramework
 
 			public static class MonoFont
 			{
-				public static readonly FontMembers fontData;
-
-				static MonoFont()
+				public static FontMembers GetFontData()
 				{
 					FontStyleMembers[] styles = new FontStyleMembers[4];
 					styles[0] = GetMonospace0();
 
-					fontData = new FontMembers("Monospace", 23f, styles);
+					return new FontMembers("Monospace", 23f, styles);
 				}
 
 				private static FontStyleMembers GetMonospace0()

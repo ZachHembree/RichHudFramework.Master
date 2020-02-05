@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Game;
+using RichHudFramework.Game;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
@@ -77,10 +77,10 @@ namespace RichHudFramework
             { 
                 get 
                 {
-                    if (instance == null)
+                    if (_instance == null)
                         Init();
 
-                    return instance.root; 
+                    return _instance.root; 
                 } 
             }
 
@@ -91,28 +91,28 @@ namespace RichHudFramework
             { 
                 get 
                 {
-                    if (instance == null)
+                    if (_instance == null)
                         Init();
 
-                    return instance.cursor; 
+                    return _instance.cursor; 
                 }
             }
 
             /// <summary>
             /// Shared clipboard.
             /// </summary>
-            public static RichText ClipBoard { get; set; }
+            public static RichText ClipBoard { get { return Instance._clipBoard; } set { Instance._clipBoard = value; } }
 
             /// <summary>
             /// Resolution scale normalized to 1080p for resolutions over 1080p. Returns a scale of 1f
             /// for lower resolutions.
             /// </summary>
-            public static float ResScale { get; private set; }
+            public static float ResScale { get { return Instance._resScale; } set { Instance._resScale = value; } }
 
             /// <summary>
             /// Debugging element used to test scaling and positioning of members.
             /// </summary>
-            public static UiTestPattern TestPattern { get; private set; }
+            public static UiTestPattern TestPattern { get { return Instance._uiTestPattern; } set { Instance._uiTestPattern = value; } }
 
             /// <summary>
             /// The current horizontal screen resolution in pixels.
@@ -121,10 +121,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (instance == null)
+                    if (_instance == null)
                         Init();
 
-                    return instance.screenWidth;
+                    return _instance.screenWidth;
                 }
             }
 
@@ -135,10 +135,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (instance == null)
+                    if (_instance == null)
                         Init();
 
-                    return instance.screenHeight;
+                    return _instance.screenHeight;
                 }
             }
 
@@ -149,10 +149,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (instance == null)
+                    if (_instance == null)
                         Init();
 
-                    return instance.fov;
+                    return _instance.fov;
                 }
             }
 
@@ -163,10 +163,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (instance == null)
+                    if (_instance == null)
                         Init();
 
-                    return instance.aspectRatio;
+                    return _instance.aspectRatio;
                 }
             }
 
@@ -178,10 +178,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (instance == null)
+                    if (_instance == null)
                         Init();
 
-                    return instance.fovScale;
+                    return _instance.fovScale;
                 }
             }
 
@@ -192,19 +192,24 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (instance == null)
+                    if (_instance == null)
                         Init();
 
-                    return instance.uiBkOpacity;
+                    return _instance.uiBkOpacity;
                 }
             }
 
             private static HudMain Instance
             {
-                get { Init(); return instance; }
-                set { instance = value; }
+                get { Init(); return _instance; }
+                set { _instance = value; }
             }
-            private static HudMain instance;
+            private static HudMain _instance;
+
+            private RichText _clipBoard;
+            private float _resScale;
+            private UiTestPattern _uiTestPattern;
+
             private readonly HudRoot root;
             private readonly HudCursor cursor;
             private readonly Utils.Stopwatch cacheTimer;
@@ -212,25 +217,25 @@ namespace RichHudFramework
 
             private HudMain() : base(false, true)
             {
-                UpdateResScaling();
-                UpdateFovScaling();
-
                 root = new HudRoot();
                 cursor = new HudCursor();
 
                 cacheTimer = new Utils.Stopwatch();
                 cacheTimer.Start();
+
+                _uiTestPattern = new UiTestPattern();
+                _uiTestPattern.Hide();
+
+                cursor.Visible = true;
             }
 
             public static void Init()
             {
-                if (instance == null)
+                if (_instance == null)
                 {
-                    instance = new HudMain();
-
-                    instance.cursor.Visible = true;
-                    TestPattern = new UiTestPattern();
-                    TestPattern.Hide();
+                    _instance = new HudMain();
+                    Instance.UpdateResScaling();
+                    Instance.UpdateFovScaling();
                 }
             }
 
@@ -290,15 +295,15 @@ namespace RichHudFramework
             /// </summary>
             public static Vector2 GetPixelVector(Vector2 scaledVec)
             {
-                if (instance == null)
+                if (_instance == null)
                     Init();
 
                     scaledVec /= 2f;
 
                 return new Vector2
                 (
-                    (int)(scaledVec.X * instance.screenWidth),
-                    (int)(scaledVec.Y * instance.screenHeight)
+                    (int)(scaledVec.X * _instance.screenWidth),
+                    (int)(scaledVec.Y * _instance.screenHeight)
                 );
             }
 
@@ -307,15 +312,15 @@ namespace RichHudFramework
             /// </summary>
             public static Vector2 GetRelativeVector(Vector2 pixelVec)
             {
-                if (instance == null)
+                if (_instance == null)
                     Init();
 
                 pixelVec *= 2f;
 
                 return new Vector2
                 (
-                    pixelVec.X / instance.screenWidth,
-                    pixelVec.Y / instance.screenHeight
+                    pixelVec.X / _instance.screenWidth,
+                    pixelVec.Y / _instance.screenHeight
                 );
             }
 
@@ -330,16 +335,16 @@ namespace RichHudFramework
 
                 return new HudMainMembers()
                 {
-                    Item1 = instance.root.GetApiData(),
-                    Item2 = instance.cursor.GetApiData(),
-                    Item3 = () => instance.screenWidth,
-                    Item4 = () => instance.screenHeight,
-                    Item5 = () => instance.aspectRatio,
+                    Item1 = _instance.root.GetApiData(),
+                    Item2 = _instance.cursor.GetApiData(),
+                    Item3 = () => _instance.screenWidth,
+                    Item4 = () => _instance.screenHeight,
+                    Item5 = () => _instance.aspectRatio,
                     Item6 = new MyTuple<Func<float>, Func<float>, Func<float>, MyTuple<Func<IList<RichStringMembers>>, Action<IList<RichStringMembers>>>, Func<TextBoardMembers>, ApiMemberAccessor>
                     {
                         Item1 = () => ResScale,
-                        Item2 = () => instance.fov,
-                        Item3 = () => instance.fovScale,
+                        Item2 = () => _instance.fov,
+                        Item3 = () => _instance.fovScale,
                         Item4 = new MyTuple<Func<IList<RichStringMembers>>, Action<IList<RichStringMembers>>>(() => ClipBoard?.GetApiData(), x => ClipBoard = new RichText(x)),
                         Item5 = GetTextBoardData,
                         Item6 = GetOrSetMember

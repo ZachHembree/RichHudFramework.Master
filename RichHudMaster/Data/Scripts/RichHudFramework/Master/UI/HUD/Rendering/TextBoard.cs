@@ -526,16 +526,14 @@ namespace RichHudFramework
                 /// </summary>
                 private float UpdateCharOffset(Line line, int right, int left, Vector2 pos, float xAlign)
                 {
-                    FormattedGlyph 
-                        glyphDataRight = line.extFormattedGlyphs[right], 
-                        glyphDataLeft = line.extFormattedGlyphs[left];
-
+                    FormattedGlyph glyphDataRight = line.extFormattedGlyphs[right];
                     IFontStyle fontStyle = FontManager.GetFontStyle(glyphDataRight.format.StyleIndex);
                     float scale = glyphDataRight.format.TextSize * fontStyle.FontScale * Scale;
 
-                    if (left != -1 && CanUseKernings(glyphDataLeft.format, glyphDataRight.format))
+                    if (left >= 0 && CanUseKernings(line.extFormattedGlyphs[left].format, glyphDataRight.format))
                     {
-                        char leftCh = line.extChars[left], rightCh = line.extChars[right];
+                        char leftCh = line.extChars[left], 
+                            rightCh = line.extChars[right];
 
                         pos.X += fontStyle.GetKerningAdjustment(leftCh, rightCh) * scale;
                     }

@@ -1,6 +1,5 @@
 ﻿using RichHudFramework.Game;
 using RichHudFramework.UI;
-using RichHudFramework.UI.FontData;
 using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
@@ -20,20 +19,17 @@ namespace RichHudFramework.Server
     internal sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int versionID = 1;
+        private const int versionID = 2;
 
         private static new RichHudMaster Instance { get; set; }
         private readonly List<RichHudClient> clients;
         private CmdManager.Group rhdCommands;
-        private bool unload;
 
         static RichHudMaster()
         {
             ModName = "Rich HUD Master";
             LogFileName = "RichHudMasterLog.txt";
             MasterConfig.FileName = "RichHudMasterConfig.xml";
-
-            InitializeFonts();
         }
 
         public RichHudMaster() : base(false, true)
@@ -41,19 +37,12 @@ namespace RichHudFramework.Server
             clients = new List<RichHudClient>();
         }
 
-        private static void InitializeFonts()
-        {
-            FontManager.TryAddFont(SeFont.fontData);
-            FontManager.TryAddFont(SeFontShadowed.fontData);
-            FontManager.TryAddFont(MonoFont.fontData);
-            FontManager.TryAddFont(AbhayaLibreMedium.fontData);
-            FontManager.TryAddFont(BitstreamVeraSans.fontData);
-        }
-
         protected override void AfterInit()
         {
             Instance = this;
+
             rhdCommands = CmdManager.AddOrGetCmdGroup("/rhd", GetChatCommands());
+            FontManager.Init();
             BindManager.Init();
             HudMain.Init();
             MasterConfig.LoadStart(true);
@@ -109,21 +98,15 @@ namespace RichHudFramework.Server
             }
         }
 
-        protected override void Update()
-        {
-            if (unload)
-            {
-                unload = false;
-                Reload();
-            }
-        }
-
         protected override void BeforeClose()
         {
             UnregisterClientHandler();
 
-            for (int n = 0; n < clients.Count; n++)
-                clients[n].Unregister();
+            if (Reloading)
+            {
+                for (int n = 0; n < clients.Count; n++)
+                    clients[n].Unregister();
+            }
 
             MasterConfig.Save();
             MasterConfig.ClearSubscribers();
