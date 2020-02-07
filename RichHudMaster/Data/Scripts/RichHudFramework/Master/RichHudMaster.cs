@@ -90,7 +90,7 @@ namespace RichHudFramework.Server
                 {
                     Action<int, object> SendMsgAction = clientData.Item2;
 
-                    if (clientData.Item4 > versionID)
+                    if (clientData.Item4 != versionID)
                         SendMsgAction((int)MsgTypes.RegistrationFailed, $"Client version mismatch. Server vID: {versionID}, Client vID: {clientData.Item4}");
                     else
                         SendMsgAction((int)MsgTypes.RegistrationFailed, "Client already registered.");

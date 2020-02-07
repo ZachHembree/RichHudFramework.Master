@@ -434,7 +434,7 @@ namespace RichHudFramework
                     for (int n = 0; n < lines.Count; n++)
                         currentLength += lines[n].extChars.Count;
 
-                    return newTextLength == currentLength && currentLength > 0;
+                    return newTextLength == currentLength && currentLength > 1;
                 }
 
                 public TextBuilderMembers GetApiData()

@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using VRage;
 using VRage.Game.ModAPI;
 using VRageMath;
+using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
-using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
@@ -73,28 +73,28 @@ namespace RichHudFramework
             /// <summary>
             /// Root parent for all HUD elements.
             /// </summary>
-            public static IHudParent Root 
-            { 
-                get 
+            public static IHudParent Root
+            {
+                get
                 {
                     if (_instance == null)
                         Init();
 
-                    return _instance.root; 
-                } 
+                    return _instance.root;
+                }
             }
 
             /// <summary>
             /// Cursor shared between mods.
             /// </summary>
             public static ICursor Cursor
-            { 
-                get 
+            {
+                get
                 {
                     if (_instance == null)
                         Init();
 
-                    return _instance.cursor; 
+                    return _instance.cursor;
                 }
             }
 
@@ -298,7 +298,7 @@ namespace RichHudFramework
                 if (_instance == null)
                     Init();
 
-                    scaledVec /= 2f;
+                scaledVec /= 2f;
 
                 return new Vector2
                 (
@@ -345,7 +345,7 @@ namespace RichHudFramework
                         Item1 = () => ResScale,
                         Item2 = () => _instance.fov,
                         Item3 = () => _instance.fovScale,
-                        Item4 = new MyTuple<Func<IList<RichStringMembers>>, Action<IList<RichStringMembers>>>(() => ClipBoard?.GetApiData(), x => ClipBoard = new RichText(x)),
+                        Item4 = new MyTuple<Func<IList<RichStringMembers>>, Action<IList<RichStringMembers>>>(() => ClipBoard.ApiData, x => ClipBoard = new RichText(x)),
                         Item5 = GetTextBoardData,
                         Item6 = GetOrSetMember
                     }

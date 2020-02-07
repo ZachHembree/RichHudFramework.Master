@@ -21,6 +21,8 @@ namespace RichHudFramework
 
                     public int Count { get; private set; }
 
+                    public int Capacity => lines.Capacity;
+
                     private readonly List<Line> lines;
 
                     public LinePool()
@@ -131,13 +133,12 @@ namespace RichHudFramework
                     /// </summary>
                     public void AddRange(IList<Line> newLines)
                     {
-                        if (Count + newLines.Count > lines.Capacity)
-                            lines.Capacity = Count + newLines.Count;
+                        lines.EnsureCapacity(Count + newLines.Count);
 
                         for (int n = 0; n < newLines.Count; n++)
-                        {
                             Add(newLines[n]);
-                        }
+
+                        TrimExcess();
                     }
 
                     /// <summary>
@@ -147,6 +148,8 @@ namespace RichHudFramework
                     {
                         lines.InsertRange(index, newLines);
                         Count += newLines.Count;
+
+                        TrimExcess();
                     }
 
                     /// <summary>
@@ -177,6 +180,15 @@ namespace RichHudFramework
                         }
 
                         Count -= rangeSize;
+                    }
+
+                    public void EnsureCapacity(int capacity) =>
+                        lines.EnsureCapacity(capacity);
+
+                    public void TrimExcess()
+                    {
+                        if (Count > 10 && lines.Capacity > 5 * Count)
+                            lines.TrimExcess();
                     }
 
                     /// <summary>
