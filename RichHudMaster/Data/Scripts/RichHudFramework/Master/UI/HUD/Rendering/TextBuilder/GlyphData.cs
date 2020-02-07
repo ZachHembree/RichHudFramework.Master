@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework
 {
@@ -63,18 +63,6 @@ namespace RichHudFramework
                         this.glyph = glyph;
                         this.format = format;
                     }
-                }
-
-                internal interface IRichCharFull : IRichChar
-                {
-                    Glyph Glyph { get; }
-                    QuadBoard GlyphBoard { get; }
-                    Vector2 BbSize { get; }
-                    Vector2 Offset { get; set; }
-                    bool IsLineBreak { get; }
-                    bool IsSeparator { get; }
-
-                    bool IsWordBreak(IRichCharFull right);
                 }
             }
         }

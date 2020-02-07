@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework
 {
@@ -222,23 +222,22 @@ namespace RichHudFramework
                 /// <summary>
                 /// Clears current text and appends the text given.
                 /// </summary>
-                public void SetText(RichText text)
-                {
-                    RichStringMembers[] data = text.GetApiData();
-
-                    if (!IsTextEqual(data))
-                    {
-                        Clear();
-                        AppendData(data);
-                    }
-                }
+                public void SetText(RichText text) =>
+                    SetData(text.ApiData);
 
                 protected void SetData(IList<RichStringMembers> text)
                 {
+                    for (int n = 0; n < text.Count; n++)
+                    {
+                        if (text[n].Item2.Equals(GlyphFormat.Empty.data))
+                            text[n] = new RichStringMembers(text[n].Item1, Format.data);
+                    }
+
                     if (!IsTextEqual(text))
                     {
                         Clear();
-                        AppendData(text);
+                        formatter.Append(text);
+                        AfterTextUpdate();
                     }
                 }
 
@@ -254,16 +253,8 @@ namespace RichHudFramework
                 /// <summary>
                 /// Appends the given text to the end of the text using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
                 /// </summary>
-                public void Append(RichText text)
-                {
-                    for (int n = 0; n < text.Count; n++)
-                    {
-                        if (text[n].format == null)
-                            text[n].format = Format;
-                    }
-
-                    AppendData(text.GetApiData());
-                }
+                public void Append(RichText text) =>
+                    AppendData(text.ApiData);
 
                 protected void AppendData(IList<RichStringMembers> text)
                 {
@@ -280,16 +271,8 @@ namespace RichHudFramework
                 /// <summary>
                 /// Inserts the given text to the end of the text at the specified starting index using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
                 /// </summary>
-                public void Insert(RichText text, Vector2I start)
-                {
-                    for (int n = 0; n < text.Count; n++)
-                    {
-                        if (text[n].format == GlyphFormat.Empty)
-                            text[n].format = Format;
-                    }
-
-                    InsertData(text.GetApiData(), start);
-                }
+                public void Insert(RichText text, Vector2I start) =>
+                    InsertData(text.ApiData, start);
 
                 public void InsertData(IList<RichStringMembers> text, Vector2I start)
                 {
@@ -406,6 +389,7 @@ namespace RichHudFramework
                     if (IsTextLengthEqual(text))
                     {
                         Vector2I i = Vector2I.Zero;
+                        GlyphFormat lastFormat = null;
 
                         for (int x = 0; x < text.Count; x++)
                         {
@@ -415,10 +399,19 @@ namespace RichHudFramework
 
                             for (int y = 0; (y < newChars.Length && lines.TryGetNextIndex(i, out nextIndex)); y++)
                             {
-                                char ch = lines[i.X].extChars[i.Y];
-                                GlyphFormatMembers format = lines[i.X].extFormattedGlyphs[i.Y].format.data;
+                                GlyphFormat currentFormat = lines[i.X].extFormattedGlyphs[i.Y].format;
 
-                                if (!((ch == newChars[y]) && (format.Equals(newFormat))))
+                                if (lastFormat == null || lastFormat != currentFormat)
+                                {
+                                    if (currentFormat.data.Equals(newFormat))
+                                        lastFormat = currentFormat;
+                                    else
+                                        return false;
+                                }
+
+                                char ch = lines[i.X].extChars[i.Y];
+
+                                if (ch != newChars[y])
                                     return false;
 
                                 i = nextIndex;
@@ -441,7 +434,7 @@ namespace RichHudFramework
                     for (int n = 0; n < lines.Count; n++)
                         currentLength += lines[n].extChars.Count;
 
-                    return newTextLength == currentLength;
+                    return newTextLength == currentLength && currentLength > 0;
                 }
 
                 public TextBuilderMembers GetApiData()

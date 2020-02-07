@@ -5,7 +5,7 @@ using System.Text;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework
 {
@@ -137,18 +137,18 @@ namespace RichHudFramework
                     case ControlCatAccessors.HeaderText:
                         {
                             if (data == null)
-                                return HeaderText.GetApiData();
+                                return HeaderText.ApiData;
                             else
-                                HeaderText = new RichText((RichStringMembers[])data);
+                                HeaderText = new RichText((IList<RichStringMembers>)data);
 
                             break;
                         }
                     case ControlCatAccessors.SubheaderText:
                         {
                             if (data == null)
-                                return SubheaderText.GetApiData();
+                                return SubheaderText.ApiData;
                             else
-                                SubheaderText = new RichText((RichStringMembers[])data);
+                                SubheaderText = new RichText((IList<RichStringMembers>)data);
 
                             break;
                         }

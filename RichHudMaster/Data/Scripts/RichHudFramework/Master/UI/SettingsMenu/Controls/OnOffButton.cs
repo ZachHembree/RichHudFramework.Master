@@ -1,10 +1,11 @@
 ﻿using RichHudFramework.UI.Rendering;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework.UI.Server
 {
@@ -139,18 +140,18 @@ namespace RichHudFramework.UI.Server
                     case OnOffButtonAccessors.OffText:
                         {
                             if (data == null)
-                                return OffText.GetApiData();
+                                return OffText.ApiData;
                             else
-                                OffText = new RichText((RichStringMembers[])data);
+                                OffText = new RichText((IList<RichStringMembers>)data);
 
                             break;
                         }
                     case OnOffButtonAccessors.OnText:
                         {
                             if (data == null)
-                                return OnText.GetApiData();
+                                return OnText.ApiData;
                             else
-                                OnText = new RichText((RichStringMembers[])data);
+                                OnText = new RichText((IList<RichStringMembers>)data);
 
                             break;
                         }

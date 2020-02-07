@@ -69,7 +69,7 @@ namespace RichHudFramework
 
             private void MessageHandler(string message, ref bool sendToOthers)
             {
-                if (settingsMenu.Visible)
+                if (Open)
                     sendToOthers = false;
             }
 
@@ -84,6 +84,7 @@ namespace RichHudFramework
 
             public override void Close()
             {
+                MyAPIGateway.Utilities.MessageEntered -= MessageHandler;
                 instance = null;
             }
 

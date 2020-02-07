@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework
 {

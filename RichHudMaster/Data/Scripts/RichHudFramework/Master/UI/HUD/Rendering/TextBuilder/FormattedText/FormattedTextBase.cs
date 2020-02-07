@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework.UI.Rendering.Server
 {
@@ -144,7 +144,7 @@ namespace RichHudFramework.UI.Rendering.Server
             }
 
             /// <summary>
-            /// Builds a list of <see cref="IRichCharFull"/>s from RichString data.
+            /// Builds a list of <see cref="Line.RichChar"/>s from RichString data.
             /// </summary>
             protected static void GetRichChars(RichStringMembers richString, Line charBuffer, GlyphFormat previous, float scale, Func<char, bool> FilterFunc)
             {

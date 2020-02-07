@@ -6,7 +6,7 @@ using VRage;
 using VRageMath;
 using RichHudFramework.UI.Rendering;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 using BindDefinitionData = VRage.MyTuple<string, string[]>;
 
 namespace RichHudFramework

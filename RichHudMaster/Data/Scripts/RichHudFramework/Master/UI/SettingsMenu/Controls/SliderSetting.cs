@@ -1,11 +1,12 @@
 ﻿using RichHudFramework.UI.Rendering;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using EventAccessor = VRage.MyTuple<bool, System.Action>;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework.UI.Server
 {
@@ -29,7 +30,7 @@ namespace RichHudFramework.UI.Server
         Percent = 18,
 
         /// <summary>
-        /// RichStringMembers[]
+        /// IList<RichStringMembers>
         /// </summary>
         ValueText = 19,
     }
@@ -181,9 +182,9 @@ namespace RichHudFramework.UI.Server
                     case SliderSettingsAccessors.ValueText:
                         {
                             if (data == null)
-                                return ValueText.GetApiData();
+                                return ValueText.ApiData;
                             else
-                                ValueText = new RichText((RichStringMembers[])data);
+                                ValueText = new RichText((IList<RichStringMembers>)data);
 
                             break;
                         }

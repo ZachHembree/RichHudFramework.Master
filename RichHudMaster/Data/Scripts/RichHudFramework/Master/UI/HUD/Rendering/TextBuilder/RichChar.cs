@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using VRage;
 using VRageMath;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework
 {
@@ -16,7 +16,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Wrapper used to facilitate access to rich character members.
                     /// </summary>
-                    internal struct RichChar : IRichCharFull
+                    internal struct RichChar : IRichChar
                     {
                         /// <summary>
                         /// The character associated with the <see cref="RichChar"/>
@@ -67,8 +67,8 @@ namespace RichHudFramework
                             set { line.locData[index] = line.locData[index].SetOffset(value); }
                         }
 
-                        public readonly Line line;
                         public readonly int index;
+                        public readonly Line line;
 
                         public RichChar(Line line, int index)
                         {
@@ -76,7 +76,7 @@ namespace RichHudFramework
                             this.index = index;
                         }
 
-                        public bool IsWordBreak(IRichCharFull right) =>
+                        public bool IsWordBreak(Line.RichChar right) =>
                             (IsSeparator && !right.IsSeparator);
                     }
                 }

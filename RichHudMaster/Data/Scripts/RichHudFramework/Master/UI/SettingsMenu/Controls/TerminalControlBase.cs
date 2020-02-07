@@ -1,8 +1,9 @@
 ﻿using RichHudFramework.UI.Rendering;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using VRage;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework.UI.Server
@@ -74,9 +75,9 @@ namespace RichHudFramework.UI.Server
                 case TerminalControlAccessors.Name:
                     {
                         if (data == null)
-                            return Name.GetApiData();
+                            return Name.ApiData;
                         else
-                            Name = new RichText((RichStringMembers[])data);
+                            Name = new RichText((IList<RichStringMembers>)data);
 
                         break;
                     }

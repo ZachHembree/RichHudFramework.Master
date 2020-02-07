@@ -6,7 +6,7 @@ using VRage;
 using VRageMath;
 using RichHudFramework.UI.Rendering;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using GlyphFormatMembers = VRage.MyTuple<VRageMath.Vector2I, int, VRageMath.Color, float>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework
 {
@@ -58,9 +58,9 @@ namespace RichHudFramework
                     case TerminalPageAccessors.Name:
                         {
                             if (data == null)
-                                return Name.GetApiData();
+                                return Name.ApiData;
                             else
-                                Name = new RichText(data as RichStringMembers[]);
+                                Name = new RichText(data as IList<RichStringMembers>);
 
                             break;
                         }
