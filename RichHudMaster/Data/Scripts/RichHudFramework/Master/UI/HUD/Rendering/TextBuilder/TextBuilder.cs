@@ -395,9 +395,8 @@ namespace RichHudFramework
                         {
                             StringBuilder newChars = text[x].Item1;
                             GlyphFormatMembers newFormat = text[x].Item2;
-                            Vector2I nextIndex;
 
-                            for (int y = 0; (y < newChars.Length && lines.TryGetNextIndex(i, out nextIndex)); y++)
+                            for (int y = 0; y < newChars.Length; y++)
                             {
                                 GlyphFormat currentFormat = lines[i.X].extFormattedGlyphs[i.Y].format;
 
@@ -414,7 +413,8 @@ namespace RichHudFramework
                                 if (ch != newChars[y])
                                     return false;
 
-                                i = nextIndex;
+                                if (!lines.TryGetNextIndex(i, out i))
+                                    break;
                             }
                         }
 
@@ -434,7 +434,7 @@ namespace RichHudFramework
                     for (int n = 0; n < lines.Count; n++)
                         currentLength += lines[n].extChars.Count;
 
-                    return newTextLength == currentLength && currentLength > 1;
+                    return newTextLength == currentLength && currentLength > 0;
                 }
 
                 public TextBuilderMembers GetApiData()
