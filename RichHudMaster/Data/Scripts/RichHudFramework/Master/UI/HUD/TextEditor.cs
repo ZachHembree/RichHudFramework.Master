@@ -200,7 +200,7 @@ namespace RichHudFramework.UI
         {
             GlyphFormat format = textBox.Format;
             Vector2I index = format.StyleIndex;
-            int bold = (int)FontStyleEnum.Bold;
+            int bold = (int)FontStyles.Bold;
 
             if ((format.StyleIndex.Y & bold) == bold)
                 index.Y -= bold;  
@@ -216,7 +216,7 @@ namespace RichHudFramework.UI
             GlyphFormat format = textBox.Format;
             Vector2I index = format.StyleIndex;
 
-            int italic = (int)FontStyleEnum.Italic;
+            int italic = (int)FontStyles.Italic;
 
             if ((format.StyleIndex.Y & italic) == italic)
                 index.Y -= italic;

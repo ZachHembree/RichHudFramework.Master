@@ -42,7 +42,7 @@ namespace RichHudFramework
                             }
                         }
                         public IFont Font { get; }
-                        public FontStyleEnum Style { get; }
+                        public FontStyles Style { get; }
                         public float PtSize => Font.PtSize;
                         public float Height { get; }
                         public float BaseLine { get; }
@@ -51,7 +51,7 @@ namespace RichHudFramework
                         private readonly Dictionary<char, Glyph> glyphs;
                         private readonly Dictionary<uint, float> kerningPairs;
 
-                        public FontStyle(Font parent, FontStyleEnum style, float height, float baseline, Dictionary<char, Glyph> glyphs, Dictionary<uint, float> kerningPairs)
+                        public FontStyle(Font parent, FontStyles style, float height, float baseline, Dictionary<char, Glyph> glyphs, Dictionary<uint, float> kerningPairs)
                         {
                             Font = parent;
                             Style = style;

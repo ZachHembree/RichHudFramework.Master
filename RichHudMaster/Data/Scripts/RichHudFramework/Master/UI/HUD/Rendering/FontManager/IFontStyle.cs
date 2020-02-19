@@ -55,7 +55,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Gets the style enum associated with the <see cref="IFontStyle"/>
                 /// </summary>
-                FontStyleEnum Style { get; }
+                FontStyles Style { get; }
 
                 /// <summary>
                 /// Position of the base line starting from the origin

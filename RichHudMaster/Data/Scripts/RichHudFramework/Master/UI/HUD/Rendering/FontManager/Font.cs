@@ -50,7 +50,7 @@ namespace RichHudFramework
                     // <summary>
                     /// Retrieves the font style at the given index.
                     /// </summary>
-                    public IFontStyle this[FontStyleEnum type] => styles[(int)type];
+                    public IFontStyle this[FontStyles type] => styles[(int)type];
 
                     /// <summary>
                     /// Font name
@@ -150,7 +150,7 @@ namespace RichHudFramework
                             for (int n = 0; n < kernData.Length; n++)
                                 kerningPairs.Add(kernData[n].Key, kernData[n].Value);
 
-                            styles[style] = new FontStyle(this, (FontStyleEnum)style, height, baseLine, glyphs, kerningPairs);
+                            styles[style] = new FontStyle(this, (FontStyles)style, height, baseLine, glyphs, kerningPairs);
                             return true;
                         }
                         else
@@ -160,7 +160,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Returns true if the font is defined for the given style.
                     /// </summary>
-                    public bool IsStyleDefined(FontStyleEnum styleEnum) =>
+                    public bool IsStyleDefined(FontStyles styleEnum) =>
                         styles[(int)styleEnum] != null;
 
                     /// <summary>
@@ -178,7 +178,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Retrieves the full index of the font style
                     /// </summary>
-                    public Vector2I GetStyleIndex(FontStyleEnum style) =>
+                    public Vector2I GetStyleIndex(FontStyles style) =>
                         new Vector2I(Index, (int)style);
 
                     /// <summary>

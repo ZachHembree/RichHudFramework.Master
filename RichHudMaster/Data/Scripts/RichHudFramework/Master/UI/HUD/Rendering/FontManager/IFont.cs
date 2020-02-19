@@ -36,7 +36,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Gets the style for the given font; returns null if the style isn't defined.
                 /// </summary>
-                IFontStyle this[FontStyleEnum type] { get; }
+                IFontStyle this[FontStyles type] { get; }
 
                 /// <summary>
                 /// Gets the style for the given font; returns null if the style isn't defined.
