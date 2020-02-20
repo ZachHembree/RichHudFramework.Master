@@ -25,7 +25,7 @@ namespace RichHudFramework
             object // ID
         >;
 
-        public sealed partial class RichHudTerminal : ModBase.ComponentBase
+        public sealed partial class RichHudTerminal : RichHudComponentBase
         {
             private class ModControlRoot : HudElementBase, IModControlRoot, IListBoxEntry
             {

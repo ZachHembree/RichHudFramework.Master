@@ -47,7 +47,7 @@ namespace RichHudFramework
             /// <summary>
             /// Manages fonts used by the Rich Hud Framework
             /// </summary>
-            public sealed partial class FontManager : ModBase.ComponentBase
+            public sealed partial class FontManager : RichHudComponentBase
             {
                 /// <summary>
                 /// Retrieves default font for Space Engineers with regular styling.
@@ -82,8 +82,8 @@ namespace RichHudFramework
                         _instance = new FontManager();
                         InitializeFonts();
                     }
-                    else if (!_instance.Registered)
-                        _instance.RegisterComponent();
+                    else if (_instance.Parent == null)
+                        _instance.RegisterComponent(RichHudMain.Instance);
                 }
 
                 private static void InitializeFonts()
@@ -97,7 +97,7 @@ namespace RichHudFramework
 
                 public override void Close()
                 {
-                    if (ModBase.Unloading)
+                    if (Parent.Unloading)
                         _instance = null;
                 }
 

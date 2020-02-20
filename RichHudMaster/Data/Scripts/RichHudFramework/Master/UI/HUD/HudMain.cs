@@ -68,7 +68,7 @@ namespace RichHudFramework
             >
         >;
 
-        public sealed partial class HudMain : ModBase.ComponentBase
+        public sealed partial class HudMain : RichHudComponentBase
         {
             /// <summary>
             /// Root parent for all HUD elements.

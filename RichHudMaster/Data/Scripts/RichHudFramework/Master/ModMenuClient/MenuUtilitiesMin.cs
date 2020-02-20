@@ -11,17 +11,17 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Collection of wrapper types and utilities used to simplify the creation of settings menu elements in the Text HUD API Mod Menu
     /// </summary>
-    public sealed class MenuUtilities : ModBase.ComponentBase
+    public sealed class MenuUtilities : RichHudComponentBase
     {
         public static bool CanAddElements => !wasClosed;
 
         private static MenuUtilities Instance
         {
-            get { Init(); return instance; }
-            set { instance = value; }
+            get { Init(); return _instance; }
+            set { _instance = value; }
         }
 
-        private static MenuUtilities instance = null;
+        private static MenuUtilities _instance = null;
         private static bool wasClosed = false;
         private static readonly List<Action> menuUpdateActions;
 
@@ -35,12 +35,12 @@ namespace RichHudFramework.UI
 
         private static void Init()
         {
-            if (instance == null)
+            if (_instance == null)
             {
-                instance = new MenuUtilities();
+                _instance = new MenuUtilities();
 
                 if (!wasClosed)
-                    MenuRoot.Init(ModBase.ModName, $"{ModBase.ModName} Settings");
+                    MenuRoot.Init(_instance.Parent.ModName, $"{_instance.Parent.ModName} Settings");
             }
         }
 
@@ -301,7 +301,7 @@ namespace RichHudFramework.UI
             }
 
             private void OnClick() =>
-                ModBase.RunSafeAction(OnClickAction);
+                RichHudMain.Instance.RunSafeAction(OnClickAction);
 
             public override void InitElement() =>
                 Element = new HudApiMin.MenuItem(Name, Parent.CategoryBase, OnClick);

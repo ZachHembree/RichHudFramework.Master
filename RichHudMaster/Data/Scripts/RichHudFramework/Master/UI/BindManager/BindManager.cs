@@ -15,17 +15,17 @@ namespace RichHudFramework
         /// <summary>
         /// Manages custom keybinds; singleton
         /// </summary>
-        public sealed partial class BindManager : ModBase.ComponentBase
+        public sealed partial class BindManager : RichHudComponentBase
         {
             public static IReadOnlyCollection<IBindGroup> Groups => Instance.mainClient.Groups;
             public static ReadOnlyCollection<IControl> Controls => Instance.extControls;
 
             private static BindManager Instance
             {
-                get { Init(); return instance; }
-                set { instance = value; }
+                get { Init(); return _instance; }
+                set { _instance = value; }
             }
-            private static BindManager instance;
+            private static BindManager _instance;
 
             private readonly Control[] controls;
             private readonly ReadOnlyCollection<IControl> extControls;
@@ -60,10 +60,10 @@ namespace RichHudFramework
 
             public static void Init()
             {
-                if (instance == null)
-                    instance = new BindManager();
-                else if (!instance.Registered)
-                    instance.RegisterComponent();
+                if (_instance == null)
+                    _instance = new BindManager();
+                else if (_instance.Parent == null)
+                    _instance.RegisterComponent(RichHudMain.Instance);
             }
 
             public override void HandleInput()
@@ -75,8 +75,8 @@ namespace RichHudFramework
             {
                 mainClient.Unload();
 
-                if (ModBase.Unloading)
-                    instance = null;
+                if (Parent.Unloading)
+                    _instance = null;
             }
 
             /// <summary>

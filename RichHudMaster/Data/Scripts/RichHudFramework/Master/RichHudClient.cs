@@ -19,7 +19,7 @@ namespace RichHudFramework.Server
             private readonly IBindClient bindClient;
 
             private readonly Action<int, object> SendMsgAction;
-            private readonly Action UnloadAction;
+            private readonly Action ReloadAction;
             private MyTuple<object, IHudElement> menuData;
             private bool registered;
 
@@ -27,14 +27,14 @@ namespace RichHudFramework.Server
             {
                 debugName = data.Item1;
                 SendMsgAction = data.Item2;
-                UnloadAction = data.Item3;
+                ReloadAction = data.Item3;
                 versionID = data.Item4;
 
                 bindClient = BindManager.GetNewBindClient();
                 menuData = RichHudTerminal.GetClientData(debugName);
                 registered = true;
 
-                SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => RunSafeAction(Unregister), GetApiData, versionID));
+                SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => Instance.RunSafeAction(Unregister), GetApiData, versionID));
             }
 
             /// <summary>
@@ -68,11 +68,13 @@ namespace RichHudFramework.Server
                 if (registered)
                 {
                     registered = false;
-
                     Instance.clients.Remove(this);
+
                     bindClient.Unload();
                     menuData.Item2.Unregister();
-                    UnloadAction();
+                    ReloadAction();
+
+                    Instance.SendChatMessage($"Unregistered {debugName}");
                 }
             }
         }

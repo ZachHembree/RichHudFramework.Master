@@ -254,7 +254,7 @@ namespace RichHudFramework
                     if (combo == null || TryGetCombo(uniqueControls, out newCombo))
                         return TryRegisterBind(bindName, newCombo, out bind, silent);
                     else if (!silent)
-                        ModBase.SendChatMessage($"Invalid bind for {Name}.{bindName}. One or more control names were not recognised.");
+                        RichHudMain.Instance.SendChatMessage($"Invalid bind for {Name}.{bindName}. One or more control names were not recognised.");
 
                     return false;
                 }
@@ -278,7 +278,7 @@ namespace RichHudFramework
                             return true;
                     }
                     else if (!silent)
-                        ModBase.SendChatMessage($"Bind {Name}.{bindName} already exists.");
+                        RichHudMain.Instance.SendChatMessage($"Bind {Name}.{bindName} already exists.");
 
                     return false;
                 }
@@ -337,7 +337,7 @@ namespace RichHudFramework
 
                         if (bindError)
                         {
-                            ModBase.SendChatMessage("One or more keybinds in the given configuration were invalid or conflict with oneanother.");
+                            RichHudMain.Instance.SendChatMessage("One or more keybinds in the given configuration were invalid or conflict with oneanother.");
                             UnregisterControls();
 
                             usedControls = oldUsedControls;
@@ -351,7 +351,7 @@ namespace RichHudFramework
                     }
                     else
                     {
-                        ModBase.SendChatMessage("Bind data cannot be null or empty.");
+                        RichHudMain.Instance.SendChatMessage("Bind data cannot be null or empty.");
                         return false;
                     }
                 }
@@ -453,7 +453,7 @@ namespace RichHudFramework
                         if (bind.Name.ToLower() == name)
                             return bind;
 
-                    ModBase.SendChatMessage($"{name} is not a valid bind name.");
+                    RichHudMain.Instance.SendChatMessage($"{name} is not a valid bind name.");
                     return null;
                 }
 

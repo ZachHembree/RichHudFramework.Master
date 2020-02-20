@@ -30,7 +30,7 @@ namespace RichHudFramework
             Func<int, ControlMembers> // GetNewModPage
         >;
 
-        public sealed partial class RichHudTerminal : ModBase.ComponentBase
+        public sealed partial class RichHudTerminal : RichHudComponentBase
         {
             public static readonly GlyphFormat HeaderFormat = new GlyphFormat(Color.White, TextAlignment.Center, 1.15f);
             public static readonly GlyphFormat ControlFormat = GlyphFormat.Blueish.WithSize(1.08f);

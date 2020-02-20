@@ -8,7 +8,7 @@ namespace RichHudFramework.UI.TextHudApi
     /// <summary>
     /// HudAPI client stripped down to only allow usage of mod menu categories and buttons.
     /// </summary>
-    public class HudApiMin : ModBase.ComponentBase
+    public class HudApiMin : RichHudComponentBase
     {
         public static HudApiMin Instance
         {
