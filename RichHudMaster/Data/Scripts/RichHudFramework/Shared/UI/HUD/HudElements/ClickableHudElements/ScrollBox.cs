@@ -5,6 +5,8 @@ namespace RichHudFramework.UI
 {
     public enum ScrollBoxSizingModes : byte
     {
+        None = 0,
+
         /// <summary>
         /// In this mode, the element will automatically resize to match the size of the chain.
         /// </summary>
