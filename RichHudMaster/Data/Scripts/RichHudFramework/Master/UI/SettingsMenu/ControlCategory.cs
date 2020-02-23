@@ -71,7 +71,7 @@ namespace RichHudFramework
                 scrollBox = new ScrollBox<ControlTile>()
                 {
                     Spacing = 12f,
-                    FitToChain = false,
+                    SizingMode = ScrollBoxSizingModes.None,
                     AlignVertical = false,
                     MinimumVisCount = 1,
                     Color = Color.Red,

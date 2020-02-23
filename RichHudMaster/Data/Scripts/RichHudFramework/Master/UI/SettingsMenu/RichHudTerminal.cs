@@ -362,7 +362,7 @@ namespace RichHudFramework
                         scrollBox = new ScrollBox<ModControlRoot>(this)
                         {
                             AlignVertical = true,
-                            FitToChain = false,
+                            SizingMode = ScrollBoxSizingModes.FitMembersToBox,
                             Color = ListBgColor,
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
                         };

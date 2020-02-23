@@ -29,7 +29,7 @@ namespace RichHudFramework
                 {
                     Spacing = 30f,
                     Padding = new Vector2(32f, 0f),
-                    FitToChain = false,
+                    SizingMode = ScrollBoxSizingModes.None,
                     AlignVertical = true,
                     DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding
                 };
@@ -159,7 +159,7 @@ namespace RichHudFramework
                     scrollBox = new ScrollBox<BindBox>()
                     {
                         AlignVertical = true,
-                        FitToChain = false,
+                        SizingMode = ScrollBoxSizingModes.None,
                         Spacing = 8f,
                     };
 

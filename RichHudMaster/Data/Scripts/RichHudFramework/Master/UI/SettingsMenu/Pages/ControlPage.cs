@@ -32,7 +32,7 @@ namespace RichHudFramework
                 catBox = new ScrollBox<ControlCategory>(this)
                 {
                     Spacing = 30f,
-                    FitToChain = false,
+                    SizingMode = ScrollBoxSizingModes.None,
                     AlignVertical = true,
                     DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding
                 };

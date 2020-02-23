@@ -1,5 +1,6 @@
 ﻿using RichHudFramework.Game;
 using RichHudFramework.UI;
+using RichHudFramework.IO;
 using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
@@ -37,7 +38,7 @@ namespace RichHudFramework.Server
                 throw new Exception("Only one instance of RichHudMaster can exist at any given time.");
 
             ModName = "Rich HUD Master";
-            LogFileName = "RichHudMasterLog.txt";
+            LogIO.FileName = "RichHudMasterLog.txt";
             MasterConfig.FileName = "RichHudMasterConfig.xml";
 
             clients = new List<RichHudClient>();
