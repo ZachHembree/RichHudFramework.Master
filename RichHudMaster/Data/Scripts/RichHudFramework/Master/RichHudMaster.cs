@@ -5,6 +5,7 @@ using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using VRage;
+using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -22,7 +23,7 @@ namespace RichHudFramework.Server
     internal sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int versionID = 2;
+        private const int versionID = 3;
 
         private static RichHudMaster Instance { get; set; }
         private readonly List<RichHudClient> clients;
@@ -42,15 +43,19 @@ namespace RichHudFramework.Server
             clients = new List<RichHudClient>();
         }
 
-        protected override void AfterInit()
+        protected override void AfterLoadData()
         {
             RichHudMain.MainModName = ModName;
             rhdCommands = CmdManager.AddOrGetCmdGroup("/rhd", GetChatCommands());
 
             FontManager.Init();
             BindManager.Init();
-            HudMain.Init();
             MasterConfig.Load(true);
+        }
+
+        protected override void AfterInit()
+        {
+            HudMain.Init();
             InitSettingsMenu();
 
             RegisterClientHandler();
@@ -133,7 +138,7 @@ namespace RichHudFramework.Server
 
             if (Reloading)
             {
-                for (int n = 0; n < clients.Count; n++)
+                for (int n = clients.Count - 1; n >= 0; n--)
                     clients[n].Unregister();
 
                 clients.Clear();
