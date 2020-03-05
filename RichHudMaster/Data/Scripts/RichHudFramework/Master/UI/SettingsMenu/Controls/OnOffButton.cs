@@ -18,27 +18,33 @@ namespace RichHudFramework.UI.Server
     }
 
     /// <summary>
-    /// Boolean toggle designed to mimic the appearance of the On/Off button in the SE Terminal.
+    /// On/Off toggle designed to mimic the appearance of the On/Off button in the SE Terminal.
     /// </summary>
     public class OnOffButton : TerminalValue<bool, OnOffButton>
     {
-        public override event Action OnControlChanged;
-
-        public override RichText Name { get { return NameBuilder.GetText(); } set { NameBuilder.SetText(value); } }
+        /// <summary>
+        /// The name of the control as it appears in the terminal.
+        /// </summary>
+        public override string Name { get { return NameBuilder.ToString(); } set { NameBuilder.SetText(value); } }
         public ITextBuilder NameBuilder => name.TextBoard;
 
+        /// <summary>
+        /// Value associated with the control.
+        /// </summary>
         public override bool Value { get { return base.Value; } set { base.Value = value; } }
-        public override Func<bool> CustomValueGetter { get; set; }
-        public override Action<bool> CustomValueSetter { get; set; }
 
-        public RichText OnText { get { return on.Name; } set { on.Name = value; } }
-        public RichText OffText { get { return off.Name; } set { off.Name = value; } }
+        /// <summary>
+        /// Used to periodically update the value associated with the control. Optional.
+        /// </summary>
+        public override Func<bool> CustomValueGetter { get; set; }
+
+        public string OnText { get { return on.Name; } set { on.Name = value; } }
+        public string OffText { get { return off.Name; } set { off.Name = value; } }
 
         private readonly Label name;
         private readonly TerminalButton on, off;
         private readonly BorderBox selectionHighlight;
-        private readonly HudChain<HudElementBase> layout, buttonChain;
-        private bool lastValue;
+        private readonly HudChain<HudElementBase> buttonChain;
 
         public OnOffButton(IHudParent parent = null) : base(parent)
         {
@@ -83,7 +89,7 @@ namespace RichHudFramework.UI.Server
             selectionHighlight = new BorderBox(buttonChain) 
             { Color = Color.White };
 
-            layout = new HudChain<HudElementBase>(this) 
+            var layout = new HudChain<HudElementBase>(this) 
             { 
                 DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                 AutoResize = true,
@@ -114,16 +120,6 @@ namespace RichHudFramework.UI.Server
                 selectionHighlight.Offset = off.Offset;
             }
 
-            if (Value != lastValue)
-            {
-                lastValue = Value;
-                OnControlChanged?.Invoke();
-                CustomValueSetter?.Invoke(Value);
-            }          
-
-            if (CustomValueGetter != null && Value != CustomValueGetter())
-                Value = CustomValueGetter();
-
             base.Draw();
         }
 
@@ -140,18 +136,18 @@ namespace RichHudFramework.UI.Server
                     case OnOffButtonAccessors.OffText:
                         {
                             if (data == null)
-                                return OffText.ApiData;
+                                return OffText;
                             else
-                                OffText = new RichText((IList<RichStringMembers>)data);
+                                OffText = data as string;
 
                             break;
                         }
                     case OnOffButtonAccessors.OnText:
                         {
                             if (data == null)
-                                return OnText.ApiData;
+                                return OnText;
                             else
-                                OnText = new RichText((IList<RichStringMembers>)data);
+                                OnText = data as string;
 
                             break;
                         }

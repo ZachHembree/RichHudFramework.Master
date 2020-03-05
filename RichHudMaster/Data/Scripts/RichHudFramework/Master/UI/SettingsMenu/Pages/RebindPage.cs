@@ -15,8 +15,14 @@ namespace RichHudFramework
 
     namespace UI.Server
     {
+        /// <summary>
+        /// Scrollable list of bind group controls.
+        /// </summary>
         public class RebindPage : TerminalPageBase, IRebindPage
         {
+            /// <summary>
+            /// List of bind groups registered to the page.
+            /// </summary>
             public IReadOnlyCollection<IBindGroup> BindGroups { get; }
 
             public RebindPage GroupContainer => this;
@@ -47,12 +53,18 @@ namespace RichHudFramework
                 slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
             }
 
+            /// <summary>
+            /// Adds the given bind group to the page.
+            /// </summary>
             public void Add(IBindGroup bindGroup)
             {
                 var bindBox = new BindGroupBox() { BindGroup = bindGroup };
                 bindGroups.AddToList(bindBox);
             }
 
+            /// <summary>
+            /// Adds the given bind group to the page along with its associated default configuration.
+            /// </summary>
             public void Add(IBindGroup bindGroup, BindDefinition[] defaultBinds)
             {
                 var bindBox = new BindGroupBox() { BindGroup = bindGroup, DefaultBinds = defaultBinds };
@@ -90,23 +102,19 @@ namespace RichHudFramework
                     return base.GetOrSetMember(data, memberEnum);
             }
 
+            /// <summary>
+            /// Scrollable list of keybinds. Supports, at most, three controls per bind.
+            /// </summary>
             private class BindGroupBox : HudElementBase, IListBoxEntry
             {
-                public override float Height { get { return layout.Height; } set { scrollBox.Height = value - (layout.Height - scrollBox.Height); } }
-
-                public override bool Visible
-                {
-                    set
-                    {
-                        if (value == true && base.Visible != value)
-                            UpdateBindGroup();
-
-                        base.Visible = value;
-                    }
-                }
-
+                /// <summary>
+                /// Determines whether or not the control will be visible in the list.
+                /// </summary>
                 public bool Enabled { get; set; }
 
+                /// <summary>
+                /// Bind group associated with the control.
+                /// </summary>
                 public IBindGroup BindGroup
                 {
                     get { return bindGroup; }
@@ -117,6 +125,9 @@ namespace RichHudFramework
                     }
                 }
 
+                /// <summary>
+                /// Default configuration associated with the bind group.
+                /// </summary>
                 public BindDefinition[] DefaultBinds 
                 {
                     get { return defaultBinds; } 
@@ -124,6 +135,19 @@ namespace RichHudFramework
                     { 
                         defaultBinds = value;
                         resetButton.Visible = defaultBinds != null;
+                    }
+                }
+
+                public override float Height { get { return layout.Height; } set { scrollBox.Height = value - (layout.Height - scrollBox.Height); } }
+
+                public override bool Visible
+                {
+                    set
+                    {
+                        if (value == true && base.Visible != value)
+                            UpdateBindGroup();
+
+                        base.Visible = value;
                     }
                 }
 
@@ -200,6 +224,9 @@ namespace RichHudFramework
                         scrollBox.List[n].Width = Width - scrollBox.scrollBar.Width;
                 }
 
+                /// <summary>
+                /// Applies the default configuration to the bind group if defaults are defined.
+                /// </summary>
                 private void ResetBinds()
                 {
                     if (DefaultBinds != null)
@@ -209,6 +236,9 @@ namespace RichHudFramework
                     }
                 }
 
+                /// <summary>
+                /// Updates bind controls.
+                /// </summary>
                 private void UpdateBindGroup()
                 {
                     if (BindGroup != null)
@@ -227,12 +257,19 @@ namespace RichHudFramework
                 }
             }
 
+            /// <summary>
+            /// Control for individual keybinds. Supports up to three controls per bind.
+            /// </summary>
             private class BindBox : HudElementBase, IListBoxEntry
             {
-                public override float Height { get { return layout.Height; } set { layout.Height = value; bindName.Height = value; } }
-
+                /// <summary>
+                /// Determines whether the bind will be visible in the list.
+                /// </summary>
                 public bool Enabled { get; set; }
 
+                /// <summary>
+                /// The keybind associated the the control.
+                /// </summary>
                 public IBind Bind
                 {
                     get { return bind; }
@@ -242,6 +279,8 @@ namespace RichHudFramework
                         UpdateBindText();
                     }
                 }
+
+                public override float Height { get { return layout.Height; } set { layout.Height = value; bindName.Height = value; } }
 
                 private readonly Label bindName;
                 private readonly TerminalButton con1, con2, con3;
@@ -307,18 +346,27 @@ namespace RichHudFramework
                     Enabled = true;
                 }
 
+                /// <summary>
+                /// Opens the rebind dialog for the given bind for the control specified.
+                /// </summary>
                 private void GetNewControl(int index)
                 {
                     RichHudTerminal.Open = false;
                     RebindDialog.UpdateBind(bind, index, DialogClosed);
                 }
 
+                /// <summary>
+                /// Rebind dialog callback.
+                /// </summary>
                 private void DialogClosed()
                 {
                     UpdateBindText();
                     RichHudTerminal.Open = true;
                 }
 
+                /// <summary>
+                /// Removes the control at the index specified.
+                /// </summary>
                 private void RemoveControl(int index)
                 {
                     List<IControl> combo = new List<IControl>(bind.GetCombo());
@@ -340,6 +388,9 @@ namespace RichHudFramework
                     }
                 }
 
+                /// <summary>
+                /// Updates the buttons for the bind controls to reflect the current configuration.
+                /// </summary>
                 private void UpdateBindText()
                 {
                     bindName.Text = bind.Name;
@@ -347,6 +398,7 @@ namespace RichHudFramework
 
                     if (combo != null && combo.Count > 0)
                     {
+                        bindName.TextBoard.SetFormatting(GlyphFormat.Blueish);
                         con1.Name = combo[0].DisplayName;
 
                         if (combo.Count > 1)
@@ -361,6 +413,7 @@ namespace RichHudFramework
                     }
                     else
                     {
+                        bindName.TextBoard.SetFormatting(RichHudTerminal.WarningFormat);
                         con1.Name = "none";
                         con2.Name = "none";
                         con3.Name = "none";

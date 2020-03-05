@@ -19,6 +19,9 @@ namespace RichHudFramework
             object // ID
         >;
 
+        /// <summary>
+        /// Horizontally scrolling list of control tiles.
+        /// </summary>
         public class ControlCategory : HudElementBase, IListBoxEntry, IControlCategory
         {
             public override float Width
@@ -39,10 +42,26 @@ namespace RichHudFramework
 
             public override Vector2 Padding { get { return layout.Padding; } set { layout.Padding = value; } }
 
-            public RichText HeaderText { get { return header.TextBoard.GetText(); } set { header.TextBoard.SetText(value); } }
-            public RichText SubheaderText { get { return subheader.TextBoard.GetText(); } set { subheader.TextBoard.SetText(value); } }
+            /// <summary>
+            /// Category name
+            /// </summary>
+            public string HeaderText { get { return header.TextBoard.ToString(); } set { header.TextBoard.SetText(value); } }
+
+            /// <summary>
+            /// Category information
+            /// </summary>
+            public string SubheaderText { get { return subheader.TextBoard.ToString(); } set { subheader.TextBoard.SetText(value); } }
+
+            /// <summary>
+            /// Read only collection of <see cref="IControlTile"/>s assigned to this category
+            /// </summary>
             public IReadOnlyCollection<IControlTile> Tiles { get; }
+
             public IControlCategory TileContainer => this;
+
+            /// <summary>
+            /// Determines whether or not the element will be drawn.
+            /// </summary>
             public bool Enabled { get; set; }
 
             private readonly ScrollBox<ControlTile> scrollBox;
@@ -103,6 +122,9 @@ namespace RichHudFramework
                 base.Draw();
             }
 
+            /// <summary>
+            /// Adds a <see cref="IControlTile"/> to the category
+            /// </summary>
             public void Add(ControlTile tile)
             {
                 scrollBox.AddToList(tile);
@@ -114,6 +136,9 @@ namespace RichHudFramework
             IEnumerator IEnumerable.GetEnumerator() =>
                 Tiles.GetEnumerator();
 
+            /// <summary>
+            /// Retrieves information used by the Framework API
+            /// </summary>
             public new ControlContainerMembers GetApiData()
             {
                 return new ControlContainerMembers()
@@ -137,18 +162,18 @@ namespace RichHudFramework
                     case ControlCatAccessors.HeaderText:
                         {
                             if (data == null)
-                                return HeaderText.ApiData;
+                                return HeaderText;
                             else
-                                HeaderText = new RichText((IList<RichStringMembers>)data);
+                                HeaderText = data as string;
 
                             break;
                         }
                     case ControlCatAccessors.SubheaderText:
                         {
                             if (data == null)
-                                return SubheaderText.ApiData;
+                                return SubheaderText;
                             else
-                                SubheaderText = new RichText((IList<RichStringMembers>)data);
+                                SubheaderText = data as string;
 
                             break;
                         }

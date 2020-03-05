@@ -18,14 +18,20 @@ namespace RichHudFramework
 
     namespace UI.Server
     {
+        /// <summary>
+        /// Base class for named pages attached to a mod control root.
+        /// </summary>
         public abstract class TerminalPageBase : HudElementBase, ITerminalPage, IListBoxEntry
         {
-            public RichText Name
+            /// <summary>
+            /// Name of the <see cref="ITerminalPage"/> as it appears in the dropdown of the <see cref="IModControlRoot"/>.
+            /// </summary>
+            public string Name
             {
                 get
                 {
                     if (NameBuilder != null)
-                        return NameBuilder.GetText();
+                        return NameBuilder.ToString();
                     else
                         return name;
                 }
@@ -40,13 +46,17 @@ namespace RichHudFramework
             }
 
             public ITextBoard NameBuilder { get; set; }
+
+            /// <summary>
+            /// Determines whether or not the <see cref="ITerminalPage"/> will be visible in the mod root.
+            /// </summary>
             public bool Enabled { get; set; }
 
-            protected RichText name;
+            protected string name;
 
             public TerminalPageBase(IHudParent parent) : base(parent)
             {
-                Name = new RichText("NewPage", GlyphFormat.White);
+                Name = "NewPage";
                 Enabled = true;
                 Visible = false;
             }
@@ -58,9 +68,9 @@ namespace RichHudFramework
                     case TerminalPageAccessors.Name:
                         {
                             if (data == null)
-                                return Name.ApiData;
+                                return Name;
                             else
-                                Name = new RichText(data as IList<RichStringMembers>);
+                                Name = data as string;
 
                             break;
                         }
@@ -78,6 +88,9 @@ namespace RichHudFramework
                 return null;
             }
 
+            /// <summary>
+            /// Retrieves information used by the Framework API
+            /// </summary>
             public virtual new ControlMembers GetApiData()
             {
                 return new ControlMembers()

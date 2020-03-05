@@ -10,9 +10,41 @@ namespace RichHudFramework.UI.Server
         CharFilterFunc = 16,
     }
 
+    /// <summary>
+    /// One-line text field with a configurable input filter delegate. Designed to mimic the appearance of the text field
+    /// in the SE terminal.
+    /// </summary>
     public class TextField : TerminalValue<string, TextField>
     {
+        /// <summary>
+        /// Invoked whenver a change occurs to a control that requires a response, like a change
+        /// to a value.
+        /// </summary>
         public override event Action OnControlChanged;
+
+        /// <summary>
+        /// The name of the control as it appears in the terminal.
+        /// </summary>
+        public override string Name { get { return name.TextBoard.ToString(); } set { name.TextBoard.SetText(value); } }
+
+        /// <summary>
+        /// The contents of the textbox.
+        /// </summary>
+        public override string Value
+        {
+            get { return textBox.TextBoard.ToString(); }
+            set { textBox.TextBoard.SetText(value); }
+        }
+
+        /// <summary>
+        /// Used to periodically update the value associated with the control. Optional.
+        /// </summary>
+        public override Func<string> CustomValueGetter { get; set; }
+
+        /// <summary>
+        /// Restricts the range of characters allowed for input.
+        /// </summary>
+        public Func<char, bool> CharFilterFunc { get { return textBox.CharFilterFunc; } set { textBox.CharFilterFunc = value; } }
 
         public override float Width
         {
@@ -39,25 +71,13 @@ namespace RichHudFramework.UI.Server
             }
         }
 
-        public override RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
-        public override string Value
-        {
-            get { return textBox.TextBoard.GetText().ToString(); }
-            set { textBox.TextBoard.SetText(value); }
-        }
-        public override Func<string> CustomValueGetter { get; set; }
-        public override Action<string> CustomValueSetter { get; set; }
-
-        /// <summary>
-        /// Used to restrict the range of characters allowed for input.
-        /// </summary>
-        public Func<char, bool> CharFilterFunc { get { return textBox.CharFilterFunc; } set { textBox.CharFilterFunc = value; } }
-
         private readonly Label name;
         private readonly TextBox textBox;
         private readonly TexturedBox background, highlight;
-        private readonly BorderBox border;
         private readonly Utils.Stopwatch refreshTimer;
+        private string lastValue;
+        private bool textChanged;
+        private bool controlUpdating;
 
         public TextField(IHudParent parent = null) : base(parent)
         {
@@ -77,7 +97,7 @@ namespace RichHudFramework.UI.Server
                 ParentAlignment = ParentAlignments.Bottom,
             };
 
-            border = new BorderBox(background)
+            var border = new BorderBox(background)
             {
                 Color = RichHudTerminal.BorderColor,
                 Thickness = 1f,
@@ -99,7 +119,7 @@ namespace RichHudFramework.UI.Server
                 Visible = false,
             };
 
-            textBox.TextBoard.SetText("TextBox");
+            Name = "TextBox";
             Padding = new Vector2(40f, 0f);
             Size = new Vector2(319f, 62f);
 
@@ -108,17 +128,29 @@ namespace RichHudFramework.UI.Server
             refreshTimer.Start();
         }
 
-        private void TextChanged()
-        {
-            OnControlChanged?.Invoke();
-            CustomValueSetter?.Invoke(Value);
-        }
+        private void TextChanged() =>
+            textChanged = true;
 
         protected override void Draw()
         {
             if (refreshTimer.ElapsedMilliseconds > 2000)
             {
-                if (CustomValueGetter != null && CustomValueSetter != null && Value != CustomValueGetter())
+                if (textChanged)
+                {
+                    string newValue = name.TextBoard.ToString();
+
+                    if (newValue != lastValue)
+                    {
+                        controlUpdating = true;
+                        lastValue = newValue;
+                        OnControlChanged?.Invoke();
+                        controlUpdating = false;
+                    }
+
+                    textChanged = false;
+                }
+
+                if (CustomValueGetter != null && lastValue != CustomValueGetter())
                     Value = CustomValueGetter();
 
                 refreshTimer.Reset();

@@ -55,10 +55,16 @@ namespace RichHudFramework.UI.Server
             instance = null;
         }
 
+        /// <summary>
+        /// Opens the rebind dialog for the control at the specified position.
+        /// </summary>
         public static void UpdateBind(IBind bind, int bindPos, Action CallbackFunc = null) =>
-            Instance.UpdateBind2(bind, bindPos, CallbackFunc);
+            Instance.UpdateBindInternal(bind, bindPos, CallbackFunc);
 
-        public void UpdateBind2(IBind bind, int bindPos, Action CallbackFunc = null)
+        /// <summary>
+        /// Opens the rebind dialog for the control at the specified position.
+        /// </summary>
+        private void UpdateBindInternal(IBind bind, int bindPos, Action CallbackFunc = null)
         {
             stopwatch.Start();
             open = true;
@@ -103,6 +109,9 @@ namespace RichHudFramework.UI.Server
             }
         }
 
+        /// <summary>
+        /// Adds the new control at the index given, applies the new combo and closes the dialog.
+        /// </summary>
         private void Confirm()
         {
             if (open && newControl != null)
@@ -118,6 +127,9 @@ namespace RichHudFramework.UI.Server
             }
         }
 
+        /// <summary>
+        /// Closes and resets the dialog.
+        /// </summary>
         private void Exit()
         {
             if (open)

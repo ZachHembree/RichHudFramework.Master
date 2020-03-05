@@ -22,12 +22,26 @@ namespace RichHudFramework
 
     namespace UI.Server
     {
+        /// <summary>
+        /// Small collection of terminal controls organized into a single block. No more than 1-3
+        /// controls should be added to a tile. If a group of controls can't fit on a tile, then they
+        /// will be drawn outside its bounds.
+        /// </summary>
         public class ControlTile : HudElementBase, IListBoxEntry, IControlTile
         {
+            /// <summary>
+            /// Read only collection of <see cref="TerminalControlBase"/>s attached to the tile
+            /// </summary>
             public IReadOnlyCollection<ITerminalControl> Controls { get; }
+
             public IControlTile ControlContainer => this;
-            public override float Width { get { return controls.Width + Padding.X; } set { controls.Width = value - Padding.X; } }
+
+            /// <summary>
+            /// Determines whether or not the tile will be rendered in the list.
+            /// </summary>
             public bool Enabled { get; set; }
+
+            public override float Width { get { return controls.Width + Padding.X; } set { controls.Width = value - Padding.X; } }
 
             private readonly HudChain<TerminalControlBase> controls;
             private readonly TexturedBox background;
@@ -68,6 +82,9 @@ namespace RichHudFramework
                 base.Draw();
             }
 
+            /// <summary>
+            /// Adds a <see cref="TerminalControlBase"/> to the tile
+            /// </summary>
             public void Add(TerminalControlBase newControl)
             {
                 controls.Add(newControl);
@@ -79,6 +96,9 @@ namespace RichHudFramework
             IEnumerator IEnumerable.GetEnumerator() =>
                 Controls.GetEnumerator();
 
+            /// <summary>
+            /// Retrieves information needed by the Framework API 
+            /// </summary>
             public new ControlContainerMembers GetApiData()
             {
                 return new ControlContainerMembers()

@@ -1,12 +1,35 @@
-﻿using System;
-using RichHudFramework.UI.Rendering;
+﻿using RichHudFramework.UI.Rendering;
+using System;
 using VRageMath;
 
 namespace RichHudFramework.UI.Server
 {
+    /// <summary>
+    /// Clickable button. Mimics the appearance of the terminal button in the SE terminal.
+    /// </summary>
     public class TerminalButton : TerminalControlBase<TerminalButton>
     {
+        /// <summary>
+        /// Invoked when the button is clicked.
+        /// </summary>
         public override event Action OnControlChanged;
+
+        /// <summary>
+        /// The name of the control as it appears in the terminal.
+        /// </summary>
+        public override string Name { get { return button.TextBoard.ToString(); } set { button.TextBoard.SetText(value); } }
+
+        /// <summary>
+        /// Text formatting applied to button text.
+        /// </summary>
+        public GlyphFormat Format { get { return button.Format; } set { button.Format = value; } }
+
+        /// <summary>
+        /// If true, the the button will highlight when moused over.
+        /// </summary>
+        public bool HighlightEnabled { get { return button.HighlightEnabled; } set { button.HighlightEnabled = value; } }
+
+        public IClickableElement MouseInput => button.MouseInput;
 
         public override float Width
         {
@@ -31,11 +54,6 @@ namespace RichHudFramework.UI.Server
                 button.Height = value;
             }
         }
-
-        public override RichText Name { get { return button.TextBoard.GetText(); } set { button.TextBoard.SetText(value); } }
-        public GlyphFormat Format { get { return button.Format; } set { button.Format = value; } }
-        public bool HighlightEnabled { get { return button.HighlightEnabled; } set { button.HighlightEnabled = value; } }
-        public IClickableElement MouseInput => button.MouseInput;
 
         public readonly TextBoxButton button;
         public readonly BorderBox border;

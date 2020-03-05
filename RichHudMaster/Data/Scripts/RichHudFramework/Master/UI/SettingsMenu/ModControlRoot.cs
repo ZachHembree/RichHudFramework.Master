@@ -27,20 +27,46 @@ namespace RichHudFramework
 
         public sealed partial class RichHudTerminal : RichHudComponentBase
         {
+            /// <summary>
+            /// Indented dropdown list of terminal pages. Root UI element for all terminal controls
+            /// associated with a given mod.
+            /// </summary>
             private class ModControlRoot : HudElementBase, IModControlRoot, IListBoxEntry
             {
+                /// <summary>
+                /// Invoked when a new page is selected
+                /// </summary>
                 public event Action OnSelectionChanged;
+
                 internal event Action<ModControlRoot> OnModUpdate;
 
                 public override float Width { get { return pageControl.Width; } set { pageControl.Width = value; } }
                 public override float Height { get { return pageControl.Height; } set { pageControl.Height = value; } }
                 public override Vector2 Padding { get { return pageControl.Padding; } set { pageControl.Padding = value; } }
 
-                public RichText Name { get { return pageControl.Name; } set { pageControl.Name = value; } }
+                /// <summary>
+                /// Name of the mod as it appears in the <see cref="RichHudTerminal"/> mod list
+                /// </summary>
+                public string Name { get { return pageControl.Name.ToString(); } set { pageControl.Name = value; } }
+
+                /// <summary>
+                /// Read only collection of <see cref="ITerminalPage"/>s assigned to this object.
+                /// </summary>
                 public IReadOnlyCollection<ITerminalPage> Pages { get; }
+
                 public IModControlRoot PageContainer => this;
+
+                /// <summary>
+                /// Currently selected <see cref="ITerminalPage"/>.
+                /// </summary>
                 public ITerminalPage Selection => SelectedElement;
+
                 public TerminalPageBase SelectedElement => pageControl.Selection?.AssocMember;
+
+                /// <summary>
+                /// Determines whether or not the element will appear in the list.
+                /// Disabled by default.
+                /// </summary>
                 public bool Enabled { get; set; }
 
                 private readonly TreeBox<TerminalPageBase> pageControl;
@@ -81,6 +107,9 @@ namespace RichHudFramework
                     pageControl.ClearSelection();
                 }
 
+                /// <summary>
+                /// Adds the given <see cref="TerminalPageBase"/> to the object.
+                /// </summary>
                 public void Add(TerminalPageBase page)
                 {
                     ListBoxEntry<TerminalPageBase> listMember = pageControl.Add(page.Name, page);
@@ -94,6 +123,9 @@ namespace RichHudFramework
                 IEnumerator IEnumerable.GetEnumerator() =>
                     Pages.GetEnumerator();
 
+                /// <summary>
+                /// Retrieves data used by the Framework API
+                /// </summary>
                 public new ControlContainerMembers GetApiData()
                 {
                     return new ControlContainerMembers()
@@ -128,9 +160,9 @@ namespace RichHudFramework
                         case ModControlRootAccessors.Name:
                             {
                                 if (data == null)
-                                    return Name.ApiData;
+                                    return Name;
                                 else
-                                    Name = new RichText(data as IList<RichStringMembers>);
+                                    Name = data as string;
 
                                 break;
                             }

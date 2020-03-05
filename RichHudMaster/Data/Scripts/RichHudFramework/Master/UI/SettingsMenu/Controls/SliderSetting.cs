@@ -30,14 +30,51 @@ namespace RichHudFramework.UI.Server
         Percent = 18,
 
         /// <summary>
-        /// IList<RichStringMembers>
+        /// string
         /// </summary>
         ValueText = 19,
     }
 
+    /// <summary>
+    /// Labeled slider used to set float values in the settings menu. Mimics the appearance of the slider in the
+    /// SE terminal.
+    /// </summary>
     public class SliderSetting : TerminalValue<float, SliderSetting>
     {
-        public override event Action OnControlChanged;
+        /// <summary>
+        /// The name of the control as rendred in the terminal.
+        /// </summary>
+        public override string Name { get { return name.TextBoard.ToString(); } set { name.TextBoard.SetText(value); } }
+
+        /// <summary>
+        /// Text indicating the current value of the slider. Does not automatically reflect changes to the slider value.
+        /// </summary>
+        public string ValueText { get { return current.TextBoard.ToString(); } set { current.TextBoard.SetText(value); } }
+
+        /// <summary>
+        /// Minimum configurable value for the slider.
+        /// </summary>
+        public float Min { get { return sliderBox.Min; } set { sliderBox.Min = value; } }
+
+        /// <summary>
+        /// Maximum configurable value for the slider.
+        /// </summary>
+        public float Max { get { return sliderBox.Max; } set { sliderBox.Max = value; } }
+
+        /// <summary>
+        /// Value currently set on the slider.
+        /// </summary>
+        public override float Value { get { return sliderBox.Current; } set { sliderBox.Current = value; } }
+
+        /// <summary>
+        /// Current slider value expreseed as a percentage between the min and maximum values.
+        /// </summary>
+        public float Percent { get { return sliderBox.Percent; } set { sliderBox.Percent = value; } }
+
+        /// <summary>
+        /// Used to periodically update the value associated with the control. Optional.
+        /// </summary>
+        public override Func<float> CustomValueGetter { get; set; }
 
         public override float Width
         {
@@ -63,22 +100,9 @@ namespace RichHudFramework.UI.Server
             }
         }
 
-        public float Min { get { return sliderBox.Min; } set { sliderBox.Min = value; } }
-        public float Max { get { return sliderBox.Max; } set { sliderBox.Max = value; } }
-        public override float Value { get { return sliderBox.Current; } set { sliderBox.Current = value; } }
-        public float Percent { get { return sliderBox.Percent; } set { sliderBox.Percent = value; } }
-
-        public override Func<float> CustomValueGetter { get; set; }
-        public override Action<float> CustomValueSetter { get; set; }
-
-
-        public override RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
-        public RichText ValueText { get { return current.TextBoard.GetText(); } set { current.TextBoard.SetText(value); } }
-
         private readonly Label name, current;
         private readonly SliderBox sliderBox;
         private readonly TexturedBox highlight;
-        private float lastValue;
 
         public SliderSetting(IHudParent parent = null) : base(parent)
         {
@@ -111,7 +135,6 @@ namespace RichHudFramework.UI.Server
                 ParentAlignment = ParentAlignments.InnerH | ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.UsePadding
             };
 
-            lastValue = Value;
             Padding = new Vector2(40f, 0f);
         }
 
@@ -127,19 +150,6 @@ namespace RichHudFramework.UI.Server
             {
                 highlight.Visible = false;
             }
-        }
-
-        protected override void Draw()
-        {
-            if (Value != lastValue)
-            {
-                lastValue = Value;
-                OnControlChanged?.Invoke();
-                CustomValueSetter?.Invoke(Value);
-            }
-
-            if (CustomValueGetter != null && Value != CustomValueGetter())
-                Value = CustomValueGetter();
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)
@@ -182,9 +192,9 @@ namespace RichHudFramework.UI.Server
                     case SliderSettingsAccessors.ValueText:
                         {
                             if (data == null)
-                                return ValueText.ApiData;
+                                return ValueText;
                             else
-                                ValueText = new RichText((IList<RichStringMembers>)data);
+                                ValueText = data as string;
 
                             break;
                         }

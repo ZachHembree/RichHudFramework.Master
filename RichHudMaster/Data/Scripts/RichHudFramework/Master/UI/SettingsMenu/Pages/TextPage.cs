@@ -24,6 +24,9 @@ namespace RichHudFramework
             object // ID
         >;
 
+        /// <summary>
+        /// Scrollable text page used by the terminal. Not implemented.
+        /// </summary>
         public class TextPage : TerminalPageBase, ITextPage
         {
             public RichText Text { get { return textBox.Text; } set { textBox.Text = value; } }

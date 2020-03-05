@@ -12,13 +12,17 @@ namespace RichHudFramework.UI.Server
         AlignToEdge = 17,
     }
 
+    /// <summary>
+    /// A terminal control that uses a draggable window to indicate a position on the screen.
+    /// </summary>
     public class DragBox : TerminalValue<Vector2, DragBox>
     {
-        public override event Action OnControlChanged;
-
-        public override RichText Name
+        /// <summary>
+        /// The name of the control as it appears in the terminal.
+        /// </summary>
+        public override string Name
         {
-            get { return window.Header.GetText(); }
+            get { return window.Header.ToString(); }
             set
             {
                 window.Header.SetText(value);
@@ -26,11 +30,25 @@ namespace RichHudFramework.UI.Server
             }
         }
 
+        /// <summary>
+        /// Value associated with the control.
+        /// </summary>
         public override Vector2 Value { get { return window.Value; } set { window.Value = value; } }
+
+        /// <summary>
+        /// Used to periodically update the value associated with the control. Optional.
+        /// </summary>
         public override Func<Vector2> CustomValueGetter { get { return window.CustomValueGetter; } set { window.CustomValueGetter = value; } }
-        public override Action<Vector2> CustomValueSetter { get { return window.CustomValueSetter; } set { window.CustomValueSetter = value; } }
+
+        /// <summary>
+        /// Determines whether or not the window will automatically align itself to one side of the screen
+        /// or the other.
+        /// </summary>
         public bool AlignToEdge { get { return window.AlignToEdge; } set { window.AlignToEdge = value; } }
 
+        /// <summary>
+        /// Size of the window spawned by the control.
+        /// </summary>
         public Vector2 BoxSize
         {
             get { return HudMain.GetRelativeVector(window.Size); }
@@ -39,7 +57,6 @@ namespace RichHudFramework.UI.Server
 
         private readonly TerminalButton openButton;
         private readonly DragWindow window;
-        private Vector2 lastValue;
 
         public DragBox(IHudParent parent = null) : base(parent)
         {
@@ -72,19 +89,6 @@ namespace RichHudFramework.UI.Server
         {
             window.Visible = false;
             RichHudTerminal.Open = true;
-        }
-
-        protected override void Draw()
-        {
-            if (Value != lastValue)
-            {
-                lastValue = Value;
-                OnControlChanged?.Invoke();
-                CustomValueSetter?.Invoke(Value);
-            }
-
-            if (CustomValueGetter != null && Value != CustomValueGetter())
-                Value = CustomValueGetter();
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)
@@ -122,6 +126,7 @@ namespace RichHudFramework.UI.Server
         private class DragWindow : WindowBase
         {
             public event Action OnConfirm;
+
             public Vector2 Value
             {
                 get { return HudMain.GetRelativeVector(base.Offset); }
@@ -134,11 +139,11 @@ namespace RichHudFramework.UI.Server
             }
 
             public Func<Vector2> CustomValueGetter { get; set; }
-            public Action<Vector2> CustomValueSetter { get; set; }
+
             public bool AlignToEdge { get; set; }
 
             private readonly TerminalButton confirm;
-            private Vector2 lastValue, alignment;
+            private Vector2 alignment;
 
             public DragWindow() : base(HudMain.Root)
             {
@@ -173,15 +178,6 @@ namespace RichHudFramework.UI.Server
             protected override void Draw()
             {
                 base.Draw();
-
-                if (Value != lastValue)
-                {
-                    lastValue = Value;
-                    CustomValueSetter?.Invoke(Value);
-                }
-
-                if (CustomValueGetter != null && Value != CustomValueGetter())
-                    Value = CustomValueGetter();
 
                 if (AlignToEdge)
                 {

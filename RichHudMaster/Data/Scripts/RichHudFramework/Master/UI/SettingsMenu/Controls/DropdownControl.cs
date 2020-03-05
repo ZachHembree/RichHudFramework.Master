@@ -10,14 +10,30 @@ namespace RichHudFramework.UI.Server
     using CollectionData = MyTuple<Func<int, ApiMemberAccessor>, Func<int>>;
     using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
 
+    /// <summary>
+    /// A dropdown list with a label. Designed to mimic the appearance of the dropdown in the SE terminal.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class DropdownControl<T> : TerminalValue<ListBoxEntry<T>, DropdownControl<T>>
     {
-        public override event Action OnControlChanged;
+        /// <summary>
+        /// The name of the control as it appears in the terminal.
+        /// </summary>
+        public override string Name { get { return name.TextBoard.ToString(); } set { name.TextBoard.SetText(value); } }
 
-        public override RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
+        /// <summary>
+        /// Currently selected list member.
+        /// </summary>
         public override ListBoxEntry<T> Value { get { return List.Selection; } set { List.SetSelection(value); } }
+
+        /// <summary>
+        /// Used to periodically update the value associated with the control. Optional.
+        /// </summary>
         public override Func<ListBoxEntry<T>> CustomValueGetter { get; set; }
-        public override Action<ListBoxEntry<T>> CustomValueSetter { get; set; }
+
+        /// <summary>
+        /// Dropdown instance backing this control.
+        /// </summary>
         public Dropdown<T> List { get; }
 
         public override float Width
@@ -38,16 +54,10 @@ namespace RichHudFramework.UI.Server
             set { hudChain.Padding = value; }
         }
 
-        /// <summary>
-        /// Default format for member text;
-        /// </summary>
-        public GlyphFormat Format { get { return List.Format; } set { List.Format = value; name.Format = value; } }
-
         private readonly Label name;
         private readonly HudChain<HudElementBase> hudChain;
         private readonly TexturedBox highlight;
         private readonly BorderBox border;
-        private ListBoxEntry<T> lastValue;
 
         public DropdownControl(IHudParent parent = null) : base(parent)
         {
@@ -89,21 +99,6 @@ namespace RichHudFramework.UI.Server
 
             Padding = new Vector2(20f, 0f);
             Size = new Vector2(250f, 66f);
-        }
-
-        protected override void Draw()
-        {
-            if (Value != lastValue)
-            {
-                lastValue = Value;
-                OnControlChanged?.Invoke();
-                CustomValueSetter?.Invoke(Value);
-            }
-
-            if (CustomValueGetter != null && Value != CustomValueGetter())
-                Value = CustomValueGetter();
-
-            base.Draw();
         }
 
         protected override void HandleInput()

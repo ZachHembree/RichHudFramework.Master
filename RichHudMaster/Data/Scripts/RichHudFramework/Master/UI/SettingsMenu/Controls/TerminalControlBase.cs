@@ -1,21 +1,20 @@
-﻿using RichHudFramework.UI.Rendering;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using VRage;
-using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 using ApiMemberAccessor = System.Func<object, int, object>;
+using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework.UI.Server
 {
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
     using ControlMembers = MyTuple<
         ApiMemberAccessor, // GetOrSetMember
         object // ID
     >;
+    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
 
     /// <summary>
-    /// Abstract base for all controls in the settings menu accessible via the Framework API.
+    /// Base type for all controls in the Rich Hud Terminal.
     /// </summary>
     public abstract class TerminalControlBase : HudElementBase, IListBoxEntry, ITerminalControl
     {
@@ -26,9 +25,9 @@ namespace RichHudFramework.UI.Server
         public abstract event Action OnControlChanged;
 
         /// <summary>
-        /// The name of the control as rendred in the terminal.
+        /// The name of the control as it appears in the terminal.
         /// </summary>
-        public abstract RichText Name { get; set; }
+        public abstract string Name { get; set; }
 
         /// <summary>
         /// Determines whether or not the control should be visible in the terminal.
@@ -75,9 +74,9 @@ namespace RichHudFramework.UI.Server
                 case TerminalControlAccessors.Name:
                     {
                         if (data == null)
-                            return Name.ApiData;
+                            return Name;
                         else
-                            Name = new RichText((IList<RichStringMembers>)data);
+                            Name = data as string;
 
                         break;
                     }
@@ -96,10 +95,13 @@ namespace RichHudFramework.UI.Server
         }
     }
 
+    /// <summary>
+    /// Clickable control used in conjunction by the settings menu.
+    /// </summary>
     public abstract class TerminalControlBase<T> : TerminalControlBase, ITerminalControl<T> where T : TerminalControlBase<T>
     {
         /// <summary>
-        /// Delegate invoked by OnControlChanged. Passes in a reference of type calling.
+        /// Delegate invoked by OnControlChanged. Passes in a reference to the control.
         /// </summary>
         public Action<T> ControlChangedAction { get; set; }
 
@@ -108,10 +110,8 @@ namespace RichHudFramework.UI.Server
             OnControlChanged += UpdateControl;
         }
 
-        protected virtual void UpdateControl()
-        {
+        private void UpdateControl() =>
             ControlChangedAction?.Invoke(this as T);
-        }
 
         /// <summary>
         /// Faciltates access to object members via the Framework API.
@@ -127,23 +127,45 @@ namespace RichHudFramework.UI.Server
     }
 
     /// <summary>
-    /// Abstract base for all settings menu controls associated with a given type of value.
+    /// Base type for settings menu controls associated with a value of a given type.
     /// </summary>
     public abstract class TerminalValue<TValue, TCon> : TerminalControlBase<TCon>, ITerminalValue<TValue, TCon> where TCon : TerminalControlBase<TCon>
     {
+        /// <summary>
+        /// Invoked whenver a change occurs to a control that requires a response, like a change
+        /// to a value.
+        /// </summary>
+        public override event Action OnControlChanged;
+
         /// <summary>
         /// Value associated with the control.
         /// </summary>
         public virtual TValue Value { get; set; }
 
+        /// <summary>
+        /// Used to periodically update the value associated with the control. Optional.
+        /// </summary>
         public abstract Func<TValue> CustomValueGetter { get; set; }
 
-        public abstract Action<TValue> CustomValueSetter { get; set; }
-
-        private TValue value;
+        private TValue lastValue;
+        private bool controlUpdating;
 
         public TerminalValue(IHudParent parent) : base(parent)
         { }
+
+        protected override void Draw()
+        {
+            if (!Value.Equals(lastValue) && !controlUpdating)
+            {
+                controlUpdating = true;
+                lastValue = Value;
+                OnControlChanged?.Invoke();
+                controlUpdating = false;
+            }
+
+            if (CustomValueGetter != null && !Value.Equals(CustomValueGetter()))
+                Value = CustomValueGetter();
+        }
 
         protected override object GetOrSetMember(object data, int memberEnum)
         {
@@ -168,15 +190,6 @@ namespace RichHudFramework.UI.Server
                                 return CustomValueGetter;
                             else
                                 CustomValueGetter = data as Func<TValue>;
-
-                            break;
-                        }
-                    case TerminalControlAccessors.ValueSetter:
-                        {
-                            if (data == null)
-                                return CustomValueSetter;
-                            else
-                                CustomValueSetter = data as Action<TValue>;
 
                             break;
                         }

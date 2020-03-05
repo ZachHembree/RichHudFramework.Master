@@ -20,8 +20,14 @@ namespace RichHudFramework
             object // ID
         >;
 
+        /// <summary>
+        /// Vertically scrolling collection of control categories.
+        /// </summary>
         public class ControlPage : TerminalPageBase, IControlPage
         {
+            /// <summary>
+            /// List of control categories registered to the page.
+            /// </summary>
             public IReadOnlyCollection<IControlCategory> Categories { get; }
             public IControlPage CategoryContainer => this;
 
@@ -50,6 +56,9 @@ namespace RichHudFramework
                 slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
             }
 
+            /// <summary>
+            /// Adds the given control category to the page.
+            /// </summary>
             public void Add(ControlCategory category)
             {
                 catBox.AddToList(category);

@@ -76,6 +76,9 @@ namespace RichHudFramework
                 }
             }
 
+            /// <summary>
+            /// Border size. Included in total element size.
+            /// </summary>
             public virtual Vector2 Padding { get { return padding * Scale; } set { padding = value / Scale; } }
 
             /// <summary>

@@ -5,31 +5,39 @@ using VRageMath;
 namespace RichHudFramework.UI.Server
 {
     /// <summary>
-    /// Creates a named checkbox designed to mimic the appearance of checkboxes in the SE terminal.
+    /// Labeled checkbox designed to mimic the appearance of checkboxes in the SE terminal.
     /// </summary>
     public class Checkbox : TerminalValue<bool, Checkbox>
     {
-        public override event Action OnControlChanged;
+        /// <summary>
+        /// Name of the checkbox as it appears on its label.
+        /// </summary>
+        public override string Name { get { return name.TextBoard.ToString(); } set { name.TextBoard.SetText(value); } }
+
+        /// <summary>
+        /// Indicates whether or not the box is checked.
+        /// </summary>
+        public override bool Value { get { return box.Visible; } set { box.Visible = value; } }
+
+        /// <summary>
+        /// Used to periodically update the value associated with the control. Optional.
+        /// </summary>
+        public override Func<bool> CustomValueGetter { get; set; }
 
         public override float Width
         {
             get { return chain.Width; }
             set { name.Width = value - box.Width - chain.Spacing; }
         }
-        public override float Height { get { return chain.Height; } set { chain.Height = value; } }
-        public override Vector2 Padding { get { return chain.Padding; } set { chain.Padding = value; } }
 
-        public override RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
-        public override bool Value { get { return box.Visible; } set { box.Visible = value; } }
-        public override Func<bool> CustomValueGetter { get; set; }
-        public override Action<bool> CustomValueSetter { get; set; }
+        public override float Height { get { return chain.Height; } set { chain.Height = value; } }
+
+        public override Vector2 Padding { get { return chain.Padding; } set { chain.Padding = value; } }
 
         private readonly HudChain<HudElementBase> chain;
         private readonly Label name;
         private readonly Button button;
         private readonly TexturedBox box, highlight;
-        private readonly BorderBox border;
-        private bool lastValue;
 
         private static readonly Color BoxColor = new Color(114, 121, 139);
 
@@ -49,7 +57,7 @@ namespace RichHudFramework.UI.Server
                 highlightEnabled = false,
             };
 
-            border = new BorderBox(button)
+            var border = new BorderBox(button)
             {
                 Color = RichHudTerminal.BorderColor,
                 Thickness = 1f,
@@ -83,19 +91,6 @@ namespace RichHudFramework.UI.Server
 
             button.MouseInput.OnLeftClick += ToggleValue;
             Height = 36f;
-        }
-
-        protected override void Draw()
-        {
-            if (Value != lastValue)
-            {
-                lastValue = Value;
-                OnControlChanged?.Invoke();
-                CustomValueSetter?.Invoke(Value);
-            }
-
-            if (CustomValueGetter != null && Value != CustomValueGetter())
-                Value = CustomValueGetter();
         }
 
         protected override void HandleInput()

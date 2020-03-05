@@ -1,6 +1,6 @@
 ﻿using RichHudFramework.Game;
-using RichHudFramework.UI;
 using RichHudFramework.IO;
+using RichHudFramework.UI;
 using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
@@ -13,8 +13,8 @@ using VRageMath;
 
 namespace RichHudFramework.Server
 {
-    using UI.Server;
     using UI.Rendering.Server;
+    using UI.Server;
     using ClientData = MyTuple<string, Action<int, object>, Action, int>;
 
     /// <summary>
@@ -24,7 +24,7 @@ namespace RichHudFramework.Server
     internal sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int versionID = 3;
+        private const int versionID = 4;
 
         private static RichHudMaster Instance { get; set; }
         private readonly List<RichHudClient> clients;

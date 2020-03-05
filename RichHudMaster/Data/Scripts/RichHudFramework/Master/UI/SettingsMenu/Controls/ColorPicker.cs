@@ -6,11 +6,22 @@ namespace RichHudFramework.UI.Server
 {
     using UI;
 
+    /// <summary>
+    /// An RGB color picker using sliders for each channel. Designed to mimic the appearance of the color picker
+    /// in the SE terminal.
+    /// </summary>
     public class ColorPicker : TerminalValue<Color, ColorPicker>
     {
-        public override event Action OnControlChanged;
+        /// <summary>
+        /// The name of the color picker as it appears in the menu.
+        /// </summary>
+        public override string Name { get { return name.TextBoard.ToString(); } set { name.TextBoard.SetText(value); } }
 
-        public override RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
+        /// <summary>
+        /// Used to periodically update the value associated with the control. Optional.
+        /// </summary>
+        public override Func<Color> CustomValueGetter { get; set; }
+
         public override float Width
         {
             get { return mainChain.Width + Padding.X; }
@@ -37,9 +48,6 @@ namespace RichHudFramework.UI.Server
                 b.Height = rText.Height;
             }
         }
-
-        public override Func<Color> CustomValueGetter { get; set; }
-        public override Action<Color> CustomValueSetter { get; set; }
 
         private readonly Label name, rText, gText, bText;
         private readonly TexturedBox display;
@@ -139,15 +147,7 @@ namespace RichHudFramework.UI.Server
 
             display.Color = color;
 
-            if (Value != color)
-            {
-                Value = color;
-                OnControlChanged?.Invoke();
-                CustomValueSetter?.Invoke(Value);
-            }
-
-            if (CustomValueGetter != null && Value != CustomValueGetter())
-                Value = CustomValueGetter();
+            base.Draw();
         }
     }
 }

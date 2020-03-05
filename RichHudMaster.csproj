@@ -72,6 +72,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\IControlCategory.cs" />
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\IControlPage.cs" />
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\IControlTile.cs" />
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\IModControlRoot.cs" />
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\IRebindPage.cs" />
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\ITerminalControl.cs" />
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\ITerminalControl1.cs" />
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\ITerminalPage.cs" />
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\ITerminalValue.cs" />
+    <Compile Include="Data\Scripts\RichHudFramework\Shared\UI\SettingsMenu\ITextPage.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\Config\ChatCommands.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\Config\MasterBinds.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\Config\MasterConfig.cs" />

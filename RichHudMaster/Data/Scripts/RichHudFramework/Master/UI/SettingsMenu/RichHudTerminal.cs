@@ -30,10 +30,16 @@ namespace RichHudFramework
             Func<int, ControlMembers> // GetNewModPage
         >;
 
+        /// <summary>
+        /// Windowed settings menu shared by mods using the framework.
+        /// </summary>
         public sealed partial class RichHudTerminal : RichHudComponentBase
         {
-            public static readonly GlyphFormat HeaderFormat = new GlyphFormat(Color.White, TextAlignment.Center, 1.15f);
-            public static readonly GlyphFormat ControlFormat = GlyphFormat.Blueish.WithSize(1.08f);
+            public static readonly GlyphFormat 
+                HeaderFormat = new GlyphFormat(Color.White, TextAlignment.Center, 1.15f),
+                ControlFormat = GlyphFormat.Blueish.WithSize(1.08f),
+                WarningFormat = new GlyphFormat(new Color(200, 35, 35));
+
             public static readonly Color
                 ScrollBarColor = new Color(41, 51, 61),
                 TileColor = new Color(39, 50, 57),
@@ -51,8 +57,14 @@ namespace RichHudFramework
                 set { instance = value; }
             }
 
+            /// <summary>
+            /// Determines whether or not the terminal is currently open.
+            /// </summary>
             public static bool Open { get { return Instance.settingsMenu.Visible; } set { Instance.settingsMenu.Visible = value; } }
 
+            /// <summary>
+            /// Mod control root used by Rich HUD Master.
+            /// </summary>
             public static IModControlRoot Root => Instance.root;
 
             private static RichHudTerminal instance;
@@ -165,6 +177,9 @@ namespace RichHudFramework
                 return default(ControlMembers);
             }
 
+            /// <summary>
+            /// Settings menu main window.
+            /// </summary>
             private class SettingsMenu : WindowBase
             {
                 public event Action OnSelectionChanged;
@@ -182,6 +197,9 @@ namespace RichHudFramework
 
                 public ModControlRoot Selection { get; private set; }
 
+                /// <summary>
+                /// Currently selected control page.
+                /// </summary>
                 public TerminalPageBase CurrentPage => Selection?.SelectedElement;
 
                 public ReadOnlyCollection<ModControlRoot> ModRoots => modList.scrollBox.List;
@@ -270,6 +288,9 @@ namespace RichHudFramework
                         Height = MinimumSize.Y;
                 }
 
+                /// <summary>
+                /// Creates and returns a new control root with the name given.
+                /// </summary>
                 public ModControlRoot AddModRoot(string clientName)
                 {
                     ModControlRoot modSettings = new ModControlRoot(this) { Name = clientName };
@@ -280,18 +301,27 @@ namespace RichHudFramework
                     return modSettings;
                 }
 
+                /// <summary>
+                /// Adds a new control page to the settings menu.
+                /// </summary>
                 public void AddPage(TerminalPageBase page)
                 {
                     pages.Add(page);
                     chain.Add(page);
                 }
 
+                /// <summary>
+                /// Toggles menu visiblity, but only if chat is open.
+                /// </summary>
                 public void ToggleMenu()
                 {
                     if (MyAPIGateway.Gui.ChatEntryVisible)
                         Visible = !Visible;
                 }
 
+                /// <summary>
+                /// Closes the settings menu.
+                /// </summary>
                 public void CloseMenu()
                 {
                     if (Visible)
@@ -336,6 +366,9 @@ namespace RichHudFramework
                         CurrentPage.Visible = true;
                 }
 
+                /// <summary>
+                /// Scrollable list of mod control roots.
+                /// </summary>
                 private class ModList : HudElementBase
                 {
                     public override float Width
@@ -397,6 +430,9 @@ namespace RichHudFramework
                         };
                     }
 
+                    /// <summary>
+                    /// Adds a new mod control root to the list.
+                    /// </summary>
                     public void AddToList(ModControlRoot modSettings)
                     {
                         scrollBox.AddToList(modSettings);
