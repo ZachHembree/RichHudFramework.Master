@@ -68,7 +68,7 @@ namespace RichHudFramework
                     Spacing = 20f,
                 };
 
-                Controls = new ReadOnlyCollectionData<ITerminalControl>(x => controls.List[x], () => controls.List.Count);
+                Controls = new ReadOnlyCollectionData<ITerminalControl>(x => controls.ChainMembers[x], () => controls.ChainMembers.Count);
 
                 Padding = new Vector2(16f);
                 Size = new Vector2(300f, 250f);
@@ -106,8 +106,8 @@ namespace RichHudFramework
                     Item1 = GetOrSetMember,
                     Item2 = new MyTuple<object, Func<int>>
                     {
-                        Item1 = (Func<int, ControlMembers>)(x => controls.List[x].GetApiData()),
-                        Item2 = () => controls.List.Count
+                        Item1 = (Func<int, ControlMembers>)(x => controls.ChainMembers[x].GetApiData()),
+                        Item2 = () => controls.ChainMembers.Count
                     },
                     Item3 = this
                 };

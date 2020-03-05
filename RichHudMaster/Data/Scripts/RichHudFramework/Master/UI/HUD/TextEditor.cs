@@ -10,6 +10,7 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Simple text editor used for debugging TextBoard
     /// </summary>
+    [Obsolete]
     public class TextEditor : WindowBase
     {
         public readonly TextBox textBox;
@@ -96,8 +97,8 @@ namespace RichHudFramework.UI
             IFontMin abhaya = FontManager.GetFont("AbhayaLibreMedium");
             GlyphFormat buttonFormat = new GlyphFormat(Color.White, TextAlignment.Center, 1.1625f, abhaya.Regular);
 
-            TextBoxButton
-                bold = new TextBoxButton()
+            LabelBoxButton
+                bold = new LabelBoxButton()
                 {
                     Format = buttonFormat,
                     Text = "B",
@@ -106,7 +107,7 @@ namespace RichHudFramework.UI
                     Size = new Vector2(32f, 30f),
                     Color = new Color(41, 54, 62),
                 },
-                italic = new TextBoxButton()
+                italic = new LabelBoxButton()
                 {
                     Format = buttonFormat,
                     Text = "I",
@@ -147,7 +148,7 @@ namespace RichHudFramework.UI
             base.HandleInput();
 
             ITextBoard textBoard = textBox.TextBoard;
-            IClickableElement horzControl = scrollHorz.slide.MouseInput,
+            IMouseInput horzControl = scrollHorz.slide.MouseInput,
                 vertControl = scrollVert.slide.MouseInput;
 
             scrollHorz.Min = -Math.Max(0f, textBoard.TextSize.X - textBoard.Size.X);

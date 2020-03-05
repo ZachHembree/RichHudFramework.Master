@@ -29,7 +29,7 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public bool HighlightEnabled { get { return button.HighlightEnabled; } set { button.HighlightEnabled = value; } }
 
-        public IClickableElement MouseInput => button.MouseInput;
+        public IMouseInput MouseInput => button.MouseInput;
 
         public override float Width
         {
@@ -55,13 +55,13 @@ namespace RichHudFramework.UI.Server
             }
         }
 
-        public readonly TextBoxButton button;
+        public readonly LabelBoxButton button;
         public readonly BorderBox border;
         private readonly TexturedBox highlight;
 
         public TerminalButton(IHudParent parent = null) : base(parent)
         {
-            button = new TextBoxButton(this)
+            button = new LabelBoxButton(this)
             {
                 AutoResize = false,
                 Color = new Color(42, 55, 63),

@@ -44,7 +44,7 @@ namespace RichHudFramework
                 };
 
                 catBox.background.Visible = false;
-                Categories = new ReadOnlyCollectionData<IControlCategory>(x => catBox.Members.List[x], () => catBox.Members.List.Count);              
+                Categories = new ReadOnlyCollectionData<IControlCategory>(x => catBox.Chain.ChainMembers[x], () => catBox.Chain.ChainMembers.Count);              
             }
 
             protected override void Draw()

@@ -81,7 +81,7 @@ namespace RichHudFramework
                         HeaderColor = TileColor,
                     };
 
-                    Pages = new ReadOnlyCollectionData<ITerminalPage>(x => pageControl.Members[x].AssocMember, () => pageControl.Members.Count);
+                    Pages = new ReadOnlyCollectionData<ITerminalPage>(x => pageControl.List[x].AssocMember, () => pageControl.List.Count);
                     pageControl.MouseInput.OnLeftClick += UpdateSelection;
                     pageControl.OnSelectionChanged += () => UpdateSelection();
 
@@ -133,8 +133,8 @@ namespace RichHudFramework
                         Item1 = GetOrSetMember,
                         Item2 = new MyTuple<object, Func<int>>()
                         {
-                            Item1 = (Func<int, ControlMembers>)(x => pageControl.Members[x].AssocMember.GetApiData()),
-                            Item2 = () => pageControl.Members.Count
+                            Item1 = (Func<int, ControlMembers>)(x => pageControl.List[x].AssocMember.GetApiData()),
+                            Item2 = () => pageControl.List.Count
                         },
                         Item3 = this
                     };
