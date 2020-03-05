@@ -89,7 +89,6 @@ namespace RichHudFramework
                 private static void InitializeFonts()
                 {
                     TryAddFont(SeFont.GetFontData());
-                    TryAddFont(SeFontShadowed.GetFontData());
                     TryAddFont(MonoFont.GetFontData());
                     TryAddFont(AbhayaLibreMedium.GetFontData());
                     TryAddFont(BitstreamVeraSans.GetFontData());
