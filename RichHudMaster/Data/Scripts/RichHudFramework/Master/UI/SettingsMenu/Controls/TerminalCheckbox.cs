@@ -7,7 +7,7 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// Labeled checkbox designed to mimic the appearance of checkboxes in the SE terminal.
     /// </summary>
-    public class Checkbox : TerminalValue<bool, Checkbox>
+    public class TerminalCheckbox : TerminalValue<bool, TerminalCheckbox>
     {
         /// <summary>
         /// Name of the checkbox as it appears on its label.
@@ -41,7 +41,7 @@ namespace RichHudFramework.UI.Server
 
         private static readonly Color BoxColor = new Color(114, 121, 139);
 
-        public Checkbox(IHudParent parent = null) : base(parent)
+        public TerminalCheckbox(IHudParent parent = null) : base(parent)
         {
             name = new Label()
             {

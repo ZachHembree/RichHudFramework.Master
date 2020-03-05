@@ -14,7 +14,7 @@ namespace RichHudFramework.UI.Server
     /// One-line text field with a configurable input filter delegate. Designed to mimic the appearance of the text field
     /// in the SE terminal.
     /// </summary>
-    public class TextField : TerminalValue<string, TextField>
+    public class TerminalTextField : TerminalValue<string, TerminalTextField>
     {
         /// <summary>
         /// Invoked whenver a change occurs to a control that requires a response, like a change
@@ -79,7 +79,7 @@ namespace RichHudFramework.UI.Server
         private bool textChanged;
         private bool controlUpdating;
 
-        public TextField(IHudParent parent = null) : base(parent)
+        public TerminalTextField(IHudParent parent = null) : base(parent)
         {
             name = new Label(this)
             {

@@ -92,8 +92,8 @@ namespace RichHudFramework.Server
             return new List<MenuUtilities.IMenuElement>()
             {
                 new MenuUtilities.MenuButton(
-                        $"Open Rich Hud Terminal",
-                        () => RichHudTerminal.Open = true)
+                    $"Open Rich Hud Terminal",
+                    () => RichHudTerminal.Open = true)
             };
         }
 

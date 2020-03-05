@@ -15,7 +15,7 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// A fixed size list box with a label. Designed to mimic the appearance of the list box in the SE terminal.
     /// </summary>
-    public class ListControl<T> : TerminalValue<ListBoxEntry<T>, ListControl<T>>
+    public class TerminalList<T> : TerminalValue<ListBoxEntry<T>, TerminalList<T>>
     {
         /// <summary>
         /// The name of the listbox as it appears in the terminal.
@@ -58,7 +58,7 @@ namespace RichHudFramework.UI.Server
         private readonly Label name;
         private readonly HudChain<HudElementBase> hudChain;
 
-        public ListControl(IHudParent parent = null) : base(parent)
+        public TerminalList(IHudParent parent = null) : base(parent)
         {
             name = new Label()
             {

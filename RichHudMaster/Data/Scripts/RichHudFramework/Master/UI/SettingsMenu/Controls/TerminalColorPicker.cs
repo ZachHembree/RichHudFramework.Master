@@ -10,7 +10,7 @@ namespace RichHudFramework.UI.Server
     /// An RGB color picker using sliders for each channel. Designed to mimic the appearance of the color picker
     /// in the SE terminal.
     /// </summary>
-    public class ColorPicker : TerminalValue<Color, ColorPicker>
+    public class TerminalColorPicker : TerminalValue<Color, TerminalColorPicker>
     {
         /// <summary>
         /// The name of the color picker as it appears in the menu.
@@ -55,7 +55,7 @@ namespace RichHudFramework.UI.Server
         private readonly HudChain<HudElementBase> mainChain, displayChain,
             sliderChain, colorText, colorSliders;
 
-        public ColorPicker(IHudParent parent = null) : base(parent)
+        public TerminalColorPicker(IHudParent parent = null) : base(parent)
         {
             name = new Label()
             {

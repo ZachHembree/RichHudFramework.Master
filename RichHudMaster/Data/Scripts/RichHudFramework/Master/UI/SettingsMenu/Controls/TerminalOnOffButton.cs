@@ -20,7 +20,7 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// On/Off toggle designed to mimic the appearance of the On/Off button in the SE Terminal.
     /// </summary>
-    public class OnOffButton : TerminalValue<bool, OnOffButton>
+    public class TerminalOnOffButton : TerminalValue<bool, TerminalOnOffButton>
     {
         /// <summary>
         /// The name of the control as it appears in the terminal.
@@ -46,7 +46,7 @@ namespace RichHudFramework.UI.Server
         private readonly BorderBox selectionHighlight;
         private readonly HudChain<HudElementBase> buttonChain;
 
-        public OnOffButton(IHudParent parent = null) : base(parent)
+        public TerminalOnOffButton(IHudParent parent = null) : base(parent)
         {
             name = new Label()
             {

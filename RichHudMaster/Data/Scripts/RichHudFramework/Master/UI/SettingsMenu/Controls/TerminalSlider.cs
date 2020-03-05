@@ -39,7 +39,7 @@ namespace RichHudFramework.UI.Server
     /// Labeled slider used to set float values in the settings menu. Mimics the appearance of the slider in the
     /// SE terminal.
     /// </summary>
-    public class SliderSetting : TerminalValue<float, SliderSetting>
+    public class TerminalSlider : TerminalValue<float, TerminalSlider>
     {
         /// <summary>
         /// The name of the control as rendred in the terminal.
@@ -104,7 +104,7 @@ namespace RichHudFramework.UI.Server
         private readonly SliderBox sliderBox;
         private readonly TexturedBox highlight;
 
-        public SliderSetting(IHudParent parent = null) : base(parent)
+        public TerminalSlider(IHudParent parent = null) : base(parent)
         {
             sliderBox = new SliderBox(this)
             {

@@ -129,23 +129,23 @@ namespace RichHudFramework
                 switch ((MenuControls)controlEnum)
                 {
                     case MenuControls.Checkbox:
-                        return new Checkbox().GetApiData();
+                        return new TerminalCheckbox().GetApiData();
                     case MenuControls.ColorPicker:
-                        return new ColorPicker().GetApiData();
+                        return new TerminalColorPicker().GetApiData();
                     case MenuControls.DropdownControl:
-                        return new DropdownControl<object>().GetApiData();
+                        return new TerminalDropdown<object>().GetApiData();
                     case MenuControls.ListControl:
-                        return new ListControl<object>().GetApiData();
+                        return new TerminalList<object>().GetApiData();
                     case MenuControls.OnOffButton:
-                        return new OnOffButton().GetApiData();
+                        return new TerminalOnOffButton().GetApiData();
                     case MenuControls.SliderSetting:
-                        return new SliderSetting().GetApiData();
+                        return new TerminalSlider().GetApiData();
                     case MenuControls.TerminalButton:
                         return new TerminalButton().GetApiData();
                     case MenuControls.TextField:
-                        return new TextField().GetApiData();
+                        return new TerminalTextField().GetApiData();
                     case MenuControls.DragBox:
-                        return new DragBox().GetApiData();
+                        return new TerminalDragBox().GetApiData();
                 }
 
                 return default(ControlMembers);

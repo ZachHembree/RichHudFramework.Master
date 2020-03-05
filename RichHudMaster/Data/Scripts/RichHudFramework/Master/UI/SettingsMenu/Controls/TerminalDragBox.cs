@@ -15,7 +15,7 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// A terminal control that uses a draggable window to indicate a position on the screen.
     /// </summary>
-    public class DragBox : TerminalValue<Vector2, DragBox>
+    public class TerminalDragBox : TerminalValue<Vector2, TerminalDragBox>
     {
         /// <summary>
         /// The name of the control as it appears in the terminal.
@@ -58,7 +58,7 @@ namespace RichHudFramework.UI.Server
         private readonly TerminalButton openButton;
         private readonly DragWindow window;
 
-        public DragBox(IHudParent parent = null) : base(parent)
+        public TerminalDragBox(IHudParent parent = null) : base(parent)
         {
             window = new DragWindow()
             {

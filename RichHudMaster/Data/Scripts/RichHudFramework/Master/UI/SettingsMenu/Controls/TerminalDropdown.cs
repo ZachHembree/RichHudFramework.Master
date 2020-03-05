@@ -14,7 +14,7 @@ namespace RichHudFramework.UI.Server
     /// A dropdown list with a label. Designed to mimic the appearance of the dropdown in the SE terminal.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class DropdownControl<T> : TerminalValue<ListBoxEntry<T>, DropdownControl<T>>
+    public class TerminalDropdown<T> : TerminalValue<ListBoxEntry<T>, TerminalDropdown<T>>
     {
         /// <summary>
         /// The name of the control as it appears in the terminal.
@@ -59,7 +59,7 @@ namespace RichHudFramework.UI.Server
         private readonly TexturedBox highlight;
         private readonly BorderBox border;
 
-        public DropdownControl(IHudParent parent = null) : base(parent)
+        public TerminalDropdown(IHudParent parent = null) : base(parent)
         {
             name = new Label()
             {
