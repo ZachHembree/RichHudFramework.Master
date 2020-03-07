@@ -113,13 +113,11 @@ namespace RichHudFramework.Server
 
                 if (client == null && clientData.Item4 <= versionID)
                 {
-                    SendChatMessage($"Registered {clientData.Item1}");
                     clients.Add(new RichHudClient(clientData));
                 }
                 else
                 {
                     Action<int, object> SendMsgAction = clientData.Item2;
-                    SendChatMessage($"Failed to register {clientData.Item1}");
 
                     if (clientData.Item4 != versionID)
                         SendMsgAction((int)MsgTypes.RegistrationFailed, $"Client version mismatch. Server vID: {versionID}, Client vID: {clientData.Item4}");
