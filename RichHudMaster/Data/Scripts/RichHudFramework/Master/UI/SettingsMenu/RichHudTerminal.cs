@@ -38,7 +38,7 @@ namespace RichHudFramework
             public static readonly GlyphFormat 
                 HeaderFormat = new GlyphFormat(Color.White, TextAlignment.Center, 1.15f),
                 ControlFormat = GlyphFormat.Blueish.WithSize(1.08f),
-                WarningFormat = new GlyphFormat(new Color(200, 35, 35));
+                WarningFormat = new GlyphFormat(new Color(200, 55, 55));
 
             public static readonly Color
                 ScrollBarColor = new Color(41, 51, 61),

@@ -117,10 +117,10 @@ namespace RichHudFramework
                 /// </summary>
                 public IBindGroup BindGroup
                 {
-                    get { return bindGroup; }
+                    get { return _bindGroup; }
                     set
                     {
-                        bindGroup = value;
+                        _bindGroup = value;
                         UpdateBindGroup();
                     }
                 }
@@ -156,7 +156,7 @@ namespace RichHudFramework
                 private readonly ScrollBox<BindBox> scrollBox;
                 private readonly HudChain<HudElementBase> layout;
 
-                private IBindGroup bindGroup;
+                private IBindGroup _bindGroup;
                 private BindDefinition[] defaultBinds;
 
                 public BindGroupBox(IHudParent parent = null) : base(parent)
@@ -251,7 +251,7 @@ namespace RichHudFramework
                                 scrollBox.AddToList(new BindBox());
 
                             scrollBox.List[n].Enabled = true;
-                            scrollBox.List[n].Bind = BindGroup[n];
+                            scrollBox.List[n].SetBind(BindGroup[n], BindGroup);
                         }
                     }
                 }
@@ -267,19 +267,6 @@ namespace RichHudFramework
                 /// </summary>
                 public bool Enabled { get; set; }
 
-                /// <summary>
-                /// The keybind associated the the control.
-                /// </summary>
-                public IBind Bind
-                {
-                    get { return bind; }
-                    set
-                    {
-                        bind = value;
-                        UpdateBindText();
-                    }
-                }
-
                 public override float Height { get { return layout.Height; } set { layout.Height = value; bindName.Height = value; } }
 
                 private readonly Label bindName;
@@ -287,9 +274,10 @@ namespace RichHudFramework
                 private readonly HudChain<HudElementBase> layout;
 
                 private IBind bind;
+                private IBindGroup group;
 
                 public BindBox(IHudParent parent = null) : base(parent)
-                {
+                {                    
                     bindName = new Label(this)
                     {
                         Text = "NewBindBox",
@@ -346,6 +334,13 @@ namespace RichHudFramework
                     Enabled = true;
                 }
 
+                public void SetBind(IBind bind, IBindGroup group)
+                {
+                    this.bind = bind;
+                    this.group = group;
+                    UpdateBindText();
+                }
+
                 /// <summary>
                 /// Opens the rebind dialog for the given bind for the control specified.
                 /// </summary>
@@ -398,7 +393,11 @@ namespace RichHudFramework
 
                     if (combo != null && combo.Count > 0)
                     {
-                        bindName.TextBoard.SetFormatting(GlyphFormat.Blueish);
+                        if (!group.DoesComboConflict(combo, bind))
+                            bindName.TextBoard.SetFormatting(GlyphFormat.Blueish);
+                        else
+                            bindName.TextBoard.SetFormatting(RichHudTerminal.WarningFormat);
+
                         con1.Name = combo[0].DisplayName;
 
                         if (combo.Count > 1)

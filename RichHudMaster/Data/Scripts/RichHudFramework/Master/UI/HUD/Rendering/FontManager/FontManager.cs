@@ -83,7 +83,7 @@ namespace RichHudFramework
                         InitializeFonts();
                     }
                     else if (_instance.Parent == null)
-                        _instance.RegisterComponent(RichHudMain.Instance);
+                        _instance.RegisterComponent(RichHudCore.Instance);
                 }
 
                 private static void InitializeFonts()

@@ -63,7 +63,7 @@ namespace RichHudFramework
                 if (_instance == null)
                     _instance = new BindManager();
                 else if (_instance.Parent == null)
-                    _instance.RegisterComponent(RichHudMain.Instance);
+                    _instance.RegisterComponent(RichHudCore.Instance);
             }
 
             public override void HandleInput()

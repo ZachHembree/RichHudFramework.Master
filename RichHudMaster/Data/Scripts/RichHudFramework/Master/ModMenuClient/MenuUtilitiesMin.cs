@@ -301,7 +301,7 @@ namespace RichHudFramework.UI
             }
 
             private void OnClick() =>
-                RichHudMain.Instance.RunSafeAction(OnClickAction);
+                RichHudCore.Instance.RunSafeAction(OnClickAction);
 
             public override void InitElement() =>
                 Element = new HudApiMin.MenuItem(Name, Parent.CategoryBase, OnClick);

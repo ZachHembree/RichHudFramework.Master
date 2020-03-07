@@ -46,7 +46,7 @@ namespace RichHudFramework.Server
 
         protected override void AfterLoadData()
         {
-            RichHudMain.MainModName = ModName;
+            RichHudCore.MainModName = ModName;
             rhdCommands = CmdManager.AddOrGetCmdGroup("/rhd", GetChatCommands());
 
             FontManager.Init();
@@ -141,7 +141,7 @@ namespace RichHudFramework.Server
                     clients[n].Unregister();
 
                 clients.Clear();
-                RichHudMain.Instance.Reload();
+                RichHudCore.Instance.Reload();
             }
             else if (Unloading)
             {

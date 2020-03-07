@@ -88,7 +88,7 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\GlyphData.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\LinePool.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\RichHudInternal.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\RichHudMain.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\RichHudCore.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindGroupData.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\ModMenuClient\TextHudApiMin.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\ModMenuClient\MenuUtilitiesMin.cs" />
