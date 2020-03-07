@@ -73,8 +73,6 @@ namespace RichHudFramework.Server
                     bindClient.Unload();
                     menuData.Item2.Unregister();
                     ReloadAction();
-
-                    Instance.SendChatMessage($"Unregistered {debugName}");
                 }
             }
         }

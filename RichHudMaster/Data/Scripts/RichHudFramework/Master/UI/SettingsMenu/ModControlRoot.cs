@@ -36,7 +36,11 @@ namespace RichHudFramework
                 /// <summary>
                 /// Invoked when a new page is selected
                 /// </summary>
-                public event Action OnSelectionChanged;
+                public event Action OnSelectionChanged
+                {
+                    add { pageControl.OnSelectionChanged += value; }
+                    remove { pageControl.OnSelectionChanged -= value; }
+                }
 
                 internal event Action<ModControlRoot> OnModUpdate;
 
@@ -82,7 +86,6 @@ namespace RichHudFramework
                     };
 
                     Pages = new ReadOnlyCollectionData<ITerminalPage>(x => pageControl.List[x].AssocMember, () => pageControl.List.Count);
-                    pageControl.MouseInput.OnLeftClick += UpdateSelection;
                     pageControl.OnSelectionChanged += () => UpdateSelection();
 
                     Enabled = true;
@@ -98,7 +101,6 @@ namespace RichHudFramework
 
                 private void UpdateSelection()
                 {
-                    OnSelectionChanged?.Invoke();
                     OnModUpdate?.Invoke(this);
                 }
 
