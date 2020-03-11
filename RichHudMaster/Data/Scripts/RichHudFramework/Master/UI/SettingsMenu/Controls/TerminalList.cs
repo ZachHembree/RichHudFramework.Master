@@ -7,7 +7,7 @@ using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageM
 
 namespace RichHudFramework.UI.Server
 {
-    internal enum ListControlAccessors : int
+    public enum ListControlAccessors : int
     {
         ListAccessors = 16,
     }

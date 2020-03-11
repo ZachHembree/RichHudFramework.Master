@@ -36,7 +36,7 @@ namespace RichHudFramework
         namespace Rendering.Server
         {
             /// <summary>
-            /// Style for a given font. Used internally by the HUD API for rendering text from
+            /// Style for a given font. Used publicly by the HUD API for rendering text from
             /// the font's sprites.
             /// </summary>
             public interface IFontStyle

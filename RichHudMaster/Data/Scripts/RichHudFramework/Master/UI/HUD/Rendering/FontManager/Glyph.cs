@@ -58,10 +58,10 @@ namespace RichHudFramework
                     };
                 }
 
-                internal QuadBoard GetQuadBoard(float scale, Color color) =>
+                public QuadBoard GetQuadBoard(float scale, Color color) =>
                     new QuadBoard(material.TextureID, GetMaterialAlignment(material.size * scale), color);
 
-                internal FlatQuad GetMaterialAlignment(Vector2 bbSize) =>
+                public FlatQuad GetMaterialAlignment(Vector2 bbSize) =>
                     matFrame.GetMaterialAlignment(bbSize);
             }
         }

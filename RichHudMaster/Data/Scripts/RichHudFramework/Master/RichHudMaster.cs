@@ -21,7 +21,7 @@ namespace RichHudFramework.Server
     /// Main class for Framework API server.
     /// </summary>
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation, 1)]
-    internal sealed partial class RichHudMaster : ModBase
+    public sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
         private const int versionID = 4;

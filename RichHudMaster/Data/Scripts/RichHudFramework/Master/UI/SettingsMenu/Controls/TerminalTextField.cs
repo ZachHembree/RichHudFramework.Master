@@ -5,7 +5,7 @@ using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework.UI.Server
 {
-    internal enum TextFieldAccessors : int
+    public enum TextFieldAccessors : int
     {
         CharFilterFunc = 16,
     }

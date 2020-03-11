@@ -10,7 +10,7 @@ using VRageMath;
 
 namespace RichHudFramework.Server
 {
-    internal sealed partial class RichHudMaster
+    public sealed partial class RichHudMaster
     {
         private List<CmdManager.Command> GetChatCommands()
         {

@@ -29,7 +29,7 @@ namespace RichHudFramework
         namespace Rendering.Server
         {
             /// <summary>
-            /// Expanded font interface. Used internally by the HUD API.
+            /// Expanded font interface. Used publicly by the HUD API.
             /// </summary>
             public interface IFont : IFontMin
             {

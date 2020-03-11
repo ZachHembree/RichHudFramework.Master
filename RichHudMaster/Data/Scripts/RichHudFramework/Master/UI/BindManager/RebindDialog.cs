@@ -8,7 +8,7 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// GUI used to change binds in <see cref="BindManager.Group"/>s.
     /// </summary>
-    internal sealed class RebindDialog : RichHudComponentBase
+    public sealed class RebindDialog : RichHudComponentBase
     {
         private static RebindDialog Instance
         {

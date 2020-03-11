@@ -11,7 +11,7 @@ namespace RichHudFramework.UI.Server
 {
     using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
 
-    internal enum OnOffButtonAccessors : int
+    public enum OnOffButtonAccessors : int
     {
         OnText = 16,
         OffText = 17,

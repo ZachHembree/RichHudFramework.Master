@@ -66,7 +66,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Read-only list of the QuadBoards for each character in the line.
                     /// </summary>
-                    internal readonly IReadOnlyList<QuadBoard> extGlyphBoards;
+                    public readonly IReadOnlyList<QuadBoard> extGlyphBoards;
 
                     private readonly List<char> chars;
                     private readonly List<FormattedGlyph> formattedGlyphs;
@@ -318,7 +318,7 @@ namespace RichHudFramework
                         }
                     }
 
-                    internal void GetText(StringBuilder stringBuilder)
+                    public void GetText(StringBuilder stringBuilder)
                     {
                         stringBuilder.EnsureCapacity(stringBuilder.Length + chars.Count);
 

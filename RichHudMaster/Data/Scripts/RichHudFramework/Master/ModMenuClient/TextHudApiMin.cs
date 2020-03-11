@@ -139,7 +139,7 @@ namespace RichHudFramework.UI.TextHudApi
                 Text = 0,
                 Interactable
             }
-            internal object BackingObject;
+            public object BackingObject;
 
             public virtual MenuCategoryBase Parent { get; set; }
 

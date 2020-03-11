@@ -9,7 +9,7 @@ namespace RichHudFramework.Server
     using ClientData = MyTuple<string, Action<int, object>, Action, int>;
     using ServerData = MyTuple<Action, Func<int, object>, int>;
 
-    internal sealed partial class RichHudMaster
+    public sealed partial class RichHudMaster
     {
         private class RichHudClient
         {

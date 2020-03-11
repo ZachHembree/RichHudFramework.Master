@@ -6,7 +6,7 @@ namespace RichHudFramework.UI.Server
 {
     using UI;
 
-    internal enum DragBoxAccessors : int
+    public enum DragBoxAccessors : int
     {
         BoxSize = 16,
         AlignToEdge = 17,

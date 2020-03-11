@@ -6,7 +6,7 @@ using VRage.Input;
 
 namespace RichHudFramework.Server
 {
-    internal sealed class MasterBinds : RichHudComponentBase
+    public sealed class MasterBinds : RichHudComponentBase
     {
         public static BindsConfig Cfg
         {

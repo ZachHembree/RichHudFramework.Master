@@ -158,7 +158,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Used internally to register a new font via the API. Returns font accessors.
+                /// Used publicly to register a new font via the API. Returns font accessors.
                 /// </summary>
                 private static FontMembers? TryAddApiFont(FontDefinition fontData)
                 {

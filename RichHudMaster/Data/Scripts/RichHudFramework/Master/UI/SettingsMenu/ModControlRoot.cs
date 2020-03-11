@@ -42,7 +42,7 @@ namespace RichHudFramework
                     remove { pageControl.OnSelectionChanged -= value; }
                 }
 
-                internal event Action<ModControlRoot> OnModUpdate;
+                public event Action<ModControlRoot> OnModUpdate;
 
                 public override float Width { get { return pageControl.Width; } set { pageControl.Width = value; } }
                 public override float Height { get { return pageControl.Height; } set { pageControl.Height = value; } }
