@@ -1,91 +1,10 @@
-﻿using Sandbox.ModAPI;
-using System;
+﻿using System;
 using System.Text.RegularExpressions;
-using VRageMath;
 
 namespace RichHudFramework
 {
     public static partial class Utils
     {
-        /// <summary>
-        /// Simple stopwatch class in lieu of <see cref="System.Diagnostics.Stopwatch"/>.
-        /// </summary>
-        public class Stopwatch
-        {
-            public long ElapsedTicks { get { return Enabled ? (DateTime.Now.Ticks - startTime) : (stopTime - startTime); } }
-            public long ElapsedMilliseconds { get { return ElapsedTicks / TimeSpan.TicksPerMillisecond; } }
-            public bool Enabled { get; private set; }
-
-            private long startTime, stopTime;
-
-            public Stopwatch()
-            {
-                startTime = long.MaxValue;
-                stopTime = long.MaxValue;
-                Enabled = false;
-            }
-
-            public void Start()
-            {
-                Reset();
-                Enabled = true;
-            }
-
-            public void Stop()
-            {
-                stopTime = DateTime.Now.Ticks;
-                Enabled = false;
-            }
-
-            public void Reset()
-            {
-                startTime = DateTime.Now.Ticks;
-            }
-        }
-
-        public static class Xml
-        {
-            /// <summary>
-            /// Attempts to serialize an object to an Xml string.
-            /// </summary>
-            public static KnownException TrySerialize<T>(T obj, out string xmlOut)
-            {
-                KnownException exception = null;
-                xmlOut = null;
-
-                try
-                {
-                    xmlOut = MyAPIGateway.Utilities.SerializeToXML(obj);
-                }
-                catch (Exception e)
-                {
-                    exception = new KnownException("IO Error. Failed to generate XML.", e);
-                }
-
-                return exception;
-            }
-
-            /// <summary>
-            /// Attempts to deserialize an Xml string to an object of a given type.
-            /// </summary>
-            public static KnownException TryDeserialize<T>(string xmlIn, out T obj)
-            {
-                KnownException exception = null;
-                obj = default(T);
-
-                try
-                {
-                    obj = MyAPIGateway.Utilities.SerializeFromXML<T>(xmlIn);
-                }
-                catch (Exception e)
-                {
-                    exception = new KnownException("IO Error. Unable to interpret XML.", e);
-                }
-
-                return exception;
-            }
-        }
-
         public static class Color
         {
             private static readonly Regex colorParser = new Regex(@"(\s*,?(\d{1,3})\s*,?){3,4}");
@@ -175,20 +94,6 @@ namespace RichHudFramework
                     return $"{color.R},{color.G},{color.B},{color.A}";
                 else
                     return $"{color.R},{color.G},{color.B}";
-            }
-        }
-
-        public static class Debug
-        {
-            public static void AssertNotNull<T>(T obj, string message = "")
-            {
-                Assert(obj != null, $"Object of type {typeof(T).ToString()} is null. " + message);
-            }
-
-            public static void Assert(bool condition, string message = "")
-            {
-                if (!condition)
-                    throw new Exception("Assertion failed. " + message);
             }
         }
     }
