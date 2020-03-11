@@ -94,7 +94,7 @@ namespace RichHudFramework
 
                 protected override void Draw()
                 {
-                    pageControl.HeaderColor = pageControl.HeaderColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+                    pageControl.HeaderColor = pageControl.HeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
 
                     base.Draw();
                 }

@@ -86,10 +86,10 @@ namespace RichHudFramework.UI.Server
 
         protected override void Draw()
         {
-            List.Color = RichHudTerminal.ListBgColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+            List.Color = RichHudTerminal.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
 
             SliderBar slider = List.scrollBox.scrollBar.slide;
-            slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+            slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
 
             base.Draw();
         }

@@ -204,7 +204,7 @@ namespace RichHudFramework.UI.Server
             protected override void Draw()
             {
                 Scale = HudMain.ResScale;
-                background.Color = background.Color.SetAlpha((byte)(HudMain.UiBkOpacity * 255f * .95f));
+                background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity * .95f);
             }
         }
     }

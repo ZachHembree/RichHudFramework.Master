@@ -40,7 +40,7 @@ namespace RichHudFramework.UI
                 _instance = new MenuUtilities();
 
                 if (!wasClosed)
-                    MenuRoot.Init(_instance.Parent.ModName, $"{_instance.Parent.ModName} Settings");
+                    MenuRoot.Init(ExceptionHandler.ModName, $"{ExceptionHandler.ModName} Settings");
             }
         }
 
@@ -301,7 +301,7 @@ namespace RichHudFramework.UI
             }
 
             private void OnClick() =>
-                RichHudCore.Instance.RunSafeAction(OnClickAction);
+                ExceptionHandler.Run(OnClickAction);
 
             public override void InitElement() =>
                 Element = new HudApiMin.MenuItem(Name, Parent.CategoryBase, OnClick);

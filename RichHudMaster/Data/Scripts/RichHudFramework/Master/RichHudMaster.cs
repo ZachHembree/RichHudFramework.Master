@@ -37,7 +37,7 @@ namespace RichHudFramework.Server
             else
                 throw new Exception("Only one instance of RichHudMaster can exist at any given time.");
 
-            ModName = "Rich HUD Master";
+            ExceptionHandler.ModName = "Rich HUD Master";
             LogIO.FileName = "RichHudMasterLog.txt";
             MasterConfig.FileName = "RichHudMasterConfig.xml";
 
@@ -46,7 +46,6 @@ namespace RichHudFramework.Server
 
         protected override void AfterLoadData()
         {
-            RichHudCore.MainModName = ModName;
             rhdCommands = CmdManager.AddOrGetCmdGroup("/rhd", GetChatCommands());
 
             FontManager.Init();
@@ -135,7 +134,7 @@ namespace RichHudFramework.Server
             MasterConfig.ClearSubscribers();
             rhdCommands = null;
 
-            if (Reloading)
+            if (ExceptionHandler.Reloading)
             {
                 for (int n = clients.Count - 1; n >= 0; n--)
                     clients[n].Unregister();

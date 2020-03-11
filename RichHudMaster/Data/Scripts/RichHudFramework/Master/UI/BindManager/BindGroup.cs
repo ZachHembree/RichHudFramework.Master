@@ -254,7 +254,7 @@ namespace RichHudFramework
                     if (combo == null || TryGetCombo(uniqueControls, out newCombo))
                         return TryRegisterBind(bindName, newCombo, out bind, silent);
                     else if (!silent)
-                        RichHudCore.Instance.SendChatMessage($"Invalid bind for {Name}.{bindName}. One or more control names were not recognised.");
+                        ExceptionHandler.SendChatMessage($"Invalid bind for {Name}.{bindName}. One or more control names were not recognised.");
 
                     return false;
                 }
@@ -278,7 +278,7 @@ namespace RichHudFramework
                             return true;
                     }
                     else if (!silent)
-                        RichHudCore.Instance.SendChatMessage($"Bind {Name}.{bindName} already exists.");
+                        ExceptionHandler.SendChatMessage($"Bind {Name}.{bindName} already exists.");
 
                     return false;
                 }
@@ -337,7 +337,7 @@ namespace RichHudFramework
 
                         if (bindError)
                         {
-                            RichHudCore.Instance.SendChatMessage("One or more keybinds in the given configuration were invalid or conflict with oneanother.");
+                            ExceptionHandler.SendChatMessage("One or more keybinds in the given configuration were invalid or conflict with oneanother.");
                             UnregisterControls();
 
                             usedControls = oldUsedControls;
@@ -351,7 +351,7 @@ namespace RichHudFramework
                     }
                     else
                     {
-                        RichHudCore.Instance.SendChatMessage("Bind data cannot be null or empty.");
+                        ExceptionHandler.SendChatMessage("Bind data cannot be null or empty.");
                         return false;
                     }
                 }
@@ -453,7 +453,7 @@ namespace RichHudFramework
                         if (bind.Name.ToLower() == name)
                             return bind;
 
-                    RichHudCore.Instance.SendChatMessage($"{name} is not a valid bind name.");
+                    ExceptionHandler.SendChatMessage($"{name} is not a valid bind name.");
                     return null;
                 }
 

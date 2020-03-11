@@ -77,7 +77,7 @@ namespace RichHudFramework
 
             protected override void Draw()
             {
-                background.Color = background.Color.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+                background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
 
                 base.Draw();
             }

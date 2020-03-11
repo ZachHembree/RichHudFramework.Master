@@ -183,14 +183,14 @@ namespace RichHudFramework
                                 return true;
                             }
                             else if (!silent)
-                                RichHudCore.Instance.SendChatMessage($"Invalid bind for {group.Name}.{Name}. One or more of the given controls conflict with existing binds.");
+                                ExceptionHandler.SendChatMessage($"Invalid bind for {group.Name}.{Name}. One or more of the given controls conflict with existing binds.");
                         }
                         else if (!silent)
                         {
                             if (combo.Count > 0)
-                                RichHudCore.Instance.SendChatMessage($"Invalid key bind. No more than {maxBindLength} keys in a bind are allowed.");
+                                ExceptionHandler.SendChatMessage($"Invalid key bind. No more than {maxBindLength} keys in a bind are allowed.");
                             else
-                                RichHudCore.Instance.SendChatMessage("Invalid key bind. There must be at least one control in a key bind.");
+                                ExceptionHandler.SendChatMessage("Invalid key bind. There must be at least one control in a key bind.");
                         }
 
                         return false;

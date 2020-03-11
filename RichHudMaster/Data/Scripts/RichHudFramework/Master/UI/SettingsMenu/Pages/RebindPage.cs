@@ -50,7 +50,7 @@ namespace RichHudFramework
                     bindGroups.List[n].Width = Width - bindGroups.scrollBar.Width - bindGroups.Padding.X;
 
                 SliderBar slider = bindGroups.scrollBar.slide;
-                slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+                slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
             }
 
             /// <summary>
@@ -218,7 +218,7 @@ namespace RichHudFramework
                 protected override void Draw()
                 {
                     SliderBar slider = scrollBox.scrollBar.slide;
-                    slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+                    slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
 
                     for (int n = 0; n < scrollBox.List.Count; n++)
                         scrollBox.List[n].Width = Width - scrollBox.scrollBar.Width;

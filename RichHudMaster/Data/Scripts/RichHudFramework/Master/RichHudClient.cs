@@ -34,7 +34,7 @@ namespace RichHudFramework.Server
                 menuData = RichHudTerminal.GetClientData(debugName);
                 registered = true;
 
-                SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => Instance.RunSafeAction(Unregister), GetApiData, versionID));
+                SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => ExceptionHandler.Run(Unregister), GetApiData, versionID));
             }
 
             /// <summary>

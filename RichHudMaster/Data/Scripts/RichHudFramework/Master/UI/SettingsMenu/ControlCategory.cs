@@ -117,7 +117,7 @@ namespace RichHudFramework
             protected override void Draw()
             {
                 SliderBar slider = scrollBox.scrollBar.slide;
-                slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+                slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
 
                 base.Draw();
             }

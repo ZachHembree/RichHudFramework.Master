@@ -340,7 +340,7 @@ namespace RichHudFramework
                     chain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
                     modList.Width = 250f * Scale;
 
-                    BodyColor = BodyColor.SetAlpha((byte)(HudMain.UiBkOpacity * 255f));
+                    BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
                 }
 
