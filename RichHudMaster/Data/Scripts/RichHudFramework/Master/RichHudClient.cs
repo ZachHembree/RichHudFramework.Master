@@ -6,6 +6,7 @@ namespace RichHudFramework.Server
     using UI;
     using UI.Server;
     using UI.Rendering.Server;
+    using Internal;
     using ClientData = MyTuple<string, Action<int, object>, Action, int>;
     using ServerData = MyTuple<Action, Func<int, object>, int>;
 

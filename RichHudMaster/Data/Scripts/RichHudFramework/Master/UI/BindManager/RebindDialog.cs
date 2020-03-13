@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Game;
+﻿using RichHudFramework.Internal;
 using System.Collections.Generic;
 using VRageMath;
 using System;

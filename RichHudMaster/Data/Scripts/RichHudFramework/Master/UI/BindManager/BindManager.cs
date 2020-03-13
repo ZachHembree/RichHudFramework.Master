@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Game;
+﻿using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
@@ -75,7 +75,7 @@ namespace RichHudFramework
             {
                 mainClient.Unload();
 
-                if (Parent.Unloading)
+                if (ExceptionHandler.Unloading)
                     _instance = null;
             }
 

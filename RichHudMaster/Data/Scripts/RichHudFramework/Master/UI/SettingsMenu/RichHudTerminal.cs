@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Game;
+﻿using RichHudFramework.Internal;
 using RichHudFramework.Server;
 using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;

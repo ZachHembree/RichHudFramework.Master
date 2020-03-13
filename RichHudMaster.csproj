@@ -129,7 +129,6 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Pages\TerminalPageBase.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Pages\TextPage.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\RichHudTerminal.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\ExceptionHandler.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\ApiContainers.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\Collections.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\Extensions\CollectionExtensions.cs" />
@@ -141,11 +140,12 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\Utilities\ProtoBuf.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\Utilities\Stopwatch.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\General\Utilities\Xml.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\Internal\ExceptionHandler.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\Internal\ModBase.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\Internal\RichHudCore.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\IO\LocalFileIO.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\IO\LogIO.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\ModBase.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\MsgEnums.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\RichHudCore.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindDefinition.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\BindGroupData.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\BindManager\CustomControls.cs" />

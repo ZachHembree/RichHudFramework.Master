@@ -9,7 +9,7 @@ using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
-    using Game;
+    using Internal;
     using FontMembers = MyTuple<
         string, // Name
         int, // Index
@@ -96,7 +96,7 @@ namespace RichHudFramework
 
                 public override void Close()
                 {
-                    if (Parent.Unloading)
+                    if (ExceptionHandler.Unloading)
                         _instance = null;
                 }
 

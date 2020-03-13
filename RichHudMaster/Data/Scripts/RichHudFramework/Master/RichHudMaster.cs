@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Game;
+﻿using RichHudFramework.Internal;
 using RichHudFramework.IO;
 using RichHudFramework.UI;
 using RichHudFramework.UI.Rendering;
@@ -126,7 +126,7 @@ namespace RichHudFramework.Server
             }
         }
 
-        protected override void BeforeClose()
+        public override void BeforeClose()
         {
             UnregisterClientHandler();
 
@@ -142,7 +142,7 @@ namespace RichHudFramework.Server
                 clients.Clear();
                 RichHudCore.Instance.Reload();
             }
-            else if (Unloading)
+            else if (ExceptionHandler.Unloading)
             {
                 Instance = null;
             }

@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Game;
+﻿using RichHudFramework.Internal;
 using RichHudFramework.UI;
 using RichHudFramework.UI.Server;
 using RichHudFramework;
