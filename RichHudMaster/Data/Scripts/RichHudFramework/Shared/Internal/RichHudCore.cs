@@ -1,12 +1,11 @@
-﻿using RichHudFramework.Game;
-using Sandbox.ModAPI;
+﻿using Sandbox.ModAPI;
 using System;
 using VRage;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
 
-namespace RichHudFramework
+namespace RichHudFramework.Internal
 {
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation, 0)]
     public sealed class RichHudCore : ModBase
@@ -24,9 +23,11 @@ namespace RichHudFramework
         protected override void AfterLoadData()
         { }
 
-        protected override void BeforeClose()
+        public override void Close()
         {
-            if (Unloading)
+            base.Close();
+
+            if (ExceptionHandler.Unloading)
                 Instance = null;
         }       
     }
