@@ -34,9 +34,9 @@ namespace RichHudFramework
             public float Scale
             {
                 get { return _scale; }
-                set 
-                { 
-                    _localScale = value;
+                set
+                {
+                    localScale = value;
                     _scale = (_parent == null || ignoreParentScale) ? value : (value * _parent._scale);
                 }
             }
@@ -116,14 +116,15 @@ namespace RichHudFramework
             public bool CaptureCursor { get; set; }
 
             /// <summary>
-            /// If set to true the hud element will share the cursor with its child elements.
+            /// If set to true the hud element will share the cursor with its child elements if it's
+            /// already captured it.
             /// </summary>
             public bool ShareCursor { get; set; }
 
             /// <summary>
-            /// If true, the hud element will cede cursor input to its children.
+            /// If true, the hud element will attempt to capture the cursor before its children.
             /// </summary>
-            public bool CedeCursor { get; set; }
+            public bool CaptureEarly { get; set; }
 
             /// <summary>
             /// Indicates whether or not the cursor is currently over the element. The element must
@@ -141,7 +142,7 @@ namespace RichHudFramework
             private bool isMousedOver;
             private Vector2 _offset, _padding, originAlignment;
 
-            protected float _localScale = 1f, _scale = 1f;
+            protected float localScale = 1f, _scale = 1f;
             protected float _width, _height;
             protected HudElementBase _parent;
 
@@ -160,20 +161,20 @@ namespace RichHudFramework
             public override void Register(IHudParent parent)
             {
                 base.Register(parent);
-                _scale = (_parent == null || ignoreParentScale) ? _localScale : (_localScale * _parent._scale);
+                _scale = (_parent == null || ignoreParentScale) ? localScale : (localScale * _parent._scale);
             }
 
             public override void Unregister()
             {
                 base.Unregister();
-                _scale = _localScale;
+                _scale = localScale;
             }
 
-            public sealed override void HandleInputStart()
+            public override void HandleInputStart()
             {
                 if (Visible)
                 {
-                    if (CedeCursor)
+                    if (CaptureEarly)
                         HandleChildInput();
 
                     if (CaptureCursor && HudMain.Cursor.Visible && !HudMain.Cursor.IsCaptured)
@@ -186,15 +187,15 @@ namespace RichHudFramework
                     else
                         isMousedOver = false;
 
-                    if (!CedeCursor)
+                    HandleInput();
+
+                    if (!CaptureEarly)
                     {
                         if (ShareCursor)
                             ShareInput();
                         else
                             HandleChildInput();
                     }
-
-                    HandleInput();
                 }
                 else
                     isMousedOver = false;
@@ -231,14 +232,14 @@ namespace RichHudFramework
             /// </summary>
             private bool IsMouseInBounds()
             {
-                Vector2 pos = Origin + Offset, cursorPos = HudMain.Cursor.Origin;
+                Vector2 cursorPos = HudMain.Cursor.Origin;
                 float
-                    width = Math.Max(minMouseBounds, Size.X),
-                    height = Math.Max(minMouseBounds, Size.Y),
-                    leftBound = pos.X - width / 2f,
-                    rightBound = pos.X + width / 2f,
-                    upperBound = pos.Y + height / 2f,
-                    lowerBound = pos.Y - height / 2f;
+                    width = Math.Max(minMouseBounds, cachedSize.X),
+                    height = Math.Max(minMouseBounds, cachedSize.Y),
+                    leftBound = cachedPosition.X - width / 2f,
+                    rightBound = cachedPosition.X + width / 2f,
+                    upperBound = cachedPosition.Y + height / 2f,
+                    lowerBound = cachedPosition.Y - height / 2f;
 
                 return
                     (cursorPos.X >= leftBound && cursorPos.X < rightBound) &&
@@ -259,7 +260,7 @@ namespace RichHudFramework
 
             private void UpdateCache()
             {
-                _scale = Scale;
+                _scale = (_parent == null || ignoreParentScale) ? localScale : (localScale * _parent._scale);
                 cachedSize = new Vector2(Width, Height);
 
                 if (_parent != null)
@@ -316,7 +317,7 @@ namespace RichHudFramework
             private Vector2 GetParentAlignment()
             {
                 Vector2 alignment = Vector2.Zero,
-                    max = (_parent.cachedSize + cachedSize) / 2f, 
+                    max = (_parent.cachedSize + cachedSize) / 2f,
                     min = -max;
 
                 if (ParentAlignment.HasFlag(ParentAlignments.UsePadding))
