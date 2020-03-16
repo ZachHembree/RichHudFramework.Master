@@ -47,7 +47,7 @@ namespace RichHudFramework
                 Categories = new ReadOnlyCollectionData<IControlCategory>(x => catBox.Chain.ChainMembers[x], () => catBox.Chain.ChainMembers.Count);              
             }
 
-            protected override void Draw()
+            protected override void Layout()
             {
                 for (int n = 0; n < catBox.List.Count; n++)
                     catBox.List[n].Width = Width - catBox.scrollBar.Width;

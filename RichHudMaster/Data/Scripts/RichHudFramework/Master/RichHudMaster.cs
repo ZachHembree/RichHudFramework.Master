@@ -20,11 +20,11 @@ namespace RichHudFramework.Server
     /// <summary>
     /// Main class for Framework API server.
     /// </summary>
-    [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation, 1)]
+    [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation, 0)]
     public sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int versionID = 4;
+        private const int versionID = 5;
 
         private static RichHudMaster Instance { get; set; }
         private readonly List<RichHudClient> clients;
@@ -37,9 +37,11 @@ namespace RichHudFramework.Server
             else
                 throw new Exception("Only one instance of RichHudMaster can exist at any given time.");
 
-            ExceptionHandler.ModName = "Rich HUD Master";
             LogIO.FileName = "RichHudMasterLog.txt";
             MasterConfig.FileName = "RichHudMasterConfig.xml";
+
+            ExceptionHandler.RecoveryLimit = 5;
+            ExceptionHandler.ModName = "Rich HUD Master";
 
             clients = new List<RichHudClient>();
         }
@@ -110,7 +112,7 @@ namespace RichHudFramework.Server
 
                 RichHudClient client = clients.Find(x => (x.debugName == clientData.Item1));
 
-                if (client == null && clientData.Item4 <= versionID)
+                if (client == null && clientData.Item4 == versionID)
                 {
                     clients.Add(new RichHudClient(clientData));
                 }
@@ -140,7 +142,6 @@ namespace RichHudFramework.Server
                     clients[n].Unregister();
 
                 clients.Clear();
-                RichHudCore.Instance.Reload();
             }
             else if (ExceptionHandler.Unloading)
             {

@@ -153,9 +153,9 @@ namespace RichHudFramework.UI.Server
         public TerminalValue(IHudParent parent) : base(parent)
         { }
 
-        protected override void Draw()
+        protected override void Layout()
         {
-            if (!Value.Equals(lastValue) && !controlUpdating)
+            if (Value != null && !Value.Equals(lastValue) && !controlUpdating)
             {
                 controlUpdating = true;
                 lastValue = Value;

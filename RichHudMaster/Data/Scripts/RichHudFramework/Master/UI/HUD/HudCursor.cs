@@ -106,8 +106,8 @@ namespace RichHudFramework
                     {
                         shadow.Scale = ResScale;
 
-                        shadow.BeforeDrawStart();
-                        shadow.DrawStart();
+                        shadow.BeforeLayout(true);
+                        shadow.BeforeDraw(HudLayers.Normal);
                     }
                 }
 

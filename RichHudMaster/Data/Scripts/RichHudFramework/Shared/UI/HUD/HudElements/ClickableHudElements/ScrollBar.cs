@@ -98,7 +98,7 @@ namespace RichHudFramework.UI
             Size = new Vector2(317f, 47f);
         }
 
-        protected override void Draw()
+        protected override void Layout()
         {
             if (Vertical)
             {

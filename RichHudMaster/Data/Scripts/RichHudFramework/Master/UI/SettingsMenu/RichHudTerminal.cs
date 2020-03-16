@@ -328,11 +328,11 @@ namespace RichHudFramework
                         Visible = false;
                 }
 
-                protected override void BeforeDraw()
+                protected override void Layout()
                 {
                     Scale = HudMain.ResScale;
 
-                    base.BeforeDraw();
+                    base.Layout();
 
                     if (CurrentPage != null)
                         CurrentPage.Width = Width - Padding.X - modList.Width - chain.Spacing;
@@ -438,7 +438,7 @@ namespace RichHudFramework
                         scrollBox.AddToList(modSettings);
                     }
 
-                    protected override void Draw()
+                    protected override void Layout()
                     {
                         header.Width = scrollBox.Width;
 

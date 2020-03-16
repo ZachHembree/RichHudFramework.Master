@@ -28,9 +28,14 @@ namespace RichHudFramework.Server
                     () => RichHudTerminal.Open = true),
                 new CmdManager.Command ("close",
                     () => RichHudTerminal.Open = false),
-                new CmdManager.Command ("reload",
-                    () => Instance.Reload()),
+                new CmdManager.Command ("crash",
+                    ThrowException),
             };
+        }
+
+        private static void ThrowException()
+        {
+            throw new Exception("Crash chat command was called");
         }
     }
 }

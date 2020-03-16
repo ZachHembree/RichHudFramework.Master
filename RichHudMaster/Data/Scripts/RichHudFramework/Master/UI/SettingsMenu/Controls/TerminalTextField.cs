@@ -140,7 +140,7 @@ namespace RichHudFramework.UI.Server
             }
         }
 
-        protected override void Draw()
+        protected override void Layout()
         {
             if (refreshTimer.ElapsedMilliseconds > 1000)
             {

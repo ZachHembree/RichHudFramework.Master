@@ -270,7 +270,7 @@ namespace RichHudFramework.UI
             }
         }
 
-        protected override void BeforeDraw()
+        protected override void Layout()
         {
             scrollBar.Max = GetMaxStart(List.Count - 1);
             scrollBar.Min = GetFirstEnabled();

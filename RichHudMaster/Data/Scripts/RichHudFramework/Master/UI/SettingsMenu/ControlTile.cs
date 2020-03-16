@@ -75,11 +75,11 @@ namespace RichHudFramework
                 Enabled = true;
             }
 
-            protected override void Draw()
+            protected override void Layout()
             {
                 background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
 
-                base.Draw();
+                base.Layout();
             }
 
             /// <summary>

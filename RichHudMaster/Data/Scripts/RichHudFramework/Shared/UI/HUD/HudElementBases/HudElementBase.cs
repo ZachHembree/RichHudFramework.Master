@@ -127,8 +127,7 @@ namespace RichHudFramework
             public bool CaptureEarly { get; set; }
 
             /// <summary>
-            /// Indicates whether or not the cursor is currently over the element. The element must
-            /// be set to capture the cursor for this to work.
+            /// Indicates whether or not the element is capturing the cursor.
             /// </summary>
             public virtual bool IsMousedOver => Visible && isMousedOver;
 
@@ -161,7 +160,14 @@ namespace RichHudFramework
             public override void Register(IHudParent parent)
             {
                 base.Register(parent);
-                _scale = (_parent == null || ignoreParentScale) ? localScale : (localScale * _parent._scale);
+
+                if (_parent != null)
+                {
+                    _zOffset = _parent.ZOffset;
+                    _scale = (ignoreParentScale) ? localScale : (localScale * _parent._scale);
+                }
+                else
+                    _scale = localScale;
             }
 
             public override void Unregister()
@@ -170,7 +176,7 @@ namespace RichHudFramework
                 _scale = localScale;
             }
 
-            public override void HandleInputStart()
+            public sealed override void BeforeInput()
             {
                 if (Visible)
                 {
@@ -223,7 +229,7 @@ namespace RichHudFramework
                 for (int n = children.Count - 1; n >= 0; n--)
                 {
                     if (children[n].Visible)
-                        children[n].HandleInputStart();
+                        children[n].BeforeInput();
                 }
             }
 
@@ -246,15 +252,15 @@ namespace RichHudFramework
                     (cursorPos.Y >= lowerBound && cursorPos.Y < upperBound);
             }
 
-            public sealed override void BeforeDrawStart()
+            public sealed override void BeforeLayout(bool refresh)
             {
                 UpdateCache();
-                BeforeDraw();
+                Layout();
 
                 for (int n = 0; n < children.Count; n++)
                 {
-                    if (children[n].Visible)
-                        children[n].BeforeDrawStart();
+                    if (children[n].Visible || refresh)
+                        children[n].BeforeLayout(refresh);
                 }
             }
 

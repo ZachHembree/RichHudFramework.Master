@@ -81,8 +81,8 @@ namespace RichHudFramework.UI.Server
         {
             if (open)
             {
-                menu.BeforeDrawStart();
-                menu.DrawStart();
+                menu.BeforeLayout(true);
+                menu.BeforeDraw(HudLayers.Normal);
             }
         }
 
@@ -201,7 +201,7 @@ namespace RichHudFramework.UI.Server
                 Size = new Vector2(1210f, 288f);
             }
 
-            protected override void Draw()
+            protected override void Layout()
             {
                 Scale = HudMain.ResScale;
                 background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity * .95f);

@@ -163,7 +163,7 @@ namespace RichHudFramework.UI
             textBoard.TextOffset = new Vector2(scrollHorz.Current, scrollVert.Current);
         }
 
-        protected override void Draw()
+        protected override void Layout()
         {
             ITextBoard textBoard = textBox.TextBoard;
 

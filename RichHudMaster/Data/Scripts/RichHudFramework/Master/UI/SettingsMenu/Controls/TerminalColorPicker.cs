@@ -131,7 +131,7 @@ namespace RichHudFramework.UI.Server
             };
         }
 
-        protected override void Draw()
+        protected override void Layout()
         {
             Color color = new Color()
             {
@@ -147,7 +147,7 @@ namespace RichHudFramework.UI.Server
 
             display.Color = color;
 
-            base.Draw();
+            base.Layout();
         }
     }
 }

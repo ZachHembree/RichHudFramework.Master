@@ -92,11 +92,11 @@ namespace RichHudFramework
                     Visible = true;
                 }
 
-                protected override void Draw()
+                protected override void Layout()
                 {
                     pageControl.HeaderColor = pageControl.HeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
 
-                    base.Draw();
+                    base.Layout();
                 }
 
                 private void UpdateSelection()

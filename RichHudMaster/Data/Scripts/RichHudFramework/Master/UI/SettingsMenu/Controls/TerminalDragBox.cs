@@ -165,19 +165,14 @@ namespace RichHudFramework.UI.Server
                 confirm.button.MouseInput.OnLeftClick += () => OnConfirm?.Invoke();
             }
 
-            protected override void BeforeDraw()
+            protected override void Layout()
             {
                 Scale = HudMain.ResScale;
 
-                base.BeforeDraw();
+                base.Layout();
 
                 if (canMoveWindow)
                     Offset = HudMain.Cursor.Origin + cursorOffset - Origin - alignment;
-            }
-
-            protected override void Draw()
-            {
-                base.Draw();
 
                 if (AlignToEdge)
                 {

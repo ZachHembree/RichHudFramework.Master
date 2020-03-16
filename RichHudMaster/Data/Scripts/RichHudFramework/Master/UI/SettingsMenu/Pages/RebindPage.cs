@@ -44,7 +44,7 @@ namespace RichHudFramework
                 BindGroups = new ReadOnlyCollectionData<IBindGroup>(x => bindGroups.List[x].BindGroup, () => bindGroups.List.Count);
             }
 
-            protected override void Draw()
+            protected override void Layout()
             {
                 for (int n = 0; n < bindGroups.List.Count; n++)
                     bindGroups.List[n].Width = Width - bindGroups.scrollBar.Width - bindGroups.Padding.X;
@@ -215,7 +215,7 @@ namespace RichHudFramework
                     Enabled = true;
                 }
 
-                protected override void Draw()
+                protected override void Layout()
                 {
                     SliderBar slider = scrollBox.scrollBar.slide;
                     slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);

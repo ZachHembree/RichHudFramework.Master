@@ -27,8 +27,8 @@ namespace RichHudFramework
     using HudElementMembers = MyTuple<
         Func<bool>, // Visible
         object, // ID
-        Action, // BeforeDrawStart
-        Action, // DrawStart
+        Action<bool>, // BeforeLayout
+        Action<int>, // BeforeDraw
         Action, // HandleInput
         ApiMemberAccessor // GetOrSetMembers
     >;
@@ -258,8 +258,11 @@ namespace RichHudFramework
                     cacheTimer.Reset();
                 }
 
-                root.BeforeDrawStart();
-                root.DrawStart();
+                root.BeforeLayout(true);
+
+                root.BeforeDraw(HudLayers.Background);
+                root.BeforeDraw(HudLayers.Normal);
+                root.BeforeDraw(HudLayers.Foreground);
 
                 cursor.Draw();
             }
@@ -267,7 +270,7 @@ namespace RichHudFramework
             public override void HandleInput()
             {
                 cursor.Release();
-                root.HandleInputStart();
+                root.BeforeInput();
                 cursor.HandleInput();
             }
 

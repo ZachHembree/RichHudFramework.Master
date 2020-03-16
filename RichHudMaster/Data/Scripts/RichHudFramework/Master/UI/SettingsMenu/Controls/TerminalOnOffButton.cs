@@ -107,7 +107,7 @@ namespace RichHudFramework.UI.Server
             Value = !Value;
         }
 
-        protected override void Draw()
+        protected override void Layout()
         {
             if (Value)
             {
@@ -120,7 +120,7 @@ namespace RichHudFramework.UI.Server
                 selectionHighlight.Offset = off.Offset;
             }
 
-            base.Draw();
+            base.Layout();
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

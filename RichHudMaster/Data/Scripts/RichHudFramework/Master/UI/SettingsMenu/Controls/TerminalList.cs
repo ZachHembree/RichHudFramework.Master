@@ -84,14 +84,14 @@ namespace RichHudFramework.UI.Server
             Size = new Vector2(250f, 200f);
         }
 
-        protected override void Draw()
+        protected override void Layout()
         {
             List.Color = RichHudTerminal.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
 
             SliderBar slider = List.scrollBox.scrollBar.slide;
             slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
 
-            base.Draw();
+            base.Layout();
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

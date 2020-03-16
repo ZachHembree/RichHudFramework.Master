@@ -114,12 +114,12 @@ namespace RichHudFramework
                 Enabled = true;
             }
 
-            protected override void Draw()
+            protected override void Layout()
             {
                 SliderBar slider = scrollBox.scrollBar.slide;
                 slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
 
-                base.Draw();
+                base.Layout();
             }
 
             /// <summary>
