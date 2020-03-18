@@ -44,10 +44,6 @@ namespace RichHudFramework
 
                 public event Action<ModControlRoot> OnModUpdate;
 
-                public override float Width { get { return pageControl.Width; } set { pageControl.Width = value; } }
-                public override float Height { get { return pageControl.Height; } set { pageControl.Height = value; } }
-                public override Vector2 Padding { get { return pageControl.Padding; } set { pageControl.Padding = value; } }
-
                 /// <summary>
                 /// Name of the mod as it appears in the <see cref="RichHudTerminal"/> mod list
                 /// </summary>
@@ -67,14 +63,21 @@ namespace RichHudFramework
 
                 public TerminalPageBase SelectedElement => pageControl.Selection?.AssocMember;
 
+                public override float Width { get { return pageControl.Width; } set { pageControl.Width = value; } }
+                public override float Height { get { return pageControl.Height; } set { pageControl.Height = value; } }
+                public override Vector2 Padding { get { return pageControl.Padding; } set { pageControl.Padding = value; } }
+
+                public override bool Visible { get { return base.Visible && Enabled; } }
+
                 /// <summary>
                 /// Determines whether or not the element will appear in the list.
                 /// Disabled by default.
                 /// </summary>
-                public bool Enabled { get; set; }
+                public bool Enabled { get { return _enabled && pageControl.List.Count > 0; } set { _enabled = value; } }
 
                 private readonly TreeBox<TerminalPageBase> pageControl;
                 private readonly SettingsMenu menu;
+                private bool _enabled;
 
                 public ModControlRoot(SettingsMenu menu) : base(null)
                 {
@@ -88,7 +91,7 @@ namespace RichHudFramework
                     Pages = new ReadOnlyCollectionData<ITerminalPage>(x => pageControl.List[x].AssocMember, () => pageControl.List.Count);
                     pageControl.OnSelectionChanged += () => UpdateSelection();
 
-                    Enabled = true;
+                    Enabled = false;
                     Visible = true;
                 }
 

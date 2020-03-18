@@ -214,6 +214,7 @@ namespace RichHudFramework
             private readonly HudCursor cursor;
             private readonly Utils.Stopwatch cacheTimer;
             private float screenWidth, screenHeight, aspectRatio, fov, fovScale, uiBkOpacity;
+            private int tick;
 
             private HudMain() : base(false, true)
             {
@@ -258,13 +259,17 @@ namespace RichHudFramework
                     cacheTimer.Reset();
                 }
 
-                root.BeforeLayout(true);
+                root.BeforeLayout(tick == 0);
 
                 root.BeforeDraw(HudLayers.Background);
                 root.BeforeDraw(HudLayers.Normal);
                 root.BeforeDraw(HudLayers.Foreground);
-
                 cursor.Draw();
+
+                tick++;
+
+                if (tick == 30)
+                    tick = 0;
             }
 
             public override void HandleInput()
