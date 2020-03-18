@@ -158,7 +158,7 @@ namespace RichHudFramework.Internal
         /// The update function used (Before/Sim/After) is determined by the settings used by
         /// the MySessionComponentDescriptorAttribute applied to the child class.
         /// </summary>
-        private void BeforeUpdate()
+        protected void BeforeUpdate()
         {
             if (Loaded && CanUpdate)
                 ExceptionHandler.Run(UpdateComponents);
@@ -184,27 +184,23 @@ namespace RichHudFramework.Internal
             if (Loaded && !closing)
             {
                 Loaded = false;
-                CanUpdate = true;
+                CanUpdate = false;
                 closing = true;
 
-                if (CanUpdate)
+                for (int n = clientComponents.Count - 1; n >= 0; n--)
                 {
-                    for (int n = clientComponents.Count - 1; n >= 0; n--)
-                    {
-                        ExceptionHandler.Run(clientComponents[n].Close);
-                        clientComponents[n].UnregisterComponent(n);
-                    }
+                    ExceptionHandler.Run(clientComponents[n].Close);
+                    clientComponents[n].UnregisterComponent(n);
+                }
 
-                    for (int n = serverComponents.Count - 1; n >= 0; n--)
-                    {
-                        ExceptionHandler.Run(serverComponents[n].Close);
-                        serverComponents[n].UnregisterComponent(n);
-                    }
+                for (int n = serverComponents.Count - 1; n >= 0; n--)
+                {
+                    ExceptionHandler.Run(serverComponents[n].Close);
+                    serverComponents[n].UnregisterComponent(n);
                 }
 
                 clientComponents.Clear();
                 serverComponents.Clear();
-                CanUpdate = false;
                 closing = false;
             }
         }
