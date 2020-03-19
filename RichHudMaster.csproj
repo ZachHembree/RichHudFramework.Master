@@ -72,6 +72,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\MouseInputFilter.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\Config\ConfigIO.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\Config\ChatCommands.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\Config\MasterBinds.cs" />
@@ -109,7 +110,6 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\FormattedText\UnlinedText.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBuilder\FormattedText\WrappedText.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\Rendering\TextBoard.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\TextEditor.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\HUD\UiTestPattern.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\ControlCategory.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\Controls\TerminalCheckbox.cs" />
@@ -168,7 +168,7 @@
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElementInterfaces\IHudParent.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\BorderBox.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\Button.cs" />
-    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\ClickableElement.cs" />
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\MouseInputElement.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\Dropdown.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\LabelBoxButton.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\LabelButton.cs" />
