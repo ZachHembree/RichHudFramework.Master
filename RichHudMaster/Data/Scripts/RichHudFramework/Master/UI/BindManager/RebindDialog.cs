@@ -151,53 +151,54 @@ namespace RichHudFramework.UI.Server
             public readonly TexturedBox background;
             public readonly BorderBox border;
             public readonly Label header, subheader;
-            private readonly HudChain<HudElementBase> layout;
 
             public RebindHud() : base(null)
             {
                 background = new TexturedBox(this)
                 {
                     Color = new Color(37, 46, 53),
-                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+                    DimAlignment = DimAlignments.Both,
                 };
 
                 border = new BorderBox(this)
                 {
                     Thickness = 1f,
                     Color = new Color(53, 66, 75),
-                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+                    DimAlignment = DimAlignments.Both,
                 };
 
-                header = new Label()
+                header = new Label(this)
                 {
-                    Padding = new Vector2(0f, 27f),
-                    Format = GlyphFormat.White.WithSize(1.25f),
+                    AutoResize = false, 
+                    DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                    Height = 24f,
+                    ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV | ParentAlignments.UsePadding,
+                    Offset = new Vector2(0f, -42f),
+                    Format = new GlyphFormat(Color.White, TextAlignment.Center, 1.25f),
                     Text = "SELECT CONTROL",
                 };
 
-                var divider = new TexturedBox()
+                var divider = new TexturedBox(header)
                 {
-                    Color = new Color(84, 98, 111),
-                    Padding = new Vector2(376f, 0f),
+                    DimAlignment = DimAlignments.Width,
                     Height = 1f,
+                    ParentAlignment = ParentAlignments.Bottom,
+                    Offset = new Vector2(0f, -10f),
+                    Color = new Color(84, 98, 111),
                 };
-
-                subheader = new Label()
+                
+                subheader = new Label(divider)
                 {
-                    Padding = new Vector2(0f, 80f),
-                    Format = GlyphFormat.Blueish.WithSize(1.25f),
+                    AutoResize = false,
+                    DimAlignment = DimAlignments.Width,
+                    Height = 24f,
+                    ParentAlignment = ParentAlignments.Bottom,
+                    Offset = new Vector2(0f, -41f),
+                    Format = new GlyphFormat(GlyphFormat.Blueish.Color, TextAlignment.Center, 1.25f),
                     Text = "Please press a key",
                 };
 
-                layout = new HudChain<HudElementBase>(this)
-                {
-                    AlignVertical = true,
-                    AutoResize = true,
-                    Offset = new Vector2(0f, 36f),
-                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
-                    ChildContainer = { header, divider, subheader }
-                };
-
+                Padding = new Vector2(372f, 0f);
                 Size = new Vector2(1210f, 288f);
             }
 
