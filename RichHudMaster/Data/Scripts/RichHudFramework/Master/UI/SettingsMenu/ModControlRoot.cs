@@ -76,10 +76,10 @@ namespace RichHudFramework
                 public bool Enabled { get { return _enabled && pageControl.List.Count > 0; } set { _enabled = value; } }
 
                 private readonly TreeBox<TerminalPageBase> pageControl;
-                private readonly SettingsMenu menu;
+                private readonly TerminalWindow menu;
                 private bool _enabled;
 
-                public ModControlRoot(SettingsMenu menu) : base(null)
+                public ModControlRoot(TerminalWindow menu) : base(null)
                 {
                     this.menu = menu;
 

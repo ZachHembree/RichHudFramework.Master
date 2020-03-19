@@ -72,6 +72,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\UI\SettingsMenu\TerminalWindow.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Shared\UI\HUD\HudElements\ClickableHudElements\MouseInputFilter.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\Config\ConfigIO.cs" />
     <Compile Include="RichHudMaster\Data\Scripts\RichHudFramework\Master\Config\ChatCommands.cs" />
