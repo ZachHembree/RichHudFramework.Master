@@ -196,6 +196,7 @@ namespace RichHudFramework
 
                 private void UpdateSelection(ModControlRoot selection)
                 {
+                    Selection = selection;
                     UpdateSelectionVisibilty();
 
                     for (int n = 0; n < modList.scrollBox.List.Count; n++)
