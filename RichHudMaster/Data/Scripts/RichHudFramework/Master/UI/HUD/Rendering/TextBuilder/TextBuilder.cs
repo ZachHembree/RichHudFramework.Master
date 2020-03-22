@@ -410,11 +410,8 @@ namespace RichHudFramework
 
                                 char ch = lines[i.X].extChars[i.Y];
 
-                                if (ch != newChars[y])
+                                if (ch != newChars[y] || !lines.TryGetNextIndex(i, out i))
                                     return false;
-
-                                if (!lines.TryGetNextIndex(i, out i))
-                                    break;
                             }
                         }
 

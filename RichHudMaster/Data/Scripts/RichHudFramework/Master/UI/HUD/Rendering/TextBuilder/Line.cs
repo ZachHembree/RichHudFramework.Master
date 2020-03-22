@@ -21,7 +21,16 @@ namespace RichHudFramework
                 /// </summary>
                 protected abstract partial class Line : ILine
                 {
-                    public IRichChar this[int index] => new RichChar(this, index);
+                    public IRichChar this[int index] 
+                    {
+                        get
+                        {
+                            if (index >= 0 && index < Count)
+                                return new RichChar(this, index);
+                            else
+                                throw new Exception("Index was out of range. Must be non-negative and less than the size of the collection.");
+                        }
+                    }
 
                     /// <summary>
                     /// The number of rich characters currently in the collection.
