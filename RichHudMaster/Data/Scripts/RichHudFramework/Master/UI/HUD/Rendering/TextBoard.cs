@@ -149,7 +149,7 @@ namespace RichHudFramework
                             else
                                 _textOffset.Y = 0f;
 
-                            lineRangeIsStale = true;
+                            UpdateLineRange();
                         }
 
                         if (BuilderMode != TextBuilderModes.Wrapped)
@@ -280,7 +280,7 @@ namespace RichHudFramework
                 /// </summary>
                 private int GetCharAt(int ln, float offset)
                 {
-                    float last = -8f;
+                    float last = 0f;
                     offset -= _textOffset.X;
 
                     for (int ch = 0; ch < lines[ln].Count; ch++)
@@ -288,7 +288,7 @@ namespace RichHudFramework
                         Line line = lines[ln];
                         float pos = line.extLocData[ch].bbOffset.X;
 
-                        if ((offset >= last && offset < pos) || ch == lines[ln].Count - 1)
+                        if (((offset >= last || ch == 0) && offset < pos) || ch == lines[ln].Count - 1)
                             return ch;
 
                         last = pos;
