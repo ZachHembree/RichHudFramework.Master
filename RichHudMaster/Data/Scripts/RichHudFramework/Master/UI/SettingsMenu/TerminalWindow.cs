@@ -166,7 +166,12 @@ namespace RichHudFramework
                 public void ToggleMenu()
                 {
                     if (MyAPIGateway.Gui.ChatEntryVisible)
+                    {
                         Visible = !Visible;
+
+                        if (Visible)
+                            GetFocus();
+                    }
                 }
 
                 /// <summary>

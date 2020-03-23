@@ -76,7 +76,7 @@ namespace RichHudFramework.UI.Server
         private readonly TexturedBox background, highlight;
         private readonly Utils.Stopwatch refreshTimer;
         private string lastValue;
-        private bool controlUpdating;
+        private bool controlUpdating, valueChanged;
 
         public TerminalTextField(IHudParent parent = null) : base(parent)
         {
@@ -129,25 +129,30 @@ namespace RichHudFramework.UI.Server
 
         private void TextChanged()
         {
-            string newValue = textBox.TextBoard.ToString();
-
-            if (newValue != lastValue)
-            {
-                controlUpdating = true;
-                lastValue = newValue;
-                OnControlChanged?.Invoke();
-                controlUpdating = false;
-            }
+            valueChanged = !controlUpdating;
         }
 
         protected override void Layout()
         {
-            if (refreshTimer.ElapsedMilliseconds > 1000)
+            if (!textBox.InputOpen)
             {
-                if (CustomValueGetter != null && lastValue != CustomValueGetter())
-                    Value = CustomValueGetter();
+                if (refreshTimer.ElapsedMilliseconds > 1000)
+                {
+                    if (CustomValueGetter != null && lastValue != CustomValueGetter())
+                        Value = CustomValueGetter();
 
-                refreshTimer.Reset();
+                    refreshTimer.Reset();
+                }
+
+                if (valueChanged)
+                {
+                    controlUpdating = true;
+                    lastValue = Value;
+                    OnControlChanged?.Invoke();
+
+                    controlUpdating = false;
+                    valueChanged = false;
+                }
             }
         }
 
