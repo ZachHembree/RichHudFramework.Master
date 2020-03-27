@@ -409,8 +409,10 @@ namespace RichHudFramework
                     {
                         float height = _textOffset.Y;
 
-                        int start = 0;
-                        int end = -1;
+                        if (VertCenterText)
+                            height += MathHelper.Max(0f, TextSize.Y - Size.Y) / 2f;
+
+                        int start = 0, end = -1;
 
                         for (int line = 0; line < lines.Count; line++)
                         {
