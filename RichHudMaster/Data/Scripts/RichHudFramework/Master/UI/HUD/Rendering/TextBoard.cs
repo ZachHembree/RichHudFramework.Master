@@ -218,7 +218,7 @@ namespace RichHudFramework
                     {
                         if (index.Y != 0)
                         {
-                            GlyphLocData locData = line.extLocData[index.Y];
+                            GlyphLocData locData = line.LocData[index.Y];
 
                             float minOffset = -locData.bbOffset.X + locData.chSize.X / 2f - _fixedSize.X / 2f,
                                 maxOffset = minOffset - locData.chSize.X + _fixedSize.X;
@@ -286,7 +286,7 @@ namespace RichHudFramework
                     for (int ch = 0; ch < lines[ln].Count; ch++)
                     {
                         Line line = lines[ln];
-                        float pos = line.extLocData[ch].bbOffset.X;
+                        float pos = line.LocData[ch].bbOffset.X;
 
                         if (((offset >= last || ch == 0) && offset < pos) || ch == lines[ln].Count - 1)
                             return ch;
@@ -320,8 +320,8 @@ namespace RichHudFramework
 
                         for (int ch = 0; ch < line.Count; ch++)
                         {
-                            GlyphLocData locData = line.extLocData[ch];
-                            QuadBoard glyphBoard = line.extGlyphBoards[ch];
+                            GlyphLocData locData = line.LocData[ch];
+                            QuadBoard glyphBoard = line.GlyphBoards[ch];
 
                             float 
                                 xPos = locData.bbOffset.X + _textOffset.X,
@@ -329,7 +329,7 @@ namespace RichHudFramework
 
                             if ((xPos - edge) >= min && (xPos + edge) <= max)
                             {
-                                glyphBoard.Draw(locData.bbSize, origin + locData.bbOffset + _textOffset);
+                                glyphBoard.Draw(locData.bbSize, origin + _textOffset + locData.bbOffset);
                             }
                         }
                     }
@@ -477,15 +477,15 @@ namespace RichHudFramework
                 /// </summary>
                 private float GetLineAlignment(Line line)
                 {
-                    float offset = 0f, lineWidth = Math.Min(line.Size.X, Size.X);
+                    float offset = 0f;
                     TextAlignment alignment = line[0].Format.Alignment; // the first character determines alignment
 
                     if (alignment == TextAlignment.Left)
                         offset = -Size.X / 2f;
                     else if (alignment == TextAlignment.Center)
-                        offset = -lineWidth / 2f;
+                        offset = (MathHelper.Max(0f, TextSize.X - Size.X) - line.Size.X) / 2f;
                     else if (alignment == TextAlignment.Right)
-                        offset = (Size.X / 2f) - lineWidth;
+                        offset = MathHelper.Max(Size.X, TextSize.X) - (Size.X / 2f) - line.Size.X;
 
                     return offset;
                 }
@@ -516,19 +516,19 @@ namespace RichHudFramework
                 /// </summary>
                 private float UpdateCharOffset(Line line, int right, int left, Vector2 pos, float xAlign)
                 {
-                    FormattedGlyph glyphDataRight = line.extFormattedGlyphs[right];
+                    FormattedGlyph glyphDataRight = line.FormattedGlyphs[right];
                     IFontStyle fontStyle = FontManager.GetFontStyle(glyphDataRight.format.StyleIndex);
                     float scale = glyphDataRight.format.TextSize * fontStyle.FontScale * Scale;
 
-                    if (left >= 0 && CanUseKernings(line.extFormattedGlyphs[left].format, glyphDataRight.format))
+                    if (left >= 0 && CanUseKernings(line.FormattedGlyphs[left].format, glyphDataRight.format))
                     {
-                        char leftCh = line.extChars[left], 
-                            rightCh = line.extChars[right];
+                        char leftCh = line.Chars[left], 
+                            rightCh = line.Chars[right];
 
                         pos.X += fontStyle.GetKerningAdjustment(leftCh, rightCh) * scale;
                     }
 
-                    GlyphLocData locData = line.extLocData[right];
+                    GlyphLocData locData = line.LocData[right];
 
                     line.SetOffsetAt(right, new Vector2()
                     {

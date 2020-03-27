@@ -195,13 +195,13 @@ namespace RichHudFramework
                     switch ((RichCharAccessors)memberEnum)
                     {
                         case RichCharAccessors.Ch:
-                            return lines[i.X].extChars[i.Y];
+                            return lines[i.X].Chars[i.Y];
                         case RichCharAccessors.Format:
-                            return lines[i.X].extFormattedGlyphs[i.Y].format.data;
+                            return lines[i.X].FormattedGlyphs[i.Y].format.data;
                         case RichCharAccessors.Offset:
-                            return lines[i.X].extLocData[i.Y].bbOffset;
+                            return lines[i.X].LocData[i.Y].bbOffset;
                         case RichCharAccessors.Size:
-                            return lines[i.X].extLocData[i.Y].chSize;
+                            return lines[i.X].LocData[i.Y].chSize;
                     }
 
                     return null;
@@ -398,7 +398,7 @@ namespace RichHudFramework
 
                             for (int y = 0; y < newChars.Length; y++)
                             {
-                                GlyphFormat currentFormat = lines[i.X].extFormattedGlyphs[i.Y].format;
+                                GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
 
                                 if (lastFormat == null || lastFormat != currentFormat)
                                 {
@@ -408,7 +408,7 @@ namespace RichHudFramework
                                         return false;
                                 }
 
-                                char ch = lines[i.X].extChars[i.Y];
+                                char ch = lines[i.X].Chars[i.Y];
 
                                 if (ch != newChars[y] || !lines.TryGetNextIndex(i, out i))
                                     return false;
@@ -429,7 +429,7 @@ namespace RichHudFramework
                         newTextLength += text[n].Item1.Length;
 
                     for (int n = 0; n < lines.Count; n++)
-                        currentLength += lines[n].extChars.Count;
+                        currentLength += lines[n].Chars.Count;
 
                     return newTextLength == currentLength && currentLength > 0;
                 }

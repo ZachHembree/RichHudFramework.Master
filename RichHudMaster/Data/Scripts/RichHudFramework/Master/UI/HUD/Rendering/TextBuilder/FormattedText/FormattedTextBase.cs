@@ -183,7 +183,7 @@ namespace RichHudFramework.UI.Rendering.Server
             protected GlyphFormat GetPreviousFormat(Vector2I i)
             {
                 if (lines.TryGetLastIndex(i, out i))
-                    return lines[i.X].extFormattedGlyphs[i.Y].format;
+                    return lines[i.X].FormattedGlyphs[i.Y].format;
                 else
                     return null;
             }
@@ -204,8 +204,8 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             protected bool IsWordBreak(Vector2I iLeft, Vector2I iRight)
             {
-                char left = lines[iLeft.X].extChars[iLeft.Y], 
-                    right = lines[iRight.X].extChars[iRight.Y];
+                char left = lines[iLeft.X].Chars[iLeft.Y], 
+                    right = lines[iRight.X].Chars[iRight.Y];
 
                 return (left == ' ' || left == '-' || left == '_') && !(right == ' ' || right == '-' || right == '_');
             }
@@ -215,8 +215,8 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             protected bool IsWordBreak(int iLeft, int iRight)
             {
-                char left = charBuffer.extChars[iLeft],
-                    right = charBuffer.extChars[iRight];
+                char left = charBuffer.Chars[iLeft],
+                    right = charBuffer.Chars[iRight];
 
                 return (left == ' ' || left == '-' || left == '_') && !(right == ' ' || right == '-' || right == '_');
             }

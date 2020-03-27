@@ -60,22 +60,22 @@ namespace RichHudFramework
                     /// <summary>
                     /// Read-only list of the characters in the line.
                     /// </summary>
-                    public readonly IReadOnlyList<char> extChars;
+                    public readonly IReadOnlyList<char> Chars;
 
                     /// <summary>
                     /// Read-only list of the formatted glyphs for each character in the line.
                     /// </summary>
-                    public readonly IReadOnlyList<FormattedGlyph> extFormattedGlyphs;
+                    public readonly IReadOnlyList<FormattedGlyph> FormattedGlyphs;
 
                     /// <summary>
                     /// Read-only list of the location and size information for each character in the line.
                     /// </summary>
-                    public readonly IReadOnlyList<GlyphLocData> extLocData;
+                    public readonly IReadOnlyList<GlyphLocData> LocData;
 
                     /// <summary>
                     /// Read-only list of the QuadBoards for each character in the line.
                     /// </summary>
-                    public readonly IReadOnlyList<QuadBoard> extGlyphBoards;
+                    public readonly IReadOnlyList<QuadBoard> GlyphBoards;
 
                     private readonly List<char> chars;
                     private readonly List<FormattedGlyph> formattedGlyphs;
@@ -94,10 +94,10 @@ namespace RichHudFramework
                         locData = new List<GlyphLocData>(capacity);
                         glyphBoards = new List<QuadBoard>(capacity);
 
-                        extChars = chars;
-                        extFormattedGlyphs = formattedGlyphs;
-                        extLocData = locData;
-                        extGlyphBoards = glyphBoards;
+                        Chars = chars;
+                        FormattedGlyphs = formattedGlyphs;
+                        LocData = locData;
+                        GlyphBoards = glyphBoards;
                     }
 
                     /// <summary>
