@@ -447,12 +447,25 @@ namespace RichHudFramework
                 {
                     float width = 0f, height = 0f;
 
-                    for (int line = 0; line < lines.Count; line++)
+                    if (lines.Count > 0)
                     {
-                        if (lines[line].Size.X > width)
-                            width = lines[line].Size.X;
+                        for (int line = 0; line < lines.Count - 1; line++)
+                        {
+                            if (lines[line].Size.X > width)
+                                width = lines[line].Size.X;
 
-                        height += lines[line].Size.Y;
+                            height += lines[line].Size.Y;
+                        }
+   
+                        Line lastLine = lines[lines.Count - 1];
+
+                        if (lastLine.Count > 1 || (lastLine.Count > 0 && lastLine[0].Ch != '\n'))
+                        {
+                            if (lastLine.Size.X > width)
+                                width = lastLine.Size.X;
+
+                            height += lastLine.Size.Y;
+                        }
                     }
 
                     return new Vector2(width, height);
