@@ -533,22 +533,20 @@ namespace RichHudFramework
                 {
                     FormattedGlyph glyphDataRight = line.FormattedGlyphs[right];
                     IFontStyle fontStyle = FontManager.GetFontStyle(glyphDataRight.format.StyleIndex);
-                    float scale = glyphDataRight.format.TextSize * fontStyle.FontScale * Scale;
+                    char rightCh = line.Chars[right];
+                    float scale = glyphDataRight.format.TextSize * fontStyle.FontScale * Scale,
+                        // Quick fix for CJK characters in Space Engineers font data
+                        cjkOffset = (glyphDataRight.format.StyleIndex.X == 0 && rightCh >= 0x4E00) ? -4f : 0f;
 
                     if (left >= 0 && CanUseKernings(line.FormattedGlyphs[left].format, glyphDataRight.format))
-                    {
-                        char leftCh = line.Chars[left], 
-                            rightCh = line.Chars[right];
-
-                        pos.X += fontStyle.GetKerningAdjustment(leftCh, rightCh) * scale;
-                    }
+                        pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], rightCh) * scale;
 
                     GlyphLocData locData = line.LocData[right];
 
                     line.SetOffsetAt(right, new Vector2()
                     {
                         X = pos.X + locData.bbSize.X / 2f + (glyphDataRight.glyph.leftSideBearing * scale) + xAlign,
-                        Y = pos.Y - (locData.bbSize.Y / 2f) + (fontStyle.BaseLine * scale)
+                        Y = pos.Y - (locData.bbSize.Y / 2f) + (fontStyle.BaseLine * scale) + cjkOffset
                     });
 
                     pos.X += locData.chSize.X;
