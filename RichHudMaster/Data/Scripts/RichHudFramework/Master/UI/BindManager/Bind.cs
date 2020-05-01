@@ -158,19 +158,19 @@ namespace RichHudFramework
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IList<int> combo, bool strict = true, bool silent = false) =>
+                    public bool TrySetCombo(IList<int> combo, bool strict = true, bool silent = true) =>
                         TrySetCombo(BindManager.GetCombo(combo), strict, silent);
 
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IList<string> combo, bool strict = true, bool silent = false) =>
+                    public bool TrySetCombo(IList<string> combo, bool strict = true, bool silent = true) =>
                         TrySetCombo(BindManager.GetCombo(combo), strict, silent);
 
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IList<IControl> combo, bool strict = true, bool silent = false)
+                    public bool TrySetCombo(IList<IControl> combo, bool strict = true, bool silent = true)
                     {
                         if (combo == null)
                             combo = new IControl[0];

@@ -182,7 +182,7 @@ namespace RichHudFramework
                     IBind newBind;
 
                     foreach (string name in bindNames)
-                        TryRegisterBind(name, out newBind, silent: true);
+                        TryRegisterBind(name, out newBind);
                 }
 
                 /// <summary>
@@ -202,7 +202,7 @@ namespace RichHudFramework
                     IBind newBind;
 
                     foreach (BindDefinition bind in bindData)
-                        TryRegisterBind(bind.name, out newBind, bind.controlNames, true);
+                        TryRegisterBind(bind.name, out newBind, bind.controlNames);
                 }
 
                 /// <summary>
@@ -230,7 +230,7 @@ namespace RichHudFramework
                 {
                     IBind bind;
 
-                    if (TryRegisterBind(bindName, combo, out bind, true))
+                    if (TryRegisterBind(bindName, combo, out bind))
                         return bind;
                     else
                         throw new Exception($"Bind {Name}.{bindName} is invalid. Bind names and key combinations must be unique.");
@@ -239,22 +239,20 @@ namespace RichHudFramework
                 /// <summary>
                 /// Tries to register a bind using the given name and the given key combo. Shows an error message in chat upon failure.
                 /// </summary>
-                public bool TryRegisterBind(string bindName, IList<int> combo, out IBind newBind, bool silent = false) =>
-                    TryRegisterBind(bindName, GetCombo(combo), out newBind, silent);
+                public bool TryRegisterBind(string bindName, IList<int> combo, out IBind newBind) =>
+                    TryRegisterBind(bindName, GetCombo(combo), out newBind);
 
                 /// <summary>
                 /// Tries to register a bind using the given name and the given key combo. Shows an error message in chat upon failure.
                 /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind bind, IList<string> combo = null, bool silent = false)
+                public bool TryRegisterBind(string bindName, out IBind bind, IList<string> combo = null)
                 {
                     string[] uniqueControls = combo?.GetUnique();
                     IControl[] newCombo = null;
                     bind = null;
 
                     if (combo == null || TryGetCombo(uniqueControls, out newCombo))
-                        return TryRegisterBind(bindName, newCombo, out bind, silent);
-                    else if (!silent)
-                        ExceptionHandler.SendChatMessage($"Invalid bind for {Name}.{bindName}. One or more control names were not recognised.");
+                        return TryRegisterBind(bindName, newCombo, out bind);
 
                     return false;
                 }
@@ -262,7 +260,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Tries to register a bind using the given name and the given key combo. Shows an error message in chat upon failure.
                 /// </summary>
-                public bool TryRegisterBind(string bindName, IList<IControl> combo, out IBind newBind, bool silent = false)
+                public bool TryRegisterBind(string bindName, IList<IControl> combo, out IBind newBind)
                 {
                     newBind = null;
 
@@ -273,12 +271,10 @@ namespace RichHudFramework
                         keyBinds.Add(bind);
 
                         if (combo != null)
-                            return bind.TrySetCombo(combo, true, silent);
+                            return bind.TrySetCombo(combo, true, true);
                         else
                             return true;
                     }
-                    else if (!silent)
-                        ExceptionHandler.SendChatMessage($"Bind {Name}.{bindName} already exists.");
 
                     return false;
                 }
@@ -286,11 +282,11 @@ namespace RichHudFramework
                 /// <summary>
                 /// Attempts to register a bind using the name and controls. Returns API data.
                 /// </summary>
-                private BindMembers? TryRegisterBind(string name, IList<string> combo, bool silent)
+                private BindMembers? TryRegisterBind(string name, IList<string> combo)
                 {
                     IBind bind;
 
-                    if (TryRegisterBind(name, out bind, combo, silent))
+                    if (TryRegisterBind(name, out bind, combo))
                         return bind.GetApiData();
                     else
                         return null;
@@ -299,12 +295,12 @@ namespace RichHudFramework
                 /// <summary>
                 /// Attempts to register a bind using the name and controls. Returns API data.
                 /// </summary>
-                private BindMembers? TryRegisterBind(string name, IList<int> combo, bool silent)
+                private BindMembers? TryRegisterBind(string name, IList<int> combo)
                 {
                     IBind bind;
                     IControl[] controls = combo != null ? GetCombo(combo) : null;
 
-                    if (TryRegisterBind(name, controls, out bind, silent))
+                    if (TryRegisterBind(name, controls, out bind))
                         return bind.GetApiData();
                     else
                         return null;
@@ -329,31 +325,27 @@ namespace RichHudFramework
                         bindMap = new List<List<IBind>>(bindData.Count);
 
                         foreach (BindDefinition bind in bindData)
+                        {
                             if (!GetBind(bind.name).TrySetCombo(bind.controlNames, false, false))
                             {
                                 bindError = true;
                                 break;
                             }
+                        }
 
                         if (bindError)
                         {
-                            ExceptionHandler.SendChatMessage("One or more keybinds in the given configuration were invalid or conflict with oneanother.");
                             UnregisterControls();
 
                             usedControls = oldUsedControls;
                             bindMap = oldBindMap;
                             ReregisterControls();
-
-                            return false;
                         }
                         else
                             return true;
                     }
-                    else
-                    {
-                        ExceptionHandler.SendChatMessage("Bind data cannot be null or empty.");
-                        return false;
-                    }
+
+                    return false;
                 }
 
                 /// <summary>
@@ -453,7 +445,6 @@ namespace RichHudFramework
                         if (bind.Name.ToLower() == name)
                             return bind;
 
-                    ExceptionHandler.SendChatMessage($"{name} is not a valid bind name.");
                     return null;
                 }
 
@@ -515,7 +506,7 @@ namespace RichHudFramework
                         case BindGroupAccessors.TryRegisterBind:
                             {
                                 var args = (MyTuple<string, IList<int>, bool>)data;
-                                return TryRegisterBind(args.Item1, args.Item2, args.Item3);
+                                return TryRegisterBind(args.Item1, args.Item2);//, args.Item3
                             }
                         case BindGroupAccessors.TryLoadBindData:
                             {
@@ -525,7 +516,7 @@ namespace RichHudFramework
                         case BindGroupAccessors.TryRegisterBind2:
                             {
                                 var args = (MyTuple<string, IList<string>, bool>)data;
-                                return TryRegisterBind(args.Item1, args.Item2, args.Item3);
+                                return TryRegisterBind(args.Item1, args.Item2);//, args.Item3
                             }
                         case BindGroupAccessors.GetBindData:
                             return GetBindData();
