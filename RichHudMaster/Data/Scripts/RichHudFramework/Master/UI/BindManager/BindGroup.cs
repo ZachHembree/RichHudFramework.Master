@@ -324,9 +324,11 @@ namespace RichHudFramework
                         usedControls = new List<IControl>(bindData.Count);
                         bindMap = new List<List<IBind>>(bindData.Count);
 
-                        foreach (BindDefinition bind in bindData)
+                        foreach (BindDefinition bindDef in bindData)
                         {
-                            if (!GetBind(bind.name).TrySetCombo(bind.controlNames, false, false))
+                            IBind bind = GetBind(bindDef.name);
+
+                            if (bind != null && !bind.TrySetCombo(bindDef.controlNames, false, false))
                             {
                                 bindError = true;
                                 break;
