@@ -38,7 +38,7 @@ namespace RichHudFramework.Server
             if (instance == null)
             {
                 instance = new MasterBinds();
-                Cfg = BindsConfig.Defaults;
+                Cfg = MasterConfig.Current.binds;
 
                 MasterConfig.OnConfigSave += instance.UpdateConfig;
                 MasterConfig.OnConfigLoad += instance.UpdateBinds;

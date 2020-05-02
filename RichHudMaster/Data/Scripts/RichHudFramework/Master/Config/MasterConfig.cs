@@ -16,10 +16,18 @@ namespace RichHudFramework.Server
         {
             return new MasterConfig()
             {
-                VersionID = 1,
+                VersionID = 2,
                 binds = BindsConfig.Defaults,
             };
-        }  
+        }
+
+        public override void Validate()
+        {
+            if (VersionID < 2)
+                binds = BindsConfig.Defaults;
+
+            VersionID = Defaults.VersionID;
+        }
     }
 
     public class BindsConfig : Config<BindsConfig>
@@ -40,7 +48,7 @@ namespace RichHudFramework.Server
 
         private static readonly BindDefinition[] defaultBinds = new BindDefinition[]
         {
-            new BindDefinition("ToggleTerminal", new string[] { "OemTilde" }),
+            new BindDefinition("ToggleTerminal", new string[] { "F1" }),
         };
 
         [XmlArray("KeyBinds")]
@@ -56,7 +64,7 @@ namespace RichHudFramework.Server
         /// </summary>
         public override void Validate()
         {
-            if (bindData == null || bindData.Length != defaultBinds.Length)
+            if (bindData == null)
                 bindData = DefaultBinds;
         }
     }
