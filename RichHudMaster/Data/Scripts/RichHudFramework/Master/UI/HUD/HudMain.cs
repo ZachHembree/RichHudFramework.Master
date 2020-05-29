@@ -1,10 +1,13 @@
 using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
+using System.Text;
 using System.Collections.Generic;
 using VRage;
 using VRage.Game.ModAPI;
 using VRageMath;
+using VRage.Utils;
+
 using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
@@ -115,6 +118,20 @@ namespace RichHudFramework
             public static UiTestPattern TestPattern { get { return Instance._uiTestPattern; } set { Instance._uiTestPattern = value; } }
 
             /// <summary>
+            /// Matrix used to convert from 2D pixel-value screen space coordinates to worldspace.
+            /// </summary>
+            public static MatrixD PixelToWorld
+            {
+                get
+                {
+                    if (_instance == null)
+                        Init();
+
+                    return _instance.pixelToWorld;
+                }
+            }
+
+            /// <summary>
             /// The current horizontal screen resolution in pixels.
             /// </summary>
             public static float ScreenWidth
@@ -213,6 +230,7 @@ namespace RichHudFramework
             private readonly HudRoot root;
             private readonly HudCursor cursor;
             private readonly Utils.Stopwatch cacheTimer;
+            private MatrixD pixelToWorld;
             private float screenWidth, screenHeight, aspectRatio, fov, fovScale, uiBkOpacity;
             private int tick;
 
@@ -259,8 +277,17 @@ namespace RichHudFramework
                     cacheTimer.Reset();
                 }
 
-                root.BeforeLayout(tick == 0);
+                pixelToWorld = new MatrixD
+                {
+                    M11 = (FovScale / ScreenHeight),    M12 = 0d,                           M13 = 0d,       M14 = 0d,
+                    M21 = 0d,                           M22 = (FovScale / ScreenHeight),    M23 = 0d,       M24 = 0d,
+                    M31 = 0d,                           M32 = 0d,                           M33 = -0.05,    M34 = 0d,
+                    M41 = 0d,                           M42 = 0d,                           M43 = 0d,       M44 = 1d
+                };
 
+                pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;
+
+                root.BeforeLayout(tick == 0);
                 root.BeforeDraw(HudLayers.Background);
                 root.BeforeDraw(HudLayers.Normal);
                 root.BeforeDraw(HudLayers.Foreground);
@@ -285,7 +312,6 @@ namespace RichHudFramework
                 screenHeight = MyAPIGateway.Session.Camera.ViewportSize.Y;
                 aspectRatio = (screenWidth / screenHeight);
 
-                //invTextApiScale = 1080f / screenHeight;
                 ResScale = (screenHeight > 1080f) ? screenHeight / 1080f : 1f;
             }
 
@@ -306,8 +332,6 @@ namespace RichHudFramework
                 if (_instance == null)
                     Init();
 
-                scaledVec /= 2f;
-
                 return new Vector2
                 (
                     (int)(scaledVec.X * _instance.screenWidth),
@@ -322,8 +346,6 @@ namespace RichHudFramework
             {
                 if (_instance == null)
                     Init();
-
-                pixelVec *= 2f;
 
                 return new Vector2
                 (
