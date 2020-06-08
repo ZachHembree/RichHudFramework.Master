@@ -115,10 +115,15 @@ namespace RichHudFramework
                 {
                     if (Visible)
                     {
-                        float invMousePosScale = ScreenHeight / 1080f;
+                        Vector2 desktopSize = MyAPIGateway.Input.GetMouseAreaSize();
+                        Vector2 invMousePosScale = new Vector2
+                        {
+                            X = ScreenWidth / desktopSize.X,
+                            Y = ScreenHeight / desktopSize.Y,
+                        };
                         Vector2 pos = MyAPIGateway.Input.GetMousePosition() * invMousePosScale;
 
-                        shadow.Offset = new Vector2(-ScreenWidth / 2f, ScreenHeight / 2f) + new Vector2(pos.X, -pos.Y) + new Vector2(12f, -12f) * ResScale;
+                        shadow.Offset = new Vector2(-ScreenWidth / 2f, ScreenHeight / 2f) + new Vector2(pos.X, -pos.Y) + (new Vector2(12f, -12f) * ResScale);
                     }
                 }
 
