@@ -359,6 +359,8 @@ namespace RichHudFramework
                         return ScreenHeight;
                     case HudMainAccessors.AspectRatio:
                         return AspectRatio;
+                    case HudMainAccessors.ResScale:
+                        return ResScale;
                     case HudMainAccessors.Fov:
                         return Fov;
                     case HudMainAccessors.FovScale:

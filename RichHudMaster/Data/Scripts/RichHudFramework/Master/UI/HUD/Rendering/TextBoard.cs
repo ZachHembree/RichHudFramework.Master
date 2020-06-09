@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
+using RichHudFramework.UI.Server;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework
@@ -313,6 +314,7 @@ namespace RichHudFramework
                         UpdateLineRange();
 
                     float min = -Size.X / 2f - 2f, max = -min;
+                    MatrixD pixelToWorld = HudMain.PixelToWorld;
 
                     for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
                     {
@@ -329,7 +331,7 @@ namespace RichHudFramework
 
                             if ((xPos - edge) >= min && (xPos + edge) <= max)
                             {
-                                glyphBoard.Draw(locData.bbSize, origin + _textOffset + locData.bbOffset);
+                                glyphBoard.Draw(locData.bbSize, origin + _textOffset + locData.bbOffset, ref pixelToWorld);
                             }
                         }
                     }
