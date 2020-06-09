@@ -32,7 +32,7 @@ namespace RichHudFramework
         object, // ID
         Action<bool>, // BeforeLayout
         Action<int>, // BeforeDraw
-        Action, // HandleInput
+        Action<int>, // HandleInput
         ApiMemberAccessor // GetOrSetMembers
     >;
     using TextBoardMembers = MyTuple<
@@ -56,19 +56,10 @@ namespace RichHudFramework
     {
         using Rendering.Server;
         using HudMainMembers = MyTuple<
-            HudElementMembers,
-            CursorMembers,
-            Func<float>, // ScreenWidth
-            Func<float>, // ScreenHeight
-            Func<float>, // AspectRatio
-            MyTuple<
-                Func<float>, // ResScale
-                Func<float>, // Fov
-                Func<float>, // FovScale
-                MyTuple<Func<IList<RichStringMembers>>, Action<IList<RichStringMembers>>>,
-                Func<TextBoardMembers>, // GetNewTextBoard
-                ApiMemberAccessor // GetOrSetMembers
-            >
+            HudElementMembers, // HudRoot
+            CursorMembers, // Cursor
+            Func<TextBoardMembers>, // GetNewTextBoard
+            ApiMemberAccessor // GetOrSetMembers
         >;
 
         public sealed partial class HudMain : RichHudComponentBase
@@ -302,7 +293,11 @@ namespace RichHudFramework
             public override void HandleInput()
             {
                 cursor.Release();
-                root.BeforeInput();
+
+                root.BeforeInput(HudLayers.Background);
+                root.BeforeInput(HudLayers.Normal);
+                root.BeforeInput(HudLayers.Foreground);
+
                 cursor.HandleInput();
             }
 
@@ -356,6 +351,30 @@ namespace RichHudFramework
 
             private static object GetOrSetMember(object data, int memberEnum)
             {
+                switch ((HudMainAccessors)memberEnum)
+                {
+                    case HudMainAccessors.ScreenWidth:
+                        return ScreenWidth;
+                    case HudMainAccessors.ScreenHeight:
+                        return ScreenHeight;
+                    case HudMainAccessors.AspectRatio:
+                        return AspectRatio;
+                    case HudMainAccessors.Fov:
+                        return Fov;
+                    case HudMainAccessors.FovScale:
+                        return FovScale;
+                    case HudMainAccessors.PixelToWorldTransform:
+                        return PixelToWorld;
+                    case HudMainAccessors.ClipBoard:
+                        {
+                            if (data == null)
+                                return ClipBoard.ApiData;
+                            else
+                                ClipBoard = new RichText(data as IList<RichStringMembers>);
+                            break;
+                        }
+                }
+
                 return null;
             }
 
@@ -367,18 +386,8 @@ namespace RichHudFramework
                 {
                     Item1 = _instance.root.GetApiData(),
                     Item2 = _instance.cursor.GetApiData(),
-                    Item3 = () => _instance.screenWidth,
-                    Item4 = () => _instance.screenHeight,
-                    Item5 = () => _instance.aspectRatio,
-                    Item6 = new MyTuple<Func<float>, Func<float>, Func<float>, MyTuple<Func<IList<RichStringMembers>>, Action<IList<RichStringMembers>>>, Func<TextBoardMembers>, ApiMemberAccessor>
-                    {
-                        Item1 = () => ResScale,
-                        Item2 = () => _instance.fov,
-                        Item3 = () => _instance.fovScale,
-                        Item4 = new MyTuple<Func<IList<RichStringMembers>>, Action<IList<RichStringMembers>>>(() => ClipBoard.ApiData, x => ClipBoard = new RichText(x)),
-                        Item5 = GetTextBoardData,
-                        Item6 = GetOrSetMember
-                    }
+                    Item3 = GetTextBoardData,
+                    Item4 = GetOrSetMember
                 };
             }
 

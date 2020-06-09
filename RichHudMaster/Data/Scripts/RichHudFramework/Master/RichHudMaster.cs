@@ -24,11 +24,11 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int versionID = 5;
+        private const int versionID = 6;
 
         private static RichHudMaster Instance { get; set; }
         private readonly List<RichHudClient> clients;
-        private CmdManager.Group rhdCommands;
+        private ICommandGroup rhdCommands;
 
         public RichHudMaster() : base(false, true)
         {
@@ -48,7 +48,7 @@ namespace RichHudFramework.Server
 
         protected override void AfterLoadData()
         {
-            rhdCommands = CmdManager.AddOrGetCmdGroup("/rhd", GetChatCommands());
+            rhdCommands = CmdManager.GetOrCreateGroup("/rhd", GetChatCommands());
 
             FontManager.Init();
             BindManager.Init();
@@ -121,7 +121,12 @@ namespace RichHudFramework.Server
                     Action<int, object> SendMsgAction = clientData.Item2;
 
                     if (clientData.Item4 != versionID)
-                        SendMsgAction((int)MsgTypes.RegistrationFailed, $"Client version mismatch. Server vID: {versionID}, Client vID: {clientData.Item4}");
+                    {
+                        string error = $"Error: Client version for {clientData.Item1} does not match. API vID: {versionID}, Client vID: {clientData.Item4}";
+
+                        SendMsgAction((int)MsgTypes.RegistrationFailed, error);
+                        ExceptionHandler.SendChatMessage(error);
+                    }
                     else
                         SendMsgAction((int)MsgTypes.RegistrationFailed, "Client already registered.");
                 }
