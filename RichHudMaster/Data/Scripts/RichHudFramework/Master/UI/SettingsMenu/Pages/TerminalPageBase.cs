@@ -61,6 +61,12 @@ namespace RichHudFramework
                 Visible = false;
             }
 
+            public virtual void Reset()
+            {
+                NameBuilder.Clear();
+                Enabled = false;
+            }
+
             protected override object GetOrSetMember(object data, int memberEnum)
             {
                 switch ((TerminalPageAccessors)memberEnum)

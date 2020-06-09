@@ -102,6 +102,12 @@ namespace RichHudFramework.UI.Server
             Size = new Vector2(250f, 72f);
         }
 
+        public override void Reset()
+        {
+            name.TextBoard.Clear();
+            base.Reset();
+        }
+
         private void ToggleValue()
         {
             Value = !Value;

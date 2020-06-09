@@ -76,6 +76,13 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public override Func<float> CustomValueGetter { get; set; }
 
+        public override void Reset()
+        {
+            name.TextBoard.Clear();
+            current.TextBoard.Clear();
+            base.Reset();
+        }
+
         public override float Width
         {
             get { return sliderBox.Width + Padding.X; }

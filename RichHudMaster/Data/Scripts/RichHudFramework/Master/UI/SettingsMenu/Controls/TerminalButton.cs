@@ -91,6 +91,12 @@ namespace RichHudFramework.UI.Server
             Name = "NewTerminalButton";
         }
 
+        public override void Reset()
+        {
+            OnControlChanged = null;
+            button.TextBoard.Clear();
+        }
+
         protected override void HandleInput()
         {
             if (button.IsMousedOver)

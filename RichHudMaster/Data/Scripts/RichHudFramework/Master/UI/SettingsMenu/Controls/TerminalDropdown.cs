@@ -101,6 +101,13 @@ namespace RichHudFramework.UI.Server
             Size = new Vector2(250f, 66f);
         }
 
+        public override void Reset()
+        {
+            name.TextBoard.Clear();
+            List.Clear();
+            base.Reset();
+        }
+
         protected override void HandleInput()
         {
             if (List.IsMousedOver || List.Open)

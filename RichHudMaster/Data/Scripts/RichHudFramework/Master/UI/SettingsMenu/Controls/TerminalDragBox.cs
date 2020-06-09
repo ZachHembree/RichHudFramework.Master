@@ -78,6 +78,13 @@ namespace RichHudFramework.UI.Server
             Size = new Vector2(253f, 50f);
         }
 
+        public override void Reset()
+        {
+            window.Header.Clear();
+            window.Visible = false;
+            base.Reset();
+        }
+
         private void Open()
         {
             RichHudTerminal.Open = false;

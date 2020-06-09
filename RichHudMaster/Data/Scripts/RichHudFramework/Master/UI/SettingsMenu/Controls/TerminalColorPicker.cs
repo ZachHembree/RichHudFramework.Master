@@ -131,6 +131,15 @@ namespace RichHudFramework.UI.Server
             };
         }
 
+        public override void Reset()
+        {
+            name.TextBoard.Clear();
+            rText.TextBoard.Clear();
+            gText.TextBoard.Clear();
+            bText.TextBoard.Clear();
+            base.Reset();
+        }
+
         protected override void Layout()
         {
             Color color = new Color()

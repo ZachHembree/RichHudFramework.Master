@@ -71,6 +71,12 @@ namespace RichHudFramework
                 bindGroups.AddToList(bindBox);
             }
 
+            public override void Reset()
+            {
+                bindGroups.Clear();
+                base.Reset();
+            }
+
             public IEnumerator<IBindGroup> GetEnumerator() =>
                 BindGroups.GetEnumerator();
 
@@ -224,6 +230,14 @@ namespace RichHudFramework
                         scrollBox.List[n].Width = Width - scrollBox.scrollBar.Width;
                 }
 
+                public void Reset()
+                {
+                    name.TextBoard.Clear();
+                    scrollBox.Clear();
+                    _bindGroup = null;
+                    defaultBinds = null;
+                }
+
                 /// <summary>
                 /// Applies the default configuration to the bind group if defaults are defined.
                 /// </summary>
@@ -332,6 +346,13 @@ namespace RichHudFramework
 
                     Size = new Vector2(400f, 44f);
                     Enabled = true;
+                }
+
+                public void Reset()
+                {
+                    bindName.TextBoard.Clear();
+                    bind = null;
+                    group = null;
                 }
 
                 public void SetBind(IBind bind, IBindGroup group)

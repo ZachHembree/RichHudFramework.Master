@@ -39,6 +39,8 @@ namespace RichHudFramework.UI.Server
             Enabled = true;
         }
 
+        public abstract void Reset();
+
         /// <summary>
         /// Faciltates access to object members via the Framework API.
         /// </summary>
@@ -152,6 +154,12 @@ namespace RichHudFramework.UI.Server
 
         public TerminalValue(IHudParent parent) : base(parent)
         { }
+
+        public override void Reset()
+        {
+            OnControlChanged = null;
+            CustomValueGetter = null;
+        }
 
         protected override void Layout()
         {

@@ -6,19 +6,9 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using ControlMembers = VRage.MyTuple<
-    System.Func<object, int, object>, // GetOrSetMember
-    object // ID
->;
 
 namespace RichHudFramework
 {
-    using ControlContainerMembers = MyTuple<
-        ApiMemberAccessor, // GetOrSetMember,
-        MyTuple<object, Func<int>>, // Member List
-        object // ID
-    >;
-
     namespace UI.Server
     {
         public sealed partial class RichHudTerminal
@@ -52,7 +42,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Read only collection of mod roots registered with the terminal
                 /// </summary>
-                public ReadOnlyCollection<ModControlRoot> ModRoots => modList.scrollBox.List;
+                public HudList<ModControlRoot> ModRoots => modList.scrollBox.List;
 
                 public override bool Visible => base.Visible && MyAPIGateway.Gui.ChatEntryVisible;
 

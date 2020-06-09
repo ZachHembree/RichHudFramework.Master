@@ -127,6 +127,14 @@ namespace RichHudFramework.UI.Server
             refreshTimer.Start();
         }
 
+        public override void Reset()
+        {
+            name.TextBoard.Clear();
+            textBox.TextBoard.Clear();
+            CharFilterFunc = null;
+            base.Reset();
+        }
+
         private void TextChanged()
         {
             valueChanged = !controlUpdating;

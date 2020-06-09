@@ -105,13 +105,20 @@ namespace RichHudFramework
                     ChildContainer = { header, subheader, scrollBox }
                 };
 
-                Tiles = new ReadOnlyCollectionData<IControlTile>(x => scrollBox.Chain.ChainMembers[x], () => scrollBox.Chain.ChainMembers.Count);
+                Tiles = new ReadOnlyCollectionData<IControlTile>(x => scrollBox.List[x], () => scrollBox.List.Count);
 
                 HeaderText = "NewSettingsCategory";
                 SubheaderText = "Subheading\nLine 1\nLine 2\nLine 3\nLine 4";
 
-                scrollBox.Chain.AutoResize = false;
+                scrollBox.List.AutoResize = false;
                 Enabled = true;
+            }
+
+            public void Reset()
+            {
+                header.TextBoard.Clear();
+                subheader.TextBoard.Clear();
+                scrollBox.Clear();
             }
 
             protected override void Layout()
@@ -146,8 +153,8 @@ namespace RichHudFramework
                     Item1 = GetOrSetMember,
                     Item2 = new MyTuple<object, Func<int>>()
                     {
-                        Item1 = (Func<int, ControlContainerMembers>)(x => scrollBox.Chain.ChainMembers[x].GetApiData()),
-                        Item2 = () => scrollBox.Chain.ChainMembers.Count
+                        Item1 = (Func<int, ControlContainerMembers>)(x => scrollBox.List[x].GetApiData()),
+                        Item2 = () => scrollBox.List.Count
                     },
                     Item3 = this
                 };

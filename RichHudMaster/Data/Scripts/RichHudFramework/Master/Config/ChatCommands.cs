@@ -12,24 +12,17 @@ namespace RichHudFramework.Server
 {
     public sealed partial class RichHudMaster
     {
-        private List<CmdManager.Command> GetChatCommands()
+        private CmdGroupInitializer GetChatCommands()
         {
-            return new List<CmdManager.Command>
+            return new CmdGroupInitializer
             {
-                new CmdManager.Command("resetBinds",
-                    () => MasterBinds.Cfg = BindsConfig.Defaults),
-                new CmdManager.Command ("save",
-                    () => MasterConfig.SaveStart()),
-                new CmdManager.Command ("load",
-                    () => MasterConfig.LoadStart()),
-                new CmdManager.Command("resetConfig",
-                    () => MasterConfig.ResetConfig()),
-                new CmdManager.Command ("open",
-                    () => RichHudTerminal.Open = true),
-                new CmdManager.Command ("close",
-                    () => RichHudTerminal.Open = false),
-                new CmdManager.Command ("crash",
-                    ThrowException),
+                { "resetBinds", x => MasterBinds.Cfg = BindsConfig.Defaults },
+                { "save", x => MasterConfig.SaveStart() },
+                { "load", x => MasterConfig.LoadStart() },
+                { "resetConfig", x => MasterConfig.ResetConfig()},
+                { "open", x => RichHudTerminal.Open = true},
+                { "close", x => RichHudTerminal.Open = false },
+                { "crash", x => ThrowException()},
             };
         }
 

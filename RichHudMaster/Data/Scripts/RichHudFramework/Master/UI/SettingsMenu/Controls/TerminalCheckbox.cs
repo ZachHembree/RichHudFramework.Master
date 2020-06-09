@@ -93,6 +93,12 @@ namespace RichHudFramework.UI.Server
             Height = 36f;
         }
 
+        public override void Reset()
+        {
+            name.TextBoard.Clear();
+            base.Reset();
+        }
+
         protected override void HandleInput()
         {
             if (button.IsMousedOver)

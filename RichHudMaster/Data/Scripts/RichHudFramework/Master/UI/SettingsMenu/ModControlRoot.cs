@@ -89,7 +89,7 @@ namespace RichHudFramework
                     };
 
                     Pages = new ReadOnlyCollectionData<ITerminalPage>(x => pageControl.List[x].AssocMember, () => pageControl.List.Count);
-                    pageControl.OnSelectionChanged += () => UpdateSelection();
+                    pageControl.OnSelectionChanged += UpdateSelection;
 
                     Enabled = false;
                     Visible = true;
@@ -120,6 +120,11 @@ namespace RichHudFramework
                     ListBoxEntry<TerminalPageBase> listMember = pageControl.Add(page.Name, page);
                     page.NameBuilder = listMember.TextBoard;
                     menu.AddPage(page);
+                }
+
+                public void Reset()
+                {
+                    pageControl.Clear();
                 }
 
                 IEnumerator<ITerminalPage> IEnumerable<ITerminalPage>.GetEnumerator() =>

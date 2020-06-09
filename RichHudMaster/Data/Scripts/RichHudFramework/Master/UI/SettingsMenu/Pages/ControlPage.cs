@@ -29,6 +29,7 @@ namespace RichHudFramework
             /// List of control categories registered to the page.
             /// </summary>
             public IReadOnlyCollection<IControlCategory> Categories { get; }
+
             public IControlPage CategoryContainer => this;
 
             private readonly ScrollBox<ControlCategory> catBox;
@@ -44,7 +45,7 @@ namespace RichHudFramework
                 };
 
                 catBox.background.Visible = false;
-                Categories = new ReadOnlyCollectionData<IControlCategory>(x => catBox.Chain.ChainMembers[x], () => catBox.Chain.ChainMembers.Count);              
+                Categories = new ReadOnlyCollectionData<IControlCategory>(x => catBox.List[x], () => catBox.List.Count);              
             }
 
             protected override void Layout()
@@ -62,6 +63,12 @@ namespace RichHudFramework
             public void Add(ControlCategory category)
             {
                 catBox.AddToList(category);
+            }
+
+            public override void Reset()
+            {
+                catBox.Clear();
+                base.Reset();
             }
 
             IEnumerator<IControlCategory> IEnumerable<IControlCategory>.GetEnumerator() =>

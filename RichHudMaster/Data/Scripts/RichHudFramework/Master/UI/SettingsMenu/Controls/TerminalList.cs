@@ -84,6 +84,13 @@ namespace RichHudFramework.UI.Server
             Size = new Vector2(250f, 200f);
         }
 
+        public override void Reset()
+        {
+            name.TextBoard.Clear();
+            List.Clear();
+            base.Reset();
+        }
+
         protected override void Layout()
         {
             List.Color = RichHudTerminal.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
