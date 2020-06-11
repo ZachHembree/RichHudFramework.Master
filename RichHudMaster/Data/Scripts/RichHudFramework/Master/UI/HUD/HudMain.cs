@@ -95,7 +95,11 @@ namespace RichHudFramework
             /// <summary>
             /// Shared clipboard.
             /// </summary>
-            public static RichText ClipBoard { get { return Instance._clipBoard; } set { Instance._clipBoard = value; } }
+            public static RichText ClipBoard 
+            { 
+                get { return Instance._clipBoard ?? new RichText(); } 
+                set { Instance._clipBoard = value; } 
+            }
 
             /// <summary>
             /// Resolution scale normalized to 1080p for resolutions over 1080p. Returns a scale of 1f
@@ -370,7 +374,7 @@ namespace RichHudFramework
                     case HudMainAccessors.ClipBoard:
                         {
                             if (data == null)
-                                return ClipBoard.ApiData;
+                                return ClipBoard?.ApiData;
                             else
                                 ClipBoard = new RichText(data as IList<RichStringMembers>);
                             break;
