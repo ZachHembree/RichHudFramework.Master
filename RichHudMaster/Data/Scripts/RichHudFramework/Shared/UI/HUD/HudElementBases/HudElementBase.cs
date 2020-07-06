@@ -260,22 +260,22 @@ namespace RichHudFramework
                     float width = cachedSize.X, height = cachedSize.Y,
                         parentWidth = _parent.cachedSize.X, parentHeight = _parent.cachedSize.Y;
 
-                    if (DimAlignment.HasFlag(DimAlignments.IgnorePadding))
+                    if ((DimAlignment & DimAlignments.IgnorePadding) == DimAlignments.IgnorePadding)
                     {
                         Vector2 parentPadding = _parent.Padding;
 
-                        if (DimAlignment.HasFlag(DimAlignments.Width))
+                        if ((DimAlignment & DimAlignments.Width) == DimAlignments.Width)
                             width = parentWidth - parentPadding.X;
 
-                        if (DimAlignment.HasFlag(DimAlignments.Height))
+                        if ((DimAlignment & DimAlignments.Height) == DimAlignments.Height)
                             height = parentHeight - parentPadding.Y;
                     }
                     else
                     {
-                        if (DimAlignment.HasFlag(DimAlignments.Width))
+                        if ((DimAlignment & DimAlignments.Width) == DimAlignments.Width)
                             width = parentWidth;
 
-                        if (DimAlignment.HasFlag(DimAlignments.Height))
+                        if ((DimAlignment & DimAlignments.Height) == DimAlignments.Height)
                             height = parentHeight;
                     }
 
@@ -294,7 +294,7 @@ namespace RichHudFramework
                     max = (_parent.cachedSize + cachedSize) / 2f,
                     min = -max;
 
-                if (ParentAlignment.HasFlag(ParentAlignments.UsePadding))
+                if ((ParentAlignment & ParentAlignments.UsePadding) == ParentAlignments.UsePadding)
                 {
                     Vector2 parentPadding = _parent.Padding;
 
@@ -302,26 +302,26 @@ namespace RichHudFramework
                     max -= parentPadding / 2f;
                 }
 
-                if (ParentAlignment.HasFlag(ParentAlignments.InnerV))
+                if ((ParentAlignment & ParentAlignments.InnerV) == ParentAlignments.InnerV)
                 {
                     min.Y += cachedSize.Y;
                     max.Y -= cachedSize.Y;
                 }
 
-                if (ParentAlignment.HasFlag(ParentAlignments.InnerH))
+                if ((ParentAlignment & ParentAlignments.InnerH) == ParentAlignments.InnerH)
                 {
                     min.X += cachedSize.X;
                     max.X -= cachedSize.X;
                 }
 
-                if (ParentAlignment.HasFlag(ParentAlignments.Bottom))
+                if ((ParentAlignment & ParentAlignments.Bottom) == ParentAlignments.Bottom)
                     alignment.Y = min.Y;
-                else if (ParentAlignment.HasFlag(ParentAlignments.Top))
+                else if ((ParentAlignment & ParentAlignments.Top) == ParentAlignments.Top)
                     alignment.Y = max.Y;
 
-                if (ParentAlignment.HasFlag(ParentAlignments.Left))
+                if ((ParentAlignment & ParentAlignments.Left) == ParentAlignments.Left)
                     alignment.X = min.X;
-                else if (ParentAlignment.HasFlag(ParentAlignments.Right))
+                else if ((ParentAlignment & ParentAlignments.Right) == ParentAlignments.Right)
                     alignment.X = max.X;
 
                 return alignment;

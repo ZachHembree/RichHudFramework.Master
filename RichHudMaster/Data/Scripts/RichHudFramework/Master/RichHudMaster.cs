@@ -24,7 +24,7 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int versionID = 6;
+        private const int versionID = 7;
 
         private static RichHudMaster Instance { get; set; }
         private readonly List<RichHudClient> clients;

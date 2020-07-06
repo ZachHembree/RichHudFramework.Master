@@ -322,14 +322,14 @@ namespace RichHudFramework.UI
                     OnCaretMoved?.Invoke();
             }
 
-            protected override void Draw()
+            protected override void Draw(ref MatrixD matrix)
             {
                 if (blink)
                 {
                     Index = ClampIndex(Index);
                     UpdateOffset();
 
-                    base.Draw();
+                    base.Draw(ref matrix);
                 }
 
                 if (blinkTimer.ElapsedMilliseconds > 500)
@@ -695,17 +695,17 @@ namespace RichHudFramework.UI
                 return box;
             }
 
-            protected override void Draw()
+            protected override void Draw(ref MatrixD matrix)
             {
                 if (!Empty)
                 {
-                    top.Draw(highlightBoard, Origin);
+                    top.Draw(highlightBoard, Origin, ref matrix);
 
                     if (middle != null)
-                        middle.Draw(highlightBoard, Origin);
+                        middle.Draw(highlightBoard, Origin, ref matrix);
 
                     if (bottom != null)
-                        bottom.Draw(highlightBoard, Origin);
+                        bottom.Draw(highlightBoard, Origin, ref matrix);
                 }
             }
 
@@ -713,10 +713,10 @@ namespace RichHudFramework.UI
             {
                 public Vector2 size, offset;
 
-                public void Draw(MatBoard matBoard, Vector2 origin)
+                public void Draw(MatBoard matBoard, Vector2 origin, ref MatrixD matrix)
                 {
                     matBoard.Size = size;
-                    matBoard.Draw(origin + offset);
+                    matBoard.Draw(origin + offset, ref matrix);
                 }
             }
         }

@@ -170,8 +170,8 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Draws a billboard in world space facing the +Z direction of the matrix given. Units in meters.
-                /// Dont forget to compensate for perspective scaling!
+                /// Draws a billboard in world space facing the +Z direction of the matrix given. Units in meters,
+                /// matrix transform notwithstanding. Dont forget to compensate for perspective scaling!
                 /// </summary>
                 public void Draw(Vector3D offset, ref MatrixD matrix)
                 {
@@ -185,8 +185,8 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Draws a billboard in world space facing the +Z direction of the matrix given. Units in meters.
-                /// Dont forget to compensate for perspective scaling!
+                /// Draws a billboard in world space facing the +Z direction of the matrix given. Units in meters,
+                /// matrix transform notwithstanding. Dont forget to compensate for perspective scaling!
                 /// </summary>
                 public void Draw(Vector2 offset, ref MatrixD matrix)
                 {

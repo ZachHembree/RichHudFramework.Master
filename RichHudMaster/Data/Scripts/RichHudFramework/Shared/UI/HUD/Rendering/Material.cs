@@ -61,19 +61,27 @@ namespace RichHudFramework
                 /// <summary>
                 /// Creates a <see cref="Material"/> using the name of the Texture's ID and its size in pixels.
                 /// </summary>
+                /// <param name="TextureName">Name of the texture ID</param>
+                /// <param name="size">Size of the material in pixels</param>
                 public Material(string TextureName, Vector2 size) : this(MyStringId.GetOrCompute(TextureName), size)
                 { }
 
                 /// <summary>
                 /// Creates a <see cref="Material"/> based on a Texture Atlas/Sprite with a given offset and size.
                 /// </summary>
-                public Material(string TextureName, Vector2 textureSize, Vector2 offset, Vector2 size)
-                    : this(MyStringId.GetOrCompute(TextureName), textureSize, offset, size)
+                /// <param name="TextureName">Name of the texture ID</param>
+                /// <param name="texSize">Size of the texture associated with the texture ID in pixels</param>
+                /// <param name="texCoords">UV offset starting from the upper left hand corner in pixels</param>
+                /// <param name="size">Size of the material starting from the given offset</param>
+                public Material(string TextureName, Vector2 texSize, Vector2 texCoords, Vector2 size)
+                    : this(MyStringId.GetOrCompute(TextureName), texSize, texCoords, size)
                 { }
 
                 /// <summary>
-                /// Creates a <see cref="Material"/> using the <see cref="MyStringId"/> of the texture and its size in pixels.
+                /// Creates a <see cref="Material"/> using the name of the Texture's ID and its size in pixels.
                 /// </summary>
+                /// <param name="TextureID">MyStringID associated with the texture</param>
+                /// <param name="size">Size of the material in pixels</param>
                 public Material(MyStringId TextureID, Vector2 size)
                 {
                     this.TextureID = TextureID;
@@ -84,8 +92,12 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Creates a <see cref="Material"/> based on an Atlas/Sprite with a given offset and size.
+                /// Creates a <see cref="Material"/> based on a Texture Atlas/Sprite with a given offset and size.
                 /// </summary>
+                /// <param name="TextureID">MyStringID associated with the texture</param>
+                /// <param name="texSize">Size of the texture associated with the texture ID in pixels</param>
+                /// <param name="texCoords">UV offset starting from the upper left hand corner in pixels</param>
+                /// <param name="size">Size of the material starting from the given offset</param>
                 public Material(MyStringId TextureID, Vector2 textureSize, Vector2 offset, Vector2 size)
                 {
                     this.TextureID = TextureID;

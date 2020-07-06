@@ -57,7 +57,8 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Draws a billboard in world space facing the +Z direction the matrix specified. Units in meters.
+                /// Draws a billboard in world space facing the +Z direction the matrix specified. Units in meters matrix
+                /// transform notwithstanding.
                 /// </summary>
                 public void Draw(Vector2 size, Vector3D origin, ref MatrixD matrix)
                 {
@@ -70,7 +71,8 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Draws a billboard in world space facing the +Z direction the matrix specified. Units in meters.
+                /// Draws a billboard in world space facing the +Z direction the matrix specified. Units in meters, matrix
+                /// transform notwithstanding.
                 /// </summary>
                 public void Draw(Vector2 size, Vector2 origin, ref MatrixD matrix)
                 {

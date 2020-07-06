@@ -47,6 +47,9 @@ namespace RichHudFramework
             /// </summary>
             ParentAlignments ParentAlignment { get; set; }
 
+            /// <summary>
+            /// Determines how/if an element will copy its parent's dimensions. 
+            /// </summary>
             DimAlignments DimAlignment { get; set; }
 
             /// <summary>

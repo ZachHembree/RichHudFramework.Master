@@ -32,15 +32,18 @@ namespace RichHudFramework
                 Func<Vector2>, // Size
                 Func<Vector2>, // TextSize
                 Vec2Prop, // FixedSize
-                Action<Vector2> // UpdateText, Draw 
+                Action<Vector2, MatrixD> // UpdateText, Draw 
             >;
 
             public class TextBoard : TextBuilder, ITextBoard
             {
+                /// <summary>
+                /// Raised when a change is made to the text.
+                /// </summary>
                 public event Action OnTextChanged;
 
                 /// <summary>
-                /// Text size
+                /// Base text size
                 /// </summary>
                 public override float Scale
                 {
@@ -298,7 +301,29 @@ namespace RichHudFramework
                     return 0;
                 }
 
+                /// <summary>
+                /// Draws the text board in screen space with an offset given in pixels.
+                /// </summary>
                 public void Draw(Vector2 origin)
+                {
+                    MatrixD pixelToWorld = HudMain.PixelToWorld;
+                    Draw(origin, ref pixelToWorld);
+                }
+
+                /// <summary>
+                /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
+                /// direction.
+                /// </summary>
+                public void Draw(Vector2 offset, MatrixD matrix)
+                {
+                    Draw(offset, ref matrix);
+                }
+
+                /// <summary>
+                /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
+                /// direction.
+                /// </summary>
+                public void Draw(Vector2 offset, ref MatrixD matrix)
                 {
                     if (updateEvent && eventTimer.ElapsedMilliseconds > 500)
                     {
@@ -314,7 +339,6 @@ namespace RichHudFramework
                         UpdateLineRange();
 
                     float min = -Size.X / 2f - 2f, max = -min;
-                    MatrixD pixelToWorld = HudMain.PixelToWorld;
 
                     for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
                     {
@@ -325,13 +349,13 @@ namespace RichHudFramework
                             GlyphLocData locData = line.LocData[ch];
                             QuadBoard glyphBoard = line.GlyphBoards[ch];
 
-                            float 
+                            float
                                 xPos = locData.bbOffset.X + _textOffset.X,
                                 edge = locData.chSize.X / 2f;
 
                             if ((xPos - edge) >= min && (xPos + edge) <= max)
                             {
-                                glyphBoard.Draw(locData.bbSize, origin + _textOffset + locData.bbOffset, ref pixelToWorld);
+                                glyphBoard.Draw(locData.bbSize, offset + _textOffset + locData.bbOffset, ref matrix);
                             }
                         }
                     }

@@ -3,6 +3,17 @@
     namespace UI
     {
         /// <summary>
+        /// Used to determine which layer a UI element will be drawn on.
+        /// Back/Mid/Foreground
+        /// </summary>
+        public enum HudLayers : int
+        {
+            Background = -1,
+            Normal = 0,
+            Foreground = 1,
+        }
+
+        /// <summary>
         /// Interface for all hud elements that can be parented to another element.
         /// </summary>
         public interface IHudNode : IHudParent
@@ -12,6 +23,9 @@
             /// </summary>
             IHudParent Parent { get; }
 
+            /// <summary>
+            /// Determines 
+            /// </summary>
             HudLayers ZOffset { get; set; }
 
             /// <summary>

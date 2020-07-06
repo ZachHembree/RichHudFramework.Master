@@ -1,5 +1,6 @@
 ﻿using System;
 using VRage;
+using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
@@ -8,7 +9,7 @@ namespace RichHudFramework
         Func<bool>, // Visible
         object, // ID
         Action<bool>, // BeforeLayout
-        Action<int>, // BeforeDraw
+        Action<int, MatrixD>, // BeforeDraw
         Action<int>, // HandleInput
         ApiMemberAccessor // GetOrSetMembers
     >;

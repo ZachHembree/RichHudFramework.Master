@@ -31,7 +31,7 @@ namespace RichHudFramework
         Func<bool>, // Visible
         object, // ID
         Action<bool>, // BeforeLayout
-        Action<int>, // BeforeDraw
+        Action<int, MatrixD>, // BeforeDraw
         Action<int>, // HandleInput
         ApiMemberAccessor // GetOrSetMembers
     >;
@@ -49,7 +49,7 @@ namespace RichHudFramework
         Func<Vector2>, // Size
         Func<Vector2>, // TextSize
         Vec2Prop, // FixedSize
-        Action<Vector2> // Draw 
+        Action<Vector2, MatrixD> // Draw 
     >;
 
     namespace UI.Server
@@ -283,10 +283,10 @@ namespace RichHudFramework
                 pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;
 
                 root.BeforeLayout(tick == 0);
-                root.BeforeDraw(HudLayers.Background);
-                root.BeforeDraw(HudLayers.Normal);
-                root.BeforeDraw(HudLayers.Foreground);
-                cursor.Draw();
+                root.BeforeDraw(HudLayers.Background, ref pixelToWorld);
+                root.BeforeDraw(HudLayers.Normal, ref pixelToWorld);
+                root.BeforeDraw(HudLayers.Foreground, ref pixelToWorld);
+                cursor.Draw(ref pixelToWorld);
 
                 tick++;
 

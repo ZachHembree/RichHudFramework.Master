@@ -81,8 +81,10 @@ namespace RichHudFramework.UI.Server
         {
             if (open)
             {
+                MatrixD matrix = HudMain.PixelToWorld;
+
                 menu.BeforeLayout(true);
-                menu.BeforeDraw(HudLayers.Normal);
+                menu.BeforeDraw(HudLayers.Normal, ref matrix);
             }
         }
 

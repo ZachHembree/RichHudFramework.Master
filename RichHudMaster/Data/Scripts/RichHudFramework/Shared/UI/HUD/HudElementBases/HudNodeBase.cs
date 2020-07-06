@@ -1,5 +1,6 @@
 ﻿using System;
 using VRage;
+using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
@@ -8,13 +9,16 @@ namespace RichHudFramework
         Func<bool>, // Visible
         object, // ID
         Action<bool>, // BeforeLayout
-        Action<int>, // BeforeDraw
+        Action<int, MatrixD>, // BeforeDraw
         Action<int>, // HandleInput
         ApiMemberAccessor // GetOrSetMembers
     >;
 
     namespace UI
     {
+        /// <summary>
+        /// API accessors for IHudNode
+        /// </summary>
         public enum HudNodeAccessors : int
         {
             GetParentID = 10,
@@ -35,6 +39,9 @@ namespace RichHudFramework
             /// </summary>
             public virtual IHudParent Parent { get; protected set; }
 
+            /// <summary>
+            /// Determines whether the UI element will be drawn in the Back, Mid or Foreground
+            /// </summary>
             public HudLayers ZOffset
             {
                 get { return _zOffset; }
@@ -54,13 +61,7 @@ namespace RichHudFramework
 
             public HudNodeBase(IHudParent parent)
             {
-                if (parent != null)
-                {
-                    if (parent.ID == ID)
-                        throw new Exception("Types of HudNodeBase cannot be parented to themselves!");
-                    else
-                        Register(parent);
-                }
+                Register(parent);
             }
 
             /// <summary>
@@ -75,6 +76,9 @@ namespace RichHudFramework
             /// </summary>
             public virtual void Register(IHudParent parent)
             {
+                if (parent != null && parent.ID == ID)
+                    throw new Exception("Types of HudNodeBase cannot be parented to themselves!");
+
                 if (parent != null && Parent == null)
                 {
                     Parent = parent;

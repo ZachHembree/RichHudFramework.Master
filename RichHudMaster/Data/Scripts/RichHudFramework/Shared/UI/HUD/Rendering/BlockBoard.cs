@@ -59,7 +59,6 @@ namespace RichHudFramework
 
                 private readonly MatBoard[] faces;
                 private readonly Vector3D[] octant;
-                private MyQuadD faceQuad;
 
                 public BlockBoard()
                 {
@@ -120,6 +119,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(ref MatrixD matrix)
                 {
+                    MyQuadD faceQuad;
                     UpdateOctant(ref matrix);
 
                     // -Z/+Z

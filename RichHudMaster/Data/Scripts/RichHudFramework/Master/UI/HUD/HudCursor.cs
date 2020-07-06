@@ -100,14 +100,14 @@ namespace RichHudFramework
                     CapturedElement = null;
                 }
 
-                public void Draw()
+                public void Draw(ref MatrixD matrix)
                 {
                     if (Visible)
                     {
                         shadow.Scale = ResScale;
 
                         shadow.BeforeLayout(true);
-                        shadow.BeforeDraw(HudLayers.Normal);
+                        shadow.BeforeDraw(HudLayers.Normal, ref matrix);
                     }
                 }
 
