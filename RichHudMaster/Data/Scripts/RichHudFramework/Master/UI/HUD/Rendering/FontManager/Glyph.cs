@@ -62,7 +62,7 @@ namespace RichHudFramework
                     new QuadBoard(material.TextureID, GetMaterialAlignment(material.size * scale), color);
 
                 public FlatQuad GetMaterialAlignment(Vector2 bbSize) =>
-                    matFrame.GetMaterialAlignment(bbSize);
+                    matFrame.GetMaterialAlignment(bbSize.X / bbSize.Y);
             }
         }
     }

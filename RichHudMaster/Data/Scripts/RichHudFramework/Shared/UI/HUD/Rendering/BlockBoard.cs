@@ -79,24 +79,6 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Sets the material offset for each face.
-                /// </summary>
-                public void SetMaterialOffset(Vector2 offset)
-                {
-                    for (int n = 0; n < 6; n++)
-                        faces[n].MatOffset = offset;
-                }
-
-                /// <summary>
-                /// Sets the material scale for each face.
-                /// </summary>
-                public void SetMatScale(float scale)
-                {
-                    for (int n = 0; n < 6; n++)
-                        faces[n].MatScale = scale;
-                }
-
-                /// <summary>
                 /// Sets every face to the given material.
                 /// </summary>
                 public void SetMaterial(Material material)

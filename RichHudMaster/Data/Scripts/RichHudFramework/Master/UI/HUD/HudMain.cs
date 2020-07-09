@@ -276,8 +276,8 @@ namespace RichHudFramework
                 {
                     M11 = (FovScale / ScreenHeight),    M12 = 0d,                           M13 = 0d,       M14 = 0d,
                     M21 = 0d,                           M22 = (FovScale / ScreenHeight),    M23 = 0d,       M24 = 0d,
-                    M31 = 0d,                           M32 = 0d,                           M33 = -0.05,    M34 = 0d,
-                    M41 = 0d,                           M42 = 0d,                           M43 = 0d,       M44 = 1d
+                    M31 = 0d,                           M32 = 0d,                           M33 = 0d,       M34 = 0d,
+                    M41 = 0d,                           M42 = 0d,                           M43 = -.05d,    M44 = 1d
                 };
 
                 pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;

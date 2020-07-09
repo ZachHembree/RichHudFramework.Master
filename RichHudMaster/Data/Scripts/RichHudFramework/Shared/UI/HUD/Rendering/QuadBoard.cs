@@ -64,7 +64,7 @@ namespace RichHudFramework
                 {
                     MyQuadD quad;
 
-                    Vector3D.Transform(ref origin, ref matrix, out origin);
+                    Vector3D.TransformNoProjection(ref origin, ref matrix, out origin);
                     MyUtils.GenerateQuad(out quad, ref origin, size.X / 2f, size.Y / 2f, ref matrix);
 
                     AddBillboard(ref quad, textureID, ref matFit, bbColor);
@@ -76,10 +76,10 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 size, Vector2 origin, ref MatrixD matrix)
                 {
-                    Vector3D worldPos = new Vector3D(origin.X, origin.Y, 1d);
+                    Vector3D worldPos = new Vector3D(origin.X, origin.Y, 0d);
                     MyQuadD quad;
 
-                    Vector3D.Transform(ref worldPos, ref matrix, out worldPos);
+                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
                     MyUtils.GenerateQuad(out quad, ref worldPos, size.X / 2f, size.Y / 2f, ref matrix);
 
                     AddBillboard(ref quad, textureID, ref matFit, bbColor);
@@ -91,10 +91,10 @@ namespace RichHudFramework
                 public void Draw(Vector2 size, Vector2 origin)
                 {
                     MatrixD ptw = HudMain.PixelToWorld;
-                    Vector3D worldPos = new Vector3D(origin.X, origin.Y, 1d);
+                    Vector3D worldPos = new Vector3D(origin.X, origin.Y, 0d);
                     MyQuadD quad;
 
-                    Vector3D.Transform(ref worldPos, ref ptw, out worldPos);
+                    Vector3D.TransformNoProjection(ref worldPos, ref ptw, out worldPos);
                     MyUtils.GenerateQuad(out quad, ref worldPos, size.X / 2f, size.Y / 2f, ref ptw);
 
                     AddBillboard(ref quad, textureID, ref matFit, bbColor);

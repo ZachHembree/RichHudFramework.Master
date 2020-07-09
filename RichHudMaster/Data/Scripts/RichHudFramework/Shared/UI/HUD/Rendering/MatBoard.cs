@@ -71,38 +71,6 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Distance of the material from the MatBoard's center.
-                /// </summary>
-                public Vector2 MatOffset
-                {
-                    get { return matFrame.offset; }
-                    set
-                    {
-                        if (value != matFrame.offset)
-                        {
-                            updateMatFit = true;
-                            matFrame.offset = value;
-                        }
-                    }
-                }
-
-                /// <summary>
-                /// Material scale.
-                /// </summary>
-                public float MatScale
-                {
-                    get { return matFrame.scale; }
-                    set
-                    {
-                        if (value != matFrame.scale)
-                        {
-                            updateMatFit = true;
-                            matFrame.scale = value;
-                        }
-                    }
-                }
-
-                /// <summary>
                 /// Texture applied to the billboard.
                 /// </summary>
                 public Material Material
@@ -162,7 +130,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size);
+                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 
@@ -177,7 +145,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size);
+                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 
@@ -192,7 +160,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size);
+                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 
@@ -206,7 +174,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size);
+                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 

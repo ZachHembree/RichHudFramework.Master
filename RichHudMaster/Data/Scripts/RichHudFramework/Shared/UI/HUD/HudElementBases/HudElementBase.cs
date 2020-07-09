@@ -241,7 +241,7 @@ namespace RichHudFramework
                 {
                     GetDimAlignment();
                     originAlignment = GetParentAlignment();
-                    cachedOrigin = _parent.cachedOrigin + _parent.Offset + originAlignment;
+                    cachedOrigin = _parent.cachedPosition + originAlignment;
                 }
                 else
                     cachedOrigin = Vector2.Zero;
