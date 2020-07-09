@@ -16,16 +16,16 @@ namespace RichHudFramework.UI.Rendering.Server
             public Line this[int index] => lines[index];
             public virtual int Count => lines.Count;
             public virtual float MaxLineWidth { get; protected set; }
-            public float Scale { get { return scale; } set { RescaleText(value / scale); scale = value; } }
+            //public float Scale { get { return _scale; } set { RescaleText(value / _scale); _scale = value; } }
 
             protected readonly LinePool lines;
             protected readonly Line charBuffer;
-            private float scale;
+            private float _scale;
 
             protected FormattedTextBase(LinePool lines)
             {
                 this.lines = lines;
-                scale = 1f;
+                _scale = 1f;
                 MaxLineWidth = 0f;
                 charBuffer = lines.GetNewLine();
             }
@@ -85,16 +85,16 @@ namespace RichHudFramework.UI.Rendering.Server
                 {
                     if (end.X > start.X)
                     {
-                        lines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting, Scale);
+                        lines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting);
 
                         for (int x = start.X + 1; x < end.X; x++)
-                            lines[x].SetFormatting(formatting, Scale);
+                            lines[x].SetFormatting(formatting);
 
-                        lines[start.X].SetFormatting(0, end.Y, formatting, Scale);
+                        lines[start.X].SetFormatting(0, end.Y, formatting);
                     }
                     else
                     {
-                        lines[start.X].SetFormatting(start.Y, end.Y, formatting, Scale);
+                        lines[start.X].SetFormatting(start.Y, end.Y, formatting);
                     }
 
                     for (int n = start.X; n <= end.X; n++)
@@ -146,7 +146,7 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <summary>
             /// Builds a list of <see cref="Line.RichChar"/>s from RichString data.
             /// </summary>
-            protected static void GetRichChars(RichStringMembers richString, Line charBuffer, GlyphFormat previous, float scale, Func<char, bool> FilterFunc)
+            protected static void GetRichChars(RichStringMembers richString, Line charBuffer, GlyphFormat previous, Func<char, bool> FilterFunc)
             {
                 StringBuilder text = richString.Item1;
                 GlyphFormat format;
@@ -161,18 +161,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 for (int n = 0; n < text.Length; n++)
                 {
                     if (FilterFunc(text[n]))
-                        charBuffer.AddNew(text[n], format, scale);
-                }
-            }
-
-            /// <summary>
-            /// Sets the text to the given scale.
-            /// </summary>
-            protected virtual void RescaleText(float scale)
-            {
-                for (int line = 0; line < lines.Count; line++)
-                {
-                    lines[line].Rescale(scale);
+                        charBuffer.AddNew(text[n], format);
                 }
             }
 

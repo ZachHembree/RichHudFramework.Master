@@ -24,9 +24,11 @@ namespace RichHudFramework
                     public int Capacity => lines.Capacity;
 
                     private readonly List<Line> lines;
+                    private readonly TextBuilder builder;
 
-                    public LinePool()
+                    public LinePool(TextBuilder builder)
                     {
+                        this.builder = builder;
                         lines = new List<Line>();
                     }
 
@@ -50,7 +52,7 @@ namespace RichHudFramework
                         }
                         else
                         {
-                            line = new PooledLine(minCapacity);
+                            line = new PooledLine(builder, minCapacity);
                             lines.Add(line);
                         }
 
@@ -80,7 +82,7 @@ namespace RichHudFramework
                                 line.Capacity = minCapacity;
                         }
                         else
-                            return new PooledLine(minCapacity);
+                            return new PooledLine(builder, minCapacity);
 
                         return line;
                     }
@@ -251,7 +253,7 @@ namespace RichHudFramework
 
                     private class PooledLine : Line
                     {
-                        public PooledLine(int capacity = 6) : base(6)
+                        public PooledLine(TextBuilder builder, int capacity = 6) : base(builder, 6)
                         { }
                     }
                 }

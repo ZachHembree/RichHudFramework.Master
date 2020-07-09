@@ -46,7 +46,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 int insertStart = GetInsertStart(start);
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, previous, Scale, x => (x >= ' ' || x == '\n'));
+                    GetRichChars(text[n], charBuffer, previous, x => (x >= ' ' || x == '\n'));
 
                 InsertChars(insertStart, start);
             }
@@ -188,7 +188,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                     for (int n = start; n <= end; n++)
                     {
-                        if (spaceRemaining < charBuffer[n].Size.X || wrapWord)
+                        if (spaceRemaining < charBuffer.LocData[n].chSize.X || wrapWord)
                         {
                             spaceRemaining = MaxLineWidth;
                             currentLine = lines.GetNewLine(estLineLength);
@@ -198,7 +198,7 @@ namespace RichHudFramework.UI.Rendering.Server
                         }
 
                         currentLine.AddCharFromLine(n, charBuffer);
-                        spaceRemaining -= charBuffer[n].Size.X;
+                        spaceRemaining -= charBuffer.LocData[n].chSize.X;
                     }
                 }
 
@@ -229,7 +229,7 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             private bool TryPullToLine(int line)
             {
-                float spaceRemaining = MaxLineWidth - lines[line].Size.X;
+                float spaceRemaining = MaxLineWidth - lines[line].UnscaledSize.X;
                 Vector2I i = new Vector2I(line + 1, 0), wordEnd, end = new Vector2I();
 
                 while (TryGetWordEnd(i, out wordEnd, ref spaceRemaining) && lines[i.X].Chars[i.Y] != '\n')
@@ -269,7 +269,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 float width = 0f;
 
                 for (int n = 0; n < charBuffer.Count; n++)
-                    width += charBuffer[n].Size.X;
+                    width += charBuffer.LocData[n].chSize.X;
 
                 return width;
             }
@@ -316,7 +316,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 for (int n = start; n < charBuffer.Count; n++)
                 {
-                    width += charBuffer[n].Size.X;
+                    width += charBuffer.LocData[n].chSize.X;
 
                     if (n == (charBuffer.Count - 1) || charBuffer.Chars[n + 1] == '\n' || IsWordBreak(n, n + 1))
                     {
