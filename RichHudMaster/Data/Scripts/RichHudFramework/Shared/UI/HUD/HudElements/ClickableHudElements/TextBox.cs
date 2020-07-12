@@ -349,32 +349,32 @@ namespace RichHudFramework.UI
                 if (text.Count > 0 && text[Index.X].Count > 0)
                 {
                     IRichChar ch;
-                    Height = text[Index.X].Size.Y - 2f;
+                    Height = text[Index.X].Size.Y - (2f * _scale);
                     
                     if (Index.Y == -1)
                     {
                         ch = text[Index + new Vector2I(0, 1)];
                         offset = ch.Offset + text.TextOffset;
-                        offset.X -= ch.Size.X / 2f + 1f;
+                        offset.X -= ch.Size.X / 2f + (1f * _scale);
                     }
                     else
                     {
                         ch = text[Index];
                         offset = ch.Offset + text.TextOffset;
-                        offset.X += ch.Size.X / 2f + 1f;
+                        offset.X += ch.Size.X / 2f + (1f * _scale);
                     }
                 }
                 else
                 {
                     if (text.Format.Alignment == TextAlignment.Left)
-                        offset.X = -textElement.Size.X / 2f + 2f;
+                        offset.X = -textElement.Size.X / 2f + (2f * _scale);
                     else if (text.Format.Alignment == TextAlignment.Right)
-                        offset.X = textElement.Size.X / 2f - 2f;
+                        offset.X = textElement.Size.X / 2f - (2f * _scale);
 
                     offset.X += Padding.X / 2f;
 
                     if (!text.VertCenterText)
-                        offset.Y = (text.Size.Y - Height) / 2f - 4f;
+                        offset.Y = (text.Size.Y - Height) / 2f - (4f * _scale);
                 }
 
                 Offset = offset;
@@ -408,7 +408,7 @@ namespace RichHudFramework.UI
             /// </summary>
             private void GetClickedChar()
             {
-                if ((HudMain.Cursor.Origin - lastCursorPos).LengthSquared() > 4f)
+                if ((HudMain.Cursor.Origin - lastCursorPos).LengthSquared() > 4f * _scale)
                 {
                     Vector2 offset = HudMain.Cursor.Origin - textElement.Position;
                     Vector2I newIndex = text.GetCharAtOffset(offset);
