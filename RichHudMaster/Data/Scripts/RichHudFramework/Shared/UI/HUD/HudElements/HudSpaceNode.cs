@@ -13,9 +13,15 @@ namespace RichHudFramework
         public class HudSpaceNode : HudNodeBase
         {
             /// <summary>
-            /// Custom draw matrix
+            /// Returns the current draw matrix
             /// </summary>
-            public MatrixD CustomMatrix { get { return _customMatrix; } set { _customMatrix = value; } }
+            public MatrixD CustomMatrix => _customMatrix;
+
+            /// <summary>
+            /// Used to update the current draw matrix. If no delegate is set, the node will default
+            /// to the matrix supplied by its parent.
+            /// </summary>
+            public Func<MatrixD> UpdateMatrixFunc;
 
             private MatrixD _customMatrix;
 
@@ -24,9 +30,13 @@ namespace RichHudFramework
 
             public override void BeforeDraw(HudLayers layer, ref MatrixD oldMatrix)
             {
+                if (UpdateMatrixFunc != null)
+                    _customMatrix = UpdateMatrixFunc();
+                else
+                    _customMatrix = oldMatrix;
+
                 base.BeforeDraw(layer, ref _customMatrix);
             }
         }
     }
 }
-

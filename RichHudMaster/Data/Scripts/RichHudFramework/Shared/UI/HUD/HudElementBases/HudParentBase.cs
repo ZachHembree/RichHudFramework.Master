@@ -22,7 +22,7 @@ namespace RichHudFramework
         /// Base class for HUD elements to which other elements are parented. Types deriving from this class cannot be
         /// parented to other elements; only types of <see cref="IHudNode"/> can be parented.
         /// </summary>
-        public abstract class HudParentBase : IHudParent
+        public abstract class HudParentBase : IHudParent, IReadOnlyHudParent
         {
             /// <summary>
             /// Determines whether or not an element will be drawn or process input. Visible by default.

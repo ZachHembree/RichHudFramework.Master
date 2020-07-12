@@ -20,7 +20,7 @@ namespace RichHudFramework
         /// <summary>
         /// Wrapper used to access types of <see cref="IHudParent"/> via the API.
         /// </summary>
-        public class HudParentData : IHudParent
+        public class HudParentData : IHudParent, IReadOnlyHudParent
         {
             public bool Visible { get { return VisFunc(); } set { } }
 

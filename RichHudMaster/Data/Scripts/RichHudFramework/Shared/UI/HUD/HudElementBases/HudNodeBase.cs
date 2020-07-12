@@ -27,17 +27,26 @@ namespace RichHudFramework
             Register = 13,
             Unregister = 14,
             Registered = 15,
+            Scale = 16
         }
 
         /// <summary>
         /// Base class for hud elements that can be parented to other elements.
         /// </summary>
-        public abstract class HudNodeBase : HudParentBase, IHudNode
+        public abstract class HudNodeBase : HudParentBase, IHudNode, IReadOnlyHudNode
         {
             /// <summary>
             /// Parent object of the node.
             /// </summary>
-            public virtual IHudParent Parent { get; protected set; }
+            public virtual IHudParent Parent
+            {
+                get { return _parent; }
+                protected set
+                {
+                    _parent = value;
+                    _parentNode = value as HudNodeBase;
+                }
+            }
 
             /// <summary>
             /// Determines whether the UI element will be drawn in the Back, Mid or Foreground
@@ -45,12 +54,20 @@ namespace RichHudFramework
             public HudLayers ZOffset
             {
                 get { return _zOffset; }
+                set { _zOffset = value; }
+            }
+
+            /// <summary>
+            /// Scales the size and offset of an element. Any offset or size set at a given
+            /// be increased or decreased with scale. Defaults to 1f. Includes parent scale.
+            /// </summary>
+            public virtual float Scale
+            {
+                get { return _scale; }
                 set
                 {
-                    for (int n = 0; n < children.Count; n++)
-                        children[n].ZOffset = value;
-
-                    _zOffset = value;
+                    localScale = value;
+                    _scale = _parentNode == null ? value : (value * _parentNode._scale);
                 }
             }
 
@@ -59,9 +76,21 @@ namespace RichHudFramework
             /// </summary>
             public bool Registered { get; private set; }
 
+            private IHudParent _parent;
+            protected HudNodeBase _parentNode;
+            protected float _scale, localScale;
+
             public HudNodeBase(IHudParent parent)
             {
+                localScale = 1f;
+                _scale = 1f;
                 Register(parent);
+            }
+
+            public override void BeforeLayout(bool refresh)
+            {
+                _scale = _parentNode == null ? localScale : (localScale * _parentNode._scale);
+                base.BeforeLayout(refresh);
             }
 
             /// <summary>
@@ -85,6 +114,14 @@ namespace RichHudFramework
                     Parent.RegisterChild(this);
                     Registered = true;
                 }
+
+                if (_parentNode != null)
+                {
+                    _zOffset = _parentNode.ZOffset;
+                    _scale = localScale * _parentNode._scale;
+                }
+                else
+                    _scale = localScale;
             }
 
             /// <summary>
@@ -100,6 +137,8 @@ namespace RichHudFramework
                     lastParent.RemoveChild(this);
                     Registered = false;
                 }
+
+                _scale = localScale;
             }
 
             protected override object GetOrSetMember(object data, int memberEnum)
@@ -127,6 +166,14 @@ namespace RichHudFramework
                             break;
                         case HudNodeAccessors.Registered:
                             return Registered;
+                        case HudNodeAccessors.Scale:
+                            if (data == null)
+                                return Scale;
+                            else
+                            {
+                                Scale = (float)data;
+                                break;
+                            }
                     }
                 }
 
