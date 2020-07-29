@@ -48,8 +48,10 @@ namespace RichHudFramework
 
             public void RegisterChild(IHudNode child)
             {
-                localChildren.Add(child.ID);
                 GetOrSetMemberFunc(child.GetApiData(), (int)HudParentAccessors.Add);
+
+                if (child.Parent.ID == ID)
+                    localChildren.Add(child.ID);
             }
 
             public void BeforeLayout(bool refresh) =>
@@ -61,7 +63,7 @@ namespace RichHudFramework
             public void BeforeInput(HudLayers layer) =>
                 BeforeInputAction((int)layer);
 
-            public void RegisterChildren(IEnumerable<IHudNode> newChildren)
+            public void RegisterChildren(IList<IHudNode> newChildren)
             {
                 foreach (IHudNode child in newChildren)
                     child.Register(this);

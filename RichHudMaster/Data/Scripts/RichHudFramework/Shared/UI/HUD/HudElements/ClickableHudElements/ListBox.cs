@@ -3,8 +3,10 @@ using System.Text;
 using VRage;
 using VRageMath;
 using System.Collections.Generic;
+using RichHudFramework.UI.Rendering;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 using ApiMemberAccessor = System.Func<object, int, object>;
+using System.Collections;
 
 namespace RichHudFramework.UI
 {
@@ -32,17 +34,23 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Scrollable list of text elements. Each list entry is associated with a value of type T.
     /// </summary>
-    public class ListBox<T> : HudElementBase, IListBoxEntry
+    public class ListBox<T> : HudElementBase, IEnumerable<MyTuple<ListBoxEntry<T>, bool>>
     {
         /// <summary>
         /// Invoked when an entry is selected.
         /// </summary>
-        public event Action OnSelectionChanged;
+        public event Action<ListBox<T>> OnSelectionChanged;
+
+        /// <summary>
+        /// Used to allow the addition of list entries using collection-initializer syntax in
+        /// conjunction with normal initializers.
+        /// </summary>
+        public ListBox<T> ListContainer => this;
 
         /// <summary>
         /// Read-only collection of list entries.
         /// </summary>
-        public HudList<ListBoxEntry<T>> List => scrollBox.List;
+        public IReadOnlyList<MyTuple<ListBoxEntry<T>, bool>> ListEntries => scrollBox.ChainElements;
 
         /// <summary>
         /// Width of the list box in pixels.
@@ -100,24 +108,23 @@ namespace RichHudFramework.UI
             {
                 _memberPadding = value;
 
-                for (int n = 0; n < scrollBox.List.Count; n++)
-                    scrollBox.List[n].Padding = value;
+                for (int n = 0; n < scrollBox.ChainElements.Count; n++)
+                    scrollBox.ChainElements[n].Item1.Padding = value;
             }
         }
+
+        /// <summary>
+        /// Padding applied to the highlight box.
+        /// </summary>
+        public Vector2 HighlightPadding { get; set; }
 
         /// <summary>
         /// Height of entries in the list.
         /// </summary>
         public float LineHeight 
         { 
-            get { return _lineHeight; } 
-            set 
-            {
-                _lineHeight = value;
-                
-                for (int n = 0; n < scrollBox.List.Count; n++)
-                    scrollBox.List[n].Height = value;
-            } 
+            get { return scrollBox.MemberMaxSize.Y; } 
+            set { scrollBox.MemberMaxSize = new Vector2(scrollBox.MemberMaxSize.X, value); } 
         }
 
         /// <summary>
@@ -126,37 +133,29 @@ namespace RichHudFramework.UI
         public GlyphFormat Format { get; set; }
 
         /// <summary>
-        /// Total number of elements in the list
-        /// </summary>
-        public int Count => List.Count;
-
-        /// <summary>
         /// Minimum number of elements visible in the list at any given time.
         /// </summary>
-        public int MinimumVisCount { get { return scrollBox.MinimumVisCount; } set { scrollBox.MinimumVisCount = value; } }
+        public int MinVisibleCount { get { return scrollBox.MinVisibleCount; } set { scrollBox.MinVisibleCount = value; } }
 
         /// <summary>
         /// Current selection. Null if empty.
         /// </summary>
         public ListBoxEntry<T> Selection { get; private set; }
 
-        /// <summary>
-        /// Indicates whether or not the element will appear in the list
-        /// </summary>
-        public bool Enabled { get; set; }
-
-        public readonly ScrollBox<ListBoxEntry<T>> scrollBox;
+        protected readonly ScrollBox<ListBoxEntry<T>> scrollBox;
         protected readonly HighlightBox selectionBox, highlight;
         protected readonly BorderBox border;
         private Vector2 _memberPadding;
-        private float _lineHeight;
+
+        private readonly ObjectPool<ListBoxEntry<T>> entryPool;
 
         public ListBox(IHudParent parent = null) : base(parent)
         {
-            scrollBox = new ScrollBox<ListBoxEntry<T>>(this)
+            entryPool = new ObjectPool<ListBoxEntry<T>>(GetNewEntry, ResetEntry);
+
+            scrollBox = new ScrollBox<ListBoxEntry<T>>(true, this)
             {
-                SizingMode = ScrollBoxSizingModes.FitMembersToBox,
-                AlignVertical = true,
+                SizingMode = HudChainSizingModes.FitMembersBoth | HudChainSizingModes.FitChainOffAxis,
             };
 
             border = new BorderBox(scrollBox)
@@ -166,18 +165,40 @@ namespace RichHudFramework.UI
                 Thickness = 1f,
             };
 
-            selectionBox = new HighlightBox(scrollBox.List)
-            { Color = new Color(34, 44, 53) };
+            selectionBox = new HighlightBox(scrollBox);
+            highlight = new HighlightBox(scrollBox);
 
-            highlight = new HighlightBox(scrollBox.List)
-            { Color = new Color(34, 44, 53) };
-
+            Format = GlyphFormat.White;
+            Padding = new Vector2(20f);
             Size = new Vector2(355f, 223f);
-            _lineHeight = 30f;
 
-            Enabled = true;
+            HighlightPadding = new Vector2(12f, 6f);
+            MemberPadding = new Vector2(20f, 6f);
+            LineHeight = 30f;
+
             CaptureCursor = true;
         }
+
+        private ListBoxEntry<T> GetNewEntry()
+        {
+            return new ListBoxEntry<T>()
+            {
+                Format = Format,
+                Padding = _memberPadding,
+            };
+        }
+
+        private void ResetEntry(ListBoxEntry<T> entry)
+        {
+            entry.MouseInput.ClearSubscribers();
+            entry.AssocMember = default(T);
+        }
+
+        public IEnumerator<MyTuple<ListBoxEntry<T>, bool>> GetEnumerator() =>
+            scrollBox.ChainElements.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() =>
+            GetEnumerator();
 
         /// <summary>
         /// Adds a new member to the list box with the given name and associated
@@ -185,22 +206,11 @@ namespace RichHudFramework.UI
         /// </summary>
         public ListBoxEntry<T> Add(RichText name, T assocMember)
         {
-            ListBoxEntry<T> member = scrollBox.List.AddReserved();
+            ListBoxEntry<T> member = entryPool.Get();
 
-            if (member == null)
-            {
-                member = new ListBoxEntry<T>(assocMember)
-                {
-                    Format = Format,
-                    Height = _lineHeight,
-                    Padding = _memberPadding,
-                };
-            }
-
-            member.OnMemberSelected += SetSelection;
             member.TextBoard.SetText(name);
-            member.Enabled = true;
-            scrollBox.AddToList(member);
+            member.AssocMember = assocMember;
+            scrollBox.Add(member);
 
             return member;
         }
@@ -210,26 +220,21 @@ namespace RichHudFramework.UI
         /// </summary>
         public void Remove(ListBoxEntry<T> member)
         {
-            scrollBox.RemoveFromList(member);
+            scrollBox.Remove(member);
+            entryPool.Return(member);
         }
 
         /// <summary>
-        /// Clears the current contents of the list.
+        /// Sets the selection to the member associated with the given object.
         /// </summary>
-        public void Clear()
+        public void SetSelection(int index)
         {
-            scrollBox.Reset();
-            Selection = null;
-        }
-
-        /// <summary>
-        /// Resets the element for later reuse.
-        /// </summary>
-        public void Reset()
-        {
-            Clear();
-            OnSelectionChanged = null;
-            Enabled = false;
+            if (index > 0 && index < scrollBox.ChainElements.Count)
+            {
+                Selection = scrollBox.ChainElements[index].Item1;
+                scrollBox.SetElementEnabled(index, true);
+                OnSelectionChanged?.Invoke(this);
+            }
         }
 
         /// <summary>
@@ -237,12 +242,13 @@ namespace RichHudFramework.UI
         /// </summary>
         public void SetSelection(T assocMember)
         {
-            ListBoxEntry<T> result = scrollBox.Find(x => assocMember.Equals(x.AssocMember));
+            int index = scrollBox.FindIndex(x => assocMember.Equals(x.AssocMember));
 
-            if (result != null)
+            if (index != -1)
             {
-                Selection = result;
-                OnSelectionChanged?.Invoke();
+                Selection = scrollBox.ChainElements[index].Item1;
+                scrollBox.SetElementEnabled(index, true);
+                OnSelectionChanged?.Invoke(this);
             }
         }
 
@@ -251,21 +257,22 @@ namespace RichHudFramework.UI
         /// </summary>
         public void SetSelection(ListBoxEntry<T> member)
         {
-            ListBoxEntry<T> result = scrollBox.Find(x => member.Equals(x));
+            int index = scrollBox.FindIndex(x => member.Equals(x));
 
-            if (result != null)
+            if (index != -1)
             {
-                Selection = result;
-                OnSelectionChanged?.Invoke();
+                Selection = scrollBox.ChainElements[index].Item1;
+                scrollBox.SetElementEnabled(index, true);
+                OnSelectionChanged?.Invoke(this);
             }
         }
 
         protected override void Layout()
         {
+            // Make sure the selection box highlights the current selection
             if (Selection != null)
             {
                 selectionBox.Offset = Selection.Offset;
-                selectionBox.Padding = Selection.Padding;
                 selectionBox.Size = Selection.Size;
                 selectionBox.Visible = Selection.Visible;
             }
@@ -277,14 +284,21 @@ namespace RichHudFramework.UI
         {
             highlight.Visible = false;
 
-            foreach (ListBoxEntry<T> entry in scrollBox.List)
+            for (int n = 0; n < scrollBox.ChainElements.Count; n++)
             {
+                ListBoxEntry<T> entry = scrollBox.ChainElements[n].Item1;
+
                 if (entry.IsMousedOver)
                 {
                     highlight.Visible = true;
                     highlight.Size = entry.Size;
                     highlight.Offset = entry.Offset;
-                    highlight.Padding = entry.Padding;
+
+                    if (entry.MouseInput.IsLeftClicked)
+                    {
+                        Selection = entry;
+                        OnSelectionChanged?.Invoke(this);
+                    }
                 }
             }
         }
@@ -296,7 +310,11 @@ namespace RichHudFramework.UI
             switch (member)
             {
                 case ListBoxAccessors.ListMembers:
-                    return new CollectionData(x => List[x].GetOrSetMember, () => List.Count);
+                    return new CollectionData
+                    (
+                        x => scrollBox.ChainElements[x].Item1.GetOrSetMember, 
+                        () => scrollBox.ChainElements.Count
+                     );
                 case ListBoxAccessors.Add:
                     {
                         var entryData = (MyTuple<IList<RichStringMembers>, T>)data;
@@ -317,28 +335,39 @@ namespace RichHudFramework.UI
             return null;
         }
 
+        /// <summary>
+        /// A textured box with a white tab positioned on the left hand side.
+        /// </summary>
         protected class HighlightBox : TexturedBox
         {
-            public override float Height
-            {
-                set
-                {
-                    base.Height = value;
-                    tab.Height = value;
-                }
-            }
-            public Color TabColor { get { return tab.Color; } set { tab.Color = value; } }
+            public Color TabColor { get { return tabBoard.Color; } set { tabBoard.Color = value; } }
 
-            private readonly TexturedBox tab;
+            private readonly MatBoard tabBoard;
 
             public HighlightBox(IHudParent parent = null) : base(parent)
             {
-                tab = new TexturedBox(this)
-                {
-                    Width = 4f,
-                    Color = new Color(223, 230, 236),
-                    ParentAlignment = ParentAlignments.Left | ParentAlignments.InnerH
-                };
+                tabBoard = new MatBoard() { Color = new Color(223, 230, 236) };
+                Color = Color = new Color(34, 44, 53);
+                ZOffset = HudLayers.Background;
+            }
+
+            protected override void Layout()
+            {
+                hudBoard.Size = cachedSize - cachedPadding;
+                tabBoard.Size = new Vector2(4f * _scale, cachedSize.Y - cachedPadding.Y);
+            }
+
+            protected override void Draw(ref MatrixD matrix)
+            {
+                if (hudBoard.Color.A > 0)
+                    hudBoard.Draw(cachedPosition, ref matrix);
+
+                // Left align the tab
+                Vector2 tabPos = cachedPosition;
+                tabPos.X += (-hudBoard.Size.X + tabBoard.Size.X) / 2f;
+                
+                if (tabBoard.Color.A > 0)
+                    tabBoard.Draw(tabPos, ref matrix);
             }
         }
     }
