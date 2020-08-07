@@ -1,5 +1,4 @@
 ﻿using System;
-using RichHudFramework.UI.Rendering;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
@@ -14,26 +13,20 @@ namespace RichHudFramework.UI.Server
     /// One-line text field with a configurable input filter delegate. Designed to mimic the appearance of the text field
     /// in the SE terminal.
     /// </summary>
-    public class TerminalTextField : TerminalValue<string, TerminalTextField>
+    public class TerminalTextField : TerminalValue<string>
     {
-        /// <summary>
-        /// Invoked whenver a change occurs to a control that requires a response, like a change
-        /// to a value.
-        /// </summary>
-        public override event Action OnControlChanged;
-
         /// <summary>
         /// The name of the control as it appears in the terminal.
         /// </summary>
-        public override string Name { get { return name.TextBoard.ToString(); } set { name.TextBoard.SetText(value); } }
+        public override string Name { get { return textElement.name.TextBoard.ToString(); } set { textElement.name.TextBoard.SetText(value); } }
 
         /// <summary>
         /// The contents of the textbox.
         /// </summary>
         public override string Value
         {
-            get { return textBox.TextBoard.ToString(); }
-            set { textBox.TextBoard.SetText(value); }
+            get { return textElement.textField.TextBoard.ToString(); }
+            set { textElement.textField.TextBoard.SetText(value); }
         }
 
         /// <summary>
@@ -44,136 +37,14 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Restricts the range of characters allowed for input.
         /// </summary>
-        public Func<char, bool> CharFilterFunc { get { return textBox.CharFilterFunc; } set { textBox.CharFilterFunc = value; } }
+        public Func<char, bool> CharFilterFunc { get { return textElement.textField.CharFilterFunc; } set { textElement.textField.CharFilterFunc = value; } }
 
-        public override float Width
+        private readonly NamedTextField textElement;
+
+        public TerminalTextField()
         {
-            get { return background.Width + Padding.X; }
-            set
-            {
-                if (value > Padding.X)
-                    value -= Padding.X;
-
-                background.Width = value;
-                name.Width = value;
-            }
-        }
-
-        public override float Height
-        {
-            get { return background.Height + name.Height + Padding.Y; }
-            set
-            {
-                if (value > Padding.Y)
-                    value -= Padding.Y;
-
-                background.Height = value - name.Height;
-            }
-        }
-
-        private readonly Label name;
-        private readonly TextBox textBox;
-        private readonly TexturedBox background, highlight;
-        private readonly Utils.Stopwatch refreshTimer;
-        private string lastValue;
-        private bool controlUpdating, valueChanged;
-
-        public TerminalTextField(IHudParent parent = null) : base(parent)
-        {
-            name = new Label(this)
-            {
-                Format = RichHudTerminal.ControlFormat,
-                Text = "NewTextField",
-                AutoResize = false,
-                Height = 22f,
-                Offset = new Vector2(0f, 2f),
-                ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV
-            };
-
-            background = new TexturedBox(name)
-            {
-                Color = new Color(42, 55, 63),
-                ParentAlignment = ParentAlignments.Bottom,
-            };
-
-            var border = new BorderBox(background)
-            {
-                Color = RichHudTerminal.BorderColor,
-                Thickness = 1f,
-                DimAlignment = DimAlignments.Both,
-            };
-
-            textBox = new TextBox(background)
-            {
-                Format = RichHudTerminal.ControlFormat,
-                AutoResize = false,
-                DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
-                Padding = new Vector2(24f, 0f),
-            };
-
-            highlight = new TexturedBox(background)
-            {
-                Color = RichHudTerminal.HighlightOverlayColor,
-                DimAlignment = DimAlignments.Both,
-                Visible = false,
-            };
-
-            Name = "TextBox";
-            Padding = new Vector2(40f, 0f);
-            Size = new Vector2(319f, 62f);
-
-            textBox.TextBoard.OnTextChanged += TextChanged;
-            refreshTimer = new Utils.Stopwatch();
-            refreshTimer.Start();
-        }
-
-        public override void Reset()
-        {
-            name.TextBoard.Clear();
-            textBox.TextBoard.Clear();
-            CharFilterFunc = null;
-            base.Reset();
-        }
-
-        private void TextChanged()
-        {
-            valueChanged = !controlUpdating;
-        }
-
-        protected override void Layout()
-        {
-            if (!textBox.InputOpen)
-            {
-                if (refreshTimer.ElapsedMilliseconds > 1000)
-                {
-                    if (CustomValueGetter != null && lastValue != CustomValueGetter())
-                        Value = CustomValueGetter();
-
-                    refreshTimer.Reset();
-                }
-
-                if (valueChanged)
-                {
-                    controlUpdating = true;
-                    lastValue = Value;
-                    OnControlChanged?.Invoke();
-
-                    controlUpdating = false;
-                    valueChanged = false;
-                }
-            }
-        }
-
-        protected override void HandleInput()
-        {
-            if (textBox.IsMousedOver)
-            {
-                highlight.Visible = true;
-            }
-            else
-            {
-                highlight.Visible = false;
-            }
+            textElement = new NamedTextField();
+            Element = textElement;
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)
@@ -196,6 +67,55 @@ namespace RichHudFramework.UI.Server
                 }
 
                 return null;
+            }
+        }
+
+        private class NamedTextField : HudElementBase
+        {
+            public override float Width
+            {
+                get { return textField.Width + Padding.X; }
+                set
+                {
+                    if (value > Padding.X)
+                        value -= Padding.X;
+
+                    textField.Width = value;
+                    name.Width = value;
+                }
+            }
+
+            public override float Height
+            {
+                get { return textField.Height + name.Height + Padding.Y; }
+                set
+                {
+                    if (value > Padding.Y)
+                        value -= Padding.Y;
+
+                    textField.Height = value - name.Height;
+                }
+            }
+
+            public readonly Label name;
+            public readonly TextField textField;
+
+            public NamedTextField(HudParentBase parent = null) : base(parent)
+            {
+                name = new Label(this)
+                {
+                    Format = RichHudTerminal.ControlFormat,
+                    Text = "NewTextField",
+                    AutoResize = false,
+                    Height = 22f,
+                    Offset = new Vector2(0f, 2f),
+                    ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV
+                };
+
+                textField = new TextField(name) 
+                {
+                    ParentAlignment = ParentAlignments.Bottom,
+                };
             }
         }
     }

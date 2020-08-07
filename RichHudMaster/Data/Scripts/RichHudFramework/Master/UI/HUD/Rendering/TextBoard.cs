@@ -32,7 +32,7 @@ namespace RichHudFramework
                 Func<Vector2>, // Size
                 Func<Vector2>, // TextSize
                 Vec2Prop, // FixedSize
-                Action<Vector2, MatrixD> // UpdateText, Draw 
+                Action<Vector2, MatrixD> // Draw 
             >;
 
             public class TextBoard : TextBuilder, ITextBoard
@@ -119,7 +119,7 @@ namespace RichHudFramework
                     VertCenterText = true;
 
                     Format = GlyphFormat.White;
-                    _fixedSize = new Vector2(200f);
+                    //_fixedSize = new Vector2(200f);
 
                     eventTimer = new Utils.Stopwatch();
                     eventTimer.Start();
@@ -321,7 +321,7 @@ namespace RichHudFramework
                     if (AutoResize)
                         _textOffset = Vector2.Zero;
 
-                    if (updateEvent && eventTimer.ElapsedMilliseconds > 500)
+                    if (updateEvent && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
                     {
                         OnTextChanged?.Invoke();
                         eventTimer.Reset();
@@ -347,7 +347,9 @@ namespace RichHudFramework
 
                             if ((xPos - edge) >= min && (xPos + edge) <= max)
                             {
-                                glyphBoard.Draw((locData.bbSize * _scale), offset + (locData.bbOffset * _scale), ref matrix);
+                                Vector2 glyphPos = offset + locData.bbOffset * _scale;
+
+                                glyphBoard.Draw((locData.bbSize * _scale), glyphPos, ref matrix);
                             }
                         }
                     }

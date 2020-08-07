@@ -27,98 +27,70 @@ namespace RichHudFramework
         /// controls should be added to a tile. If a group of controls can't fit on a tile, then they
         /// will be drawn outside its bounds.
         /// </summary>
-        public class ControlTile : HudElementBase, IListBoxEntry, IControlTile
+        public class ControlTile : ScrollBoxEntry, IControlTile
         {
             /// <summary>
             /// Read only collection of <see cref="TerminalControlBase"/>s attached to the tile
             /// </summary>
             public IReadOnlyCollection<ITerminalControl> Controls { get; }
 
+            /// <summary>
+            /// Used to allow the addition of controls to tiles using collection-initializer syntax in
+            /// conjunction with normal initializers.
+            /// </summary>
             public IControlTile ControlContainer => this;
 
             /// <summary>
-            /// Determines whether or not the tile will be rendered in the list.
+            /// Unique identifier
             /// </summary>
-            public bool Enabled { get; set; }
+            public object ID => this;
 
-            public override float Width { get { return controls.Width + Padding.X; } set { controls.Width = value - Padding.X; } }
+            private readonly TileElement tileElement;
 
-            private readonly HudChain<TerminalControlBase> controls;
-            private readonly TexturedBox background;
-
-            public ControlTile(IHudParent parent = null) : base(parent)
+            public ControlTile()
             {
-                background = new TexturedBox(this)
-                {
-                    Color = RichHudTerminal.TileColor,
-                    DimAlignment = DimAlignments.Both,
-                };
+                tileElement = new TileElement();
+                Element = tileElement;
 
-                var border = new BorderBox(this)
-                {
-                    DimAlignment = DimAlignments.Both,
-                    Color = new Color(58, 68, 77),
-                    Thickness = 1f,
-                };
-
-                controls = new HudChain<TerminalControlBase>(this)
-                {
-                    AutoResize = true,
-                    AlignVertical = true,
-                    Spacing = 20f,
-                };
-
-                Controls = new ReadOnlyCollectionData<ITerminalControl>(x => controls[x], () => controls.Count);
-
-                Padding = new Vector2(16f);
-                Size = new Vector2(300f, 250f);
-                Enabled = true;
-            }
-
-            public void Reset()
-            {
-                controls.Clear();
-            }
-
-            protected override void Layout()
-            {
-                background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
-
-                base.Layout();
+                Controls = new ReadOnlyCollectionData<ITerminalControl>
+                (
+                    x => tileElement.Controls[x], 
+                    () => tileElement.Controls.Count
+                );
             }
 
             /// <summary>
-            /// Adds a <see cref="TerminalControlBase"/> to the tile
+            /// Adds an <see cref="TerminalControlBase"/> entry to the tile
             /// </summary>
             public void Add(TerminalControlBase newControl)
             {
-                controls.Add(newControl);
+                tileElement.Add(newControl);
             }
 
             IEnumerator<ITerminalControl> IEnumerable<ITerminalControl>.GetEnumerator() =>
-                Controls.GetEnumerator();
+                tileElement.Controls.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() =>
-                Controls.GetEnumerator();
+                tileElement.Controls.GetEnumerator();
 
             /// <summary>
             /// Retrieves information needed by the Framework API 
             /// </summary>
-            public new ControlContainerMembers GetApiData()
+            public ControlContainerMembers GetApiData()
             {
                 return new ControlContainerMembers()
                 {
                     Item1 = GetOrSetMember,
                     Item2 = new MyTuple<object, Func<int>>
                     {
-                        Item1 = (Func<int, ControlMembers>)(x => controls[x].GetApiData()),
-                        Item2 = () => controls.Count
+                        Item1 = (Func<int, ControlMembers>)(x => tileElement.Controls[x].GetApiData()),
+                        Item2 = () => tileElement.Controls.Count
                     },
                     Item3 = this
                 };
             }
 
-            private new object GetOrSetMember(object data, int memberEnum)
+            private object GetOrSetMember(object data, int memberEnum)
             {
                 var member = (ControlTileAccessors)memberEnum;
 
@@ -141,6 +113,53 @@ namespace RichHudFramework
                 }
 
                 return null;
+            }
+
+            private class TileElement : HudElementBase
+            {
+                public IReadOnlyList<TerminalControlBase> Controls => controls.ChainEntries;
+
+                private readonly HudChain<TerminalControlBase> controls;
+                private readonly TexturedBox background;
+
+                public TileElement(HudParentBase parent = null) : base(parent)
+                {
+                    background = new TexturedBox(this)
+                    {
+                        Color = RichHudTerminal.TileColor,
+                        DimAlignment = DimAlignments.Both,
+                    };
+
+                    var border = new BorderBox(this)
+                    {
+                        DimAlignment = DimAlignments.Both,
+                        Color = new Color(58, 68, 77),
+                        Thickness = 1f,
+                    };
+
+                    controls = new HudChain<TerminalControlBase>(true, this)
+                    {
+                        DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
+                        Spacing = 20f,
+                    };
+                    
+                    Padding = new Vector2(16f);
+                    Size = new Vector2(300f, 250f);
+                }
+
+                /// <summary>
+                /// Adds an <see cref="TerminalControlBase"/> entry to the tile
+                /// </summary>
+                public void Add(TerminalControlBase newControl)
+                {
+                    controls.Add(newControl);
+                }
+
+                protected override void Layout()
+                {
+                    background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
+                }
             }
         }
     }

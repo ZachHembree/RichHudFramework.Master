@@ -21,7 +21,7 @@ namespace RichHudFramework
         /// <summary>
         /// Base class for named pages attached to a mod control root.
         /// </summary>
-        public abstract class TerminalPageBase : HudElementBase, ITerminalPage, IListBoxEntry
+        public abstract class TerminalPageBase : ScrollBoxEntry, ITerminalPage
         {
             /// <summary>
             /// Name of the <see cref="ITerminalPage"/> as it appears in the dropdown of the <see cref="IModControlRoot"/>.
@@ -47,18 +47,14 @@ namespace RichHudFramework
 
             public ITextBoard NameBuilder { get; set; }
 
-            /// <summary>
-            /// Determines whether or not the <see cref="ITerminalPage"/> will be visible in the mod root.
-            /// </summary>
-            public bool Enabled { get; set; }
+            public object ID => this;
 
             protected string name;
 
-            public TerminalPageBase(IHudParent parent) : base(parent)
+            public TerminalPageBase()
             {
                 Name = "NewPage";
                 Enabled = true;
-                Visible = false;
             }
 
             public virtual void Reset()
@@ -67,7 +63,7 @@ namespace RichHudFramework
                 Enabled = false;
             }
 
-            protected override object GetOrSetMember(object data, int memberEnum)
+            protected virtual object GetOrSetMember(object data, int memberEnum)
             {
                 switch ((TerminalPageAccessors)memberEnum)
                 {
@@ -97,7 +93,7 @@ namespace RichHudFramework
             /// <summary>
             /// Retrieves information used by the Framework API
             /// </summary>
-            public virtual new ControlMembers GetApiData()
+            public virtual ControlMembers GetApiData()
             {
                 return new ControlMembers()
                 {

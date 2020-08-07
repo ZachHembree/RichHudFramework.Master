@@ -44,14 +44,15 @@ namespace RichHudFramework
         {
             ControlPage = 1,
             RebindPage = 2,
+            TextPage = 3,
         }
 
         public enum ModControlRootAccessors : int
         {
             /// <summary>
-            /// MyTuple<bool, Action>
+            /// Action
             /// </summary>
-            OnSelectionChanged = 1,
+            GetOrSetCallback = 1,
 
             /// <summary>
             /// string
@@ -83,7 +84,7 @@ namespace RichHudFramework
             /// <summary>
             /// Invoked when a new page is selected
             /// </summary>
-            event Action OnSelectionChanged;
+            event EventHandler OnSelectionChanged;
 
             /// <summary>
             /// Name of the mod as it appears in the <see cref="RichHudTerminal"/> mod list
@@ -95,6 +96,10 @@ namespace RichHudFramework
             /// </summary>
             IReadOnlyCollection<ITerminalPage> Pages { get; }
 
+            /// <summary>
+            /// Used to allow the addition of page elements using collection-initializer syntax in
+            /// conjunction with normal initializers.
+            /// </summary>
             IModControlRoot PageContainer { get; }
 
             /// <summary>

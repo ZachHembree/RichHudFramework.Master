@@ -32,29 +32,17 @@ namespace RichHudFramework
 
             public IControlPage CategoryContainer => this;
 
-            private readonly ScrollBox<ControlCategory> catBox;
+            private readonly CategoryScrollBox catBox;
 
-            public ControlPage(IHudParent parent = null) : base(parent)
+            public ControlPage()
             {
-                catBox = new ScrollBox<ControlCategory>(this)
-                {
-                    Spacing = 30f,
-                    SizingMode = ScrollBoxSizingModes.None,
-                    AlignVertical = true,
-                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding
-                };
+                catBox = new CategoryScrollBox();
 
-                catBox.background.Visible = false;
-                Categories = new ReadOnlyCollectionData<IControlCategory>(x => catBox.List[x], () => catBox.List.Count);              
-            }
-
-            protected override void Layout()
-            {
-                for (int n = 0; n < catBox.List.Count; n++)
-                    catBox.List[n].Width = Width - catBox.scrollBar.Width;
-
-                SliderBar slider = catBox.scrollBar.slide;
-                slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                Categories = new ReadOnlyCollectionData<IControlCategory>
+                (
+                    x => catBox.ChainEntries[x], 
+                    () => catBox.ChainEntries.Count
+                );              
             }
 
             /// <summary>
@@ -62,13 +50,7 @@ namespace RichHudFramework
             /// </summary>
             public void Add(ControlCategory category)
             {
-                catBox.AddToList(category);
-            }
-
-            public override void Reset()
-            {
-                catBox.Clear();
-                base.Reset();
+                catBox.Add(category);
             }
 
             IEnumerator<IControlCategory> IEnumerable<IControlCategory>.GetEnumerator() =>
@@ -89,19 +71,35 @@ namespace RichHudFramework
                                 break;
                             }
                         case ControlPageAccessors.CategoryData:
+                            return new MyTuple<object, Func<int>>()
                             {
-                                return new MyTuple<object, Func<int>>()
-                                {
-                                    Item1 = (Func<int, ControlContainerMembers>)(x => Categories[x].GetApiData()),
-                                    Item2 = () => Categories.Count
-                                };
-                            }
+                                Item1 = (Func<int, ControlContainerMembers>)(x => catBox.ChainEntries[x].GetApiData()),
+                                Item2 = () => catBox.ChainEntries.Count
+                            };
                     }
 
                     return null;
                 }
                 else
                     return base.GetOrSetMember(data, memberEnum);
+            }
+
+            private class CategoryScrollBox : ScrollBox<ControlCategory>
+            { 
+                public CategoryScrollBox(HudParentBase parent = null) : base(true, parent)
+                {
+                    Spacing = 30f;
+                    SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;
+                    background.Visible = false;
+                }
+
+                protected override void Layout()
+                {
+                    base.Layout();
+
+                    SliderBar slider = scrollBar.slide;
+                    slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                }
             }
         }
     }

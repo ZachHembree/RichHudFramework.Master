@@ -31,29 +31,37 @@ namespace RichHudFramework
         {
             public RichText Text { get { return textBox.Text; } set { textBox.Text = value; } }
 
-            private readonly LabelBox textBox;
+            public ITextBuilder TextBuilder => textBox.TextBoard;
 
-            public TextPage(IHudParent parent = null) : base(parent)
+            private readonly ScrollableLabelBox textBox;
+
+            public TextPage()
             {
-                textBox = new LabelBox(this)
-                {
-                    Format = GlyphFormat.Blueish,
-                    BuilderMode = TextBuilderModes.Wrapped,
-                    Color = new Color(41, 54, 62, 230),
-                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
-                };
-
-                var border = new BorderBox(this)
-                {
-                    Color = new Color(53, 66, 75),
-                    Thickness = 2f,
-                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
-                };
+                textBox = new ScrollableLabelBox();
+                Element = textBox;
             }
 
             protected override object GetOrSetMember(object data, int memberEnum)
             {
                 throw new Exception("Method not implemented.");
+            }
+
+            private class ScrollableLabelBox : LabelBox
+            { 
+                public ScrollableLabelBox(HudParentBase parent = null) : base(parent)
+                {
+                    Format = GlyphFormat.Blueish;
+                    BuilderMode = TextBuilderModes.Wrapped;
+                    Color = new Color(41, 54, 62, 230);
+                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding;
+
+                    var border = new BorderBox(this)
+                    {
+                        Color = new Color(53, 66, 75),
+                        Thickness = 2f,
+                        DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+                    };
+                }
             }
         }
     }

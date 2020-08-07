@@ -15,7 +15,7 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// A terminal control that uses a draggable window to indicate a position on the screen.
     /// </summary>
-    public class TerminalDragBox : TerminalValue<Vector2, TerminalDragBox>
+    public class TerminalDragBox : TerminalValue<Vector2>
     {
         /// <summary>
         /// The name of the control as it appears in the terminal.
@@ -26,19 +26,14 @@ namespace RichHudFramework.UI.Server
             set
             {
                 window.Header.SetText(value);
-                openButton.Name = value;
+                openButton.Text = value;
             }
         }
 
         /// <summary>
         /// Value associated with the control.
         /// </summary>
-        public override Vector2 Value { get { return window.Value; } set { window.Value = value; } }
-
-        /// <summary>
-        /// Used to periodically update the value associated with the control. Optional.
-        /// </summary>
-        public override Func<Vector2> CustomValueGetter { get { return window.CustomValueGetter; } set { window.CustomValueGetter = value; } }
+        public override Vector2 Value { get { return window.AbsolutePosition; } set { window.AbsolutePosition = value; } }
 
         /// <summary>
         /// Determines whether or not the window will automatically align itself to one side of the screen
@@ -51,41 +46,34 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public Vector2 BoxSize
         {
-            get { return HudMain.GetRelativeVector(window.Size); }
+            get { return HudMain.GetAbsoluteVector(window.Size); }
             set { window.Size = HudMain.GetPixelVector(value); }
         }
 
-        private readonly TerminalButton openButton;
+        private readonly BorderedButton openButton;
         private readonly DragWindow window;
 
-        public TerminalDragBox(IHudParent parent = null) : base(parent)
+        public TerminalDragBox()
         {
+            openButton = new BorderedButton()
+            {
+                Text = "NewDragBox",
+                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                Size = new Vector2(253f, 50f)
+            };
+            Element = openButton;
+
             window = new DragWindow()
             {
                 Size = new Vector2(300f, 250f),
                 Visible = false
             };
 
-            openButton = new TerminalButton(this)
-            {
-                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
-            };
-
             openButton.MouseInput.OnLeftClick += Open;
             window.OnConfirm += Close;
-
-            Name = "NewDragBox";
-            Size = new Vector2(253f, 50f);
         }
 
-        public override void Reset()
-        {
-            window.Header.Clear();
-            window.Visible = false;
-            base.Reset();
-        }
-
-        private void Open()
+        private void Open(object sender, EventArgs args)
         {
             RichHudTerminal.Open = false;
             window.Visible = true;
@@ -130,27 +118,32 @@ namespace RichHudFramework.UI.Server
             }
         }
 
+        /// <summary>
+        /// Customized window with a confirm button used to specify a position on the screen.
+        /// </summary>
         private class DragWindow : WindowBase
         {
+            /// <summary>
+            /// Invoked when the window's confirm button is clicked
+            /// </summary>
             public event Action OnConfirm;
 
-            public Vector2 Value
+            /// <summary>
+            /// Returns the absolute position of the window in screen space on [-1, 1]
+            /// </summary>
+            public Vector2 AbsolutePosition
             {
-                get { return HudMain.GetRelativeVector(base.Offset); }
+                get { return HudMain.GetAbsoluteVector(cachedPosition); }
                 set { base.Offset = HudMain.GetPixelVector(value); }
             }
 
-            public override Vector2 Offset 
-            {
-                get { return base.Offset + alignment; }
-            }
-
-            public Func<Vector2> CustomValueGetter { get; set; }
-
+            /// <summary>
+            /// If set to true, then the window will align its position to the screen 
+            /// quadrant nearest to its position.
+            /// </summary>
             public bool AlignToEdge { get; set; }
 
-            private readonly TerminalButton confirm;
-            private Vector2 alignment;
+            private readonly BorderedButton confirmButton;
 
             public DragWindow() : base(HudMain.Root)
             {
@@ -163,13 +156,13 @@ namespace RichHudFramework.UI.Server
                 Header.Format = RichHudTerminal.ControlFormat.WithAlignment(TextAlignment.Center);
                 header.Height = 40f;
 
-                confirm = new TerminalButton(this)
+                confirmButton = new BorderedButton(this)
                 {
-                    Name = "Confirm",
-                    DimAlignment = DimAlignments.Width,
+                    Text = "Confirm",
+                    DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                 };
 
-                confirm.button.MouseInput.OnLeftClick += () => OnConfirm?.Invoke();
+                confirmButton.MouseInput.OnLeftClick += (sender, args) => OnConfirm?.Invoke();
             }
 
             protected override void Layout()
@@ -177,24 +170,25 @@ namespace RichHudFramework.UI.Server
                 Scale = HudMain.ResScale;
 
                 base.Layout();
+                Vector2 offset = Offset;
 
                 if (canMoveWindow)
-                    Offset = HudMain.Cursor.Origin + cursorOffset - Origin - alignment;
+                    offset = HudMain.Cursor.ScreenPos + cursorOffset - cachedOrigin;
 
                 if (AlignToEdge)
                 {
-                    if (base.Offset.X < 0)
-                        alignment.X = Width / 2f;
+                    if (offset.X < 0)
+                        offset.X = Width / 2f;
                     else
-                        alignment.X = -Width / 2f;
+                        offset.X = -Width / 2f;
 
-                    if (base.Offset.Y < 0)
-                        alignment.Y = Height / 2f;
+                    if (offset.Y < 0)
+                        offset.Y = Height / 2f;
                     else
-                        alignment.Y = -Height / 2f;
+                        offset.Y = -Height / 2f;  
                 }
-                else
-                    alignment = Vector2.Zero;
+
+                Offset = offset;
             }
 
             protected override void HandleInput()

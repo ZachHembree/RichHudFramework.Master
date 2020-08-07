@@ -32,31 +32,28 @@ namespace RichHudFramework
                 /// <summary>
                 /// Currently selected mod root
                 /// </summary>
-                public ModControlRoot Selection { get; private set; }
+                public ModControlRoot SelectedMod { get; private set; }
 
                 /// <summary>
                 /// Currently selected control page.
                 /// </summary>
-                public TerminalPageBase CurrentPage => Selection?.SelectedElement;
+                public TerminalPageBase CurrentPage { get; private set; }
 
                 /// <summary>
                 /// Read only collection of mod roots registered with the terminal
                 /// </summary>
-                public HudList<ModControlRoot> ModRoots => modList.scrollBox.List;
+                public IReadOnlyList<ModControlRoot> ModRoots => modList.ModRoots;
 
                 public override bool Visible => base.Visible && MyAPIGateway.Gui.ChatEntryVisible;
 
                 private readonly ModList modList;
-                private readonly HudChain<HudElementBase> chain;
+                private readonly HudChain layout;
                 private readonly TexturedBox topDivider, middleDivider, bottomDivider;
                 private readonly Button closeButton;
-                private readonly List<TerminalPageBase> pages;
                 private static readonly Material closeButtonMat = new Material("RichHudCloseButton", new Vector2(32f));
 
-                public TerminalWindow(IHudParent parent = null) : base(parent)
+                public TerminalWindow(HudParentBase parent = null) : base(parent)
                 {
-                    pages = new List<TerminalPageBase>();
-
                     Header.Format = HeaderFormat;
                     Header.SetText("Rich HUD Terminal");
 
@@ -78,14 +75,13 @@ namespace RichHudFramework
                         Width = 26f,
                     };
 
-                    chain = new HudChain<HudElementBase>(topDivider)
+                    layout = new HudChain(true, topDivider)
                     {
-                        AutoResize = true,
-                        AlignVertical = false,
-                        Spacing = 12f,
-                        Padding = new Vector2(80f, 40f),
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                         ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.InnerH,
-                        ChildContainer = { modList, middleDivider },
+                        Padding = new Vector2(80f, 40f),
+                        Spacing = 12f,
+                        ChainContainer = { modList, middleDivider },
                     };
 
                     bottomDivider = new TexturedBox(this)
@@ -100,11 +96,11 @@ namespace RichHudFramework
                     closeButton = new Button(header)
                     {
                         Material = closeButtonMat,
+                        highlightColor = Color.White,
+                        ParentAlignment = ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.Inner,
                         Size = new Vector2(30f),
                         Offset = new Vector2(-18f, -14f),
                         Color = new Color(173, 182, 189),
-                        highlightColor = Color.White,
-                        ParentAlignment = ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.Inner
                     };
 
                     closeButton.MouseInput.OnLeftClick += CloseMenu;
@@ -119,13 +115,15 @@ namespace RichHudFramework
 
                     modList.Width = 200f;
                     Size = new Vector2(1320, 850f);
-                    Offset = new Vector2(252f, 70f);
 
                     if (HudMain.ScreenWidth < 1920)
                         Width = MinimumSize.X;
 
-                    if (HudMain.ScreenHeight < 1050)
+                    if (HudMain.ScreenHeight < 1080 || HudMain.AspectRatio < (16f/9f))
                         Height = MinimumSize.Y;
+
+                    // This should be changed to scale with resolution
+                    Offset = new Vector2(252f, 70f);
                 }
 
                 /// <summary>
@@ -133,21 +131,12 @@ namespace RichHudFramework
                 /// </summary>
                 public ModControlRoot AddModRoot(string clientName)
                 {
-                    ModControlRoot modSettings = new ModControlRoot(this) { Name = clientName };
+                    ModControlRoot modSettings = new ModControlRoot() { Name = clientName };
 
-                    modList.AddToList(modSettings);
-                    modSettings.OnModUpdate += UpdateSelection;
+                    modList.Add(modSettings);
+                    modSettings.OnSelectionChanged += UpdateSelection;
 
                     return modSettings;
-                }
-
-                /// <summary>
-                /// Adds a new control page to the settings menu.
-                /// </summary>
-                public void AddPage(TerminalPageBase page)
-                {
-                    pages.Add(page);
-                    chain.Add(page);
                 }
 
                 /// <summary>
@@ -164,10 +153,15 @@ namespace RichHudFramework
                     }
                 }
 
+                public void CloseMenu()
+                {
+                    CloseMenu(null, EventArgs.Empty);
+                }
+
                 /// <summary>
                 /// Closes the settings menu.
                 /// </summary>
-                public void CloseMenu()
+                private void CloseMenu(object sender, EventArgs args)
                 {
                     if (Visible)
                         Visible = false;
@@ -180,34 +174,33 @@ namespace RichHudFramework
                     base.Layout();
 
                     if (CurrentPage != null)
-                        CurrentPage.Width = Width - Padding.X - modList.Width - chain.Spacing;
+                        CurrentPage.Element.Width = Width - Padding.X - modList.Width - layout.Spacing;
 
-                    chain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
+                    layout.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
                     modList.Width = 250f * Scale;
 
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
                 }
 
-                private void UpdateSelection(ModControlRoot selection)
+                private void UpdateSelection(object sender, EventArgs args)
                 {
-                    Selection = selection;
-                    UpdateSelectionVisibilty();
+                    SelectedMod = sender as ModControlRoot;
+                    var newPage = SelectedMod?.Selection as TerminalPageBase;
 
-                    for (int n = 0; n < modList.scrollBox.List.Count; n++)
+                    if (CurrentPage != null && newPage != CurrentPage)
+                        layout.RemoveAt(2); // I'm sure this'll be fine
+
+                    if (newPage != null && newPage != CurrentPage)
+                        layout.Add(newPage);
+
+                    CurrentPage = newPage;
+
+                    for (int n = 0; n < modList.ModRoots.Count; n++)
                     {
-                        if (modList.scrollBox.List[n] != selection)
-                            modList.scrollBox.List[n].ClearSelection();
+                        if (modList.ModRoots[n] != SelectedMod)
+                            modList.ModRoots[n].Element.ClearSelection();
                     }
-                }
-
-                private void UpdateSelectionVisibilty()
-                {
-                    for (int n = 0; n < pages.Count; n++)
-                        pages[n].Visible = false;
-
-                    if (CurrentPage != null)
-                        CurrentPage.Visible = true;
                 }
 
                 /// <summary>
@@ -231,55 +224,54 @@ namespace RichHudFramework
                         set { scrollBox.Height = value - header.Height; }
                     }
 
-                    public readonly LabelBox header;
-                    public readonly ScrollBox<ModControlRoot> scrollBox;
+                    public IReadOnlyList<ModControlRoot> ModRoots => scrollBox.ChainEntries;
 
-                    public ModList(IHudParent parent = null) : base(parent)
+                    private readonly LabelBox header;
+                    private readonly ScrollBox<ModControlRoot, ModControlRootTreeBox> scrollBox;
+
+                    public ModList(HudParentBase parent = null) : base(parent)
                     {
-                        scrollBox = new ScrollBox<ModControlRoot>(this)
+                        scrollBox = new ScrollBox<ModControlRoot, ModControlRootTreeBox>(true, this)
                         {
-                            AlignVertical = true,
-                            SizingMode = ScrollBoxSizingModes.FitMembersToBox,
-                            Color = ListBgColor,
+                            SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
+                            Color = ListBgColor,
                         };
-
-                        //scrollBox.Members.Padding = new Vector2(8f, 8f);
 
                         header = new LabelBox(scrollBox)
                         {
                             AutoResize = false,
+                            ParentAlignment = ParentAlignments.Top,
+                            DimAlignment = DimAlignments.Width,
+                            Size = new Vector2(200f, 36f),
+                            Color = new Color(32, 39, 45),
                             Format = ControlFormat,
                             Text = "Mod List:",
                             TextPadding = new Vector2(30f, 0f),
-                            Color = new Color(32, 39, 45),
-                            Size = new Vector2(200f, 36f),
-                            ParentAlignment = ParentAlignments.Top,
-                            DimAlignment = DimAlignments.Width
                         };
 
                         var listDivider = new TexturedBox(header)
                         {
-                            Color = new Color(53, 66, 75),
-                            Height = 1f,
                             ParentAlignment = ParentAlignments.Bottom,
                             DimAlignment = DimAlignments.Width,
+                            Height = 1f,
+                            Color = new Color(53, 66, 75),
                         };
 
                         var listBorder = new BorderBox(this)
                         {
-                            Color = new Color(53, 66, 75),
-                            Thickness = 1f,
                             DimAlignment = DimAlignments.Both,
+                            Thickness = 1f,
+                            Color = new Color(53, 66, 75),
                         };
                     }
 
                     /// <summary>
                     /// Adds a new mod control root to the list.
                     /// </summary>
-                    public void AddToList(ModControlRoot modSettings)
+                    public void Add(ModControlRoot modSettings)
                     {
-                        scrollBox.AddToList(modSettings);
+                        scrollBox.Add(modSettings);
                     }
 
                     protected override void Layout()
@@ -290,7 +282,7 @@ namespace RichHudFramework
                         scrollBox.Color = ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
 
                         SliderBar slider = scrollBox.scrollBar.slide;
-                        slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        slider.BarColor = ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
                     }
                 }
             }

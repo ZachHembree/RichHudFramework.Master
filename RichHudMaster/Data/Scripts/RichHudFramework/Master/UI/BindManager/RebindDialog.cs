@@ -15,6 +15,13 @@ namespace RichHudFramework.UI.Server
             get { Init(); return instance; }
             set { instance = value; }
         }
+
+        private bool Open 
+        { 
+            get { return menu.Visible; } 
+            set { menu.Visible = true; } 
+        }
+
         private static RebindDialog instance;
         private const long inputWaitTime = 200;
 
@@ -28,12 +35,14 @@ namespace RichHudFramework.UI.Server
 
         private Action CallbackFunc;
         private int controlIndex;
-        private bool open;
 
         private RebindDialog() : base(false, true)
         {
             stopwatch = new Utils.Stopwatch();
-            menu = new RebindHud();
+            menu = new RebindHud(HudMain.Root) 
+            {
+                ZOffset = int.MaxValue - 1
+            };
 
             blacklist = new List<int>
             {
@@ -67,7 +76,7 @@ namespace RichHudFramework.UI.Server
         private void UpdateBindInternal(IBind bind, int bindPos, Action CallbackFunc = null)
         {
             stopwatch.Start();
-            open = true;
+            Open = true;
             newControl = null;
 
             this.bind = bind;
@@ -75,17 +84,6 @@ namespace RichHudFramework.UI.Server
 
             combo = bind.GetCombo();
             controlIndex = MathHelper.Clamp(bindPos, 0, combo.Count);
-        }
-
-        public override void Draw()
-        {
-            if (open)
-            {
-                MatrixD matrix = HudMain.PixelToWorld;
-
-                menu.BeforeLayout(true);
-                menu.BeforeDraw(HudLayers.Normal, ref matrix);
-            }
         }
 
         public override void HandleInput()
@@ -116,7 +114,7 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         private void Confirm()
         {
-            if (open && newControl != null)
+            if (Open && newControl != null)
             {
                 IControl[] newCombo = new IControl[Math.Max(combo.Count, controlIndex + 1)];
 
@@ -134,9 +132,9 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         private void Exit()
         {
-            if (open)
+            if (Open)
             {
-                open = false;
+                Open = false;
                 CallbackFunc?.Invoke();
                 CallbackFunc = null;
                 bind = null;
@@ -148,13 +146,11 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         private class RebindHud : HudElementBase
         {
-            public override bool Visible => Instance.open;
-
             public readonly TexturedBox background;
             public readonly BorderBox border;
             public readonly Label header, subheader;
 
-            public RebindHud() : base(null)
+            public RebindHud(HudParentBase parent) : base(parent)
             {
                 background = new TexturedBox(this)
                 {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
@@ -15,90 +16,34 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// A fixed size list box with a label. Designed to mimic the appearance of the list box in the SE terminal.
     /// </summary>
-    public class TerminalList<T> : TerminalValue<ListBoxEntry<T>, TerminalList<T>>
+    public class TerminalList<TValue> : TerminalValue<ListBoxEntry<TValue>>
     {
         /// <summary>
-        /// The name of the listbox as it appears in the terminal.
+        /// The name of the control as it appears in the terminal.
         /// </summary>
-        public override string Name { get { return name.TextBoard.ToString(); } set { name.TextBoard.SetText(value); } }
+        public override string Name { get { return listBox.Name.ToString(); } set { listBox.Name = value; } }
 
         /// <summary>
         /// Currently selected list member.
         /// </summary>
-        public override ListBoxEntry<T> Value { get { return List.Selection; } set { List.SetSelection(value); } }
+        public override ListBoxEntry<TValue> Value { get { return listBox.Selection; } set { listBox.SetSelection(value); } }
 
         /// <summary>
         /// Used to periodically update the value associated with the control. Optional.
         /// </summary>
-        public override Func<ListBoxEntry<T>> CustomValueGetter { get; set; }
+        public override Func<ListBoxEntry<TValue>> CustomValueGetter { get; set; }
 
         /// <summary>
-        /// ListBox backing the control.
+        /// List of entries in the dropdown.
         /// </summary>
-        public ListBox<T> List { get; }
+        public IReadOnlyList<ListBoxEntry<TValue>> List => listBox.ListEntries;
 
-        public override float Width
+        private readonly NamedListBox<TValue> listBox;
+
+        public TerminalList()
         {
-            get { return hudChain.Width; }
-            set { hudChain.Width = value; }
-        }
-
-        public override float Height
-        {
-            get { return hudChain.Height; }
-            set { List.Height = value - name.Height - Padding.Y; }
-        }
-
-        public override Vector2 Padding
-        {
-            get { return hudChain.Padding; }
-            set { hudChain.Padding = value; }
-        }
-
-        private readonly Label name;
-        private readonly HudChain<HudElementBase> hudChain;
-
-        public TerminalList(IHudParent parent = null) : base(parent)
-        {
-            name = new Label()
-            {
-                Format = RichHudTerminal.ControlFormat,
-                Text = "NewListBox",
-                AutoResize = false,
-                Height = 24f,
-            };
-
-            List = new ListBox<T>()
-            {
-                Format = RichHudTerminal.ControlFormat,
-            };
-
-            hudChain = new HudChain<HudElementBase>(this)
-            {
-                AutoResize = true,
-                AlignVertical = true,
-                ChildContainer = { name, List },
-            };
-
-            Padding = new Vector2(20f, 0f);
-            Size = new Vector2(250f, 200f);
-        }
-
-        public override void Reset()
-        {
-            name.TextBoard.Clear();
-            List.Clear();
-            base.Reset();
-        }
-
-        protected override void Layout()
-        {
-            List.Color = RichHudTerminal.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
-
-            SliderBar slider = List.scrollBox.scrollBar.slide;
-            slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
-
-            base.Layout();
+            listBox = new NamedListBox<TValue>();
+            Element = listBox;
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)
@@ -112,10 +57,94 @@ namespace RichHudFramework.UI.Server
                 var member = (ListControlAccessors)memberEnum;
 
                 if (member == ListControlAccessors.ListAccessors)
-                    return (ApiMemberAccessor)List.GetOrSetMember;
+                    return (ApiMemberAccessor)listBox.GetOrSetMember;
 
                 return null;
             }
+        }
+
+        private class NamedListBox<T> : HudElementBase
+        {
+            /// <summary>
+            /// Text rendered by the label.
+            /// </summary>
+            public RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
+
+            /// <summary>
+            /// Default formatting used by the label.
+            /// </summary>
+            public GlyphFormat Format { get { return name.TextBoard.Format; } set { name.TextBoard.Format = value; } }
+
+            /// <summary>
+            /// List of entries in the dropdown.
+            /// </summary>
+            public IReadOnlyList<ListBoxEntry<T>> ListEntries => listBox.ListEntries;
+
+            /// <summary>
+            /// Currently selected list member.
+            /// </summary>
+            public ListBoxEntry<T> Selection => listBox.Selection;
+
+            public override float Width
+            {
+                get { return hudChain.Width; }
+                set { hudChain.Width = value; }
+            }
+
+            public override float Height
+            {
+                get { return hudChain.Height; }
+                set { listBox.Height = value - name.Height - Padding.Y; }
+            }
+
+            public override Vector2 Padding
+            {
+                get { return hudChain.Padding; }
+                set { hudChain.Padding = value; }
+            }
+
+            private readonly Label name;
+            private readonly ListBox<T> listBox;
+            private readonly HudChain hudChain;
+
+            public NamedListBox(HudParentBase parent = null) : base(parent)
+            {
+                name = new Label()
+                {
+                    Format = RichHudTerminal.ControlFormat,
+                    Text = "NewListBox",
+                    AutoResize = false,
+                    Height = 24f,
+                };
+
+                listBox = new ListBox<T>()
+                {
+                    Format = RichHudTerminal.ControlFormat,
+                };
+
+                hudChain = new HudChain(true, this)
+                {
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
+                    ChainContainer = { name, listBox },
+                };
+
+                Padding = new Vector2(20f, 0f);
+                Size = new Vector2(250f, 200f);
+            }
+
+            protected override void Layout()
+            {
+                listBox.Color = RichHudTerminal.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
+                listBox.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+
+                base.Layout();
+            }
+
+            public void SetSelection(ListBoxEntry<T> entry) =>
+                listBox.SetSelection(entry);
+
+            public new object GetOrSetMember(object data, int memberEnum) =>
+                listBox.GetOrSetMember(data, memberEnum);
         }
     }
 }

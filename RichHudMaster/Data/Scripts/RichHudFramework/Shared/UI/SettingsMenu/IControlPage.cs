@@ -32,6 +32,10 @@ namespace RichHudFramework
             /// </summary>
             IReadOnlyCollection<IControlCategory> Categories { get; }
 
+            /// <summary>
+            /// Used to allow the addition of category elements using collection-initializer syntax in
+            /// conjunction with normal initializers.
+            /// </summary>
             IControlPage CategoryContainer { get; }
 
             /// <summary>

@@ -61,6 +61,10 @@ namespace RichHudFramework
             /// </summary>
             IReadOnlyCollection<IControlTile> Tiles { get; }
 
+            /// <summary>
+            /// Used to allow the addition of control tiles to categories using collection-initializer syntax in
+            /// conjunction with normal initializers.
+            /// </summary>
             IControlCategory TileContainer { get; }
 
             /// <summary>
