@@ -18,9 +18,9 @@ namespace RichHudFramework.UI
         /// </summary>
         public IList<IBind> Binds { get; set; }
         
-        public MouseInputFilter(IHudParent parent = null) : base(parent)
+        public MouseInputFilter(HudParentBase parent = null) : base(parent)
         {
-            CaptureCursor = true;
+            UseCursor = true;
             ShareCursor = true;
         }
 
