@@ -1,79 +1,124 @@
 ﻿using System;
+using System.Collections.Generic;
 using VRage;
+using VRageMath;
+using ApiMemberAccessor = System.Func<object, int, object>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudLayoutDelegate = System.Func<bool, bool>;
+using HudDrawDelegate = System.Func<object, object>;
+using HudInputDelegate = System.Func<
+    VRageMath.Vector3, // CursorPos
+    System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>, // GetHudSpaceFunc
+    VRage.MyTuple<VRageMath.Vector3, System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>> // Return
+>;
 
-namespace RichHudFramework.Server
+namespace RichHudFramework
 {
-    using UI;
-    using UI.Server;
-    using UI.Rendering.Server;
-    using Internal;
-    using ClientData = MyTuple<string, Action<int, object>, Action, int>;
-    using ServerData = MyTuple<Action, Func<int, object>, int>;
+    using HudUpdateAccessors = MyTuple<
+        int, // ZOffset
+        uint, // Depth
+        HudLayoutDelegate, // BeforeLayout
+        HudDrawDelegate, // BeforeDraw
+        HudInputDelegate // HandleInput
+    >;
 
-    public sealed partial class RichHudMaster
+    namespace Server
     {
-        private class RichHudClient
+        using UI;
+        using UI.Server;
+        using UI.Rendering.Server;
+        using Internal;
+        using ClientData = MyTuple<string, ApiMemberAccessor, Action, int>;
+        using ServerData = MyTuple<Action, Func<int, object>, int>;
+        using HudAccessorDelegate = Action<List<HudUpdateAccessors>, int>;
+
+        public sealed partial class RichHudMaster
         {
-            public readonly string debugName;
-            public readonly int versionID;
-
-            private readonly IBindClient bindClient;
-
-            private readonly Action<int, object> SendMsgAction;
-            private readonly Action ReloadAction;
-            private MyTuple<object, IHudElement> menuData;
-            private bool registered;
-
-            public RichHudClient(ClientData data)
+            public class Client
             {
-                debugName = data.Item1;
-                SendMsgAction = data.Item2;
-                ReloadAction = data.Item3;
-                versionID = data.Item4;
+                /// <summary>
+                /// Name of the client mod as reported by the client
+                /// </summary>
+                public readonly string name;
 
-                bindClient = BindManager.GetNewBindClient();
-                menuData = RichHudTerminal.GetClientData(debugName);
-                registered = true;
+                /// <summary>
+                /// VersionID of the client
+                /// </summary>
+                public readonly int versionID;
 
-                SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => ExceptionHandler.Run(Unregister), GetApiData, versionID));
-            }
+                /// <summary>
+                /// Delegate used to retrieve UI update delegates from clients
+                /// </summary>
+                public readonly HudAccessorDelegate GetUpdateAccessorFunc;
 
-            /// <summary>
-            /// Accessor for API client modules
-            /// </summary>
-            public object GetApiData(int typeID)
-            {
-                switch ((ApiModuleTypes)typeID)
+                private readonly IBindClient bindClient;
+
+                private readonly ApiMemberAccessor GetOrSendFunc;
+                private readonly Action ReloadAction;
+                private MyTuple<object, HudElementBase> menuData;
+                private bool registered;
+
+                public Client(ClientData data)
                 {
-                    case ApiModuleTypes.BindManager:
-                        return bindClient.GetApiData();
-                    case ApiModuleTypes.HudMain:
-                        return HudMain.GetApiData();
-                    case ApiModuleTypes.FontManager:
-                        return FontManager.GetApiData();
-                    case ApiModuleTypes.SettingsMenu:
-                        return menuData.Item1;
+                    name = data.Item1;
+                    GetOrSendFunc = data.Item2;
+                    ReloadAction = data.Item3;
+                    versionID = data.Item4;
+
+                    bindClient = BindManager.GetNewBindClient();
+                    menuData = RichHudTerminal.GetClientData(name);
+                    registered = true;
+
+                    GetOrSendData
+                    (
+                        new ServerData(
+                            () => ExceptionHandler.Run(Unregister),
+                            GetApiData,
+                            versionID
+                        ),
+                        MsgTypes.RegistrationSuccessful
+                    );
+
+                    GetUpdateAccessorFunc = GetOrSendData(null, MsgTypes.GetHudUpdateAccessor) as HudAccessorDelegate;
                 }
 
-                return null;
-            }
-
-            /// <summary>
-            /// Sends a message to the client.
-            /// </summary>
-            public void SendData(MsgTypes msgType, object data) =>
-                SendMsgAction((int)msgType, data);
-
-            public void Unregister()
-            {
-                if (registered)
+                /// <summary>
+                /// Accessor for API client modules
+                /// </summary>
+                private object GetApiData(int typeID)
                 {
-                    registered = false;
-                    Instance.clients.Remove(this);
+                    switch ((ApiModuleTypes)typeID)
+                    {
+                        case ApiModuleTypes.BindManager:
+                            return bindClient.GetApiData();
+                        case ApiModuleTypes.HudMain:
+                            return HudMain.GetApiData();
+                        case ApiModuleTypes.FontManager:
+                            return FontManager.GetApiData();
+                        case ApiModuleTypes.SettingsMenu:
+                            return menuData.Item1;
+                    }
 
-                    bindClient.Unload();
-                    menuData.Item2.Unregister();
-                    ReloadAction();
+                    return null;
+                }
+
+                /// <summary>
+                /// Sends a message to the client.
+                /// </summary>
+                public object GetOrSendData(object data, MsgTypes msgType) =>
+                    GetOrSendFunc(data, (int)msgType);
+
+                public void Unregister()
+                {
+                    if (registered)
+                    {
+                        registered = false;
+                        Instance.clients.Remove(this);
+
+                        bindClient.Unload();
+                        menuData.Item2.Unregister();
+                        ReloadAction();
+                    }
                 }
             }
         }

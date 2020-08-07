@@ -10,12 +10,13 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
+using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework.Server
 {
     using UI.Rendering.Server;
     using UI.Server;
-    using ClientData = MyTuple<string, Action<int, object>, Action, int>;
+    using ClientData = MyTuple<string, ApiMemberAccessor, Action, int>;
 
     /// <summary>
     /// Main class for Framework API server.
@@ -24,11 +25,19 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int versionID = 7;
+        private const int versionID = 7, minSupportedVersion = 7;
+
+        /// <summary>
+        /// Read-only list of currently registered clients
+        /// </summary>
+        public static IReadOnlyList<Client> Clients => Instance.clients;
 
         private static RichHudMaster Instance { get; set; }
-        private readonly List<RichHudClient> clients;
+        private readonly List<Client> clients;
         private ICommandGroup rhdCommands;
+
+        private LabelBox debugBox;
+        private ScrollBox<ScrollBoxEntry<LabelBox>, LabelBox> chainTest;
 
         public RichHudMaster() : base(false, true)
         {
@@ -43,7 +52,7 @@ namespace RichHudFramework.Server
             ExceptionHandler.RecoveryLimit = 5;
             ExceptionHandler.ModName = "Rich HUD Master";
 
-            clients = new List<RichHudClient>();
+            clients = new List<Client>();
         }
 
         protected override void AfterLoadData()
@@ -65,6 +74,140 @@ namespace RichHudFramework.Server
 
             if (MenuUtilities.CanAddElements)
                 MenuUtilities.AddMenuElements(GetModMenuButton());
+
+            var window = new Window(HudMain.Root)
+            {
+                MinimumSize = new Vector2(100f),
+                Size = new Vector2(400f)
+            };
+
+            // test parent alignment next
+            chainTest = new ScrollBox<ScrollBoxEntry<LabelBox>, LabelBox>(true, window.body)
+            {
+                Visible = false,
+                DimAlignment = DimAlignments.Both,
+                SizingMode = HudChainSizingModes.ClampChainBoth,
+                //Size = new Vector2(300f, 100f),
+                Padding = new Vector2(24f),
+                Spacing = 4f,
+                MinVisibleCount = 2,
+                ChainContainer =
+                {
+                    new LabelBox()
+                    {
+                        AutoResize = false,
+                        Height = 70f,
+                        Width = 100f,
+                        ParentAlignment = ParentAlignments.Right,
+                        Color = new Color(255, 255, 255),
+                        Format = GlyphFormat.Black,
+                        Text = "Test Text 1"
+                    },
+                    new LabelBox()
+                    {
+                        AutoResize = false,
+                        Height = 80f,
+                        Width = 100f,
+                        ParentAlignment = ParentAlignments.Left,
+                        Color = new Color(255, 255, 255, 128),
+                        Format = GlyphFormat.Black,
+                        Text = "Test Text 2"
+                    },
+                    new LabelBox()
+                    {
+                        AutoResize = false,
+                        Height = 50f,
+                        Width = 100f,
+                        ParentAlignment = ParentAlignments.Right,
+                        Color = new Color(255, 255, 255, 128),
+                        Format = GlyphFormat.Black,
+                        Text = "Test Text 3"
+                    },
+                    new LabelBox()
+                    {
+                        AutoResize = false,
+                        Height = 100f,
+                        Width = 100f,
+                        ParentAlignment = ParentAlignments.Left,
+                        Color = new Color(255, 255, 255, 128),
+                        Format = GlyphFormat.Black,
+                        Text = "Test Text 4"
+                    }
+                }
+            };
+
+            var listTest = new Dropdown<int>(window.body)
+            {
+                Visible = true,
+                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                ParentAlignment = ParentAlignments.Top | ParentAlignments.Inner,
+                Padding = new Vector2(20f),
+                ListContainer =
+                {
+                    { "Entry 1", 0 },
+                    { "Entry 2", 0 },
+                    { "Entry 3", 0 },
+                    { "Entry 4", 0 },
+                    { "Entry 5", 0 },
+                    { "Entry 6", 0 },
+                },
+            };
+
+            debugBox = new LabelBox(chainTest)
+            {
+                Color = new Color(0, 0, 0, 196),
+                Format = GlyphFormat.White,
+                BuilderMode = TextBuilderModes.Lined,
+                ParentAlignment = ParentAlignments.Right,
+                VertCenterText = false,
+                AutoResize = false,
+                Size = new Vector2(450f, 500f)
+            };
+        }
+
+        public override void Draw()
+        {
+            base.Draw();
+
+            if (chainTest.Visible)
+            {
+                ITextBuilder textBuilder = debugBox.TextBoard;
+                var cursorElement = HudMain.Cursor as HudElementBase;
+                textBuilder.Clear();
+
+                textBuilder.Append(new RichText
+                {
+                    { $"Size: {chainTest.Size}\n" },
+                    { $"Chain[0] Size: {chainTest.ChainEntries[0].Element.Size}\n" },
+                    { $"Chain[0] Enabled: {chainTest.ChainEntries[0].Enabled}\n" },
+                    { $"Padding: {chainTest.Padding}\n\n" },
+
+                    { $"MemberMinSize: {chainTest.MemberMinSize}\n" },
+                    { $"MemberMaxSize: {chainTest.MemberMaxSize}\n" },
+                    { $"MinLength: {chainTest.MinLength}\n" },
+                    { $"MinVisibleCount: {chainTest.MinVisibleCount}\n\n" },
+
+                    { $"Start: {chainTest.Start}\n" },
+                    { $"End: {chainTest.End}\n" },
+                    { $"EnabledCount: {chainTest.EnabledCount}\n" },
+                    { $"VisCount: {chainTest.VisCount}\n" },
+                    { $"VisCount: {chainTest.ChainEntries.Count}\n\n" },
+
+                    { $"Cursor ScreenPos: {HudMain.Cursor.ScreenPos}\n" },
+                    { $"Captured: {HudMain.Cursor.IsCaptured}\n" },
+                    { $"Size: {cursorElement.Size}\n" },
+                    { $"Scale: {cursorElement.Scale}\n" },
+                    { $"Visible: {HudMain.Cursor.Visible}\n\n" },
+                });
+            }
+        }
+
+        public class Window : WindowBase
+        {
+            public Window(HudParentBase parent = null) : base(parent)
+            {
+                BodyColor = new Color(0, 0, 0, 0);
+            }
         }
 
         /// <summary>
@@ -110,25 +253,29 @@ namespace RichHudFramework.Server
                 Utils.Debug.AssertNotNull(clientData.Item2);
                 Utils.Debug.AssertNotNull(clientData.Item3);
 
-                RichHudClient client = clients.Find(x => (x.debugName == clientData.Item1));
+                Client client = clients.Find(x => (x.name == clientData.Item1));
 
-                if (client == null && clientData.Item4 == versionID)
+                int clientVID = clientData.Item4;
+                bool supported = clientVID <= versionID && clientVID >= minSupportedVersion;
+
+                if (client == null && supported)
                 {
-                    clients.Add(new RichHudClient(clientData));
+                    clients.Add(new Client(clientData));
                 }
                 else
                 {
-                    Action<int, object> SendMsgAction = clientData.Item2;
+                    ApiMemberAccessor GetOrSendFunc = clientData.Item2;
 
-                    if (clientData.Item4 != versionID)
+                    if (!supported)
                     {
-                        string error = $"Error: Client version for {clientData.Item1} does not match. API vID: {versionID}, Client vID: {clientData.Item4}";
+                        string error = $"Error: Client version for {clientData.Item1} is not supported. " +
+                        $"API vID: Min: {minSupportedVersion}, Max: {versionID}; Client vID: {clientVID}";
 
-                        SendMsgAction((int)MsgTypes.RegistrationFailed, error);
+                        GetOrSendFunc(error, (int)MsgTypes.RegistrationFailed);
                         ExceptionHandler.SendChatMessage(error);
                     }
                     else
-                        SendMsgAction((int)MsgTypes.RegistrationFailed, "Client already registered.");
+                        GetOrSendFunc("Client already registered.", (int)MsgTypes.RegistrationFailed);
                 }
             }
         }

@@ -88,9 +88,9 @@ namespace RichHudFramework.UI
         protected int resizeDir;
         protected Vector2 cursorOffset, minimumSize;
 
-        public WindowBase(IHudParent parent) : base(parent)
+        public WindowBase(HudParentBase parent) : base(parent)
         {
-            CaptureCursor = true;
+            UseCursor = true;
             ShareCursor = false;
             AllowResizing = true;
             CanDrag = true;
@@ -132,7 +132,7 @@ namespace RichHudFramework.UI
             body.Height = Height - header.Height;
 
             if (canMoveWindow)
-                Offset = HudMain.Cursor.Origin + cursorOffset - Origin;
+                Offset = HudMain.Cursor.ScreenPos + cursorOffset - Origin;
 
             if (canResize)
                 Resize();            
@@ -141,7 +141,7 @@ namespace RichHudFramework.UI
         protected void Resize()
         {
             Vector2 center = Origin + Offset,
-                cursorPos = HudMain.Cursor.Origin, newOffset = Offset;
+                cursorPos = HudMain.Cursor.ScreenPos, newOffset = Offset;
             float newWidth, newHeight;
 
             // 1 == horizontal, 3 == both
@@ -190,7 +190,7 @@ namespace RichHudFramework.UI
             if (CanDrag && header.MouseInput.IsLeftClicked)
             {
                 canMoveWindow = true;
-                cursorOffset = (Origin + Offset) - HudMain.Cursor.Origin;
+                cursorOffset = (Origin + Offset) - HudMain.Cursor.ScreenPos;
             }
 
             if (AllowResizing && IsBorderClicked())
@@ -199,10 +199,10 @@ namespace RichHudFramework.UI
                 canResize = true;
                 resizeDir = 0;
 
-                if (Width - 2d * Math.Abs(pos.X - HudMain.Cursor.Origin.X) <= cornerSize)
+                if (Width - 2d * Math.Abs(pos.X - HudMain.Cursor.ScreenPos.X) <= cornerSize)
                     resizeDir += 1;
 
-                if (Height - 2d * Math.Abs(pos.Y - HudMain.Cursor.Origin.Y) <= cornerSize)
+                if (Height - 2d * Math.Abs(pos.Y - HudMain.Cursor.ScreenPos.Y) <= cornerSize)
                     resizeDir += 2;
             }
 

@@ -4,7 +4,8 @@
     {
         RegistrationRequest = 1,
         RegistrationSuccessful = 2,
-        RegistrationFailed = 3
+        RegistrationFailed = 3,
+        GetHudUpdateAccessor = 4
     }
 
     public enum ApiModuleTypes : int
