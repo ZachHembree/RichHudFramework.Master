@@ -8,7 +8,7 @@ using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 
 namespace RichHudFramework
 {
@@ -17,10 +17,11 @@ namespace RichHudFramework
         Func<bool>, // IsCaptured
         Func<Vector2>, // Position
         Func<Vector3D>, // WorldPos
-        Action<object, float, HudSpaceDelegate>, // Capture
+        Func<HudSpaceDelegate, bool>, // IsCapturingSpace
         MyTuple<
+            Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
             Func<object, bool>, // IsCapturing
-            Func<object, float, HudSpaceDelegate, bool>, // TryCapture
+            Func<object, bool>, // TryCapture
             Func<object, bool>, // TryRelease
             ApiMemberAccessor // GetOrSetMember
         >
@@ -63,13 +64,15 @@ namespace RichHudFramework
                 public object CapturedElement { get; private set; }
 
                 private float captureDepth;
+
                 private HudSpaceDelegate GetHudSpaceFunc;
 
                 public HudCursor(HudParentBase parent = null) : base(parent)
                 {
                     Material = new Material(MyStringId.GetOrCompute("MouseCursor"), new Vector2(64f));
                     Size = new Vector2(64f);
-                    ZOffset = int.MaxValue;
+                    ZOffset = sbyte.MaxValue;
+                    zOffsetInner = byte.MaxValue;
 
                     var shadow = new TexturedBox(this)
                     {
@@ -82,6 +85,36 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
+                /// Returns true if the given HUD space is being captured by the cursor
+                /// </summary>
+                public bool IsCapturingSpace(HudSpaceDelegate GetHudSpaceFunc) =>
+                    Visible && this.GetHudSpaceFunc == GetHudSpaceFunc;
+
+                /// <summary>
+                /// Attempts to capture the cursor at the given depth with the given HUD space. If drawInHudSpace
+                /// is true, then the cursor will be drawn in the given space.
+                /// </summary>
+                public void CaptureHudSpace(float depth, HudSpaceDelegate GetHudSpaceFunc) =>
+                    TryCaptureHudSpace(depth, GetHudSpaceFunc);
+
+                /// <summary>
+                /// Attempts to capture the cursor at the given depth with the given HUD space. If drawInHudSpace
+                /// is true, then the cursor will be drawn in the given space.
+                /// </summary>
+                public bool TryCaptureHudSpace(float depth, HudSpaceDelegate GetHudSpaceFunc)
+                {
+                    if (this.GetHudSpaceFunc == null || depth <= captureDepth)
+                    {
+                        captureDepth = depth;
+                        this.GetHudSpaceFunc = GetHudSpaceFunc;
+
+                        return true;
+                    }
+                    else
+                        return false;
+                }
+
+                /// <summary>
                 /// Indicates whether the cursor is being captured by the given element.
                 /// </summary>
                 public bool IsCapturing(object capturedElement) =>
@@ -90,27 +123,17 @@ namespace RichHudFramework
                 /// <summary>
                 /// Attempts to capture the cursor with the given object
                 /// </summary>
-                public void Capture(object capturedElement, float depth = 0f, HudSpaceDelegate GetHudSpaceFunc = null)
-                {
-                    if (this.CapturedElement == null && depth <= captureDepth)
-                    {
-                        CapturedElement = capturedElement;
-                        captureDepth = depth;
-                        this.GetHudSpaceFunc = GetHudSpaceFunc;
-                    }
-                }
+                public void Capture(object capturedElement) =>
+                    TryCapture(capturedElement);
 
                 /// <summary>
                 /// Attempts to capture the cursor using the given object. Returns true on success.
                 /// </summary>
-                public bool TryCapture(object capturedElement, float depth = 0f, HudSpaceDelegate GetHudSpaceFunc = null)
+                public bool TryCapture(object capturedElement)
                 {
-                    if (this.CapturedElement == null && depth <= captureDepth)
+                    if (capturedElement != null && CapturedElement == null)
                     {
                         CapturedElement = capturedElement;
-                        captureDepth = depth;
-                        this.GetHudSpaceFunc = GetHudSpaceFunc;
-
                         return true;
                     }
                     else
@@ -123,7 +146,7 @@ namespace RichHudFramework
                 /// </summary>
                 public bool TryRelease(object capturedElement)
                 {
-                    if (this.CapturedElement == capturedElement && capturedElement != null)
+                    if (CapturedElement == capturedElement && capturedElement != null)
                     {
                         Release();
                         return true;
@@ -177,14 +200,18 @@ namespace RichHudFramework
                 {
                     if (Visible)
                     {
+                        Scale = ResScale;
+
                         if (GetHudSpaceFunc != null)
                         {
-                            MyTuple<float, MatrixD> spaceDef = GetHudSpaceFunc();
-                            Scale = spaceDef.Item1;
-                            matrix = spaceDef.Item2;
+                            MyTuple<bool, float, MatrixD> spaceDef = GetHudSpaceFunc();
+
+                            if (spaceDef.Item1)
+                            {
+                                Scale = spaceDef.Item2;
+                                matrix = spaceDef.Item3;
+                            }
                         }
-                        else
-                            Scale = ResScale;
                     }
 
                     return base.BeginDraw(matrix);
@@ -206,13 +233,14 @@ namespace RichHudFramework
                         Item2 = () => IsCaptured,
                         Item3 = () => ScreenPos,
                         Item4 = () => WorldPos,
-                        Item5 = Capture,
-                        Item6 = new MyTuple<Func<object, bool>, Func<object, float, HudSpaceDelegate, bool>, Func<object, bool>, ApiMemberAccessor>()
+                        Item5 = IsCapturingSpace,
+                        Item6 = new MyTuple<Func<float, HudSpaceDelegate, bool>, Func<object, bool>, Func<object, bool>, Func<object, bool>, ApiMemberAccessor>()
                         {
-                            Item1 = IsCapturing,
-                            Item2 = TryCapture,
-                            Item3 = TryRelease,
-                            Item4 = GetOrSetMember
+                            Item1 = TryCaptureHudSpace,
+                            Item2 = IsCapturing,
+                            Item3 = TryCapture,
+                            Item4 = TryRelease,
+                            Item5 = GetOrSetMember
                         }
                     };
                 }

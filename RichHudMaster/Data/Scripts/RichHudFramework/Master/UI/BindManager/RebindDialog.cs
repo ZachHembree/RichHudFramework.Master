@@ -39,10 +39,7 @@ namespace RichHudFramework.UI.Server
         private RebindDialog() : base(false, true)
         {
             stopwatch = new Utils.Stopwatch();
-            menu = new RebindHud(HudMain.Root) 
-            {
-                ZOffset = int.MaxValue - 1
-            };
+            menu = new RebindHud(HudMain.Root);
 
             blacklist = new List<int>
             {
@@ -198,6 +195,9 @@ namespace RichHudFramework.UI.Server
 
                 Padding = new Vector2(372f, 0f);
                 Size = new Vector2(1210f, 288f);
+
+                ZOffset = sbyte.MaxValue - 1;
+                zOffsetInner = byte.MaxValue;
             }
 
             protected override void Layout()

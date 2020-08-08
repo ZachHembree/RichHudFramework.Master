@@ -77,14 +77,29 @@ namespace RichHudFramework.Server
 
             var window = new Window(HudMain.Root)
             {
+                Visible = true,
                 MinimumSize = new Vector2(100f),
+                BorderColor = RichHudTerminal.TileColor,
+                BodyColor = new Color(40, 40, 40, 180),
                 Size = new Vector2(400f)
             };
+
+            for (int n = 0; n < 5; n++)
+            {
+                new Window(HudMain.Root)
+                {
+                    MinimumSize = new Vector2(100f),
+                    BorderColor = RichHudTerminal.TileColor,
+                    BodyColor = new Color(40, 40, 40, 180),
+                    Size = new Vector2(400f),
+                    HeaderText = $"Window {n + 1}"
+                };
+            }
 
             // test parent alignment next
             chainTest = new ScrollBox<ScrollBoxEntry<LabelBox>, LabelBox>(true, window.body)
             {
-                Visible = false,
+                Visible = true,
                 DimAlignment = DimAlignments.Both,
                 SizingMode = HudChainSizingModes.ClampChainBoth,
                 //Size = new Vector2(300f, 100f),
@@ -138,7 +153,7 @@ namespace RichHudFramework.Server
 
             var listTest = new Dropdown<int>(window.body)
             {
-                Visible = true,
+                Visible = false,
                 DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                 ParentAlignment = ParentAlignments.Top | ParentAlignments.Inner,
                 Padding = new Vector2(20f),
@@ -194,6 +209,7 @@ namespace RichHudFramework.Server
                     { $"VisCount: {chainTest.ChainEntries.Count}\n\n" },
 
                     { $"Cursor ScreenPos: {HudMain.Cursor.ScreenPos}\n" },
+                    { $"Cursor Z-Offset: {HudParentBase.GetFullZOffset(cursorElement)}\n" },
                     { $"Captured: {HudMain.Cursor.IsCaptured}\n" },
                     { $"Size: {cursorElement.Size}\n" },
                     { $"Scale: {cursorElement.Scale}\n" },

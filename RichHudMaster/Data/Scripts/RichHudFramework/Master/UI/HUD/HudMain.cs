@@ -12,7 +12,7 @@ using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using HudLayoutDelegate = System.Func<bool, bool>;
 using HudDrawDelegate = System.Func<object, object>;
 
@@ -25,10 +25,11 @@ namespace RichHudFramework
         Func<bool>, // IsCaptured
         Func<Vector2>, // Position
         Func<Vector3D>, // WorldPos
-        Action<object, float, HudSpaceDelegate>, // Capture
+        Func<HudSpaceDelegate, bool>, // IsCapturingSpace
         MyTuple<
+            Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
             Func<object, bool>, // IsCapturing
-            Func<object, float, HudSpaceDelegate, bool>, // TryCapture
+            Func<object, bool>, // TryCapture
             Func<object, bool>, // TryRelease
             ApiMemberAccessor // GetOrSetMember
         >
@@ -54,11 +55,12 @@ namespace RichHudFramework
     {
         using Rendering.Server;
         using HudUpdateAccessors = MyTuple<
-            int, // ZOffset
-            uint, // Depth
+            ushort, // ZOffset
+            byte, // Depth
+            HudInputDelegate, // DepthTest
+            HudInputDelegate, // HandleInput
             HudLayoutDelegate, // BeforeLayout
-            HudDrawDelegate, // BeforeDraw
-            HudInputDelegate // HandleInput
+            HudDrawDelegate // BeforeDraw
         >;
         using HudMainMembers = MyTuple<
             CursorMembers, // Cursor
@@ -68,6 +70,8 @@ namespace RichHudFramework
 
         public sealed partial class HudMain : RichHudComponentBase
         {
+            public const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
+
             /// <summary>
             /// Root parent for all HUD elements.
             /// </summary>
@@ -219,6 +223,16 @@ namespace RichHudFramework
                 }
             }
 
+            /// <summary>
+            /// Used to indicate when the draw list should be refreshed. Resets every frame.
+            /// </summary>
+            public static bool RefreshDrawList;
+
+            /// <summary>
+            /// If true then the cursor will be visible while chat is open
+            /// </summary>
+            public static bool EnableCursor;
+
             private static HudMain Instance
             {
                 get { Init(); return _instance; }
@@ -229,15 +243,16 @@ namespace RichHudFramework
             private readonly HudRoot _root;
             private readonly List<HudUpdateAccessors> updateAccessors;
             private readonly List<ulong> indexList;
-            private readonly List<MyTuple<uint, HudDrawDelegate>> drawList;
-            private readonly List<MyTuple<uint, HudInputDelegate>> inputList;
-            private readonly List<MyTuple<uint, HudLayoutDelegate>> layoutList;
+            private readonly List<MyTuple<byte, HudInputDelegate>> depthTestActions;
+            private readonly List<MyTuple<byte, HudInputDelegate>> inputActions;
+            private readonly List<MyTuple<byte, HudLayoutDelegate>> layoutActions;
+            private readonly List<MyTuple<byte, HudDrawDelegate>> drawActions;
 
             private RichText _clipBoard;
             private float _resScale;
             private float _uiBkOpacity;
 
-            private readonly Utils.Stopwatch cacheTimer;
+            private readonly Utils.Stopwatch cacheTimer, listTimer;
             private MatrixD _pixelToWorld;
             private float _screenWidth;
             private float _screenHeight;
@@ -245,6 +260,9 @@ namespace RichHudFramework
             private float _fov;
             private float _fovScale;
             private int tick;
+
+            private Action<byte> LoseFocusCallback;
+            private byte unfocusedOffset;
 
             private HudMain() : base(false, true)
             {
@@ -254,11 +272,16 @@ namespace RichHudFramework
                 cacheTimer = new Utils.Stopwatch();
                 cacheTimer.Start();
 
+                listTimer = new Utils.Stopwatch();
+                listTimer.Start();
+
                 updateAccessors = new List<HudUpdateAccessors>(200);
                 indexList = new List<ulong>(200);
-                drawList = new List<MyTuple<uint, HudDrawDelegate>>(200);
-                inputList = new List<MyTuple<uint, HudInputDelegate>>(200);
-                layoutList = new List<MyTuple<uint, HudLayoutDelegate>>(200);
+
+                depthTestActions = new List<MyTuple<byte, HudInputDelegate>>(200);
+                inputActions = new List<MyTuple<byte, HudInputDelegate>>(200);
+                layoutActions = new List<MyTuple<byte, HudLayoutDelegate>>(200);
+                drawActions = new List<MyTuple<byte, HudDrawDelegate>>(200);
             }
 
             public static void Init()
@@ -277,15 +300,33 @@ namespace RichHudFramework
 
             public override void Draw()
             {
+                IReadOnlyList<RichHudMaster.Client> clients = RichHudMaster.Clients;
+
+                for (int n = 0; n < clients.Count; n++)
+                {
+                    if (clients[n].RefreshDrawList)
+                        RefreshDrawList = true;
+
+                    clients[n].RefreshDrawList = false;
+                }
+
+                _cursor.Visible = EnableCursor;
+
+                for (int n = 0; n < clients.Count; n++)
+                {
+                    if (clients[n].EnableCursor)
+                        _cursor.Visible = true;
+                }
+
                 UpdateCache();
 
                 // Update layout
                 bool refresh = tick == 0;
 
-                for (int n = 0; n < layoutList.Count; n++)
+                for (int n = 0; n < layoutActions.Count; n++)
                 {
-                    uint treeDepth = layoutList[n].Item1;
-                    HudLayoutDelegate LayoutFunc = layoutList[n].Item2;
+                    uint treeDepth = layoutActions[n].Item1;
+                    HudLayoutDelegate LayoutFunc = layoutActions[n].Item2;
 
                     if (treeDepth == 0)
                         refresh = tick == 0;
@@ -296,10 +337,10 @@ namespace RichHudFramework
                 // Draw UI elements
                 object matrix = _pixelToWorld;
 
-                for (int n = 0; n < drawList.Count; n++)
+                for (int n = 0; n < drawActions.Count; n++)
                 {
-                    uint treeDepth = drawList[n].Item1;
-                    HudDrawDelegate DrawFunc = drawList[n].Item2;
+                    uint treeDepth = drawActions[n].Item1;
+                    HudDrawDelegate DrawFunc = drawActions[n].Item2;
 
                     if (treeDepth == 0)
                         matrix = _pixelToWorld;
@@ -337,8 +378,13 @@ namespace RichHudFramework
 
                 _pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;
 
-                if (tick == 0)
+                if (RefreshDrawList && listTimer.ElapsedMilliseconds > 500)
+                {
                     RebuildUpdateLists();
+                    listTimer.Reset();
+                }
+
+                RefreshDrawList = false;
             }
 
             /// <summary>
@@ -363,9 +409,11 @@ namespace RichHudFramework
                 // Clear update lists and rebuild accessor lists from HUD tree
                 updateAccessors.Clear();
                 indexList.Clear();
-                drawList.Clear();
-                inputList.Clear();
-                layoutList.Clear();
+
+                depthTestActions.Clear();
+                inputActions.Clear();
+                layoutActions.Clear();
+                drawActions.Clear();
 
                 // Add client UI elements
                 IReadOnlyList<RichHudMaster.Client> clients = RichHudMaster.Clients;
@@ -377,15 +425,24 @@ namespace RichHudFramework
                 _root.GetUpdateAccessors(updateAccessors, 0);
 
                 indexList.EnsureCapacity(updateAccessors.Count);
-                drawList.EnsureCapacity(updateAccessors.Count);
-                inputList.EnsureCapacity(updateAccessors.Count);
-                layoutList.EnsureCapacity(updateAccessors.Count);
+
+                depthTestActions.EnsureCapacity(updateAccessors.Count);
+                inputActions.EnsureCapacity(updateAccessors.Count);
+                layoutActions.EnsureCapacity(updateAccessors.Count);
+                drawActions.EnsureCapacity(updateAccessors.Count);
+
+                // Build depth test list (without sorting)
+                for (int n = 0; n < updateAccessors.Count; n++)
+                {
+                    HudUpdateAccessors accessors = updateAccessors[n];
+                    depthTestActions.Add(new MyTuple<byte, HudInputDelegate>(accessors.Item2, accessors.Item3));
+                }
 
                 // Build layout list (without sorting)
                 for (int n = 0; n < updateAccessors.Count; n++)
                 {
                     HudUpdateAccessors accessors = updateAccessors[n];
-                    layoutList.Add(new MyTuple<uint, HudLayoutDelegate>(accessors.Item2, accessors.Item3));
+                    layoutActions.Add(new MyTuple<byte, HudLayoutDelegate>(accessors.Item2, accessors.Item5));
                 }
 
                 // Lower 32 bits store the index, upper 32 store draw depth 
@@ -395,25 +452,15 @@ namespace RichHudFramework
                 for (int n = 0; n < updateAccessors.Count; n++)
                 {
                     HudUpdateAccessors accessors = updateAccessors[n];
-                    long zOffset = accessors.Item1, 
-                        treeDepth = accessors.Item2;
-                    ulong value = (ulong)n,
-                        drawDepth = (ulong)(zOffset + treeDepth + int.MaxValue);
+                    ulong zOffset = accessors.Item1,
+                        value = (ulong)n;
 
-                    value |= (drawDepth << 32);
+                    value |= (zOffset << 32);
                     indexList.Add(value);
                 }
 
+                // Sort in ascending order
                 indexList.Sort();
-
-                // Build draw list
-                for (int n = 0; n < indexList.Count; n++)
-                {
-                    int index = (int)(indexList[n] & indexMask);
-                    HudUpdateAccessors accessors = updateAccessors[index];
-
-                    drawList.Add(new MyTuple<uint, HudDrawDelegate>(accessors.Item2, accessors.Item4));
-                }
 
                 // Build input list
                 for (int n = 0; n < indexList.Count; n++)
@@ -421,7 +468,16 @@ namespace RichHudFramework
                     int index = (int)(indexList[n] & indexMask);
                     HudUpdateAccessors accessors = updateAccessors[index];
 
-                    inputList.Add(new MyTuple<uint, HudInputDelegate>(accessors.Item2, accessors.Item5));
+                    inputActions.Add(new MyTuple<byte, HudInputDelegate>(accessors.Item2, accessors.Item4));
+                }
+
+                // Build draw list
+                for (int n = 0; n < indexList.Count; n++)
+                {
+                    int index = (int)(indexList[n] & indexMask);
+                    HudUpdateAccessors accessors = updateAccessors[index];
+
+                    drawActions.Add(new MyTuple<byte, HudDrawDelegate>(accessors.Item2, accessors.Item6));
                 }
             }
 
@@ -434,14 +490,27 @@ namespace RichHudFramework
                 _cursor.Release();
 
                 // Update input for UI elements front to back
-                Vector3 cursorPos = new Vector3(_cursor.ScreenPos.X, _cursor.ScreenPos.Y, -.05f);
-                HudSpaceDelegate DefaultHudSpaceFunc = () => new MyTuple<float, MatrixD>(1f, _pixelToWorld);
+                Vector3 cursorPos = new Vector3(_cursor.ScreenPos.X, _cursor.ScreenPos.Y, 0f);
+                HudSpaceDelegate DefaultHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, _pixelToWorld);
                 var inputData = new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, DefaultHudSpaceFunc);
 
-                for (int n = inputList.Count - 1; n >=0; n--)
+                for (int n = 0; n < depthTestActions.Count; n++)
                 {
-                    uint treeDepth = inputList[n].Item1;
-                    HudInputDelegate InputFunc = inputList[n].Item2;
+                    uint treeDepth = depthTestActions[n].Item1;
+                    HudInputDelegate InputFunc = depthTestActions[n].Item2;
+
+                    if (treeDepth == 0)
+                        inputData = new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, DefaultHudSpaceFunc);
+
+                    inputData = InputFunc(inputData.Item1, inputData.Item2);
+                }
+
+                inputData = new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, DefaultHudSpaceFunc);
+
+                for (int n = inputActions.Count - 1; n >=0; n--)
+                {
+                    uint treeDepth = inputActions[n].Item1;
+                    HudInputDelegate InputFunc = inputActions[n].Item2;
 
                     if (treeDepth == 0)
                         inputData = new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, DefaultHudSpaceFunc);
@@ -455,6 +524,36 @@ namespace RichHudFramework
             /// </summary>
             public static TextBoardMembers GetTextBoardData() =>
                 new TextBoard().GetApiData();
+
+            /// <summary>
+            /// Returns the ZOffset for focusing a window and registers a callback
+            /// for when another object takes focus.
+            /// </summary>
+            public static byte GetFocusOffset(Action<byte> LoseFocusCallback) =>
+                Instance.GetFocusOffsetInternal(LoseFocusCallback);
+
+            /// <summary>
+            /// Returns the ZOffset for focusing a window and registers a callback
+            /// for when another object takes focus.
+            /// </summary>
+            private byte GetFocusOffsetInternal(Action<byte> LoseFocusCallback)
+            {
+                if (LoseFocusCallback != null)
+                {
+                    this.LoseFocusCallback?.Invoke(unfocusedOffset);
+                    unfocusedOffset++;
+
+                    if (unfocusedOffset >= WindowMaxOffset)
+                        unfocusedOffset = WindowBaseOffset;
+
+                    this.LoseFocusCallback = LoseFocusCallback;
+
+                    HudMain.RefreshDrawList = true;
+                    return WindowMaxOffset;
+                }
+                else
+                    return 0;
+            }
 
             /// <summary>
             /// Converts from a position in absolute screen space coordinates to a position in pixels.
@@ -515,6 +614,8 @@ namespace RichHudFramework
                                 ClipBoard = new RichText(data as IList<RichStringMembers>);
                             break;
                         }
+                    case HudMainAccessors.GetFocusOffset:
+                        return GetFocusOffset(data as Action<byte>);
                 }
 
                 return null;

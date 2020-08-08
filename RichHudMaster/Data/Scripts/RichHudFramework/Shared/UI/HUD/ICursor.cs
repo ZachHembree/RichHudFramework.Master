@@ -7,7 +7,7 @@ using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 
 namespace RichHudFramework
 {
@@ -16,10 +16,11 @@ namespace RichHudFramework
         Func<bool>, // IsCaptured
         Func<Vector2>, // Position
         Func<Vector3D>, // WorldPos
-        Action<object, float, HudSpaceDelegate>, // Capture
+        Func<HudSpaceDelegate, bool>, // IsCapturingSpace
         MyTuple<
+            Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
             Func<object, bool>, // IsCapturing
-            Func<object, float, HudSpaceDelegate, bool>, // TryCapture
+            Func<object, bool>, // TryCapture
             Func<object, bool>, // TryRelease
             ApiMemberAccessor // GetOrSetMember
         >
@@ -53,9 +54,26 @@ namespace RichHudFramework
             Vector3D WorldPos { get; }
 
             /// <summary>
+            /// Returns true if the given HUD space is being captured by the cursor
+            /// </summary>
+            bool IsCapturingSpace(HudSpaceDelegate GetHudSpaceFunc);
+
+            /// <summary>
+            /// Attempts to capture the cursor at the given depth with the given HUD space. If drawInHudSpace
+            /// is true, then the cursor will be drawn in the given space.
+            /// </summary>
+            bool TryCaptureHudSpace(float depth, HudSpaceDelegate GetHudSpaceFunc);
+
+            /// <summary>
+            /// Attempts to capture the cursor at the given depth with the given HUD space. If drawInHudSpace
+            /// is true, then the cursor will be drawn in the given space.
+            /// </summary>
+            void CaptureHudSpace(float depth, HudSpaceDelegate GetHudSpaceFunc);
+
+            /// <summary>
             /// Attempts to capture the cursor with the given object
             /// </summary>
-            void Capture(object capturedElement, float depth = 0f, HudSpaceDelegate GetHudSpaceFunc = null);
+            void Capture(object capturedElement);
 
             /// <summary>
             /// Indicates whether the cursor is being captured by the given element.
@@ -65,7 +83,7 @@ namespace RichHudFramework
             /// <summary>
             /// Attempts to capture the cursor using the given object. Returns true on success.
             /// </summary>
-            bool TryCapture(object capturedElement, float depth = 0f, HudSpaceDelegate GetHudSpaceFunc = null);
+            bool TryCapture(object capturedElement);
 
             /// <summary>
             /// Attempts to release the cursor from the given element. Returns false if

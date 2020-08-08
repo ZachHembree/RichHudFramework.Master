@@ -1,7 +1,7 @@
 ﻿using System;
 using VRage;
 using VRageMath;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 
 namespace RichHudFramework
 {
@@ -132,20 +132,34 @@ namespace RichHudFramework
                 ShareCursor = true;
             }
 
-            protected override MyTuple<Vector3, HudSpaceDelegate> BeginInput(Vector3 cursorPos, HudSpaceDelegate GetHudSpaceFunc)
+            protected override MyTuple<Vector3, HudSpaceDelegate> InputDepth(Vector3 cursorPos, HudSpaceDelegate GetHudSpaceFunc)
             {
                 if (Visible)
                 {
-                    if (UseCursor && HudMain.Cursor.Visible && !HudMain.Cursor.IsCaptured)
+                    if (UseCursor)
                     {
                         Vector2 offset = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) / 2f;
                         BoundingBox2 box = new BoundingBox2(cachedPosition - offset, cachedPosition + offset);
                         _isMousedOver = box.Contains(new Vector2(cursorPos.X, cursorPos.Y)) == ContainmentType.Contains;
 
+                        if (_isMousedOver)
+                            HudMain.Cursor.TryCaptureHudSpace(cursorPos.Z, GetHudSpaceFunc);
+                    }
+                }
+
+                return new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, GetHudSpaceFunc);
+            }
+
+            protected override MyTuple<Vector3, HudSpaceDelegate> BeginInput(Vector3 cursorPos, HudSpaceDelegate GetHudSpaceFunc)
+            {
+                if (Visible)
+                {
+                    if (UseCursor && _isMousedOver && !HudMain.Cursor.IsCaptured && HudMain.Cursor.IsCapturingSpace(GetHudSpaceFunc))
+                    {
                         HandleInput();
 
-                        if (!ShareCursor && _isMousedOver)
-                            HudMain.Cursor.Capture(this, cursorPos.Z, GetHudSpaceFunc);
+                        if (!ShareCursor)
+                            HudMain.Cursor.Capture(this);
                     }
                     else
                     {

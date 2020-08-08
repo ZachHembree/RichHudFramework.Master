@@ -1,12 +1,30 @@
 ﻿using System;
+using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
+using HudLayoutDelegate = System.Func<bool, bool>;
+using HudDrawDelegate = System.Func<object, object>;
 
 namespace RichHudFramework
 {
+    using HudInputDelegate = Func<Vector3, HudSpaceDelegate, MyTuple<Vector3, HudSpaceDelegate>>;
+
     namespace UI
     {
+        using Client;
+        using Server;
+
+        using HudUpdateAccessors = MyTuple<
+            ushort, // ZOffset
+            byte, // Depth
+            HudInputDelegate, // DepthTest
+            HudInputDelegate, // HandleInput
+            HudLayoutDelegate, // BeforeLayout
+            HudDrawDelegate // BeforeDraw
+        >;
+
         /// <summary>
         /// Base class for hud elements that can be parented to other elements.
         /// </summary>
@@ -34,10 +52,10 @@ namespace RichHudFramework
             /// <summary>
             /// Determines whether the UI element will be drawn in the Back, Mid or Foreground
             /// </summary>
-            public override int ZOffset
+            public sealed override sbyte ZOffset
             {
-                get { return _zOffset + parentZOffset; }
-                set { _zOffset = value - parentZOffset; }
+                get { return (sbyte)(_zOffset + parentZOffset); }
+                set { _zOffset = (sbyte)(value - parentZOffset); }
             }
 
             /// <summary>
@@ -58,7 +76,7 @@ namespace RichHudFramework
             protected HudParentBase _parent;
             protected float localScale, parentScale;
             protected bool _visible, parentVisible;
-            protected int _zOffset, parentZOffset;
+            protected sbyte parentZOffset;
 
             public HudNodeBase(HudParentBase parent)
             {
@@ -99,11 +117,20 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Moves the element to the end of its parent's update list in order to ensure
-            /// that it's drawn/updated last.
+            /// Adds update delegates for members in the order dictated by the UI tree
             /// </summary>
-            public void GetFocus() =>
-                _parent?.SetFocus(this);
+            public override void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, byte treeDepth)
+            {
+                fullZOffset = GetFullZOffset(this, _parent);
+
+                DrawActions.EnsureCapacity(DrawActions.Count + children.Count + 1);
+                DrawActions.Add(new HudUpdateAccessors(fullZOffset, treeDepth, DepthTestAction, InputAction, LayoutAction, DrawAction));
+
+                treeDepth++;
+
+                for (int n = 0; n < children.Count; n++)
+                    children[n].GetUpdateAccessors(DrawActions, treeDepth);
+            }
 
             /// <summary>
             /// Registers the element to the given parent object.
@@ -124,6 +151,8 @@ namespace RichHudFramework
 
                     Registered = true;
                 }
+
+                HudMain.RefreshDrawList = true;
             }
 
             /// <summary>
@@ -144,6 +173,8 @@ namespace RichHudFramework
                 parentZOffset = 0;
                 parentScale = 1f;
                 parentVisible = true;
+
+                HudMain.RefreshDrawList = true;
             }
         }
     }

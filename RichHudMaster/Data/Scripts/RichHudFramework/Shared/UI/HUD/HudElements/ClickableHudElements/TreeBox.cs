@@ -270,7 +270,6 @@ namespace RichHudFramework.UI
 
         private void OpenList()
         {
-            GetFocus();
             entryChain.Visible = true;
             display.Open = true;
         }

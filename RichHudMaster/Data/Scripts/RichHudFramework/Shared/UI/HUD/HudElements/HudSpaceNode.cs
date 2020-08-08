@@ -1,7 +1,7 @@
 ﻿using System;
 using VRage;
 using VRageMath;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 
 namespace RichHudFramework
 {
@@ -27,27 +27,27 @@ namespace RichHudFramework
             /// </summary>
             public Func<MatrixD> UpdateMatrixFunc;
 
-            private MatrixD _planeToWorld;
-            private readonly Func<MyTuple<float, MatrixD>> GetHudSpaceFunc;
+            /// <summary>
+            /// Cursor position on the XY plane defined by the HUD space. Z == dist from screen.
+            /// </summary>
+            public Vector3 CursorPos { get; protected set; }
+
+            /// <summary>
+            /// If set to true, then the cursor will be drawn in the node's HUD space when capturing.
+            /// True by default.
+            /// </summary>
+            public bool DrawCursorInHudSpace { get; set; }
+
+            protected MatrixD _planeToWorld;
+            protected readonly HudSpaceDelegate GetHudSpaceFunc;
 
             public HudSpaceNode(HudParentBase parent = null) : base(parent)
             {
-                GetHudSpaceFunc = () => new MyTuple<float, MatrixD>(Scale, _planeToWorld);
+                GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(DrawCursorInHudSpace, Scale, _planeToWorld);
+                DrawCursorInHudSpace = true;
             }
 
-            protected override object BeginDraw(object oldMatrix)
-            {
-                if (UpdateMatrixFunc != null)
-                    _planeToWorld = UpdateMatrixFunc();
-                else
-                    _planeToWorld = (MatrixD)oldMatrix;
-
-                Draw(_planeToWorld);
-
-                return _planeToWorld;
-            }
-
-            protected override MyTuple<Vector3, HudSpaceDelegate> BeginInput(Vector3 cursorPos, HudSpaceDelegate GetHudSpaceFunc)
+            protected override MyTuple<Vector3, HudSpaceDelegate> InputDepth(Vector3 cursorPos, HudSpaceDelegate GetHudSpaceFunc)
             {
                 if (Visible)
                 {
@@ -68,11 +68,37 @@ namespace RichHudFramework
                     // X & Y == Cursor position on the XY plane of the node's matrix. Z == dist from 
                     // screen to facilitate depth testing.
                     cursorPos.Z = (float)Math.Abs(worldPos.Z);
-
                     GetHudSpaceFunc = this.GetHudSpaceFunc;
+
+                    CursorPos = cursorPos;
                 }
 
-                return base.BeginInput(cursorPos, GetHudSpaceFunc);
+                return new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, GetHudSpaceFunc);
+            }
+
+            protected override MyTuple<Vector3, HudSpaceDelegate> BeginInput(Vector3 cursorPos, HudSpaceDelegate GetHudSpaceFunc)
+            {
+                if (Visible)
+                {
+                    cursorPos = CursorPos;
+                    GetHudSpaceFunc = this.GetHudSpaceFunc;
+
+                    HandleInput();
+                }
+
+                return new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, GetHudSpaceFunc);
+            }
+
+            protected override object BeginDraw(object oldMatrix)
+            {
+                if (UpdateMatrixFunc != null)
+                    _planeToWorld = UpdateMatrixFunc();
+                else
+                    _planeToWorld = (MatrixD)oldMatrix;
+
+                Draw(_planeToWorld);
+
+                return _planeToWorld;
             }
         }
     }

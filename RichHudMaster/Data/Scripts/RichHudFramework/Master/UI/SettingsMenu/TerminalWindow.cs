@@ -149,7 +149,14 @@ namespace RichHudFramework
                         Visible = !Visible;
 
                         if (Visible)
+                        {
                             GetFocus();
+                            HudMain.EnableCursor = true;
+                        }
+                        else
+                        {
+                            HudMain.EnableCursor = false;
+                        }
                     }
                 }
 

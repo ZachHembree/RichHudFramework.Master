@@ -3,23 +3,24 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using HudLayoutDelegate = System.Func<bool, bool>;
 using HudDrawDelegate = System.Func<object, object>;
 using HudInputDelegate = System.Func<
     VRageMath.Vector3, // CursorPos
-    System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>, // GetHudSpaceFunc
-    VRage.MyTuple<VRageMath.Vector3, System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>> // Return
+    System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>, // GetHudSpaceFunc
+    VRage.MyTuple<VRageMath.Vector3, System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>> // Return
 >;
 
 namespace RichHudFramework
 {
     using HudUpdateAccessors = MyTuple<
-        int, // ZOffset
-        uint, // Depth
+        ushort, // ZOffset
+        byte, // Depth
+        HudInputDelegate, // DepthTest
+        HudInputDelegate, // HandleInput
         HudLayoutDelegate, // BeforeLayout
-        HudDrawDelegate, // BeforeDraw
-        HudInputDelegate // HandleInput
+        HudDrawDelegate // BeforeDraw
     >;
 
     namespace Server
@@ -29,7 +30,7 @@ namespace RichHudFramework
         using UI.Rendering.Server;
         using Internal;
         using ClientData = MyTuple<string, ApiMemberAccessor, Action, int>;
-        using ServerData = MyTuple<Action, Func<int, object>, int>;
+        using ServerData = MyTuple<Action, Func<int, object>, ApiMemberAccessor, int>;
         using HudAccessorDelegate = Action<List<HudUpdateAccessors>, int>;
 
         public sealed partial class RichHudMaster
@@ -45,6 +46,16 @@ namespace RichHudFramework
                 /// VersionID of the client
                 /// </summary>
                 public readonly int versionID;
+
+                /// <summary>
+                /// If true, then the client is requesting that the cursor be enabled
+                /// </summary>
+                public bool EnableCursor { get; private set; }
+
+                /// <summary>
+                /// If true, then the client is requesting that the draw list be rebuilt
+                /// </summary>
+                public bool RefreshDrawList { get; set; }
 
                 /// <summary>
                 /// Delegate used to retrieve UI update delegates from clients
@@ -74,6 +85,7 @@ namespace RichHudFramework
                         new ServerData(
                             () => ExceptionHandler.Run(Unregister),
                             GetApiData,
+                            GetOrSetMember,
                             versionID
                         ),
                         MsgTypes.RegistrationSuccessful
@@ -97,6 +109,39 @@ namespace RichHudFramework
                             return FontManager.GetApiData();
                         case ApiModuleTypes.SettingsMenu:
                             return menuData.Item1;
+                    }
+
+                    return null;
+                }
+
+                private object GetOrSetMember(object data, int memberEnum)
+                {
+                    switch ((ClientDataAccessors)memberEnum)
+                    {
+                        case ClientDataAccessors.MinVersionID:
+                            return minSupportedVersion;
+                        case ClientDataAccessors.MasterVersionID:
+                            return versionID;
+                        case ClientDataAccessors.EnableCursor:
+                            {
+                                if (data == null)
+                                    return EnableCursor;
+                                else
+                                {
+                                    EnableCursor = (bool)data;
+                                    break;
+                                }
+                            }
+                        case ClientDataAccessors.RefreshDrawList:
+                            {
+                                if (data == null)
+                                    return RefreshDrawList;
+                                else
+                                {
+                                    RefreshDrawList = (bool)data;
+                                    break;
+                                }
+                            }
                     }
 
                     return null;

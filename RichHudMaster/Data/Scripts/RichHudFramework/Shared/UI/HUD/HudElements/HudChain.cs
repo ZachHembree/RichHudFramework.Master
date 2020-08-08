@@ -3,7 +3,7 @@ using VRageMath;
 using VRage;
 using System;
 using System.Collections;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using HudLayoutDelegate = System.Func<bool, bool>;
 using HudDrawDelegate = System.Func<object, object>;
 
@@ -16,11 +16,12 @@ namespace RichHudFramework
         using Server;
         using Client;
         using HudUpdateAccessors = MyTuple<
-            int, // ZOffset
-            uint, // Depth
+            ushort, // ZOffset
+            byte, // Depth
+            HudInputDelegate, // DepthTest
+            HudInputDelegate, // HandleInput
             HudLayoutDelegate, // BeforeLayout
-            HudDrawDelegate, // BeforeDraw
-            HudInputDelegate // HandleInput
+            HudDrawDelegate // BeforeDraw
         >;
 
         /// <summary>
@@ -461,19 +462,23 @@ namespace RichHudFramework
                 }
             }
 
-            public override void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, uint treeDepth)
+            public override void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, byte treeDepth)
             {
+                fullZOffset = GetFullZOffset(this, _parent);
+
                 DrawActions.EnsureCapacity(DrawActions.Count + children.Count + chainElements.Count + 1);
-                DrawActions.Add(new HudUpdateAccessors(ZOffset, treeDepth, LayoutAction, DrawAction, InputAction));
+                DrawActions.Add(new HudUpdateAccessors(fullZOffset, treeDepth, DepthTestAction, InputAction, LayoutAction, DrawAction));
+
+                treeDepth++;
 
                 for (int n = 0; n < chainElements.Count; n++)
                 {
-                    chainElements[n].Element.GetUpdateAccessors(DrawActions, treeDepth + 1);
+                    chainElements[n].Element.GetUpdateAccessors(DrawActions, treeDepth);
                 }
 
                 for (int n = 0; n < children.Count; n++)
                 {
-                    children[n].GetUpdateAccessors(DrawActions, treeDepth + 1);
+                    children[n].GetUpdateAccessors(DrawActions, treeDepth);
                 }
             }
 

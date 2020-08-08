@@ -42,7 +42,12 @@
             /// <summary>
             /// out: RichText, in: RichText
             /// </summary>
-            ClipBoard = 8
+            ClipBoard = 8,
+
+            /// <summary>
+            /// out: byte, in: Action{byte}
+            /// </summary>
+            GetFocusOffset = 9,
         }
     }
 }

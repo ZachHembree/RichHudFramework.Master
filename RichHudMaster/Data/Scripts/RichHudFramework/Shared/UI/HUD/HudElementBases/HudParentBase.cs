@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using HudLayoutDelegate = System.Func<bool, bool>;
 using HudDrawDelegate = System.Func<object, object>;
 
@@ -15,11 +15,12 @@ namespace RichHudFramework
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-            int, // ZOffset
-            uint, // Depth
+            ushort, // ZOffset
+            byte, // Depth
+            HudInputDelegate, // DepthTest
+            HudInputDelegate, // HandleInput
             HudLayoutDelegate, // BeforeLayout
-            HudDrawDelegate, // BeforeDraw
-            HudInputDelegate // HandleInput
+            HudDrawDelegate // BeforeDraw
         >;
 
         /// <summary>
@@ -42,7 +43,11 @@ namespace RichHudFramework
             /// <summary>
             /// Determines whether the UI element will be drawn in the Back, Mid or Foreground
             /// </summary>
-            public virtual int ZOffset { get; set; }
+            public virtual sbyte ZOffset 
+            { 
+                get { return _zOffset; } 
+                set { _zOffset = value; } 
+            }
 
             /// <summary>
             /// Used internally to indicate when normal parent registration should be bypassed.
@@ -52,9 +57,19 @@ namespace RichHudFramework
 
             protected readonly List<HudNodeBase> children;
 
+            protected readonly HudInputDelegate DepthTestAction;
+            protected readonly HudInputDelegate InputAction;
             protected readonly HudLayoutDelegate LayoutAction;
             protected readonly HudDrawDelegate DrawAction;
-            protected readonly HudInputDelegate InputAction;
+
+            protected sbyte _zOffset;
+
+            /// <summary>
+            /// Additional zOffset range used internally; primarily for determining window draw order.
+            /// Don't use this unless you have a good reason for it.
+            /// </summary>
+            protected byte zOffsetInner;
+            protected ushort fullZOffset;
 
             public HudParentBase()
             {
@@ -62,9 +77,19 @@ namespace RichHudFramework
                 Scale = 1f;
                 children = new List<HudNodeBase>();
 
+                this.DepthTestAction = InputDepth;
                 LayoutAction = BeginLayout;
                 DrawAction = BeginDraw;
                 InputAction = BeginInput;
+            }
+
+            /// <summary>
+            /// Used to calculate the distance between the screen and HUD space plane and update
+            /// the element accordingly.
+            /// </summary>
+            protected virtual MyTuple<Vector3, HudSpaceDelegate> InputDepth(Vector3 cursorPos, HudSpaceDelegate GetHudSpaceFunc)
+            {
+                return new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, GetHudSpaceFunc);
             }
 
             /// <summary>
@@ -123,28 +148,17 @@ namespace RichHudFramework
             /// <summary>
             /// Adds update delegates for members in the order dictated by the UI tree
             /// </summary>
-            public virtual void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, uint treeDepth)
+            public virtual void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, byte treeDepth)
             {
+                fullZOffset = GetFullZOffset(this);
+
                 DrawActions.EnsureCapacity(DrawActions.Count + children.Count + 1);
-                DrawActions.Add(new HudUpdateAccessors(ZOffset, treeDepth, LayoutAction, DrawAction, InputAction));
+                DrawActions.Add(new HudUpdateAccessors(fullZOffset, treeDepth, DepthTestAction, InputAction, LayoutAction, DrawAction));
+
+                treeDepth++;
 
                 for (int n = 0; n < children.Count; n++)
-                {
-                    children[n].GetUpdateAccessors(DrawActions, treeDepth + 1);
-                }
-            }
-
-            /// <summary>
-            /// Moves the specified child element to the end of the update list in
-            /// order to ensure that it's drawn on top/updated last.
-            /// </summary>
-            public void SetFocus(HudNodeBase child) 
-            {
-                int last = children.Count - 1,
-                    childIndex = children.FindIndex(x => x == child);
-
-                if (childIndex != -1)
-                    children.Swap(last, childIndex);
+                    children[n].GetUpdateAccessors(DrawActions, treeDepth);
             }
 
             /// <summary>
@@ -197,6 +211,23 @@ namespace RichHudFramework
                             children.RemoveAt(index);
                     }
                 }
+            }
+
+            /// <summary>
+            /// Calculates the full z-offset using the public offset and inner offset.
+            /// </summary>
+            public static ushort GetFullZOffset(HudParentBase element, HudParentBase parent = null)
+            {
+                byte outerOffset = (byte)(element._zOffset - sbyte.MinValue);
+                ushort innerOffset = (ushort)(element.zOffsetInner << 8);
+
+                if (parent != null)
+                {
+                    outerOffset += (byte)(parent.fullZOffset & 0x00FF);
+                    innerOffset += (ushort)(parent.fullZOffset & 0xFF00);
+                }
+
+                return (ushort)(innerOffset | outerOffset);
             }
         }
     }

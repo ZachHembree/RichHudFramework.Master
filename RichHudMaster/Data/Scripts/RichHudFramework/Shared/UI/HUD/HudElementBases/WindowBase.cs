@@ -1,6 +1,7 @@
 ﻿using System;
 using VRageMath;
 using RichHudFramework.UI.Rendering;
+using RichHudFramework.Internal;
 
 namespace RichHudFramework.UI
 {
@@ -67,6 +68,8 @@ namespace RichHudFramework.UI
         /// </summary>
         public bool CanDrag { get; set; }
 
+        public bool WindowActive { get; protected set; }
+
         /// <summary>
         /// Window header element.
         /// </summary>
@@ -83,6 +86,7 @@ namespace RichHudFramework.UI
         public readonly BorderBox border;
 
         private readonly MouseInputElement resizeLeft, resizeTop, resizeRight, resizeBottom;
+        protected readonly Action<byte> LoseFocusCallback;
         protected float cornerSize = 8f;
         protected bool canMoveWindow, canResize;
         protected int resizeDir;
@@ -90,18 +94,13 @@ namespace RichHudFramework.UI
 
         public WindowBase(HudParentBase parent) : base(parent)
         {
-            UseCursor = true;
-            ShareCursor = false;
-            AllowResizing = true;
-            CanDrag = true;
-            MinimumSize = new Vector2(200f, 200f);
-
             header = new LabelBoxButton(this)
             {
+                Format = GlyphFormat.White.WithAlignment(TextAlignment.Center),
                 DimAlignment = DimAlignments.Width,
                 ParentAlignment = ParentAlignments.Top | ParentAlignments.Inner,
                 HighlightEnabled = false,
-                Height = 24f,
+                Height = 32f,
                 AutoResize = false
             };
 
@@ -125,6 +124,15 @@ namespace RichHudFramework.UI
 
             resizeRight = new MouseInputElement(this) 
             { Width = 1f, DimAlignment = DimAlignments.Height, ParentAlignment = ParentAlignments.Right };
+
+            UseCursor = true;
+            ShareCursor = false;
+            AllowResizing = true;
+            CanDrag = true;
+            MinimumSize = new Vector2(200f, 200f);
+
+            LoseFocusCallback = LoseFocus;
+            GetFocus();
         }
 
         protected override void Layout()
@@ -183,7 +191,7 @@ namespace RichHudFramework.UI
         {
             if (IsMousedOver)
             {
-                if (SharedBinds.LeftButton.IsNewPressed)
+                if (SharedBinds.LeftButton.IsNewPressed && !WindowActive)
                     GetFocus();
             }
 
@@ -216,6 +224,26 @@ namespace RichHudFramework.UI
             }
         }
 
+        public virtual void GetFocus()
+        {
+            zOffsetInner = HudMain.GetFocusOffset(LoseFocusCallback);
+            WindowActive = true;
+
+            ExceptionHandler.SendChatMessage($"Gained focus: {zOffsetInner}, New Offset: {GetFullZOffset(this, _parent)}");
+        }
+
+        protected virtual void LoseFocus(byte newOffset)
+        {
+            zOffsetInner = newOffset;
+            WindowActive = false;
+
+            ExceptionHandler.SendChatMessage($"Lost focus: {zOffsetInner}, New Offset: {GetFullZOffset(this, _parent)}");
+        }
+
+        /// <summary>
+        /// Returns true if the border is clicked.
+        /// </summary>
+        /// <returns></returns>
         protected bool IsBorderClicked()
         {
             return resizeBottom.IsLeftClicked || resizeTop.IsLeftClicked || resizeLeft.IsLeftClicked || resizeRight.IsLeftClicked;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<float, VRageMath.MatrixD>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using HudLayoutDelegate = System.Func<bool, bool>;
 using HudDrawDelegate = System.Func<object, object>;
 
@@ -14,11 +14,12 @@ namespace RichHudFramework
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-            int, // ZOffset
-            uint, // Depth
+            ushort, // ZOffset
+            byte, // Depth
+            HudInputDelegate, // DepthTest
+            HudInputDelegate, // HandleInput
             HudLayoutDelegate, // BeforeLayout
-            HudDrawDelegate, // BeforeDraw
-            HudInputDelegate // HandleInput
+            HudDrawDelegate // BeforeDraw
         >;
 
         public enum HudParentAccessors : int
@@ -49,12 +50,12 @@ namespace RichHudFramework
             /// Used to change the draw order of the UI element. Lower offsets place the element
             /// further in the background. Higher offsets draw later and on top.
             /// </summary>
-            int ZOffset { get; set; }
+            sbyte ZOffset { get; set; }
 
             /// <summary>
             /// Adds update delegates for members in the order dictated by the UI tree
             /// </summary>
-            void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, uint treeDepth);
+            void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, byte treeDepth);
         }
     }
 }
