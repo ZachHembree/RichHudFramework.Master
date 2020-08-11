@@ -69,6 +69,8 @@ namespace RichHudFramework
             /// </summary>
             object ID { get; }
 
+            EventHandler ControlChangedHandler { get; set; }
+
             /// <summary>
             /// Retrieves data used by the Framework API
             /// </summary>

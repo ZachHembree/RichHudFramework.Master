@@ -228,16 +228,12 @@ namespace RichHudFramework.UI
         {
             zOffsetInner = HudMain.GetFocusOffset(LoseFocusCallback);
             WindowActive = true;
-
-            ExceptionHandler.SendChatMessage($"Gained focus: {zOffsetInner}, New Offset: {GetFullZOffset(this, _parent)}");
         }
 
         protected virtual void LoseFocus(byte newOffset)
         {
             zOffsetInner = newOffset;
             WindowActive = false;
-
-            ExceptionHandler.SendChatMessage($"Lost focus: {zOffsetInner}, New Offset: {GetFullZOffset(this, _parent)}");
         }
 
         /// <summary>

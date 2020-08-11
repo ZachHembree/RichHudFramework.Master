@@ -223,7 +223,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Adds the given range of entries to the list box.
         /// </summary>
-        public void AddRange(IList<MyTuple<RichText, T, bool>> entries)
+        public void AddRange(IReadOnlyList<MyTuple<RichText, T, bool>> entries)
         {
             for (int n = 0; n < entries.Count; n++)
             {

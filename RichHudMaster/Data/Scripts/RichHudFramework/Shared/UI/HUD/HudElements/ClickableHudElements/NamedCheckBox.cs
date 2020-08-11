@@ -110,10 +110,12 @@ namespace RichHudFramework.UI.Server
         {
             name = new Label()
             {
-                Format = RichHudTerminal.ControlFormat.WithAlignment(TextAlignment.Right),
+                Format = TerminalFormatting.ControlFormat.WithAlignment(TextAlignment.Right),
                 Text = "NewCheckbox",
                 AutoResize = false
             };
+
+            checkbox = new BorderedCheckBox();
 
             chain = new HudChain(false, this)
             {

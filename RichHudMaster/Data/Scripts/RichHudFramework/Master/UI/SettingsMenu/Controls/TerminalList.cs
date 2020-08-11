@@ -111,7 +111,7 @@ namespace RichHudFramework.UI.Server
             {
                 name = new Label()
                 {
-                    Format = RichHudTerminal.ControlFormat,
+                    Format = TerminalFormatting.ControlFormat,
                     Text = "NewListBox",
                     AutoResize = false,
                     Height = 24f,
@@ -119,7 +119,7 @@ namespace RichHudFramework.UI.Server
 
                 listBox = new ListBox<T>()
                 {
-                    Format = RichHudTerminal.ControlFormat,
+                    Format = TerminalFormatting.ControlFormat,
                 };
 
                 hudChain = new HudChain(true, this)
@@ -134,8 +134,8 @@ namespace RichHudFramework.UI.Server
 
             protected override void Layout()
             {
-                listBox.Color = RichHudTerminal.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
-                listBox.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                listBox.Color = TerminalFormatting.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
+                listBox.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
 
                 base.Layout();
             }
@@ -143,7 +143,7 @@ namespace RichHudFramework.UI.Server
             public void SetSelection(ListBoxEntry<T> entry) =>
                 listBox.SetSelection(entry);
 
-            public new object GetOrSetMember(object data, int memberEnum) =>
+            public object GetOrSetMember(object data, int memberEnum) =>
                 listBox.GetOrSetMember(data, memberEnum);
         }
     }

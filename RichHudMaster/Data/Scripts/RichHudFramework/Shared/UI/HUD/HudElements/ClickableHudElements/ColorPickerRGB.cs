@@ -114,9 +114,9 @@ namespace RichHudFramework.UI.Server
             };
 
             // Color picker
-            rText = new Label() { AutoResize = false, Format = RichHudTerminal.ControlFormat, Height = 47f };
-            gText = new Label() { AutoResize = false, Format = RichHudTerminal.ControlFormat, Height = 47f };
-            bText = new Label() { AutoResize = false, Format = RichHudTerminal.ControlFormat, Height = 47f };
+            rText = new Label() { AutoResize = false, Format = TerminalFormatting.ControlFormat, Height = 47f };
+            gText = new Label() { AutoResize = false, Format = TerminalFormatting.ControlFormat, Height = 47f };
+            bText = new Label() { AutoResize = false, Format = TerminalFormatting.ControlFormat, Height = 47f };
 
             colorNameColumn = new HudChain<HudElementContainer<Label>, Label>(true)
             {

@@ -30,7 +30,7 @@ namespace RichHudFramework.UI.Server
         private readonly Utils.Stopwatch stopwatch;
 
         private IBind bind;
-        private IList<IControl> combo;
+        private List<IControl> combo;
         private IControl newControl;
 
         private Action CallbackFunc;

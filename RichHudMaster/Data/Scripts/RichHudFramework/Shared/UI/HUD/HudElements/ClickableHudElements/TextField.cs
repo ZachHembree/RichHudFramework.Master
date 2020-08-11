@@ -93,14 +93,14 @@ namespace RichHudFramework.UI.Server
 
             border = new BorderBox(background)
             {
-                Color = RichHudTerminal.BorderColor,
+                Color = TerminalFormatting.BorderColor,
                 Thickness = 1f,
                 DimAlignment = DimAlignments.Both,
             };
 
             textBox = new TextBox(background)
             {
-                Format = RichHudTerminal.ControlFormat,
+                Format = TerminalFormatting.ControlFormat,
                 AutoResize = false,
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
                 Padding = new Vector2(24f, 0f),
@@ -108,7 +108,7 @@ namespace RichHudFramework.UI.Server
 
             highlight = new TexturedBox(background)
             {
-                Color = RichHudTerminal.HighlightOverlayColor,
+                Color = TerminalFormatting.HighlightOverlayColor,
                 DimAlignment = DimAlignments.Both,
                 Visible = false,
             };

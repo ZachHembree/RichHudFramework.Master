@@ -87,14 +87,14 @@ namespace RichHudFramework
             event EventHandler OnSelectionChanged;
 
             /// <summary>
-            /// Name of the mod as it appears in the <see cref="RichHudTerminal"/> mod list
+            /// Name of the mod as it appears in the <see cref="TerminalFormatting"/> mod list
             /// </summary>
             string Name { get; set; }
 
             /// <summary>
             /// Read only collection of <see cref="ITerminalPage"/>s assigned to this object.
             /// </summary>
-            IReadOnlyCollection<ITerminalPage> Pages { get; }
+            IReadOnlyList<ITerminalPage> Pages { get; }
 
             /// <summary>
             /// Used to allow the addition of page elements using collection-initializer syntax in

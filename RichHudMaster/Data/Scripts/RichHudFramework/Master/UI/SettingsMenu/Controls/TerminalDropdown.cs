@@ -109,7 +109,7 @@ namespace RichHudFramework.UI.Server
             {
                 name = new Label()
                 {
-                    Format = RichHudTerminal.ControlFormat,
+                    Format = TerminalFormatting.ControlFormat,
                     Text = "NewDropdown",
                     AutoResize = false,
                     Height = 24f,
@@ -117,7 +117,7 @@ namespace RichHudFramework.UI.Server
 
                 dropdown = new Dropdown<T>()
                 {
-                    Format = RichHudTerminal.ControlFormat,
+                    Format = TerminalFormatting.ControlFormat,
                 };
 
                 /*border = new BorderBox(dropdown)
@@ -140,7 +140,7 @@ namespace RichHudFramework.UI.Server
             public void SetSelection(ListBoxEntry<T> entry) =>
                 dropdown.SetSelection(entry);
 
-            public new object GetOrSetMember(object data, int memberEnum) =>
+            public object GetOrSetMember(object data, int memberEnum) =>
                 dropdown.GetOrSetMember(data, memberEnum);
         }
     }    

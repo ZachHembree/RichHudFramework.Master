@@ -30,7 +30,7 @@ namespace RichHudFramework
             /// <summary>
             /// Read only collection of <see cref="IControlCategory"/>s assigned to this object.
             /// </summary>
-            IReadOnlyCollection<IControlCategory> Categories { get; }
+            IReadOnlyList<IControlCategory> Categories { get; }
 
             /// <summary>
             /// Used to allow the addition of category elements using collection-initializer syntax in

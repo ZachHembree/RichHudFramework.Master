@@ -34,6 +34,8 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public object ID => this;
 
+        public EventHandler ControlChangedHandler { get; set; }
+
         protected Action ControlCallbackAction;
 
         public TerminalControlBase()
@@ -50,6 +52,7 @@ namespace RichHudFramework.UI.Server
         protected virtual void InvokeApiCallback(object sender, EventArgs args)
         {
             ControlCallbackAction?.Invoke();
+            ControlChangedHandler?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>

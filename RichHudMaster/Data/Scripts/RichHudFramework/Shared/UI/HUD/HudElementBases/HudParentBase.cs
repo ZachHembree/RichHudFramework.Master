@@ -178,7 +178,7 @@ namespace RichHudFramework
             /// <summary>
             /// Registers a collection of child nodes to the object.
             /// </summary>
-            public virtual void RegisterChildren(IList<HudNodeBase> newChildren)
+            public virtual void RegisterChildren(IReadOnlyList<HudNodeBase> newChildren)
             {
                 blockChildRegistration = true;
 

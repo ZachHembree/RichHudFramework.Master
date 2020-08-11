@@ -54,7 +54,7 @@ namespace RichHudFramework
 
                 public TerminalWindow(HudParentBase parent = null) : base(parent)
                 {
-                    Header.Format = HeaderFormat;
+                    Header.Format = TerminalFormatting.HeaderFormat;
                     Header.SetText("Rich HUD Terminal");
 
                     header.Height = 60f;
@@ -242,7 +242,7 @@ namespace RichHudFramework
                         {
                             SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
-                            Color = ListBgColor,
+                            Color = TerminalFormatting.ListBgColor,
                         };
 
                         header = new LabelBox(scrollBox)
@@ -252,7 +252,7 @@ namespace RichHudFramework
                             DimAlignment = DimAlignments.Width,
                             Size = new Vector2(200f, 36f),
                             Color = new Color(32, 39, 45),
-                            Format = ControlFormat,
+                            Format = TerminalFormatting.ControlFormat,
                             Text = "Mod List:",
                             TextPadding = new Vector2(30f, 0f),
                         };
@@ -285,11 +285,11 @@ namespace RichHudFramework
                     {
                         header.Width = scrollBox.Width;
 
-                        header.Color = ListHeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
-                        scrollBox.Color = ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        header.Color = TerminalFormatting.ListHeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        scrollBox.Color = TerminalFormatting.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
 
                         SliderBar slider = scrollBox.scrollBar.slide;
-                        slider.BarColor = ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
                     }
                 }
             }

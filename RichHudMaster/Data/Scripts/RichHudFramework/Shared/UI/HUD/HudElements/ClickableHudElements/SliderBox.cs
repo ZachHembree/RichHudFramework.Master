@@ -61,7 +61,7 @@ namespace RichHudFramework.UI
 
             highlight = new TexturedBox(background)
             {
-                Color = RichHudTerminal.HighlightOverlayColor,
+                Color = TerminalFormatting.HighlightOverlayColor,
                 DimAlignment = DimAlignments.Both,
                 Visible = false
             };

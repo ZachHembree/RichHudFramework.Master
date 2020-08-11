@@ -30,20 +30,20 @@ namespace RichHudFramework.UI.Server
         {
             border = new BorderBox(this)
             {
-                Color = RichHudTerminal.BorderColor,
+                Color = TerminalFormatting.BorderColor,
                 Thickness = 1f,
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
             };
 
             highlight = new TexturedBox(this)
             {
-                Color = RichHudTerminal.HighlightOverlayColor,
+                Color = TerminalFormatting.HighlightOverlayColor,
                 DimAlignment = DimAlignments.Both,
                 Visible = false,
             };
 
             AutoResize = false;
-            Format = RichHudTerminal.ControlFormat.WithAlignment(TextAlignment.Center);
+            Format = TerminalFormatting.ControlFormat.WithAlignment(TextAlignment.Center);
             Text = "NewTerminalButton";
 
             Color = new Color(42, 55, 63);

@@ -255,22 +255,22 @@ namespace RichHudFramework
             /// <summary>
             /// Add the given range to the end of the chain.
             /// </summary>
-            public void AddRange(IList<TElementContainer> newChainElements)
+            public void AddRange(IReadOnlyList<TElementContainer> newChainEntries)
             {
                 blockChildRegistration = true;
 
-                for (int n = 0; n < newChainElements.Count; n++)
+                for (int n = 0; n < newChainEntries.Count; n++)
                 {
-                    if (newChainElements[n].Element.Parent == this)
+                    if (newChainEntries[n].Element.Parent == this)
                         throw new Exception("HUD Element already registered.");
 
-                    newChainElements[n].Element.Register(this);
+                    newChainEntries[n].Element.Register(this);
 
-                    if (newChainElements[n].Element.Parent != this)
+                    if (newChainEntries[n].Element.Parent != this)
                         throw new Exception("HUD Element registration failed.");
                 }
 
-                chainElements.AddRange(newChainElements);
+                chainElements.AddRange(newChainEntries);
                 blockChildRegistration = false;
             }
 
@@ -303,22 +303,22 @@ namespace RichHudFramework
             /// <summary>
             /// Insert the given range into the chain.
             /// </summary>
-            public void InsertRange(int index, IList<TElementContainer> newChainElements)
+            public void InsertRange(int index, IReadOnlyList<TElementContainer> newChainEntries)
             {
                 blockChildRegistration = true;
 
-                for (int n = 0; n < newChainElements.Count; n++)
+                for (int n = 0; n < newChainEntries.Count; n++)
                 {
-                    if (newChainElements[n].Element.Parent == this)
+                    if (newChainEntries[n].Element.Parent == this)
                         throw new Exception("HUD Element already registered.");
 
-                    newChainElements[n].Element.Register(this);
+                    newChainEntries[n].Element.Register(this);
 
-                    if (newChainElements[n].Element.Parent != this)
+                    if (newChainEntries[n].Element.Parent != this)
                         throw new Exception("HUD Element registration failed.");
                 }
 
-                chainElements.InsertRange(index, newChainElements);
+                chainElements.InsertRange(index, newChainEntries);
                 blockChildRegistration = false;
             }
 

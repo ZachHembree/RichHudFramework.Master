@@ -28,7 +28,7 @@ namespace RichHudFramework
             /// <summary>
             /// List of control categories registered to the page.
             /// </summary>
-            public IReadOnlyCollection<IControlCategory> Categories { get; }
+            public IReadOnlyList<IControlCategory> Categories => catBox.ChainEntries;
 
             public IControlPage CategoryContainer => this;
 
@@ -36,13 +36,7 @@ namespace RichHudFramework
 
             public ControlPage()
             {
-                catBox = new CategoryScrollBox();
-
-                Categories = new ReadOnlyCollectionData<IControlCategory>
-                (
-                    x => catBox.ChainEntries[x], 
-                    () => catBox.ChainEntries.Count
-                );              
+                catBox = new CategoryScrollBox();          
             }
 
             /// <summary>
@@ -98,7 +92,7 @@ namespace RichHudFramework
                     base.Layout();
 
                     SliderBar slider = scrollBar.slide;
-                    slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
                 }
             }
         }

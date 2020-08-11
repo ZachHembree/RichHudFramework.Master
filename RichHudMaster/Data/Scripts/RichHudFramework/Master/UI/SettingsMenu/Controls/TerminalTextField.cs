@@ -104,7 +104,7 @@ namespace RichHudFramework.UI.Server
             {
                 name = new Label(this)
                 {
-                    Format = RichHudTerminal.ControlFormat,
+                    Format = TerminalFormatting.ControlFormat,
                     Text = "NewTextField",
                     AutoResize = false,
                     Height = 22f,

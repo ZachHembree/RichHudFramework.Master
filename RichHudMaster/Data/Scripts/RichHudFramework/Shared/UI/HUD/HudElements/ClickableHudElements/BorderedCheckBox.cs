@@ -22,14 +22,14 @@ namespace RichHudFramework.UI.Server
         {
             var border = new BorderBox(this)
             {
-                Color = RichHudTerminal.BorderColor,
+                Color = TerminalFormatting.BorderColor,
                 Thickness = 1f,
                 DimAlignment = DimAlignments.Both,
             };
 
             highlight = new TexturedBox(this)
             {
-                Color = RichHudTerminal.HighlightOverlayColor,
+                Color = TerminalFormatting.HighlightOverlayColor,
                 DimAlignment = DimAlignments.Both,
                 Visible = false,
             };
@@ -59,7 +59,7 @@ namespace RichHudFramework.UI.Server
             if (IsMousedOver)
             {
                 highlight.Visible = true;
-                box.Color = RichHudTerminal.HighlightColor;
+                box.Color = TerminalFormatting.HighlightColor;
             }
             else
             {

@@ -37,7 +37,7 @@ namespace RichHudFramework
             /// <summary>
             /// Read only collection of <see cref="IControlTile"/>s assigned to this category
             /// </summary>
-            public IReadOnlyCollection<IControlTile> Tiles { get; }
+            public IReadOnlyList<IControlTile> Tiles => categoryElement.Tiles;
 
             public IControlCategory TileContainer => this;
 
@@ -49,12 +49,6 @@ namespace RichHudFramework
             {
                 categoryElement = new CategoryElement();
                 Element = categoryElement;
-
-                Tiles = new ReadOnlyCollectionData<IControlTile>
-                (
-                    x => categoryElement.Tiles[x],
-                    () => categoryElement.Tiles.Count
-                );
             }
 
             /// <summary>
@@ -217,7 +211,7 @@ namespace RichHudFramework
                 protected override void Layout()
                 {
                     SliderBar slider = scrollBox.scrollBar.slide;
-                    slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
                 }
             }
         }

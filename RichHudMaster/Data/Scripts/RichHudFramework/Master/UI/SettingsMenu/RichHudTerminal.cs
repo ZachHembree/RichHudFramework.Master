@@ -34,22 +34,6 @@ namespace RichHudFramework
             /// </summary>
             public sealed partial class RichHudTerminal : RichHudComponentBase
             {
-                public static readonly GlyphFormat
-                    HeaderFormat = new GlyphFormat(Color.White, TextAlignment.Center, 1.15f),
-                    ControlFormat = GlyphFormat.Blueish.WithSize(1.08f),
-                    WarningFormat = new GlyphFormat(new Color(200, 55, 55));
-
-                public static readonly Color
-                    ScrollBarColor = new Color(41, 51, 61),
-                    TileColor = new Color(39, 50, 57),
-                    ListHeaderColor = new Color(32, 39, 45),
-                    ListBgColor = new Color(41, 54, 62),
-                    BorderColor = new Color(53, 66, 75),
-                    SelectionBgColor = new Color(34, 44, 53),
-                    HighlightOverlayColor = new Color(255, 255, 255, 40),
-                    HighlightColor = new Color(214, 213, 218),
-                    AccentHighlightColor = new Color(181, 185, 190);
-
                 private static RichHudTerminal Instance
                 {
                     get { Init(); return instance; }

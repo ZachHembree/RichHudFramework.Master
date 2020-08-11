@@ -1,31 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using VRage;
-using VRage.Utils;
 using VRageMath;
-using System;
-using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
-using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
-using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 
 namespace RichHudFramework
 {
-    using CursorMembers = MyTuple<
-        Func<bool>, // Visible
-        Func<bool>, // IsCaptured
-        Func<Vector2>, // Position
-        Func<Vector3D>, // WorldPos
-        Func<HudSpaceDelegate, bool>, // IsCapturingSpace
-        MyTuple<
-            Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
-            Func<object, bool>, // IsCapturing
-            Func<object, bool>, // TryCapture
-            Func<object, bool>, // TryRelease
-            ApiMemberAccessor // GetOrSetMember
-        >
-    >;
-
     namespace UI
     {
         /// <summary>
@@ -90,11 +70,6 @@ namespace RichHudFramework
             /// not capture or if not captured by the object given.
             /// </summary>
             bool TryRelease(object capturedElement);
-
-            /// <summary>
-            /// Returns cursor API interface members
-            /// </summary>
-            CursorMembers GetApiData();
         }
     }
 }

@@ -23,7 +23,7 @@ namespace RichHudFramework
             /// <summary>
             /// List of bind groups registered to the page.
             /// </summary>
-            public IReadOnlyCollection<IBindGroup> BindGroups { get; }
+            public IReadOnlyList<IBindGroup> BindGroups { get; }
 
             public RebindPage GroupContainer => this;
 
@@ -110,7 +110,7 @@ namespace RichHudFramework
                     base.Layout();
 
                     SliderBar slider = scrollBar.slide;
-                    slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
                 }
             }
 
@@ -222,7 +222,7 @@ namespace RichHudFramework
                 protected override void Layout()
                 {
                     SliderBar slider = scrollBox.scrollBar.slide;
-                    slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
                 }
 
                 /// <summary>
@@ -390,14 +390,14 @@ namespace RichHudFramework
                 private void UpdateBindText()
                 {
                     bindName.Text = bind.Name;
-                    IList<IControl> combo = bind.GetCombo();
+                    List<IControl> combo = bind.GetCombo();
 
                     if (combo != null && combo.Count > 0)
                     {
                         if (!group.DoesComboConflict(combo, bind))
                             bindName.TextBoard.SetFormatting(GlyphFormat.Blueish);
                         else
-                            bindName.TextBoard.SetFormatting(RichHudTerminal.WarningFormat);
+                            bindName.TextBoard.SetFormatting(TerminalFormatting.WarningFormat);
 
                         con1.Text = combo[0].DisplayName;
 
@@ -413,7 +413,7 @@ namespace RichHudFramework
                     }
                     else
                     {
-                        bindName.TextBoard.SetFormatting(RichHudTerminal.WarningFormat);
+                        bindName.TextBoard.SetFormatting(TerminalFormatting.WarningFormat);
                         con1.Text = "none";
                         con2.Text = "none";
                         con3.Text = "none";

@@ -74,7 +74,7 @@ namespace RichHudFramework.UI.Server
         {
             name = new Label()
             {
-                Format = RichHudTerminal.ControlFormat,
+                Format = TerminalFormatting.ControlFormat,
                 Text = "NewOnOffButton",
                 AutoResize = false,
                 Height = 22f,

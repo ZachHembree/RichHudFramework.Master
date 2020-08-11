@@ -153,7 +153,7 @@ namespace RichHudFramework.UI.Server
                 BodyColor = new Color(41, 54, 62, 150);
                 BorderColor = new Color(58, 68, 77);
 
-                Header.Format = RichHudTerminal.ControlFormat.WithAlignment(TextAlignment.Center);
+                Header.Format = TerminalFormatting.ControlFormat.WithAlignment(TextAlignment.Center);
                 header.Height = 40f;
 
                 confirmButton = new BorderedButton(this)

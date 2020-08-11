@@ -57,7 +57,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Read only collection of <see cref="ITerminalPage"/>s assigned to this object.
                 /// </summary>
-                public IReadOnlyCollection<ITerminalPage> Pages { get; }
+                public IReadOnlyList<ITerminalPage> Pages { get; }
 
                 /// <summary>
                 /// Used to allow the addition of child elements using collection-initializer syntax in
@@ -173,7 +173,7 @@ namespace RichHudFramework
             {
                 public ModControlRootTreeBox(HudParentBase parent = null) : base(parent)
                 {
-                    HeaderColor = TileColor;
+                    HeaderColor = TerminalFormatting.TileColor;
                 }
 
                 protected override void Layout()

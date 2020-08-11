@@ -1,15 +1,9 @@
 ﻿using Sandbox.ModAPI;
 using System;
-using System.Collections.Generic;
-using VRage;
 using VRage.Input;
-using VRage.ModAPI;
-using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
-    using ControlMembers = MyTuple<string, string, int, Func<bool>, bool, ApiMemberAccessor>;
-
     namespace UI.Server
     {
         public sealed partial class BindManager
@@ -19,10 +13,30 @@ namespace RichHudFramework
             /// </summary>
             private class Control : IControl
             {
+                /// <summary>
+                /// Name of the control
+                /// </summary>
                 public string Name { get; }
+
+                /// <summary>
+                /// Name of the control as displayed in bind menu
+                /// </summary>
                 public string DisplayName { get; }
+
+                /// <summary>
+                /// Returns true if the control is being pressed
+                /// </summary>
                 public bool IsPressed { get { return IsPressedFunc(); } }
+
+                /// <summary>
+                /// Returns true if the control doesn't represent a boolean value. For example, MwUp/Dn
+                /// represent scroll wheel movement, but don't return an exact position/displacement.
+                /// </summary>
                 public bool Analog { get; }
+
+                /// <summary>
+                /// Index of the control in the bind manager
+                /// </summary>
                 public int Index { get; }
 
                 private readonly Func<bool> IsPressedFunc;
@@ -50,7 +64,7 @@ namespace RichHudFramework
                     Analog = analog;
                 }
 
-                public ControlMembers GetApiData()
+                /*public ControlMembers GetApiData()
                 {
                     return new ControlMembers()
                     {
@@ -60,7 +74,7 @@ namespace RichHudFramework
                         Item4 = IsPressedFunc,
                         Item5 = Analog
                     };
-                }
+                }*/
             }
         }
     }

@@ -16,7 +16,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// List of binds used in filtering input
         /// </summary>
-        public IList<IBind> Binds { get; set; }
+        public IReadOnlyList<IBind> Binds { get; set; }
         
         public MouseInputFilter(HudParentBase parent = null) : base(parent)
         {

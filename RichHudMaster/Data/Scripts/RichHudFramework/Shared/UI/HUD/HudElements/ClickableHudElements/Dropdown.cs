@@ -126,7 +126,7 @@ namespace RichHudFramework.UI
 
             highlight = new TexturedBox(display)
             {
-                Color = RichHudTerminal.HighlightOverlayColor,
+                Color = TerminalFormatting.HighlightOverlayColor,
                 DimAlignment = DimAlignments.Both,
                 Visible = false,
             };
@@ -195,7 +195,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Adds the given range of entries to the dropdown.
         /// </summary>
-        public void AddRange(IList<MyTuple<RichText, T, bool>> entries) =>
+        public void AddRange(IReadOnlyList<MyTuple<RichText, T, bool>> entries) =>
             listBox.AddRange(entries);
 
         /// <summary>
@@ -271,7 +271,7 @@ namespace RichHudFramework.UI
 
                 var border = new BorderBox(this)
                 {
-                    Color = RichHudTerminal.BorderColor,
+                    Color = TerminalFormatting.BorderColor,
                     Thickness = 1f,
                     DimAlignment = DimAlignments.Both,
                 };
