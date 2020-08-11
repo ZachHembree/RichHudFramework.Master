@@ -1,13 +1,9 @@
 ﻿using Sandbox.ModAPI;
 using System;
-using System.Collections.Generic;
 using VRage;
 using VRage.Utils;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
-using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
-using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 
 namespace RichHudFramework

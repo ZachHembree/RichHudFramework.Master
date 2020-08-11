@@ -10,13 +10,12 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
-using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework.Server
 {
     using UI.Rendering.Server;
     using UI.Server;
-    using ClientData = MyTuple<string, ApiMemberAccessor, Action, int>;
+    using ClientData = MyTuple<string, Action<int, object>, Action, int>;
 
     /// <summary>
     /// Main class for Framework API server.
@@ -79,22 +78,22 @@ namespace RichHudFramework.Server
             {
                 Visible = true,
                 MinimumSize = new Vector2(100f),
-                BorderColor = RichHudTerminal.TileColor,
+                BorderColor = TerminalFormatting.TileColor,
                 BodyColor = new Color(40, 40, 40, 180),
                 Size = new Vector2(400f)
             };
 
-            for (int n = 0; n < 5; n++)
+            /*for (int n = 0; n < 5; n++)
             {
                 new Window(HudMain.Root)
                 {
                     MinimumSize = new Vector2(100f),
-                    BorderColor = RichHudTerminal.TileColor,
+                    BorderColor = TerminalFormatting.TileColor,
                     BodyColor = new Color(40, 40, 40, 180),
                     Size = new Vector2(400f),
                     HeaderText = $"Window {n + 1}"
                 };
-            }
+            }*/
 
             // test parent alignment next
             chainTest = new ScrollBox<ScrollBoxEntry<LabelBox>, LabelBox>(true, window.body)
@@ -280,18 +279,18 @@ namespace RichHudFramework.Server
                 }
                 else
                 {
-                    ApiMemberAccessor GetOrSendFunc = clientData.Item2;
+                    Action<int, object> GetOrSendFunc = clientData.Item2;
 
                     if (!supported)
                     {
                         string error = $"Error: Client version for {clientData.Item1} is not supported. " +
                         $"API vID: Min: {minSupportedVersion}, Max: {versionID}; Client vID: {clientVID}";
 
-                        GetOrSendFunc(error, (int)MsgTypes.RegistrationFailed);
+                        GetOrSendFunc((int)MsgTypes.RegistrationFailed, error);
                         ExceptionHandler.SendChatMessage(error);
                     }
                     else
-                        GetOrSendFunc("Client already registered.", (int)MsgTypes.RegistrationFailed);
+                        GetOrSendFunc((int)MsgTypes.RegistrationFailed, "Client already registered.");
                 }
             }
         }

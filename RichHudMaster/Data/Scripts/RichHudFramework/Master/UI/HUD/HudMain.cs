@@ -1,39 +1,21 @@
 using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
-using System.Text;
 using System.Collections.Generic;
 using VRage;
-using VRage.Game.ModAPI;
 using VRageMath;
-using VRage.Utils;
-
 using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
+using HudDrawDelegate = System.Func<object, object>;
+using HudLayoutDelegate = System.Func<bool, bool>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
-using HudLayoutDelegate = System.Func<bool, bool>;
-using HudDrawDelegate = System.Func<object, object>;
 
 namespace RichHudFramework
 {
     using Server;
     using HudInputDelegate = Func<Vector3, HudSpaceDelegate, MyTuple<Vector3, HudSpaceDelegate>>;
-    using CursorMembers = MyTuple<
-        Func<bool>, // Visible
-        Func<bool>, // IsCaptured
-        Func<Vector2>, // Position
-        Func<Vector3D>, // WorldPos
-        Func<HudSpaceDelegate, bool>, // IsCapturingSpace
-        MyTuple<
-            Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
-            Func<object, bool>, // IsCapturing
-            Func<object, bool>, // TryCapture
-            Func<object, bool>, // TryRelease
-            ApiMemberAccessor // GetOrSetMember
-        >
-    >;
     using TextBoardMembers = MyTuple<
         // TextBuilderMembers
         MyTuple<
@@ -61,11 +43,6 @@ namespace RichHudFramework
             HudInputDelegate, // HandleInput
             HudLayoutDelegate, // BeforeLayout
             HudDrawDelegate // BeforeDraw
-        >;
-        using HudMainMembers = MyTuple<
-            CursorMembers, // Cursor
-            Func<TextBoardMembers>, // GetNewTextBoard
-            ApiMemberAccessor // GetOrSetMembers
         >;
 
         public sealed partial class HudMain : RichHudComponentBase
@@ -103,10 +80,10 @@ namespace RichHudFramework
             /// <summary>
             /// Shared clipboard.
             /// </summary>
-            public static RichText ClipBoard 
-            { 
-                get { return Instance._clipBoard ?? new RichText(); } 
-                set { Instance._clipBoard = value; } 
+            public static RichText ClipBoard
+            {
+                get { return Instance._clipBoard ?? new RichText(); }
+                set { Instance._clipBoard = value; }
             }
 
             /// <summary>
@@ -241,8 +218,11 @@ namespace RichHudFramework
 
             private readonly HudCursor _cursor;
             private readonly HudRoot _root;
+            private readonly List<Client> hudClients;
+
             private readonly List<HudUpdateAccessors> updateAccessors;
             private readonly List<ulong> indexList;
+            
             private readonly List<MyTuple<byte, HudInputDelegate>> depthTestActions;
             private readonly List<MyTuple<byte, HudInputDelegate>> inputActions;
             private readonly List<MyTuple<byte, HudLayoutDelegate>> layoutActions;
@@ -268,12 +248,7 @@ namespace RichHudFramework
             {
                 _root = new HudRoot();
                 _cursor = new HudCursor(_root);
-
-                cacheTimer = new Utils.Stopwatch();
-                cacheTimer.Start();
-
-                listTimer = new Utils.Stopwatch();
-                listTimer.Start();
+                hudClients = new List<Client>();
 
                 updateAccessors = new List<HudUpdateAccessors>(200);
                 indexList = new List<ulong>(200);
@@ -282,6 +257,12 @@ namespace RichHudFramework
                 inputActions = new List<MyTuple<byte, HudInputDelegate>>(200);
                 layoutActions = new List<MyTuple<byte, HudLayoutDelegate>>(200);
                 drawActions = new List<MyTuple<byte, HudDrawDelegate>>(200);
+
+                cacheTimer = new Utils.Stopwatch();
+                cacheTimer.Start();
+
+                listTimer = new Utils.Stopwatch();
+                listTimer.Start();
             }
 
             public static void Init()
@@ -300,21 +281,19 @@ namespace RichHudFramework
 
             public override void Draw()
             {
-                IReadOnlyList<RichHudMaster.Client> clients = RichHudMaster.Clients;
-
-                for (int n = 0; n < clients.Count; n++)
+                for (int n = 0; n < hudClients.Count; n++)
                 {
-                    if (clients[n].RefreshDrawList)
+                    if (hudClients[n].RefreshDrawList)
                         RefreshDrawList = true;
 
-                    clients[n].RefreshDrawList = false;
+                    hudClients[n].RefreshDrawList = false;
                 }
 
                 _cursor.Visible = EnableCursor;
 
-                for (int n = 0; n < clients.Count; n++)
+                for (int n = 0; n < hudClients.Count; n++)
                 {
-                    if (clients[n].EnableCursor)
+                    if (hudClients[n].EnableCursor)
                         _cursor.Visible = true;
                 }
 
@@ -370,10 +349,22 @@ namespace RichHudFramework
                 // Update screen to world matrix transform
                 _pixelToWorld = new MatrixD
                 {
-                    M11 = (FovScale / ScreenHeight),    M12 = 0d,                           M13 = 0d,       M14 = 0d,
-                    M21 = 0d,                           M22 = (FovScale / ScreenHeight),    M23 = 0d,       M24 = 0d,
-                    M31 = 0d,                           M32 = 0d,                           M33 = 1d,       M34 = 0d,
-                    M41 = 0d,                           M42 = 0d,                           M43 = -.05d,    M44 = 1d
+                    M11 = (FovScale / ScreenHeight),
+                    M12 = 0d,
+                    M13 = 0d,
+                    M14 = 0d,
+                    M21 = 0d,
+                    M22 = (FovScale / ScreenHeight),
+                    M23 = 0d,
+                    M24 = 0d,
+                    M31 = 0d,
+                    M32 = 0d,
+                    M33 = 1d,
+                    M34 = 0d,
+                    M41 = 0d,
+                    M42 = 0d,
+                    M43 = -.05d,
+                    M44 = 1d
                 };
 
                 _pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;
@@ -405,7 +396,7 @@ namespace RichHudFramework
             /// Rebuilds update accessor lists
             /// </summary>
             private void RebuildUpdateLists()
-            {   
+            {
                 // Clear update lists and rebuild accessor lists from HUD tree
                 updateAccessors.Clear();
                 indexList.Clear();
@@ -416,10 +407,8 @@ namespace RichHudFramework
                 drawActions.Clear();
 
                 // Add client UI elements
-                IReadOnlyList<RichHudMaster.Client> clients = RichHudMaster.Clients;
-
-                for (int n = 0; n < clients.Count; n++)
-                    clients[n].GetUpdateAccessorFunc(updateAccessors, 0);
+                for (int n = 0; n < hudClients.Count; n++)
+                    hudClients[n].GetUpdateAccessors?.Invoke(updateAccessors, 0);
 
                 // Add master UI elements
                 _root.GetUpdateAccessors(updateAccessors, 0);
@@ -507,7 +496,7 @@ namespace RichHudFramework
 
                 inputData = new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, DefaultHudSpaceFunc);
 
-                for (int n = inputActions.Count - 1; n >=0; n--)
+                for (int n = inputActions.Count - 1; n >= 0; n--)
                 {
                     uint treeDepth = inputActions[n].Item1;
                     HudInputDelegate InputFunc = inputActions[n].Item2;
@@ -583,57 +572,6 @@ namespace RichHudFramework
                     pixelVec.X / _instance._screenWidth,
                     pixelVec.Y / _instance._screenHeight
                 );
-            }
-
-            /// <summary>
-            /// Provides access to HudMain properties via RHF API
-            /// </summary>
-            private static object GetOrSetMember(object data, int memberEnum)
-            {
-                switch ((HudMainAccessors)memberEnum)
-                {
-                    case HudMainAccessors.ScreenWidth:
-                        return ScreenWidth;
-                    case HudMainAccessors.ScreenHeight:
-                        return ScreenHeight;
-                    case HudMainAccessors.AspectRatio:
-                        return AspectRatio;
-                    case HudMainAccessors.ResScale:
-                        return ResScale;
-                    case HudMainAccessors.Fov:
-                        return Fov;
-                    case HudMainAccessors.FovScale:
-                        return FovScale;
-                    case HudMainAccessors.PixelToWorldTransform:
-                        return PixelToWorld;
-                    case HudMainAccessors.ClipBoard:
-                        {
-                            if (data == null)
-                                return ClipBoard?.ApiData;
-                            else
-                                ClipBoard = new RichText(data as IList<RichStringMembers>);
-                            break;
-                        }
-                    case HudMainAccessors.GetFocusOffset:
-                        return GetFocusOffset(data as Action<byte>);
-                }
-
-                return null;
-            }
-
-            /// <summary>
-            /// Retrieves API accessor delegates
-            /// </summary>
-            public static HudMainMembers GetApiData()
-            {
-                Init();
-
-                return new HudMainMembers()
-                {
-                    Item1 = _instance._cursor.GetApiData(),
-                    Item2 = GetTextBoardData,
-                    Item3 = GetOrSetMember
-                };
             }
 
             /// <summary>
