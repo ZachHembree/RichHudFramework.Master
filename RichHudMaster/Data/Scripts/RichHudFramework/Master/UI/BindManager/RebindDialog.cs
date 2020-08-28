@@ -19,7 +19,7 @@ namespace RichHudFramework.UI.Server
         private bool Open 
         { 
             get { return menu.Visible; } 
-            set { menu.Visible = true; } 
+            set { menu.Visible = value; } 
         }
 
         private static RebindDialog instance;
@@ -197,7 +197,7 @@ namespace RichHudFramework.UI.Server
                 Size = new Vector2(1210f, 288f);
 
                 ZOffset = sbyte.MaxValue - 1;
-                zOffsetInner = byte.MaxValue;
+                zOffsetInner = byte.MaxValue - 1;
             }
 
             protected override void Layout()

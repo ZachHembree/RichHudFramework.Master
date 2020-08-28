@@ -36,7 +36,8 @@ namespace RichHudFramework
 
             public ControlPage()
             {
-                catBox = new CategoryScrollBox();          
+                catBox = new CategoryScrollBox();
+                Element = catBox;
             }
 
             /// <summary>

@@ -67,7 +67,10 @@ namespace RichHudFramework
                         Height = 1f,
                     };
 
-                    modList = new ModList();
+                    modList = new ModList() 
+                    {
+                        Width = 250f
+                    };
 
                     middleDivider = new TexturedBox()
                     {
@@ -75,7 +78,7 @@ namespace RichHudFramework
                         Width = 26f,
                     };
 
-                    layout = new HudChain(true, topDivider)
+                    layout = new HudChain(false, topDivider)
                     {
                         SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                         ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.InnerH,
@@ -113,7 +116,6 @@ namespace RichHudFramework
                     Padding = new Vector2(80f, 40f);
                     MinimumSize = new Vector2(1024f, 500f);
 
-                    modList.Width = 200f;
                     Size = new Vector2(1320, 850f);
 
                     if (HudMain.ScreenWidth < 1920)
@@ -196,7 +198,7 @@ namespace RichHudFramework
                     var newPage = SelectedMod?.Selection as TerminalPageBase;
 
                     if (CurrentPage != null && newPage != CurrentPage)
-                        layout.RemoveAt(2); // I'm sure this'll be fine
+                        layout.RemoveAt(2); // I'm sure this wont bite me in the ass
 
                     if (newPage != null && newPage != CurrentPage)
                         layout.Add(newPage);
@@ -283,8 +285,6 @@ namespace RichHudFramework
 
                     protected override void Layout()
                     {
-                        header.Width = scrollBox.Width;
-
                         header.Color = TerminalFormatting.ListHeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
                         scrollBox.Color = TerminalFormatting.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
 

@@ -129,7 +129,7 @@ namespace RichHudFramework.UI.Server
 
                 hudChain = new HudChain(true, this)
                 {
-                    SizingMode = HudChainSizingModes.FitChainOffAxis | HudChainSizingModes.FitChainBoth,
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                     ChainContainer = { name, dropdown },
                 };
 

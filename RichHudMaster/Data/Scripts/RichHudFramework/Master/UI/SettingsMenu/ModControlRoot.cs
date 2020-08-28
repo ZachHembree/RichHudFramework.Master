@@ -66,18 +66,20 @@ namespace RichHudFramework
                 public IModControlRoot PageContainer => this;
 
                 private Action ApiCallbackAction;
+                private readonly ModControlRootTreeBox treeBox;
                 private bool _enabled;
 
                 public ModControlRoot()
                 {
-                    Element = new ModControlRootTreeBox();
+                    treeBox = new ModControlRootTreeBox();
+                    Element = treeBox;
                     Pages = new ReadOnlyCollectionData<ITerminalPage>
                     (
                         x => Element.ListEntries[x].AssocMember,
                         () => Element.ListEntries.Count
                     );
 
-                    OnSelectionChanged += InvokeCallback;
+                    treeBox.OnSelectionChanged += InvokeCallback;
                 }
 
                 public IEnumerator<ITerminalPage> GetEnumerator() =>

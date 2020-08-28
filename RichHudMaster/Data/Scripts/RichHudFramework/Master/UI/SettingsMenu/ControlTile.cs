@@ -120,8 +120,8 @@ namespace RichHudFramework
                 {
                     background = new TexturedBox(this)
                     {
-                        Color = TerminalFormatting.TileColor,
                         DimAlignment = DimAlignments.Both,
+                        Color = TerminalFormatting.TileColor,
                     };
 
                     var border = new BorderBox(this)
@@ -153,6 +153,9 @@ namespace RichHudFramework
                 protected override void Layout()
                 {
                     background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
+
+                    for (int n = 0; n < controls.ChainEntries.Count; n++)
+                        controls.ChainEntries[n].Update();
                 }
             }
         }

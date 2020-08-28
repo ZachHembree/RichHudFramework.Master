@@ -144,21 +144,28 @@ namespace RichHudFramework
 
                 public override float Width
                 {
-                    get { return layout.Width; }
-                    set { layout.Width = value; }
+                    get { return layout.Width + Padding.X; }
+                    set 
+                    {
+                        if (value > Padding.X)
+                            value -= Padding.X;
+
+                        layout.Width = value; 
+                    }
                 }
 
                 public override float Height
                 {
-                    get { return layout.Height; }
-                    set
+                    get { return layout.Height + Padding.Y; }
+                    set 
                     {
+                        if (value > Padding.Y)
+                            value -= Padding.Y;
+
                         layout.Height = value;
-                        scrollBox.Height = value - Padding.Y - header.Height - subheader.Height;
+                        scrollBox.Height = value - header.Height - subheader.Height; 
                     }
                 }
-
-                public override Vector2 Padding { get { return layout.Padding; } set { layout.Padding = value; } }
 
                 private readonly ScrollBox<ControlTile> scrollBox;
                 private readonly Label header, subheader;
@@ -185,9 +192,10 @@ namespace RichHudFramework
 
                     scrollBox = new ScrollBox<ControlTile>(false)
                     {
-                        Spacing = 12f,
-                        SizingMode = HudChainSizingModes.ClampChainBoth,
+                        SizingMode = HudChainSizingModes.FitChainOffAxis | HudChainSizingModes.ClampChainAlignAxis,
                         MinVisibleCount = 1,
+                        Spacing = 12f,
+                        Height = 280f,
                         Color = Color.Red,
                     };
 
@@ -201,6 +209,7 @@ namespace RichHudFramework
 
                     HeaderText = "NewSettingsCategory";
                     SubheaderText = "Subheading\nLine 1\nLine 2\nLine 3\nLine 4";
+                    Height = 334f;
                 }
 
                 public void Add(ControlTile tile)

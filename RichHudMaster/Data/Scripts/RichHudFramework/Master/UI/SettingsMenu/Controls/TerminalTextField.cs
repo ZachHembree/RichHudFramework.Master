@@ -108,14 +108,16 @@ namespace RichHudFramework.UI.Server
                     Text = "NewTextField",
                     AutoResize = false,
                     Height = 22f,
-                    Offset = new Vector2(0f, 2f),
-                    ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV
+                    Padding = new Vector2(0f, 2f),
+                    ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV | ParentAlignments.UsePadding
                 };
 
                 textField = new TextField(name) 
                 {
                     ParentAlignment = ParentAlignments.Bottom,
                 };
+
+                Padding = new Vector2(40f, 0f);
             }
         }
     }

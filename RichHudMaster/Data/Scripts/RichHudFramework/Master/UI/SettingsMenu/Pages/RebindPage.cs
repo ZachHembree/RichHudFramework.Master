@@ -100,7 +100,6 @@ namespace RichHudFramework
                     Spacing = 30f;
                     Padding = new Vector2(32f, 0f);
                     SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;
-                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding;
 
                     background.Visible = false;
                 }
@@ -189,7 +188,7 @@ namespace RichHudFramework
 
                     scrollBox = new ScrollBox<ScrollBoxEntry<BindBox>, BindBox>(true)
                     {
-                        SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitChainOffAxis,
+                        SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis,
                         Spacing = 8f,
                     };
 
@@ -318,7 +317,7 @@ namespace RichHudFramework
 
                     layout = new HudChain(false, this)
                     {
-                        SizingMode = HudChainSizingModes.FitChainOffAxis | HudChainSizingModes.ClampChainBoth,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                         Spacing = 13f,
                         Padding = new Vector2(32f, 0f),
                         ParentAlignment = ParentAlignments.Right | ParentAlignments.InnerH,
