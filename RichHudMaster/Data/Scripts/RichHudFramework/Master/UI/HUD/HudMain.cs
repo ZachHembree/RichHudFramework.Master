@@ -437,15 +437,14 @@ namespace RichHudFramework
                 // Lower 32 bits store the index, upper 32 store draw depth 
                 ulong indexMask = 0x00000000FFFFFFFF;
 
-                // Build index list and sort by draw depth (zOffset + treeDepth)
+                // Build index list and sort by zOffset
                 for (int n = 0; n < updateAccessors.Count; n++)
                 {
                     HudUpdateAccessors accessors = updateAccessors[n];
-                    ulong zOffset = accessors.Item1,
-                        value = (ulong)n;
+                    ulong index = (ulong)n,
+                        zOffset = accessors.Item1;
 
-                    value |= (zOffset << 32);
-                    indexList.Add(value);
+                    indexList.Add((zOffset << 32) | index);
                 }
 
                 // Sort in ascending order

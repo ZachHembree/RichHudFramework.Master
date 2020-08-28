@@ -119,7 +119,7 @@ namespace RichHudFramework
                     VertCenterText = true;
 
                     Format = GlyphFormat.White;
-                    //_fixedSize = new Vector2(200f);
+                    _fixedSize = new Vector2(100f);
 
                     eventTimer = new Utils.Stopwatch();
                     eventTimer.Start();
