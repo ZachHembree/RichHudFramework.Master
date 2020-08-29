@@ -191,9 +191,9 @@ namespace RichHudFramework.UI.Server
                 Offset = offset;
             }
 
-            protected override void HandleInput()
+            protected override void HandleInput(Vector2 cursorPos)
             {
-                base.HandleInput();
+                base.HandleInput(cursorPos);
 
                 if (SharedBinds.Escape.IsNewPressed)
                     OnConfirm?.Invoke();

@@ -96,6 +96,11 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
+                /// Returns the range of lines visible.
+                /// </summary>
+                public Vector2I VisibleLineRange => new Vector2I(startLine, endLine);
+
+                /// <summary>
                 /// If true, the text board will automatically resize to fit the text.
                 /// </summary>
                 public bool AutoResize { get; set; }
@@ -645,6 +650,8 @@ namespace RichHudFramework
 
                                     break;
                                 }
+                            case TextBoardAccessors.VisibleLineRange:
+                                return new Vector2I(startLine, endLine);
                         }
 
                         return null;

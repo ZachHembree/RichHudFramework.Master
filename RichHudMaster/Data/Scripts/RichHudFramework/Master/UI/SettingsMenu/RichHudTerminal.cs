@@ -52,7 +52,7 @@ namespace RichHudFramework
 
                 private static RichHudTerminal instance;
 
-                private readonly IModControlRoot root;
+                private readonly ModControlRoot root;
                 private readonly TerminalWindow settingsMenu;
 
                 private RichHudTerminal() : base(false, true)
@@ -155,6 +155,8 @@ namespace RichHudFramework
                             return new ControlPage().GetApiData();
                         case ModPages.RebindPage:
                             return new RebindPage().GetApiData();
+                        case ModPages.TextPage:
+                            return new TextPage().GetApiData();
                     }
 
                     return default(ControlMembers);

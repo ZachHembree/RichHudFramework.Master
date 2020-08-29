@@ -97,6 +97,18 @@ namespace RichHudFramework
                     page.NameBuilder = listMember.Element.TextBoard;
                 }
 
+                /// <summary>
+                /// Adds the given ranges of pages to the control root.
+                /// </summary>
+                public void AddRange(IReadOnlyList<TerminalPageBase> pages)
+                {
+                    foreach (TerminalPageBase page in pages)
+                    {
+                        ListBoxEntry<TerminalPageBase> listMember = Element.Add(page.Name, page);
+                        page.NameBuilder = listMember.Element.TextBoard;
+                    }
+                }
+
                 private void InvokeCallback(object sender, EventArgs args)
                 {
                     OnSelectionChanged?.Invoke(this, EventArgs.Empty);
@@ -141,10 +153,9 @@ namespace RichHudFramework
                                 return Element.Selection?.AssocMember.GetApiData();
                             }
                         case ModControlRootAccessors.AddPage:
-                            {
-                                Add(data as TerminalPageBase);
-                                break;
-                            }
+                            Add(data as TerminalPageBase); break;
+                        case ModControlRootAccessors.AddRange:
+                            AddRange(data as IReadOnlyList<TerminalPageBase>); break;
                     }
 
                     return null;
