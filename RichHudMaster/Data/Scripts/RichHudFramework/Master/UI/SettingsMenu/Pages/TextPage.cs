@@ -75,21 +75,21 @@ namespace RichHudFramework
                         case TextPageAccessors.GetOrSetHeader:
                             {
                                 if (data == null)
-                                    return textBox.HeaderText;
+                                    return textBox.HeaderText.ApiData;
                                 else
                                     textBox.HeaderText = new RichText(data as IList<RichStringMembers>); break;
                             }
                         case TextPageAccessors.GetOrSetSubheader:
                             {
                                 if (data == null)
-                                    return textBox.SubHeaderText;
+                                    return textBox.SubHeaderText.ApiData;
                                 else
                                     textBox.SubHeaderText = new RichText(data as IList<RichStringMembers>); break;
                             }
                         case TextPageAccessors.GetOrSetText:
                             {
                                 if (data == null)
-                                    return textBox.Text;
+                                    return textBox.Text.ApiData;
                                 else
                                     textBox.Text = new RichText(data as IList<RichStringMembers>); break;
                             }

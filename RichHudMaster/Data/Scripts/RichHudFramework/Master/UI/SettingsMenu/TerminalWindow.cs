@@ -106,7 +106,7 @@ namespace RichHudFramework
                         Color = new Color(173, 182, 189),
                     };
 
-                    closeButton.MouseInput.OnLeftClick += CloseMenu;
+                    closeButton.MouseInput.OnLeftClick += (sender, args) => CloseMenu();
                     SharedBinds.Escape.OnNewPress += CloseMenu;
                     MasterBinds.ToggleTerminal.OnNewPress += ToggleMenu;
 
@@ -117,15 +117,15 @@ namespace RichHudFramework
                     MinimumSize = new Vector2(1024f, 500f);
 
                     Size = new Vector2(1320, 850f);
+                    Vector2 screenSize = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight);
 
-                    if (HudMain.ScreenWidth < 1920)
+                    if (screenSize.X < 1920)
                         Width = MinimumSize.X;
 
-                    if (HudMain.ScreenHeight < 1080 || HudMain.AspectRatio < (16f/9f))
+                    if (screenSize.Y < 1080 || HudMain.AspectRatio < (16f/9f))
                         Height = MinimumSize.Y;
 
-                    // This should be changed to scale with resolution
-                    Offset = new Vector2(252f, 70f);
+                    Offset = (screenSize - Size) / 2f - new Vector2(40f);
                 }
 
                 /// <summary>
@@ -146,34 +146,65 @@ namespace RichHudFramework
                 /// </summary>
                 public void ToggleMenu()
                 {
-                    if (MyAPIGateway.Gui.ChatEntryVisible)
-                    {
-                        Visible = !Visible;
-
-                        if (Visible)
-                        {
-                            GetFocus();
-                            HudMain.EnableCursor = true;
-                        }
-                        else
-                        {
-                            HudMain.EnableCursor = false;
-                        }
-                    }
-                }
-
-                public void CloseMenu()
-                {
-                    CloseMenu(null, EventArgs.Empty);
+                    if (!Visible)
+                        OpenMenu();
+                    else
+                        CloseMenu();
                 }
 
                 /// <summary>
-                /// Closes the settings menu.
+                /// Opens the window if chat is visible
                 /// </summary>
-                private void CloseMenu(object sender, EventArgs args)
+                public void OpenMenu()
+                {
+                    if (!Visible && MyAPIGateway.Gui.ChatEntryVisible)
+                    {
+                        Visible = true;
+                        GetFocus();
+                        HudMain.EnableCursor = true;
+                    }
+                }
+
+                /// <summary>
+                /// Closes the window
+                /// </summary>
+                public void CloseMenu()
                 {
                     if (Visible)
+                    {
                         Visible = false;
+                        HudMain.EnableCursor = false;
+                    }
+                }
+
+                /// <summary>
+                /// Opens the given terminal page
+                /// </summary>
+                public void SetSelection(ModControlRoot modRoot, TerminalPageBase newPage)
+                {
+                    SelectedMod = modRoot;
+
+                    if (CurrentPage != null && newPage != CurrentPage)
+                        layout.RemoveAt(2); // I'm sure this wont bite me in the ass
+
+                    if (newPage != null && newPage != CurrentPage)
+                        layout.Add(newPage);
+
+                    CurrentPage = newPage;
+
+                    for (int n = 0; n < modList.ModRoots.Count; n++)
+                    {
+                        if (modList.ModRoots[n] != SelectedMod)
+                            modList.ModRoots[n].Element.ClearSelection();
+                    }
+                }
+
+                private void UpdateSelection(object sender, EventArgs args)
+                {
+                    var modRoot = sender as ModControlRoot;
+                    var newPage = SelectedMod?.Selection as TerminalPageBase;
+
+                    SetSelection(modRoot, newPage);
                 }
 
                 protected override void Layout()
@@ -190,26 +221,6 @@ namespace RichHudFramework
 
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
-                }
-
-                private void UpdateSelection(object sender, EventArgs args)
-                {
-                    SelectedMod = sender as ModControlRoot;
-                    var newPage = SelectedMod?.Selection as TerminalPageBase;
-
-                    if (CurrentPage != null && newPage != CurrentPage)
-                        layout.RemoveAt(2); // I'm sure this wont bite me in the ass
-
-                    if (newPage != null && newPage != CurrentPage)
-                        layout.Add(newPage);
-
-                    CurrentPage = newPage;
-
-                    for (int n = 0; n < modList.ModRoots.Count; n++)
-                    {
-                        if (modList.ModRoots[n] != SelectedMod)
-                            modList.ModRoots[n].Element.ClearSelection();
-                    }
                 }
 
                 /// <summary>

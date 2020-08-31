@@ -36,8 +36,8 @@ namespace RichHudFramework
             {
                 private static RichHudTerminal Instance
                 {
-                    get { Init(); return instance; }
-                    set { instance = value; }
+                    get { Init(); return _instance; }
+                    set { _instance = value; }
                 }
 
                 /// <summary>
@@ -50,7 +50,7 @@ namespace RichHudFramework
                 /// </summary>
                 public static IModControlRoot Root => Instance.root;
 
-                private static RichHudTerminal instance;
+                private static RichHudTerminal _instance;
 
                 private readonly ModControlRoot root;
                 private readonly TerminalWindow settingsMenu;
@@ -62,25 +62,72 @@ namespace RichHudFramework
                     MyAPIGateway.Utilities.MessageEntered += MessageHandler;
                 }
 
-                private void MessageHandler(string message, ref bool sendToOthers)
-                {
-                    if (Open)
-                        sendToOthers = false;
-                }
-
+                /// <summary>
+                /// Initialize the Rich HUD Terminal
+                /// </summary>
                 public static void Init()
                 {
-                    if (instance == null)
+                    if (_instance == null)
                     {
-                        instance = new RichHudTerminal();
+                        _instance = new RichHudTerminal();
                         Open = false;
                     }
+                }
+
+                /// <summary>
+                /// Toggles the menu between open and closed
+                /// </summary>
+                public static void ToggleMenu()
+                {
+                    if (_instance == null)
+                        Init();
+
+                    _instance.settingsMenu.ToggleMenu();
+                }
+
+                /// <summary>
+                /// Open the menu if chat is visible
+                /// </summary>
+                public static void OpenMenu()
+                {
+                    if (_instance == null)
+                        Init();
+
+                    _instance.settingsMenu.OpenMenu();
+                }
+
+                /// <summary>
+                /// Close the menu
+                /// </summary>
+                public static void CloseMenu()
+                {
+                    if (_instance == null)
+                        Init();
+
+                    _instance.settingsMenu.CloseMenu();
+                }
+
+                /// <summary>
+                /// Sets the current page to the one given
+                /// </summary>
+                public static void OpenToPage(TerminalPageBase newPage)
+                {
+                    OpenMenu();
+                    _instance.settingsMenu.SetSelection(_instance.root, newPage);
+                }
+
+                /// <summary>
+                /// Sets the current page to the one given
+                /// </summary>
+                public static void SetPage(TerminalPageBase newPage)
+                {
+                    _instance.settingsMenu.SetSelection(_instance.root, newPage);
                 }
 
                 public override void Close()
                 {
                     MyAPIGateway.Utilities.MessageEntered -= MessageHandler;
-                    instance = null;
+                    _instance = null;
                 }
 
                 public static IModControlRoot AddModRoot(string name) =>
@@ -102,8 +149,39 @@ namespace RichHudFramework
                     return new MyTuple<object, HudElementBase>(data, newRoot.Element);
                 }
 
+                private void MessageHandler(string message, ref bool sendToOthers)
+                {
+                    if (Open)
+                        sendToOthers = false;
+                }
+
                 private static object GetOrSetMembers(object data, int memberEnum)
                 {
+                    switch ((TerminalAccessors)memberEnum)
+                    {
+                        case TerminalAccessors.ToggleMenu:
+                            ToggleMenu(); break;
+                        case TerminalAccessors.OpenMenu:
+                            OpenMenu(); break;
+                        case TerminalAccessors.CloseMenu:
+                            CloseMenu(); break;
+                        case TerminalAccessors.OpenToPage:
+                            {
+                                var args = (MyTuple<object, object>)data;
+
+                                OpenMenu();
+                                _instance.settingsMenu.SetSelection(args.Item1 as ModControlRoot, args.Item2 as TerminalPageBase);
+                                break;
+                            }
+                        case TerminalAccessors.SetPage:
+                            {
+                                var args = (MyTuple<object, object>)data;
+
+                                _instance.settingsMenu.SetSelection(args.Item1 as ModControlRoot, args.Item2 as TerminalPageBase);
+                                break;
+                            }
+                    }
+
                     return null;
                 }
 
