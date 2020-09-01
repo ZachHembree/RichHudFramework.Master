@@ -30,7 +30,7 @@ namespace RichHudFramework
 			{
 				public static FontMembers GetFontData()
 				{
-					FontStyleMembers[] styles = new FontStyleMembers[4];
+					FontStyleMembers[] styles = new FontStyleMembers[2];
 					styles[0] = GetMonospace0();
 
 					return new FontMembers("Monospace", 23f, styles);

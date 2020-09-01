@@ -155,7 +155,7 @@ namespace RichHudFramework
 
                             formattedGlyphs[index] = new FormattedGlyph(glyph, format);
                             locData[index] = new GlyphLocData(glyph.material.size * scale, glyphSize);
-                            glyphBoards[index] = glyph.GetQuadBoard(scale, format.Color);
+                            glyphBoards[index] = glyph.GetQuadBoard(scale, format);
                         }
                     }
 
@@ -238,7 +238,7 @@ namespace RichHudFramework
                         chars.Insert(index, ch);
                         formattedGlyphs.Insert(index, new FormattedGlyph(glyph, format));
                         locData.Insert(index, new GlyphLocData(glyph.material.size * scale, glyphSize));
-                        glyphBoards.Insert(index, glyph.GetQuadBoard(scale, format.Color));
+                        glyphBoards.Insert(index, glyph.GetQuadBoard(scale, format));
 
                         TrimExcess();
                     }

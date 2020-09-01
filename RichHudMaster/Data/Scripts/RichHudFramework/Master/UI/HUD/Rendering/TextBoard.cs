@@ -114,7 +114,9 @@ namespace RichHudFramework
                 private int startLine, endLine;
                 private bool updateEvent, offsetsAreStale, lineRangeIsStale;
                 private Vector2 _size, _textSize, _fixedSize, _textOffset;
+
                 private readonly Utils.Stopwatch eventTimer;
+                private readonly List<UnderlineBoard> underlines;
 
                 public TextBoard()
                 {
@@ -126,6 +128,7 @@ namespace RichHudFramework
                     Format = GlyphFormat.White;
                     _fixedSize = new Vector2(100f);
 
+                    underlines = new List<UnderlineBoard>();
                     eventTimer = new Utils.Stopwatch();
                     eventTimer.Start();
                 }
@@ -358,6 +361,13 @@ namespace RichHudFramework
                             }
                         }
                     }
+
+                    for (int n = 0; n < underlines.Count; n++)
+                    {
+                        Vector2 bbPos = offset + underlines[n].offset * _scale;
+                        Vector2 bbSize = underlines[n].size * _scale;
+                        underlines[n].quadBoard.Draw(bbSize, bbPos, ref matrix);
+                    }
                 }
 
                 /// <summary>
@@ -374,12 +384,20 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateOffsets()
                 {
-                    Vector2I range = GetLineRange();
+                    underlines.Clear();
 
+                    Vector2I range = GetLineRange();
                     startLine = range.X;
                     endLine = range.Y;
 
+                    int visRange = endLine - startLine;
+                    underlines.EnsureCapacity(visRange);
+
                     UpdateVisibleRange();
+                    UpdateUnderlines();
+
+                    if (visRange > 9 && underlines.Capacity > 3 * underlines.Count)
+                        underlines.TrimExcess();
 
                     offsetsAreStale = false;
                     lineRangeIsStale = false;
@@ -596,6 +614,59 @@ namespace RichHudFramework
                      left.StyleIndex == right.StyleIndex && left.TextSize == right.TextSize;
 
                 /// <summary>
+                /// Generates underlines for underlined text
+                /// </summary>
+                private void UpdateUnderlines()
+                {
+                    var matFit = new FlatQuad(new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f));
+
+                    for (int ln = startLine; ln <= endLine; ln++)
+                    {
+                        Line line = lines[ln];
+
+                        if (line.Count > 0)
+                        {
+                            GlyphFormat format = line.FormattedGlyphs[0].format;
+                            int startCh = 0;
+
+                            for (int ch = 0; ch < lines[ln].Count; ch++)
+                            {
+                                GlyphFormat nextFormat = null;
+
+                                if (ch != line.Count - 1)
+                                    nextFormat = line.FormattedGlyphs[ch + 1].format;
+
+                                if (format != nextFormat)
+                                {
+                                    if ((format.FontStyle & FontStyles.Underline) > 0)
+                                    {
+                                        GlyphLocData start = line.LocData[startCh], end = line.LocData[ch];
+                                        Vector2 pos = new Vector2
+                                        (
+                                            (start.bbOffset.X + end.bbOffset.X) / 2f,
+                                            end.bbOffset.Y - (end.chSize.Y / 2f - (1f * format.TextSize))
+                                        );
+
+                                        Vector2 size = new Vector2
+                                        (
+                                            (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) / 2f,
+                                            1f * format.TextSize
+                                        );
+
+                                        Vector4 color = QuadBoard.GetQuadBoardColor(format.Color) * .9f;
+                                        var quadBoard = new QuadBoard(Material.Default.TextureID, matFit, color);
+                                        underlines.Add(new UnderlineBoard(size, pos, quadBoard));
+                                    }
+
+                                    startCh = ch;
+                                    format = nextFormat;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /// <summary>
                 /// General purpose method used to allow the API to access various members not included in this type's
                 /// associated tuple.
                 /// </summary>
@@ -672,6 +743,20 @@ namespace RichHudFramework
                         Item5 = new Vec2Prop(() => FixedSize, x => FixedSize = x),
                         Item6 = Draw
                     };
+                }
+
+                private struct UnderlineBoard
+                {
+                    public Vector2 size;
+                    public Vector2 offset;
+                    public QuadBoard quadBoard;
+
+                    public UnderlineBoard(Vector2 size, Vector2 offset, QuadBoard quadBoard)
+                    {
+                        this.size = size;
+                        this.offset = offset;
+                        this.quadBoard = quadBoard;
+                    }
                 }
             }
         }

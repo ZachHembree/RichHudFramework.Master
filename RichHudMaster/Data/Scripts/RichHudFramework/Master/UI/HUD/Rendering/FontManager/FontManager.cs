@@ -194,7 +194,7 @@ namespace RichHudFramework
                 /// Retrieves the font with the given name.
                 /// </summary>
                 public static IFontStyle GetFontStyle(Vector2I index) =>
-                    Instance.fonts[index.X][index.Y];
+                    Instance.fonts[index.X][index.Y & 1];
 
                 /// <summary>
                 /// Retrieves the font style index of the font with the given name and style.
