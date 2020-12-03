@@ -232,7 +232,7 @@ namespace RichHudFramework
             private float _resScale;
             private float _uiBkOpacity;
 
-            private readonly Utils.Stopwatch cacheTimer, listTimer;
+            private readonly Utils.Stopwatch cacheTimer;
             private MatrixD _pixelToWorld;
             private float _screenWidth;
             private float _screenHeight;
@@ -260,9 +260,6 @@ namespace RichHudFramework
 
                 cacheTimer = new Utils.Stopwatch();
                 cacheTimer.Start();
-
-                listTimer = new Utils.Stopwatch();
-                listTimer.Start();
             }
 
             public static void Init()
@@ -369,13 +366,11 @@ namespace RichHudFramework
 
                 _pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;
 
-                if (RefreshDrawList && listTimer.ElapsedMilliseconds > 500)
+                if (RefreshDrawList)
                 {
                     RebuildUpdateLists();
-                    listTimer.Reset();
+                    RefreshDrawList = false;
                 }
-
-                RefreshDrawList = false;
             }
 
             /// <summary>
