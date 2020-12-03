@@ -44,12 +44,11 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<ModControlRoot> ModRoots => modList.ModRoots;
 
-                public override bool Visible => base.Visible && MyAPIGateway.Gui.ChatEntryVisible;
-
                 private readonly ModList modList;
                 private readonly HudChain layout;
                 private readonly TexturedBox topDivider, middleDivider, bottomDivider;
                 private readonly Button closeButton;
+                private readonly LabelBox warningBox;
                 private static readonly Material closeButtonMat = new Material("RichHudCloseButton", new Vector2(32f));
 
                 public TerminalWindow(HudParentBase parent = null) : base(parent)
@@ -106,6 +105,24 @@ namespace RichHudFramework
                         Color = new Color(173, 182, 189),
                     };
 
+                    warningBox = new LabelBox(this)
+                    {
+                        Height = 30f,
+                        AutoResize = false,
+                        ParentAlignment = ParentAlignments.Bottom,
+                        DimAlignment = DimAlignments.Width,
+                        TextPadding = new Vector2(30f, 0f),
+                        Color = new Color(126, 39, 44),
+                        Format = new GlyphFormat(Color.White, textSize: .8f),
+                        Text = "Input disabled. Open chat to enable cursor.",
+                    };
+
+                    var warningBorder = new BorderBox(warningBox)
+                    {
+                        DimAlignment = DimAlignments.Both,
+                        Color = new Color(156, 65, 74)
+                    };
+
                     closeButton.MouseInput.OnLeftClick += (sender, args) => CloseMenu();
                     SharedBinds.Escape.OnNewPress += CloseMenu;
                     MasterBinds.ToggleTerminal.OnNewPress += ToggleMenu;
@@ -142,7 +159,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Toggles menu visiblity, but only if chat is open.
+                /// Toggles menu visiblity
                 /// </summary>
                 public void ToggleMenu()
                 {
@@ -157,11 +174,10 @@ namespace RichHudFramework
                 /// </summary>
                 public void OpenMenu()
                 {
-                    if (!Visible && MyAPIGateway.Gui.ChatEntryVisible)
+                    if (!Visible)
                     {
                         Visible = true;
                         GetFocus();
-                        HudMain.EnableCursor = true;
                     }
                 }
 
@@ -185,7 +201,7 @@ namespace RichHudFramework
                     SelectedMod = modRoot;
 
                     if (CurrentPage != null && newPage != CurrentPage)
-                        layout.RemoveAt(2); // I'm sure this wont bite me in the ass
+                        layout.Remove(CurrentPage);
 
                     if (newPage != null && newPage != CurrentPage)
                         layout.Add(newPage);
@@ -221,6 +237,17 @@ namespace RichHudFramework
 
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
+
+                    if (MyAPIGateway.Gui.ChatEntryVisible)
+                    {
+                        warningBox.Visible = false;
+                        HudMain.EnableCursor = true;
+                    }
+                    else
+                    {
+                        warningBox.Visible = true;
+                        HudMain.EnableCursor = false;
+                    }
                 }
 
                 /// <summary>
