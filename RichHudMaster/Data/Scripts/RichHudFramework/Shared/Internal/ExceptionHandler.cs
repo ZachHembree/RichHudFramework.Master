@@ -6,6 +6,7 @@ using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.Game;
+using VRage.Utils;
 
 namespace RichHudFramework.Internal
 {
@@ -46,6 +47,21 @@ namespace RichHudFramework.Internal
         /// </summary>
         public static bool Unloading { get; private set; }
 
+        /// <summary>
+        /// If true, the mod is currently running on a client.
+        /// </summary>
+        public static bool IsClient { get; private set; }
+
+        /// <summary>
+        /// If true, the mod is currently running on a server.
+        /// </summary>
+        public static bool IsServer { get; private set; }
+
+        /// <summary>
+        /// If true, the mod is currently running on a dedicated server.
+        /// </summary>
+        public static bool IsDedicated { get; private set; }
+
         public static bool ClientsPaused { get; private set; }
 
         private static ExceptionHandler instance;
@@ -72,6 +88,13 @@ namespace RichHudFramework.Internal
             exceptionMessages = new List<string>();
             errorTimer = new Utils.Stopwatch();
             clients = new List<ModBase>();
+        }
+
+        public override void LoadData()
+        {
+            IsDedicated = MyAPIGateway.Utilities.IsDedicated;
+            IsServer = MyAPIGateway.Session.OnlineMode == MyOnlineModeEnum.OFFLINE || MyAPIGateway.Multiplayer.IsServer || IsDedicated;
+            IsClient = !IsDedicated;
         }
 
         /// <summary>
@@ -168,7 +191,7 @@ namespace RichHudFramework.Internal
                 LogIO.TryWriteToLog(ModName + " encountered an unhandled exception.\n" + exceptionText + '\n');
                 exceptionMessages.Clear();
 
-                if (ModBase.IsClient && PromptForReload)
+                if (IsClient && PromptForReload)
                 {
                     if (RecoveryAttempts < RecoveryLimit)
                     {
@@ -280,11 +303,23 @@ namespace RichHudFramework.Internal
         /// </summary>
         public static void SendChatMessage(string message)
         {
-            if (!ModBase.IsDedicated)
+            if (!IsDedicated)
             {
                 try
                 {
                     MyAPIGateway.Utilities.ShowMessage(ModName, message);
+                }
+                catch { }
+            }
+        }
+
+        public static void WriteLineAndConsole(string message)
+        {
+            if (!Unloading)
+            {
+                try
+                {
+                    MyLog.Default.WriteLineAndConsole($"[{ModName}] {message}");
                 }
                 catch { }
             }
