@@ -1,4 +1,5 @@
 ﻿using RichHudFramework.Server;
+using RichHudFramework.Internal;
 using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
@@ -200,25 +201,28 @@ namespace RichHudFramework
                 {
                     SelectedMod = modRoot;
 
-                    if (CurrentPage != null && newPage != CurrentPage)
-                        layout.Remove(CurrentPage);
-
-                    if (newPage != null && newPage != CurrentPage)
-                        layout.Add(newPage);
-
-                    CurrentPage = newPage;
-
-                    for (int n = 0; n < modList.ModRoots.Count; n++)
+                    if (CurrentPage != newPage)
                     {
-                        if (modList.ModRoots[n] != SelectedMod)
-                            modList.ModRoots[n].Element.ClearSelection();
+                        if (CurrentPage != null)
+                            layout.Remove(CurrentPage);
+
+                        if (newPage != null)
+                            layout.Add(newPage);
+
+                        for (int n = 0; n < modList.ModRoots.Count; n++)
+                        {
+                            if (modList.ModRoots[n] != SelectedMod)
+                                modList.ModRoots[n].Element.ClearSelection();
+                        }
+
+                        CurrentPage = newPage;
                     }
                 }
 
                 private void UpdateSelection(object sender, EventArgs args)
                 {
                     var modRoot = sender as ModControlRoot;
-                    var newPage = SelectedMod?.Selection as TerminalPageBase;
+                    var newPage = modRoot?.Selection as TerminalPageBase;
 
                     SetSelection(modRoot, newPage);
                 }
