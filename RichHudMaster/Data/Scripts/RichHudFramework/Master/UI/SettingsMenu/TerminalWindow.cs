@@ -33,12 +33,12 @@ namespace RichHudFramework
                 /// <summary>
                 /// Currently selected mod root
                 /// </summary>
-                public ModControlRoot SelectedMod { get; private set; }
+                public ModControlRoot SelectedMod => modList.SelectedMod;
 
                 /// <summary>
                 /// Currently selected control page.
                 /// </summary>
-                public TerminalPageBase CurrentPage { get; private set; }
+                public TerminalPageBase CurrentPage => modList.CurrentPage;
 
                 /// <summary>
                 /// Read only collection of mod roots registered with the terminal
@@ -50,6 +50,7 @@ namespace RichHudFramework
                 private readonly TexturedBox topDivider, middleDivider, bottomDivider;
                 private readonly Button closeButton;
                 private readonly LabelBox warningBox;
+                private TerminalPageBase lastPage;
                 private static readonly Material closeButtonMat = new Material("RichHudCloseButton", new Vector2(32f));
 
                 public TerminalWindow(HudParentBase parent = null) : base(parent)
@@ -124,6 +125,7 @@ namespace RichHudFramework
                         Color = new Color(156, 65, 74)
                     };
 
+                    modList.OnSelectionChanged += HandleSelectionChange;
                     closeButton.MouseInput.OnLeftClick += (sender, args) => CloseMenu();
                     SharedBinds.Escape.OnNewPress += CloseMenu;
                     MasterBinds.ToggleTerminal.OnNewPress += ToggleMenu;
@@ -149,15 +151,14 @@ namespace RichHudFramework
                 /// <summary>
                 /// Creates and returns a new control root with the name given.
                 /// </summary>
-                public ModControlRoot AddModRoot(string clientName)
-                {
-                    ModControlRoot modSettings = new ModControlRoot() { Name = clientName };
+                public ModControlRoot AddModRoot(string clientName) =>
+                    modList.AddModRoot(clientName);
 
-                    modList.Add(modSettings);
-                    modSettings.OnSelectionChanged += UpdateSelection;
-
-                    return modSettings;
-                }
+                /// <summary>
+                /// Opens the given terminal page
+                /// </summary>
+                public void SetSelection(ModControlRoot modRoot, TerminalPageBase newPage) =>
+                    modList.SetSelection(modRoot, newPage);
 
                 /// <summary>
                 /// Toggles menu visiblity
@@ -194,39 +195,6 @@ namespace RichHudFramework
                     }
                 }
 
-                /// <summary>
-                /// Opens the given terminal page
-                /// </summary>
-                public void SetSelection(ModControlRoot modRoot, TerminalPageBase newPage)
-                {
-                    SelectedMod = modRoot;
-
-                    if (CurrentPage != newPage)
-                    {
-                        if (CurrentPage != null)
-                            layout.Remove(CurrentPage);
-
-                        if (newPage != null)
-                            layout.Add(newPage);
-
-                        for (int n = 0; n < modList.ModRoots.Count; n++)
-                        {
-                            if (modList.ModRoots[n] != SelectedMod)
-                                modList.ModRoots[n].Element.ClearSelection();
-                        }
-
-                        CurrentPage = newPage;
-                    }
-                }
-
-                private void UpdateSelection(object sender, EventArgs args)
-                {
-                    var modRoot = sender as ModControlRoot;
-                    var newPage = modRoot?.Selection as TerminalPageBase;
-
-                    SetSelection(modRoot, newPage);
-                }
-
                 protected override void Layout()
                 {
                     Scale = HudMain.ResScale;
@@ -254,11 +222,42 @@ namespace RichHudFramework
                     }
                 }
 
+                private void HandleSelectionChange()
+                {
+                    if (lastPage != null)
+                        layout.Remove(lastPage);
+
+                    if (CurrentPage != null)
+                        layout.Add(CurrentPage);
+
+                    lastPage = CurrentPage;
+                }
+
                 /// <summary>
                 /// Scrollable list of mod control roots.
                 /// </summary>
                 private class ModList : HudElementBase
                 {
+                    /// <summary>
+                    /// Invoked whenever the page selection changes
+                    /// </summary>
+                    public event Action OnSelectionChanged;
+
+                    /// <summary>
+                    /// Currently selected mod root
+                    /// </summary>
+                    public ModControlRoot SelectedMod { get; private set; }
+
+                    /// <summary>
+                    /// Currently selected control page.
+                    /// </summary>
+                    public TerminalPageBase CurrentPage { get; private set; }
+
+                    /// <summary>
+                    /// Returns a read only list of mod root containers registered to the list
+                    /// </summary>
+                    public IReadOnlyList<ModControlRoot> ModRoots => scrollBox.ChainEntries;
+
                     public override float Width
                     {
                         get { return scrollBox.Width; }
@@ -275,10 +274,9 @@ namespace RichHudFramework
                         set { scrollBox.Height = value - header.Height; }
                     }
 
-                    public IReadOnlyList<ModControlRoot> ModRoots => scrollBox.ChainEntries;
-
                     private readonly LabelBox header;
                     private readonly ScrollBox<ModControlRoot, ModControlRootTreeBox> scrollBox;
+                    private readonly EventHandler SelectionHandler;
 
                     public ModList(HudParentBase parent = null) : base(parent)
                     {
@@ -315,14 +313,49 @@ namespace RichHudFramework
                             Thickness = 1f,
                             Color = new Color(53, 66, 75),
                         };
+
+                        SelectionHandler = UpdateSelection;
+                    }
+
+                    private void UpdateSelection(object sender, EventArgs args)
+                    {
+                        var modRoot = sender as ModControlRoot;
+                        var newPage = modRoot?.Selection as TerminalPageBase;
+
+                        SetSelection(modRoot, newPage);
                     }
 
                     /// <summary>
-                    /// Adds a new mod control root to the list.
+                    /// Creates and returns a new control root with the name given.
                     /// </summary>
-                    public void Add(ModControlRoot modSettings)
+                    public ModControlRoot AddModRoot(string clientName)
                     {
+                        ModControlRoot modSettings = new ModControlRoot() { Name = clientName };
+
                         scrollBox.Add(modSettings);
+                        modSettings.OnSelectionChanged += SelectionHandler;
+
+                        return modSettings;
+                    }
+
+                    /// <summary>
+                    /// Opens the given terminal page
+                    /// </summary>
+                    public void SetSelection(ModControlRoot modRoot, TerminalPageBase newPage)
+                    {
+                        SelectedMod = modRoot;
+
+                        if (CurrentPage != newPage)
+                        {
+                            for (int n = 0; n < scrollBox.ChainEntries.Count; n++)
+                            {
+                                if (scrollBox.ChainEntries[n] != SelectedMod)
+                                    scrollBox.ChainEntries[n].Element.ClearSelection();
+                            }
+
+                            CurrentPage = newPage;
+                            OnSelectionChanged?.Invoke();
+                        }
                     }
 
                     protected override void Layout()
