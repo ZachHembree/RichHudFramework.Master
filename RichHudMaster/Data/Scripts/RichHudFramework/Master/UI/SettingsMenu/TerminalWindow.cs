@@ -179,6 +179,7 @@ namespace RichHudFramework
                     if (!Visible)
                     {
                         Visible = true;
+                        HudMain.EnableCursor = true;
                         GetFocus();
                     }
                 }
@@ -211,15 +212,9 @@ namespace RichHudFramework
                     header.Color = BodyColor;
 
                     if (MyAPIGateway.Gui.ChatEntryVisible)
-                    {
                         warningBox.Visible = false;
-                        HudMain.EnableCursor = true;
-                    }
                     else
-                    {
                         warningBox.Visible = true;
-                        HudMain.EnableCursor = false;
-                    }
                 }
 
                 private void HandleSelectionChange()
