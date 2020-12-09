@@ -159,7 +159,7 @@ namespace RichHudFramework
                         AutoResize = false,
                         Format = GlyphFormat.White,
                         VertCenterText = false,
-                        EnableEditing = true,
+                        EnableEditing = false,
                         EnableHighlighting = true,
                     };
 
@@ -224,12 +224,13 @@ namespace RichHudFramework
                         {
                             Vector2I lineRange = textBoard.VisibleLineRange;
 
-                            if (SharedBinds.MousewheelUp.IsPressed)
+                            if (SharedBinds.MousewheelUp.IsPressed || SharedBinds.UpArrow.IsNewPressed || SharedBinds.UpArrow.IsPressedAndHeld)
                                 textBoard.MoveToChar(new Vector2I(lineRange.X - 1, 0));
-                            else if (SharedBinds.MousewheelDown.IsPressed)
+                            else if (SharedBinds.MousewheelDown.IsPressed || SharedBinds.DownArrow.IsNewPressed || SharedBinds.DownArrow.IsPressedAndHeld)
                                 textBoard.MoveToChar(new Vector2I(lineRange.Y + 1, 0));
                             else if (SharedBinds.PageUp.IsNewPressed || SharedBinds.PageUp.IsPressedAndHeld)
                             {
+                                // A hacky, somewhat inefficient solution, but it works well
                                 textBoard.MoveToChar(new Vector2I(0, 0));
                                 textBoard.MoveToChar(new Vector2I(lineRange.X - 1, 0));
                             }

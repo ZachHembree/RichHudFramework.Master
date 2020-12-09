@@ -136,11 +136,8 @@ namespace RichHudFramework
                     Padding = new Vector2(80f, 40f);
                     MinimumSize = new Vector2(1024f, 500f);
 
-                    Size = new Vector2(1320, 850f);
+                    Size = new Vector2(1024f, 850f);
                     Vector2 screenSize = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight);
-
-                    if (screenSize.X < 1920)
-                        Width = MinimumSize.X;
 
                     if (screenSize.Y < 1080 || HudMain.AspectRatio < (16f/9f))
                         Height = MinimumSize.Y;
