@@ -89,6 +89,15 @@ namespace RichHudFramework
                     Pages.GetEnumerator();
 
                 /// <summary>
+                /// Sets the selection to the given page
+                /// </summary>
+                public void SetSelection(TerminalPageBase page)
+                {
+                    treeBox.SetSelection(page);
+                    treeBox.ListOpen = true;
+                }
+
+                /// <summary>
                 /// Adds the given <see cref="TerminalPageBase"/> to the object.
                 /// </summary>
                 public void Add(TerminalPageBase page)

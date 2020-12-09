@@ -346,6 +346,7 @@ namespace RichHudFramework
                             }
 
                             CurrentPage = newPage;
+                            SelectedMod.SetSelection(newPage);
                             OnSelectionChanged?.Invoke();
                         }
                     }
