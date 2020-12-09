@@ -68,11 +68,20 @@ namespace RichHudFramework.UI
         /// </summary>
         public bool CanDrag { get; set; }
 
+        /// <summary>
+        /// Returns true if the window has focus and is accepting input
+        /// </summary>
         public bool WindowActive { get; protected set; }
 
-        public override bool IsMousedOver => inputMain.IsMousedOver;
+        /// <summary>
+        /// Returns true if the cursor is over the window
+        /// </summary>
+        public override bool IsMousedOver => resizeInput.IsMousedOver;
 
-        public IMouseInput MouseInput => inputMain;
+        /// <summary>
+        /// Mouse input element for the window
+        /// </summary>
+        public IMouseInput MouseInput => resizeInput;
 
         /// <summary>
         /// Window header element.
@@ -89,7 +98,7 @@ namespace RichHudFramework.UI
         /// </summary>
         public readonly BorderBox border;
 
-        private readonly MouseInputElement resizeInput, inputMain;
+        private readonly MouseInputElement inputInner, resizeInput;
         private readonly TexturedBox bodyBg;
 
         protected readonly Action<byte> LoseFocusCallback;
@@ -120,7 +129,7 @@ namespace RichHudFramework.UI
             bodyBg = new TexturedBox(body)
             {
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
-                ZOffset = -1
+                ZOffset = -2
             };
 
             border = new BorderBox(this)
@@ -132,14 +141,13 @@ namespace RichHudFramework.UI
 
             resizeInput = new MouseInputElement(this)
             {
-                ZOffset = 1,
+                ZOffset = sbyte.MaxValue,
                 Padding = new Vector2(16f),
                 DimAlignment = DimAlignments.Both,
             };
 
-            inputMain = new MouseInputElement(resizeInput)
+            inputInner = new MouseInputElement(resizeInput)
             {
-                ZOffset = sbyte.MaxValue,
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
             };
 
@@ -213,7 +221,7 @@ namespace RichHudFramework.UI
                     GetFocus();
             }
 
-            if (AllowResizing && resizeInput.IsNewLeftClicked && !inputMain.IsMousedOver)
+            if (AllowResizing && resizeInput.IsNewLeftClicked && !inputInner.IsMousedOver)
             {
                 Vector2 pos = Origin + Offset;
                 canResize = true;
@@ -235,34 +243,25 @@ namespace RichHudFramework.UI
             {
                 if (!SharedBinds.LeftButton.IsPressed)
                 {
-                    HeaderReleased();
-                    ResizeStopped();
+                    canMoveWindow = false;
+                    canResize = false;
                 }
             }
         }
 
+        /// <summary>
+        /// Brings the window into the foreground
+        /// </summary>
         public virtual void GetFocus()
         {
             zOffsetInner = HudMain.GetFocusOffset(LoseFocusCallback);
             WindowActive = true;
-            inputMain.ShareCursor = true;
         }
 
         protected virtual void LoseFocus(byte newOffset)
         {
             zOffsetInner = newOffset;
             WindowActive = false;
-            inputMain.ShareCursor = false;
-        }
-
-        protected virtual void HeaderReleased()
-        {
-            canMoveWindow = false;
-        }
-
-        protected virtual void ResizeStopped()
-        {
-            canResize = false;
         }
     }
 }
