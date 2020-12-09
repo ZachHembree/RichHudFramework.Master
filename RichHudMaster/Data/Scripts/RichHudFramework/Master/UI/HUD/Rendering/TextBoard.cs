@@ -117,7 +117,6 @@ namespace RichHudFramework
 
                 private readonly Utils.Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
-                private QuadBoard underlineBoard;
 
                 public TextBoard()
                 {
@@ -130,10 +129,6 @@ namespace RichHudFramework
                     _fixedSize = new Vector2(100f);
 
                     underlines = new List<UnderlineBoard>();
-
-                    var matFit = new FlatQuad(new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f));
-                    underlineBoard = new QuadBoard(Material.Default.TextureID, matFit, default(Color));
-
                     eventTimer = new Utils.Stopwatch();
                     eventTimer.Start();
                 }
@@ -331,6 +326,8 @@ namespace RichHudFramework
                             }
                         }
                     }
+
+                    QuadBoard underlineBoard = QuadBoard.Default;
 
                     // Draw underlines
                     for (int n = 0; n < underlines.Count; n++)

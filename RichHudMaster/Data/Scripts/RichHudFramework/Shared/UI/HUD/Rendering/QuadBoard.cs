@@ -19,6 +19,8 @@ namespace RichHudFramework
             /// </summary>
             public struct QuadBoard
             {
+                public static readonly QuadBoard Default;
+
                 /// <summary>
                 /// Material ID used by the billboard.
                 /// </summary>
@@ -38,6 +40,12 @@ namespace RichHudFramework
                 /// Determines the extent to which the quad will be rhombused
                 /// </summary>
                 public float skewRatio;
+
+                static QuadBoard()
+                {
+                    var matFit = new FlatQuad(new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f));
+                    Default = new QuadBoard(Material.Default.TextureID, matFit, default(Color));
+                }
 
                 public QuadBoard(MyStringId textureID, FlatQuad matFit, Vector4 bbColor, float skewRatio = 0f)
                 {
