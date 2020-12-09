@@ -63,6 +63,11 @@ namespace RichHudFramework
                     public Vector2 UnscaledSize => _size;
 
                     /// <summary>
+                    /// Starting vertical position of the line starting from the center of the text element, sans text offset.
+                    /// </summary>
+                    public float VerticalOffset => _verticalOffset * builder.Scale;
+
+                    /// <summary>
                     /// Read-only list of the characters in the line.
                     /// </summary>
                     public readonly IReadOnlyList<char> Chars;
@@ -81,6 +86,8 @@ namespace RichHudFramework
                     /// Read-only list of the QuadBoards for each character in the line.
                     /// </summary>
                     public readonly IReadOnlyList<QuadBoard> GlyphBoards;
+
+                    public float _verticalOffset;
 
                     private readonly List<char> chars;
                     private readonly List<FormattedGlyph> formattedGlyphs;

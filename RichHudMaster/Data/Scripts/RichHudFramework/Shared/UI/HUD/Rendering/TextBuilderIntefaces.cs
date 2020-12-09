@@ -73,7 +73,7 @@ namespace RichHudFramework
 
                 /// <summary>
                 /// Position of the glyph relative to the center of its parent text element. Does not include the 
-                /// parent's TextOffset.
+                /// parent's TextOffset. Will not be updated if outside its TextBoard's visible line range.
                 /// </summary>
                 Vector2 Offset { get; }
             }
@@ -93,7 +93,15 @@ namespace RichHudFramework
 
             public interface ILine : IIndexedCollection<IRichChar>
             {
+                /// <summary>
+                /// Size of the line as rendered
+                /// </summary>
                 Vector2 Size { get; }
+
+                /// <summary>
+                /// Starting vertical position of the line starting from the center of the text element, sans text offset.
+                /// </summary>
+                float VerticalOffset { get; }
             }
 
             public enum TextBuilderAccessors : int

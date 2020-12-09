@@ -117,6 +117,7 @@ namespace RichHudFramework
 
                 private readonly Utils.Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
+                private QuadBoard underlineBoard;
 
                 public TextBoard()
                 {
@@ -129,6 +130,10 @@ namespace RichHudFramework
                     _fixedSize = new Vector2(100f);
 
                     underlines = new List<UnderlineBoard>();
+
+                    var matFit = new FlatQuad(new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f));
+                    underlineBoard = new QuadBoard(Material.Default.TextureID, matFit, default(Color));
+
                     eventTimer = new Utils.Stopwatch();
                     eventTimer.Start();
                 }
@@ -161,47 +166,21 @@ namespace RichHudFramework
                 /// <summary>
                 /// Finds the first line visible in the range that includes the given line index.
                 /// </summary>
-                private void UpdateVerticalOffset(int line)
+                private void UpdateVerticalOffset(int index)
                 {
-                    if (line > endLine)
-                        UpdateLineOffsetFromEnd(line);
-                    else if (line < startLine)
-                        UpdateLineOffsetFromStart(line);
-                }
+                    Line line = lines[index];
 
-                /// <summary>
-                /// Calculates the vertical text offset given the index of the last visible line.
-                /// </summary>
-                private void UpdateLineOffsetFromStart(int start)
-                {
-                    float dist = 0f;
-
-                    for (int line = 0; line < start; line++)
+                    if (index > endLine) // Scroll down
                     {
-                        dist += lines[line].UnscaledSize.Y;
+                        _textOffset.Y = -line._verticalOffset;
+                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y / 2f : _fixedSize.Y / 2f;
+                        _textOffset.Y -= (_fixedSize.Y - line.UnscaledSize.Y);
                     }
-
-                    _textOffset.Y = dist;
-                }
-
-                /// <summary>
-                /// Calculates the vertical text offset given the index of the last visible line.
-                /// </summary>
-                private void UpdateLineOffsetFromEnd(int end)
-                {
-                    float height = 0f, bottom = 0f;
-
-                    for (int line = end; line >= 0; line--)
+                    else if (index < startLine) // Scroll up
                     {
-                        if (height <= (_fixedSize.Y - lines[line].UnscaledSize.Y))
-                        {
-                            height += lines[line].UnscaledSize.Y;
-                        }
-
-                        bottom += lines[line].UnscaledSize.Y;
+                        _textOffset.Y = -line._verticalOffset;
+                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y / 2f : _fixedSize.Y / 2f;
                     }
-
-                    _textOffset.Y = bottom - height;
                 }
 
                 /// <summary>
@@ -238,7 +217,9 @@ namespace RichHudFramework
                 {
                     int line = 0, ch = 0;
                     charOffset /= _scale;
-                   
+                    charOffset = Vector2.Clamp(charOffset, -_size / 2f + 4f, _size / 2f - 4f);
+                    charOffset -= _textOffset;
+
                     if (lines.Count > 0)
                     {
                         line = GetLineAt(charOffset.Y);
@@ -253,26 +234,15 @@ namespace RichHudFramework
                 /// </summary>
                 private int GetLineAt(float offset)
                 {
-                    int line = startLine;
-                    float height;
-                    offset -= _textOffset.Y;
-
-                    if (VertCenterText)
-                        height = _textSize.Y / 2f;
-                    else
-                        height = _size.Y / 2f;
-
-                    for (int n = 0; n <= endLine; n++)
+                    for (int line = startLine; line <= endLine; line++)
                     {
-                        line = n;
+                        float height = lines[line]._verticalOffset;
 
-                        if (offset <= height && offset > (height - lines[n].UnscaledSize.Y))
-                            break;
-
-                        height -= lines[n].UnscaledSize.Y;
+                        if (offset <= height && offset > (height - lines[line].UnscaledSize.Y))
+                            return line;
                     }
 
-                    return line;
+                    return startLine;
                 }
 
                 /// <summary>
@@ -281,7 +251,6 @@ namespace RichHudFramework
                 private int GetCharAt(int ln, float offset)
                 {
                     float last = 0f;
-                    offset -= _textOffset.X;
 
                     for (int ch = 0; ch < lines[ln].Count; ch++)
                     {
@@ -340,6 +309,7 @@ namespace RichHudFramework
 
                     float min = -_size.X / 2f - 2f, max = -min;
 
+                    // Draw glyphs
                     for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
                     {
                         Line line = lines[ln];
@@ -362,11 +332,14 @@ namespace RichHudFramework
                         }
                     }
 
+                    // Draw underlines
                     for (int n = 0; n < underlines.Count; n++)
                     {
                         Vector2 bbPos = offset + underlines[n].offset * _scale;
                         Vector2 bbSize = underlines[n].size * _scale;
-                        underlines[n].quadBoard.Draw(bbSize, bbPos, ref matrix);
+                        underlineBoard.bbColor = underlines[n].color;
+
+                        underlineBoard.Draw(bbSize, bbPos, ref matrix);
                     }
                 }
 
@@ -436,23 +409,43 @@ namespace RichHudFramework
 
                     if (lines.Count > 0)
                     {
-                        float height;
-
-                        if (VertCenterText)
-                            height = _textSize.Y / 2f;
-                        else
-                            height = _size.Y / 2f;
-
-                        for (int line = 0; line <= endLine; line++)
-                        {
-                            if (line >= startLine && lines[line].Count > 0)
-                            {
-                                UpdateLineOffsets(line, height);
-                            }
-
-                            height -= lines[line].UnscaledSize.Y;
-                        }
+                        for (int line = startLine; line <= endLine; line++)
+                            UpdateLineOffsets(line, lines[line]._verticalOffset);
                     }
+                }
+
+                /// <summary>
+                /// Calculates the total size of the text, both visible and not.
+                /// </summary>
+                private Vector2 GetTextSize()
+                {
+                    Vector2 tSize = new Vector2();
+
+                    if (lines.Count > 0)
+                    {
+                        Line lastLine = lines[lines.Count - 1];
+                        int count = lines.Count;
+
+                        if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
+                            count--;
+
+                        for (int line = 0; line < count; line++)
+                        {
+                            lines[line]._verticalOffset = -tSize.Y;
+
+                            if (lines[line].UnscaledSize.X > tSize.X)
+                                tSize.X = lines[line].UnscaledSize.X;
+
+                            tSize.Y += lines[line].UnscaledSize.Y;
+                        }
+
+                        float vAlign = (VertCenterText || AutoResize) ? tSize.Y / 2f : _fixedSize.Y / 2f;
+
+                        for (int line = 0; line < count; line++)
+                            lines[line]._verticalOffset += vAlign;
+                    }
+
+                    return tSize;
                 }
 
                 /// <summary>
@@ -493,33 +486,6 @@ namespace RichHudFramework
                     }
                     else
                         return new Vector2I(0, lines.Count - 1);
-                }
-
-                /// <summary>
-                /// Calculates the total size of the text, both visible and not.
-                /// </summary>
-                private Vector2 GetTextSize()
-                {
-                    float width = 0f, height = 0f;
-
-                    if (lines.Count > 0)
-                    {
-                        Line lastLine = lines[lines.Count - 1];
-                        int count = lines.Count;
-
-                        if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
-                            count--;
-
-                        for (int line = 0; line < count; line++)
-                        {
-                            if (lines[line].UnscaledSize.X > width)
-                                width = lines[line].UnscaledSize.X;
-
-                            height += lines[line].UnscaledSize.Y;
-                        }
-                    }
-
-                    return new Vector2(width, height);
                 }
 
                 /// <summary>
@@ -575,7 +541,7 @@ namespace RichHudFramework
                         }
                     }
 
-                    return baseline.Round();
+                    return baseline;
                 }
 
                 /// <summary>
@@ -618,8 +584,6 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateUnderlines()
                 {
-                    var matFit = new FlatQuad(new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f));
-
                     for (int ln = startLine; ln <= endLine; ln++)
                     {
                         Line line = lines[ln];
@@ -654,8 +618,7 @@ namespace RichHudFramework
                                         );
 
                                         Vector4 color = QuadBoard.GetQuadBoardColor(format.Color) * .9f;
-                                        var quadBoard = new QuadBoard(Material.Default.TextureID, matFit, color);
-                                        underlines.Add(new UnderlineBoard(size, pos, quadBoard));
+                                        underlines.Add(new UnderlineBoard(size, pos, color));
                                     }
 
                                     startCh = ch;
@@ -749,13 +712,13 @@ namespace RichHudFramework
                 {
                     public Vector2 size;
                     public Vector2 offset;
-                    public QuadBoard quadBoard;
+                    public Vector4 color;
 
-                    public UnderlineBoard(Vector2 size, Vector2 offset, QuadBoard quadBoard)
+                    public UnderlineBoard(Vector2 size, Vector2 offset, Vector4 color)
                     {
                         this.size = size;
                         this.offset = offset;
-                        this.quadBoard = quadBoard;
+                        this.color = color;
                     }
                 }
             }
