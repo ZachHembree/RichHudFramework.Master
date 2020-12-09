@@ -16,7 +16,12 @@ namespace RichHudFramework
                 /// <summary>
                 /// out: Vector2
                 /// </summary>
-                Size = 2
+                Size = 2,
+
+                /// <summary>
+                /// out: float
+                /// </summary>
+                VerticalOffset = 3,
             }
 
             public interface ILine : IIndexedCollection<IRichChar>

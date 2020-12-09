@@ -178,6 +178,8 @@ namespace RichHudFramework
                             return lines[index].Count;
                         case LineAccessors.Size:
                             return lines[index].Size;
+                        case LineAccessors.VerticalOffset:
+                            return lines[index].VerticalOffset;
                     }
 
                     return null;
