@@ -141,6 +141,9 @@ namespace RichHudFramework
                 {
                     if (!AutoResize)
                     {
+                        index.X = MathHelper.Clamp(index.X, 0, lines.Count - 1);
+                        index.Y = MathHelper.Clamp(index.Y, 0, lines[index.X].Count - 1);
+
                         if (index.X < startLine || index.X > endLine)
                         {
                             if (BuilderMode != TextBuilderModes.Unlined)
