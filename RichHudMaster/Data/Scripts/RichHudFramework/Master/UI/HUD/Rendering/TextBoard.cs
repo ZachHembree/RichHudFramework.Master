@@ -410,7 +410,10 @@ namespace RichHudFramework
                     if (lines.Count > 0)
                     {
                         for (int line = startLine; line <= endLine; line++)
-                            UpdateLineOffsets(line, lines[line]._verticalOffset);
+                        {   
+                            if (lines[line].Count > 0)
+                                UpdateLineOffsets(line, lines[line]._verticalOffset);
+                        }
                     }
                 }
 
