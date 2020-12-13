@@ -114,13 +114,13 @@ namespace RichHudFramework
                     switch ((BindClientAccessors)memberEnum)
                     {
                         case BindClientAccessors.GetOrCreateGroup:
-                            return GetOrCreateGroup(data as string).Index;
+                            return GetOrCreateGroup(data as string)?.Index ?? -1;
                         case BindClientAccessors.GetBindGroup:
-                            return GetBindGroup(data as string).Index;
+                            return GetBindGroup(data as string)?.Index ?? -1;
                         case BindClientAccessors.GetComboIndices:
                             return BindManager.GetComboIndices(data as IReadOnlyList<string>);
                         case BindClientAccessors.GetControlByName:
-                            return BindManager.GetControl(data as string).Index;
+                            return BindManager.GetControl(data as string)?.Index ?? -1;
                         case BindClientAccessors.ClearBindGroups:
                             ClearBindGroups(); break;
                         case BindClientAccessors.Unload:
@@ -139,7 +139,7 @@ namespace RichHudFramework
                         case BindGroupAccessors.Name:
                             return group.Name;
                         case BindGroupAccessors.GetBindFromName:
-                            return new Vector2I(group.Index, group.GetBind(data as string).Index);
+                            return new Vector2I(group.Index, group.GetBind(data as string)?.Index ?? -1);
                         case BindGroupAccessors.DoesBindExist:
                             return group.DoesBindExist(data as string);
                         case BindGroupAccessors.RegisterBindNames:
