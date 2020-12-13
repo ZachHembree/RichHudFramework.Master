@@ -180,6 +180,8 @@ namespace RichHudFramework
                                 _instance.settingsMenu.SetSelection(args.Item1 as ModControlRoot, args.Item2 as TerminalPageBase);
                                 break;
                             }
+                        case TerminalAccessors.GetMenuOpen:
+                            return Open;
                     }
 
                     return null;
