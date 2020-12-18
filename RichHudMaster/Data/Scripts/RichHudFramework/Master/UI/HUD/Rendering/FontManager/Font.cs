@@ -150,7 +150,7 @@ namespace RichHudFramework
                             for (int n = 0; n < kernData.Length; n++)
                                 kerningPairs.Add(kernData[n].Key, kernData[n].Value);
 
-                            styles[style] = new FontStyle(this, (FontStyles)style, height, baseLine, glyphs, kerningPairs);
+                            styles[style] = new FontStyle(this, height, baseLine, glyphs, kerningPairs);
                             return true;
                         }
                         else
