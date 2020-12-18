@@ -92,7 +92,6 @@ namespace RichHudFramework.UI.Server
             public override float Height
             {
                 get { return hudChain.Height; }
-                set { dropdown.Height = value - name.Height - Padding.Y; }
             }
 
             public override Vector2 Padding
@@ -119,13 +118,6 @@ namespace RichHudFramework.UI.Server
                 {
                     Format = TerminalFormatting.ControlFormat,
                 };
-
-                /*border = new BorderBox(dropdown)
-                {
-                    Color = RichHudTerminal.BorderColor,
-                    Thickness = 1f,
-                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
-                };*/
 
                 hudChain = new HudChain(true, this)
                 {

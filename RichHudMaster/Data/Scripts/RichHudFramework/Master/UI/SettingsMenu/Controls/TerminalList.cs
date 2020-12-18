@@ -94,7 +94,6 @@ namespace RichHudFramework.UI.Server
             public override float Height
             {
                 get { return hudChain.Height; }
-                set { listBox.Height = value - name.Height - Padding.Y; }
             }
 
             public override Vector2 Padding

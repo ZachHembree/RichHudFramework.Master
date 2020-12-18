@@ -135,7 +135,7 @@ namespace RichHudFramework
                     {
                         DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                         SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                        Spacing = 20f,
+                        Spacing = 12f,
                     };
                     
                     Padding = new Vector2(16f);
