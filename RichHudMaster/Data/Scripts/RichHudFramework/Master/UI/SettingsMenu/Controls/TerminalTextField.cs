@@ -18,15 +18,15 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// The name of the control as it appears in the terminal.
         /// </summary>
-        public override string Name { get { return textElement.name.TextBoard.ToString(); } set { textElement.name.TextBoard.SetText(value); } }
+        public override string Name { get { return textElement.Name; } set { textElement.Name = value; } }
 
         /// <summary>
         /// The contents of the textbox.
         /// </summary>
         public override string Value
         {
-            get { return textElement.textField.TextBoard.ToString(); }
-            set { textElement.textField.TextBoard.SetText(value); }
+            get { return textElement.TextField; }
+            set { textElement.TextField = value; }
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Restricts the range of characters allowed for input.
         /// </summary>
-        public Func<char, bool> CharFilterFunc { get { return textElement.textField.CharFilterFunc; } set { textElement.textField.CharFilterFunc = value; } }
+        public Func<char, bool> CharFilterFunc { get { return textElement.CharFilterFunc; } set { textElement.CharFilterFunc = value; } }
 
         private readonly NamedTextField textElement;
 
@@ -45,6 +45,12 @@ namespace RichHudFramework.UI.Server
         {
             textElement = new NamedTextField();
             Element = textElement;
+        }
+
+        public override void Update()
+        {
+            if (!textElement.FieldOpen)
+                base.Update();
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)
@@ -97,8 +103,16 @@ namespace RichHudFramework.UI.Server
                 }
             }
 
-            public readonly Label name;
-            public readonly TextField textField;
+            public string Name { get { return name.TextBoard.ToString(); } set { name.Text = value; } }
+
+            public string TextField { get{ return textField.TextBoard.ToString(); } set { textField.Text = value; } }
+
+            public Func<char, bool> CharFilterFunc { get { return textField.CharFilterFunc; } set { textField.CharFilterFunc = value; } }
+
+            public bool FieldOpen { get { return textField.InputOpen; } }
+
+            private readonly Label name;
+            private readonly TextField textField;
 
             public NamedTextField(HudParentBase parent = null) : base(parent)
             {
