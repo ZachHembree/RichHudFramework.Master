@@ -405,8 +405,7 @@ namespace RichHudFramework.UI
             public HighlightBox(HudParentBase parent = null) : base(parent)
             {
                 tabBoard = new MatBoard() { Color = new Color(223, 230, 236) };
-                Color = Color = new Color(34, 44, 53);
-                ZOffset = -1;
+                Color = new Color(34, 44, 53);
             }
 
             protected override void Layout()

@@ -48,6 +48,7 @@ namespace RichHudFramework.UI
         {
             button = new LabelButton() { AutoResize = false };
             Element = button;
+            Element.ZOffset = 1;
         }
 
         public object GetOrSetMember(object data, int memberEnum)
