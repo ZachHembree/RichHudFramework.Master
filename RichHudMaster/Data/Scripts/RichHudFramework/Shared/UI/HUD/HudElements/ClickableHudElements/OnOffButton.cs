@@ -76,7 +76,7 @@ namespace RichHudFramework.UI.Server
                 Text = "On",
                 Padding = Vector2.Zero,
                 Size = new Vector2(71f, 49f),
-                HighlightEnabled = false,
+                HighlightEnabled = true,
             };
 
             on.BorderThickness = 2f;
@@ -86,7 +86,7 @@ namespace RichHudFramework.UI.Server
                 Text = "Off",
                 Padding = Vector2.Zero,
                 Size = new Vector2(71f, 49f),
-                HighlightEnabled = false,
+                HighlightEnabled = true,
             };
 
             off.BorderThickness = 2f;
