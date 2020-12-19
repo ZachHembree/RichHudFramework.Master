@@ -153,7 +153,10 @@ namespace RichHudFramework
                 protected override void Layout()
                 {
                     background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
+                }
 
+                protected override void HandleInput(Vector2 cursorPos)
+                {
                     for (int n = 0; n < controls.ChainEntries.Count; n++)
                         controls.ChainEntries[n].Update();
                 }
