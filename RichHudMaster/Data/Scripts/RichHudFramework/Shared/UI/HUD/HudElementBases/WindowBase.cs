@@ -47,7 +47,7 @@ namespace RichHudFramework.UI
                     newPos = value + Origin;
 
                 newPos.X = MathHelper.Clamp(newPos.X, -bounds.X, bounds.X);
-                newPos.Y = MathHelper.Clamp(newPos.Y, -bounds.Y, bounds.Y);
+                newPos.Y = MathHelper.Clamp(newPos.Y, -bounds.Y, bounds.Y - Height / 2f);
 
                 base.Offset = newPos - Origin;
             }
