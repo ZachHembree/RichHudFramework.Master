@@ -28,7 +28,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Indicates whether or not the textbox will accept input
         /// </summary>
-        public bool InputOpen => allowInput;
+        public bool InputOpen { get; private set; }
 
         /// <summary>
         /// Used to restrict the range of characters allowed for input.
@@ -116,8 +116,8 @@ namespace RichHudFramework.UI
 
         private void CaretMoved()
         {
-            if (canHighlight)
-                selectionBox.UpdateSelection();
+            if (!SharedBinds.LeftButton.IsPressed)
+                selectionBox.ClearSelection();
         }
 
         protected override void HandleInput(Vector2 cursorPos)
@@ -126,7 +126,6 @@ namespace RichHudFramework.UI
 
             if (useInput && EnableEditing)
             {
-                caret.Visible = true;
                 textInput.HandleInput();
 
                 if (SharedBinds.Cut.IsNewPressed && !selectionBox.Empty && EnableHighlighting)
@@ -152,12 +151,9 @@ namespace RichHudFramework.UI
                     }
                 }
             }
-            else
-            {
-                caret.Visible = false;
-            }
 
-            caret.Visible = useInput && (EnableHighlighting || EnableEditing);
+            InputOpen = useInput && (EnableHighlighting || EnableEditing);
+            caret.Visible = InputOpen;
 
             if (useInput && EnableHighlighting)
             {
@@ -399,7 +395,7 @@ namespace RichHudFramework.UI
                     else if (text.Format.Alignment == TextAlignment.Right)
                         offset.X = textElement.Size.X / 2f - (2f * Scale);
 
-                    offset.X += Padding.X / 2f;
+                    offset += _parentFull.Padding / 2f;
 
                     if (!text.VertCenterText)
                         offset.Y = (text.Size.Y - Height) / 2f - (4f * Scale);
