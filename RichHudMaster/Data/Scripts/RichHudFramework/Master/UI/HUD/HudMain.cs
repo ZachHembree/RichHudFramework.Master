@@ -35,7 +35,7 @@ namespace RichHudFramework
         using Rendering.Server;
         using HudUpdateAccessors = MyTuple<
             ushort, // ZOffset
-            byte, // Depth
+            Func<Vector3D>, // GetOrigin
             Action, // DepthTest
             Action, // HandleInput
             Action<bool>, // BeforeLayout
@@ -218,12 +218,13 @@ namespace RichHudFramework
             private readonly List<Client> hudClients;
 
             private readonly List<HudUpdateAccessors> updateAccessors;
+            private readonly List<HudUpdateAccessors> sortedUpdateAccessors;
             private readonly List<ulong> indexList;
             
-            private readonly List<MyTuple<byte, Action>> depthTestActions;
-            private readonly List<MyTuple<byte, Action>> inputActions;
-            private readonly List<MyTuple<byte, Action<bool>>> layoutActions;
-            private readonly List<MyTuple<byte, Action>> drawActions;
+            private readonly List<Action> depthTestActions;
+            private readonly List<Action> inputActions;
+            private readonly List<Action<bool>> layoutActions;
+            private readonly List<Action> drawActions;
 
             private RichText _clipBoard;
             private float _resScale;
@@ -248,12 +249,13 @@ namespace RichHudFramework
                 hudClients = new List<Client>();
 
                 updateAccessors = new List<HudUpdateAccessors>(200);
+                sortedUpdateAccessors = new List<HudUpdateAccessors>(200);
                 indexList = new List<ulong>(200);
 
-                depthTestActions = new List<MyTuple<byte, Action>>(200);
-                inputActions = new List<MyTuple<byte, Action>>(200);
-                layoutActions = new List<MyTuple<byte, Action<bool>>>(200);
-                drawActions = new List<MyTuple<byte, Action>>(200);
+                depthTestActions = new List<Action>(200);
+                inputActions = new List<Action>(200);
+                layoutActions = new List<Action<bool>>(200);
+                drawActions = new List<Action>(200);
 
                 cacheTimer = new Utils.Stopwatch();
                 cacheTimer.Start();
@@ -337,12 +339,9 @@ namespace RichHudFramework
             {
                 // Clear update lists and rebuild accessor lists from HUD tree
                 updateAccessors.Clear();
-                indexList.Clear();
 
                 depthTestActions.Clear();
-                inputActions.Clear();
                 layoutActions.Clear();
-                drawActions.Clear();
 
                 // Add client UI elements
                 for (int n = 0; n < hudClients.Count; n++)
@@ -362,15 +361,28 @@ namespace RichHudFramework
                 for (int n = 0; n < updateAccessors.Count; n++)
                 {
                     HudUpdateAccessors accessors = updateAccessors[n];
-                    depthTestActions.Add(new MyTuple<byte, Action>(accessors.Item2, accessors.Item3));
+                    depthTestActions.Add(accessors.Item3);
                 }
 
                 // Build layout list (without sorting)
                 for (int n = 0; n < updateAccessors.Count; n++)
                 {
                     HudUpdateAccessors accessors = updateAccessors[n];
-                    layoutActions.Add(new MyTuple<byte, Action<bool>>(accessors.Item2, accessors.Item5));
+                    layoutActions.Add(accessors.Item5);
                 }
+
+                RebuildSortedLists();
+            }
+
+            /// <summary>
+            /// Sorts draw and input accessors first by distance, then by zOffset, then by index
+            /// </summary>
+            private void RebuildSortedLists()
+            {
+                indexList.Clear();
+                sortedUpdateAccessors.Clear();
+                inputActions.Clear();
+                drawActions.Clear();
 
                 // Lower 32 bits store the index, upper 32 store draw depth 
                 ulong indexMask = 0x00000000FFFFFFFF;
@@ -381,29 +393,52 @@ namespace RichHudFramework
                     HudUpdateAccessors accessors = updateAccessors[n];
                     ulong index = (ulong)n,
                         zOffset = accessors.Item1;
-
+                    
                     indexList.Add((zOffset << 32) | index);
                 }
 
-                // Sort in ascending order
+                // Sort in ascending order by zOffset
+                indexList.Sort();
+
+                for (int n = 0; n < indexList.Count; n++)
+                {
+                    int index = (int)(indexList[n] & indexMask);
+                    sortedUpdateAccessors.Add(updateAccessors[index]);
+                }
+
+                indexList.Clear();
+                Vector3D position = _pixelToWorld.Translation;
+
+                // Rebuild index list and sort by distance
+                for (int n = 0; n < sortedUpdateAccessors.Count; n++)
+                {
+                    HudUpdateAccessors accessors = sortedUpdateAccessors[n];
+                    Vector3D nodeOrigin = accessors.Item2();
+                    ulong index = (ulong)n,
+                        distance = (ulong)Math.Min(Vector3D.DistanceSquared(nodeOrigin, position) * 8d, 4294967295d);
+
+                    indexList.Add((distance << 32) | index);
+                }
+
+                // Sort in ascending order by distance
                 indexList.Sort();
 
                 // Build input list
                 for (int n = 0; n < indexList.Count; n++)
                 {
                     int index = (int)(indexList[n] & indexMask);
-                    HudUpdateAccessors accessors = updateAccessors[index];
+                    HudUpdateAccessors accessors = sortedUpdateAccessors[index];
 
-                    inputActions.Add(new MyTuple<byte, Action>(accessors.Item2, accessors.Item4));
+                    inputActions.Add(accessors.Item4);
                 }
 
                 // Build draw list
                 for (int n = 0; n < indexList.Count; n++)
                 {
                     int index = (int)(indexList[n] & indexMask);
-                    HudUpdateAccessors accessors = updateAccessors[index];
+                    HudUpdateAccessors accessors = sortedUpdateAccessors[index];
 
-                    drawActions.Add(new MyTuple<byte, Action>(accessors.Item2, accessors.Item6));
+                    drawActions.Add(accessors.Item6);
                 }
             }
 
@@ -412,6 +447,8 @@ namespace RichHudFramework
             /// </summary>
             public override void Draw()
             {
+                RebuildSortedLists();
+
                 for (int n = 0; n < hudClients.Count; n++)
                 {
                     if (hudClients[n].RefreshDrawList)
@@ -435,19 +472,13 @@ namespace RichHudFramework
 
                 for (int n = 0; n < layoutActions.Count; n++)
                 {
-                    uint treeDepth = layoutActions[n].Item1;
-                    Action<bool> LayoutFunc = layoutActions[n].Item2;
-
-                    LayoutFunc(refresh);
+                    layoutActions[n](refresh);
                 }
 
                 // Draw UI elements
                 for (int n = 0; n < drawActions.Count; n++)
                 {
-                    uint treeDepth = drawActions[n].Item1;
-                    Action DrawFunc = drawActions[n].Item2;
-
-                    DrawFunc();
+                    drawActions[n]();
                 }
 
                 tick++;
@@ -467,18 +498,12 @@ namespace RichHudFramework
                 // Update input for UI elements front to back
                 for (int n = 0; n < depthTestActions.Count; n++)
                 {
-                    uint treeDepth = depthTestActions[n].Item1;
-                    Action DepthTestFunc = depthTestActions[n].Item2;
-
-                    DepthTestFunc();
+                    depthTestActions[n]();
                 }
 
                 for (int n = inputActions.Count - 1; n >= 0; n--)
                 {
-                    uint treeDepth = inputActions[n].Item1;
-                    Action InputFunc = inputActions[n].Item2;
-
-                    InputFunc();
+                    inputActions[n]();
                 }
             }
 
@@ -567,9 +592,12 @@ namespace RichHudFramework
 
                 public Func<MatrixD> UpdateMatrixFunc => null;
 
+                public Func<Vector3D> GetNodeOriginFunc { get; }
+
                 public HudRoot() : base()
                 {
                     GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorld);
+                    GetNodeOriginFunc = () => PixelToWorld.Translation;
                 }
             }
         }

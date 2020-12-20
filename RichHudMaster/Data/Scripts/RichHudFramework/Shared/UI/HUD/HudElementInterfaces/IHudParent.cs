@@ -10,7 +10,7 @@ namespace RichHudFramework
     {
         using HudUpdateAccessors = MyTuple<
             ushort, // ZOffset
-            byte, // Depth
+            Func<Vector3D>, // GetOrigin
             Action, // DepthTest
             Action, // HandleInput
             Action<bool>, // BeforeLayout

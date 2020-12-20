@@ -10,7 +10,7 @@ namespace RichHudFramework
     {
         using HudUpdateAccessors = MyTuple<
             ushort, // ZOffset
-            byte, // Depth
+            Func<Vector3D>, // GetOrigin
             Action, // DepthTest
             Action, // HandleInput
             Action<bool>, // BeforeLayout
@@ -58,10 +58,16 @@ namespace RichHudFramework
             /// </summary>
             public HudSpaceDelegate GetHudSpaceFunc { get; protected set; }
 
+            /// <summary>
+            /// Returns the world space position of the node's origin.
+            /// </summary>
+            public Func<Vector3D> GetNodeOriginFunc { get; protected set; } 
+
             public HudSpaceNode(HudParentBase parent = null) : base(parent)
             {
                 GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(DrawCursorInHudSpace, Scale, PlaneToWorld);
                 DrawCursorInHudSpace = true;
+                GetNodeOriginFunc = () => PlaneToWorld.Translation;
             }
 
             protected override void InputDepth()
@@ -100,10 +106,11 @@ namespace RichHudFramework
 
             public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
+                _hudSpace = _parent?.HudSpace;
                 fullZOffset = GetFullZOffset(this);
 
                 UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                UpdateActions.Add(new HudUpdateAccessors(0, 0, DepthTestAction, InputAction, LayoutAction, DrawAction));
+                UpdateActions.Add(new HudUpdateAccessors(0, GetNodeOriginFunc, DepthTestAction, InputAction, LayoutAction, DrawAction));
 
                 treeDepth++;
 

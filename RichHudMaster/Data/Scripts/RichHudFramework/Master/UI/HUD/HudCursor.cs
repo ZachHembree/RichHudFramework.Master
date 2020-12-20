@@ -66,6 +66,7 @@ namespace RichHudFramework
                 {
                     ZOffset = sbyte.MaxValue;
                     zOffsetInner = byte.MaxValue;
+                    //GetNodeOriginFunc = () => Vector3D.Zero;
 
                     cursorBox = new TexturedBox(this)
                     {

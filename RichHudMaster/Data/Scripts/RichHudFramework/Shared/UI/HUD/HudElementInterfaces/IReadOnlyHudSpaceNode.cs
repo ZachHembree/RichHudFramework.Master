@@ -38,6 +38,11 @@ namespace RichHudFramework
             /// to the matrix supplied by its parent.
             /// </summary>
             Func<MatrixD> UpdateMatrixFunc { get; }
+
+            /// <summary>
+            /// Returns the world space position of the node's origin.
+            /// </summary>
+            Func<Vector3D> GetNodeOriginFunc { get; }
         }
     }
 }

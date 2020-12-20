@@ -187,8 +187,6 @@ namespace RichHudFramework
 
             protected override void BeginLayout(bool refresh)
             {
-                _hudSpace = _parent?.HudSpace;
-
                 if (Visible)
                 {
                     UpdateCache();

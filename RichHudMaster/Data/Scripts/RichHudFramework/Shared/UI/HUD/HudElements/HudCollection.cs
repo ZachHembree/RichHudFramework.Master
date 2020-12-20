@@ -10,13 +10,13 @@ namespace RichHudFramework
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-             ushort, // ZOffset
-             byte, // Depth
-             Action, // DepthTest
-             Action, // HandleInput
-             Action<bool>, // BeforeLayout
-             Action // BeforeDraw
-         >;
+            ushort, // ZOffset
+            Func<Vector3D>, // GetOrigin
+            Action, // DepthTest
+            Action, // HandleInput
+            Action<bool>, // BeforeLayout
+            Action // BeforeDraw
+        >;
 
         /// <summary>
         /// A collection of UI elements wrapped in container objects. UI elements in the containers are parented
@@ -332,10 +332,11 @@ namespace RichHudFramework
 
             public override void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, byte treeDepth)
             {
+                _hudSpace = _parent?.HudSpace;
                 fullZOffset = GetFullZOffset(this, _parent);
 
                 DrawActions.EnsureCapacity(DrawActions.Count + children.Count + chainElements.Count + 1);
-                DrawActions.Add(new HudUpdateAccessors(fullZOffset, treeDepth, DepthTestAction, InputAction, LayoutAction, DrawAction));
+                DrawActions.Add(new HudUpdateAccessors(fullZOffset, _hudSpace.GetNodeOriginFunc, DepthTestAction, InputAction, LayoutAction, DrawAction));
 
                 treeDepth++;
 
