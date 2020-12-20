@@ -3,24 +3,20 @@ using System.Collections;
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
-using HudDrawDelegate = System.Func<object, object>;
-using HudLayoutDelegate = System.Func<bool, bool>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 
 namespace RichHudFramework
 {
-    using HudInputDelegate = Func<Vector3, HudSpaceDelegate, MyTuple<Vector3, HudSpaceDelegate>>;
-
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-            ushort, // ZOffset
-            byte, // Depth
-            HudInputDelegate, // DepthTest
-            HudInputDelegate, // HandleInput
-            HudLayoutDelegate, // BeforeLayout
-            HudDrawDelegate // BeforeDraw
-        >;
+             ushort, // ZOffset
+             byte, // Depth
+             Action, // DepthTest
+             Action, // HandleInput
+             Action<bool>, // BeforeLayout
+             Action // BeforeDraw
+         >;
 
         /// <summary>
         /// A collection of UI elements wrapped in container objects. UI elements in the containers are parented

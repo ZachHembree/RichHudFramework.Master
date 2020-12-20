@@ -4,8 +4,6 @@ using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
-using HudDrawDelegate = System.Func<object, object>;
-using HudLayoutDelegate = System.Func<bool, bool>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
@@ -26,7 +24,6 @@ namespace RichHudFramework
             ApiMemberAccessor // GetOrSetMember
         >
     >;
-    using HudInputDelegate = Func<Vector3, HudSpaceDelegate, MyTuple<Vector3, HudSpaceDelegate>>;
     using TextBoardMembers = MyTuple<
         // TextBuilderMembers
         MyTuple<
@@ -55,10 +52,10 @@ namespace RichHudFramework
         using HudUpdateAccessors = MyTuple<
             ushort, // ZOffset
             byte, // Depth
-            HudInputDelegate, // DepthTest
-            HudInputDelegate, // HandleInput
-            HudLayoutDelegate, // BeforeLayout
-            HudDrawDelegate // BeforeDraw
+            Action, // DepthTest
+            Action, // HandleInput
+            Action<bool>, // BeforeLayout
+            Action // BeforeDraw
         >;
 
         public sealed partial class HudMain

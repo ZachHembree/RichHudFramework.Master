@@ -4,25 +4,20 @@ using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
-using HudLayoutDelegate = System.Func<bool, bool>;
-using HudDrawDelegate = System.Func<object, object>;
 
 namespace RichHudFramework
 {
-    using HudInputDelegate = Func<Vector3, HudSpaceDelegate, MyTuple<Vector3, HudSpaceDelegate>>;
-
     namespace UI
     {
         using Client;
         using Server;
-
         using HudUpdateAccessors = MyTuple<
             ushort, // ZOffset
             byte, // Depth
-            HudInputDelegate, // DepthTest
-            HudInputDelegate, // HandleInput
-            HudLayoutDelegate, // BeforeLayout
-            HudDrawDelegate // BeforeDraw
+            Action, // DepthTest
+            Action, // HandleInput
+            Action<bool>, // BeforeLayout
+            Action // BeforeDraw
         >;
 
         /// <summary>
@@ -39,6 +34,11 @@ namespace RichHudFramework
             /// Parent object of the node.
             /// </summary>
             public virtual HudParentBase Parent { get { return _parent; } protected set { _parent = value; } }
+
+            /// <summary>
+            /// Node defining the coordinate space used to render the UI element
+            /// </summary>
+            public override IReadOnlyHudSpaceNode HudSpace => _hudSpace;
 
             /// <summary>
             /// Determines whether or not an element will be drawn or process input. Visible by default.
@@ -74,6 +74,7 @@ namespace RichHudFramework
             public bool Registered { get; private set; }
 
             protected HudParentBase _parent;
+            protected IReadOnlyHudSpaceNode _hudSpace;
             protected float localScale, parentScale;
             protected bool _visible, parentVisible;
             protected sbyte parentZOffset;
@@ -87,21 +88,21 @@ namespace RichHudFramework
                 Register(parent);
             }
 
-            protected override bool BeginLayout(bool refresh)
+            protected override void BeginLayout(bool refresh)
             {
+                _hudSpace = _parent?.HudSpace;
+
                 if (Visible || refresh)
                 {
                     parentScale = _parent == null ? 1f : _parent.Scale;
                     Layout();
                 }
-
-                return refresh;
             }
 
-            protected override object BeginDraw(object matrix)
+            protected override void BeginDraw()
             {
                 if (Visible)
-                    Draw(matrix);
+                    Draw();
 
                 if (_parent == null)
                 {
@@ -113,8 +114,6 @@ namespace RichHudFramework
                     parentVisible = _parent.Visible;
                     parentZOffset = _parent.ZOffset;
                 }
-
-                return matrix;
             }
 
             /// <summary>

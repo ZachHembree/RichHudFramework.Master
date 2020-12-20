@@ -369,9 +369,9 @@ namespace RichHudFramework.UI
                 tabBoard.Size = new Vector2(4f * Scale, cachedSize.Y - cachedPadding.Y);
             }
 
-            protected override void Draw(object matrix)
+            protected override void Draw()
             {
-                var ptw = (MatrixD)matrix;
+                var ptw = HudSpace.PlaneToWorld;
 
                 if (hudBoard.Color.A > 0)
                     hudBoard.Draw(cachedPosition, ref ptw);

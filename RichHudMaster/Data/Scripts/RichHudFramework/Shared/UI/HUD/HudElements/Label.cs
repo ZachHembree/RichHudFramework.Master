@@ -79,9 +79,9 @@ namespace RichHudFramework.UI
                 _textBoard.Scale = Scale;
         }
 
-        protected override void Draw(object planeToWorld)
+        protected override void Draw()
         {
-            var matrix = (MatrixD)planeToWorld;
+            var matrix = HudSpace.PlaneToWorld;
             _textBoard.Draw(cachedPosition, ref matrix);
         }
     }

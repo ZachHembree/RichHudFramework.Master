@@ -6,8 +6,6 @@ using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
-using HudDrawDelegate = System.Func<object, object>;
-using HudLayoutDelegate = System.Func<bool, bool>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
@@ -15,7 +13,6 @@ using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRa
 namespace RichHudFramework
 {
     using Server;
-    using HudInputDelegate = Func<Vector3, HudSpaceDelegate, MyTuple<Vector3, HudSpaceDelegate>>;
     using TextBoardMembers = MyTuple<
         // TextBuilderMembers
         MyTuple<
@@ -39,10 +36,10 @@ namespace RichHudFramework
         using HudUpdateAccessors = MyTuple<
             ushort, // ZOffset
             byte, // Depth
-            HudInputDelegate, // DepthTest
-            HudInputDelegate, // HandleInput
-            HudLayoutDelegate, // BeforeLayout
-            HudDrawDelegate // BeforeDraw
+            Action, // DepthTest
+            Action, // HandleInput
+            Action<bool>, // BeforeLayout
+            Action // BeforeDraw
         >;
 
         public sealed partial class HudMain : RichHudComponentBase
@@ -223,10 +220,10 @@ namespace RichHudFramework
             private readonly List<HudUpdateAccessors> updateAccessors;
             private readonly List<ulong> indexList;
             
-            private readonly List<MyTuple<byte, HudInputDelegate>> depthTestActions;
-            private readonly List<MyTuple<byte, HudInputDelegate>> inputActions;
-            private readonly List<MyTuple<byte, HudLayoutDelegate>> layoutActions;
-            private readonly List<MyTuple<byte, HudDrawDelegate>> drawActions;
+            private readonly List<MyTuple<byte, Action>> depthTestActions;
+            private readonly List<MyTuple<byte, Action>> inputActions;
+            private readonly List<MyTuple<byte, Action<bool>>> layoutActions;
+            private readonly List<MyTuple<byte, Action>> drawActions;
 
             private RichText _clipBoard;
             private float _resScale;
@@ -253,10 +250,10 @@ namespace RichHudFramework
                 updateAccessors = new List<HudUpdateAccessors>(200);
                 indexList = new List<ulong>(200);
 
-                depthTestActions = new List<MyTuple<byte, HudInputDelegate>>(200);
-                inputActions = new List<MyTuple<byte, HudInputDelegate>>(200);
-                layoutActions = new List<MyTuple<byte, HudLayoutDelegate>>(200);
-                drawActions = new List<MyTuple<byte, HudDrawDelegate>>(200);
+                depthTestActions = new List<MyTuple<byte, Action>>(200);
+                inputActions = new List<MyTuple<byte, Action>>(200);
+                layoutActions = new List<MyTuple<byte, Action<bool>>>(200);
+                drawActions = new List<MyTuple<byte, Action>>(200);
 
                 cacheTimer = new Utils.Stopwatch();
                 cacheTimer.Start();
@@ -274,60 +271,6 @@ namespace RichHudFramework
             public override void Close()
             {
                 _instance = null;
-            }
-
-            public override void Draw()
-            {
-                for (int n = 0; n < hudClients.Count; n++)
-                {
-                    if (hudClients[n].RefreshDrawList)
-                        RefreshDrawList = true;
-
-                    hudClients[n].RefreshDrawList = false;
-                }
-
-                _cursor.Visible = EnableCursor;
-
-                for (int n = 0; n < hudClients.Count; n++)
-                {
-                    if (hudClients[n].EnableCursor)
-                        _cursor.Visible = true;
-                }
-
-                UpdateCache();
-
-                // Update layout
-                bool refresh = tick == 0;
-
-                for (int n = 0; n < layoutActions.Count; n++)
-                {
-                    uint treeDepth = layoutActions[n].Item1;
-                    HudLayoutDelegate LayoutFunc = layoutActions[n].Item2;
-
-                    if (treeDepth == 0)
-                        refresh = tick == 0;
-
-                    refresh = LayoutFunc(refresh);
-                }
-
-                // Draw UI elements
-                object matrix = _pixelToWorld;
-
-                for (int n = 0; n < drawActions.Count; n++)
-                {
-                    uint treeDepth = drawActions[n].Item1;
-                    HudDrawDelegate DrawFunc = drawActions[n].Item2;
-
-                    if (treeDepth == 0)
-                        matrix = _pixelToWorld;
-
-                    matrix = DrawFunc(matrix);
-                }
-
-                tick++;
-
-                if (tick == 30)
-                    tick = 0;
             }
 
             /// <summary>
@@ -419,14 +362,14 @@ namespace RichHudFramework
                 for (int n = 0; n < updateAccessors.Count; n++)
                 {
                     HudUpdateAccessors accessors = updateAccessors[n];
-                    depthTestActions.Add(new MyTuple<byte, HudInputDelegate>(accessors.Item2, accessors.Item3));
+                    depthTestActions.Add(new MyTuple<byte, Action>(accessors.Item2, accessors.Item3));
                 }
 
                 // Build layout list (without sorting)
                 for (int n = 0; n < updateAccessors.Count; n++)
                 {
                     HudUpdateAccessors accessors = updateAccessors[n];
-                    layoutActions.Add(new MyTuple<byte, HudLayoutDelegate>(accessors.Item2, accessors.Item5));
+                    layoutActions.Add(new MyTuple<byte, Action<bool>>(accessors.Item2, accessors.Item5));
                 }
 
                 // Lower 32 bits store the index, upper 32 store draw depth 
@@ -451,7 +394,7 @@ namespace RichHudFramework
                     int index = (int)(indexList[n] & indexMask);
                     HudUpdateAccessors accessors = updateAccessors[index];
 
-                    inputActions.Add(new MyTuple<byte, HudInputDelegate>(accessors.Item2, accessors.Item4));
+                    inputActions.Add(new MyTuple<byte, Action>(accessors.Item2, accessors.Item4));
                 }
 
                 // Build draw list
@@ -460,8 +403,57 @@ namespace RichHudFramework
                     int index = (int)(indexList[n] & indexMask);
                     HudUpdateAccessors accessors = updateAccessors[index];
 
-                    drawActions.Add(new MyTuple<byte, HudDrawDelegate>(accessors.Item2, accessors.Item6));
+                    drawActions.Add(new MyTuple<byte, Action>(accessors.Item2, accessors.Item6));
                 }
+            }
+
+            /// <summary>
+            /// Draw UI elements
+            /// </summary>
+            public override void Draw()
+            {
+                for (int n = 0; n < hudClients.Count; n++)
+                {
+                    if (hudClients[n].RefreshDrawList)
+                        RefreshDrawList = true;
+
+                    hudClients[n].RefreshDrawList = false;
+                }
+
+                _cursor.Visible = EnableCursor;
+
+                for (int n = 0; n < hudClients.Count; n++)
+                {
+                    if (hudClients[n].EnableCursor)
+                        _cursor.Visible = true;
+                }
+
+                UpdateCache();
+
+                // Update layout
+                bool refresh = tick == 0;
+
+                for (int n = 0; n < layoutActions.Count; n++)
+                {
+                    uint treeDepth = layoutActions[n].Item1;
+                    Action<bool> LayoutFunc = layoutActions[n].Item2;
+
+                    LayoutFunc(refresh);
+                }
+
+                // Draw UI elements
+                for (int n = 0; n < drawActions.Count; n++)
+                {
+                    uint treeDepth = drawActions[n].Item1;
+                    Action DrawFunc = drawActions[n].Item2;
+
+                    DrawFunc();
+                }
+
+                tick++;
+
+                if (tick == 30)
+                    tick = 0;
             }
 
             /// <summary>
@@ -473,32 +465,20 @@ namespace RichHudFramework
                 _cursor.Release();
 
                 // Update input for UI elements front to back
-                Vector3 cursorPos = new Vector3(_cursor.ScreenPos.X, _cursor.ScreenPos.Y, 0f);
-                HudSpaceDelegate DefaultHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, _pixelToWorld);
-                var inputData = new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, DefaultHudSpaceFunc);
-
                 for (int n = 0; n < depthTestActions.Count; n++)
                 {
                     uint treeDepth = depthTestActions[n].Item1;
-                    HudInputDelegate InputFunc = depthTestActions[n].Item2;
+                    Action DepthTestFunc = depthTestActions[n].Item2;
 
-                    if (treeDepth == 0)
-                        inputData = new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, DefaultHudSpaceFunc);
-
-                    inputData = InputFunc(inputData.Item1, inputData.Item2);
+                    DepthTestFunc();
                 }
-
-                inputData = new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, DefaultHudSpaceFunc);
 
                 for (int n = inputActions.Count - 1; n >= 0; n--)
                 {
                     uint treeDepth = inputActions[n].Item1;
-                    HudInputDelegate InputFunc = inputActions[n].Item2;
+                    Action InputFunc = inputActions[n].Item2;
 
-                    if (treeDepth == 0)
-                        inputData = new MyTuple<Vector3, HudSpaceDelegate>(cursorPos, DefaultHudSpaceFunc);
-
-                    inputData = InputFunc(inputData.Item1, inputData.Item2);
+                    InputFunc();
                 }
             }
 
@@ -571,12 +551,26 @@ namespace RichHudFramework
             /// <summary>
             /// Root parent for all hud elements.
             /// </summary>
-            private sealed class HudRoot : HudParentBase
+            private sealed class HudRoot : HudParentBase, IReadOnlyHudSpaceNode
             {
                 public override bool Visible => true;
 
+                public bool DrawCursorInHudSpace => true;
+
+                public override IReadOnlyHudSpaceNode HudSpace => this;
+
+                public Vector3 CursorPos => new Vector3(Cursor.ScreenPos.X, Cursor.ScreenPos.Y, 0f);
+
+                public HudSpaceDelegate GetHudSpaceFunc { get; }
+
+                public MatrixD PlaneToWorld => PixelToWorld;
+
+                public Func<MatrixD> UpdateMatrixFunc => null;
+
                 public HudRoot() : base()
-                { }
+                {
+                    GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorld);
+                }
             }
         }
     }

@@ -32,7 +32,7 @@ namespace RichHudFramework
             /// <summary>
             /// Draws cursor shared by elements in the framework
             /// </summary>
-            private sealed class HudCursor : TexturedBox, ICursor
+            private sealed class HudCursor : HudSpaceNode, ICursor
             {
                 /// <summary>
                 /// The position of the cursor in pixels in screen space
@@ -60,17 +60,20 @@ namespace RichHudFramework
                 public object CapturedElement { get; private set; }
 
                 private float captureDepth;
-
-                private HudSpaceDelegate GetHudSpaceFunc;
+                private readonly TexturedBox cursorBox;
 
                 public HudCursor(HudParentBase parent = null) : base(parent)
                 {
-                    Material = new Material(MyStringId.GetOrCompute("MouseCursor"), new Vector2(64f));
-                    Size = new Vector2(64f);
                     ZOffset = sbyte.MaxValue;
                     zOffsetInner = byte.MaxValue;
 
-                    var shadow = new TexturedBox(this)
+                    cursorBox = new TexturedBox(this)
+                    {
+                        Material = new Material(MyStringId.GetOrCompute("MouseCursor"), new Vector2(64f)),
+                        Size = new Vector2(64f),
+                    };
+
+                    var shadow = new TexturedBox(cursorBox)
                     {
                         Material = new Material(MyStringId.GetOrCompute("RadialShadow"), new Vector2(32f, 32f)),
                         Color = new Color(0, 0, 0, 96),
@@ -161,8 +164,10 @@ namespace RichHudFramework
                     GetHudSpaceFunc = null;
                 }
 
-                protected override void Layout()
+                protected override void BeginLayout(bool refresh)
                 {
+                    base.BeginLayout(refresh);
+
                     // Reverse scaling due to differences between rendering resolution and
                     // desktop resolution when running the game in windowed mode
                     Vector2 desktopSize = MyAPIGateway.Input.GetMouseAreaSize();
@@ -187,13 +192,8 @@ namespace RichHudFramework
 
                     WorldPos = worldPos;
                     ScreenPos = pos;
-                    Offset = pos;
+                    cursorBox.Offset = pos;
 
-                    base.Layout();
-                }
-
-                protected override object BeginDraw(object matrix)
-                {
                     if (Visible)
                     {
                         Scale = ResScale;
@@ -205,12 +205,10 @@ namespace RichHudFramework
                             if (spaceDef.Item1)
                             {
                                 Scale = spaceDef.Item2;
-                                matrix = spaceDef.Item3;
+                                PlaneToWorld = spaceDef.Item3;
                             }
                         }
                     }
-
-                    return base.BeginDraw(matrix);
                 }
 
                 private object GetOrSetMember(object data, int memberEnum)

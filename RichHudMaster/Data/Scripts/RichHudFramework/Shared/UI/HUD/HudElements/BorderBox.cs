@@ -37,11 +37,11 @@ namespace RichHudFramework.UI
             Thickness = 1f;
         }
 
-        protected override void Draw(object matrix)
+        protected override void Draw()
         {
             if (Color.A > 0)
             {
-                var ptw = (MatrixD)matrix;
+                var ptw = HudSpace.PlaneToWorld;
 
                 float thickness = _thickness * Scale, 
                     height = _absoluteHeight * Scale, width = _absoluteWidth * Scale;

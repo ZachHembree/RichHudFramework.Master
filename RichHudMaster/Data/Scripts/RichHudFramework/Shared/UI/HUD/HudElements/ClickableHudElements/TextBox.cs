@@ -343,7 +343,7 @@ namespace RichHudFramework.UI
                     OnCaretMoved?.Invoke();
             }
 
-            protected override void Draw(object matrix)
+            protected override void Draw()
             {
                 if (ShowCaret)
                 {
@@ -352,7 +352,7 @@ namespace RichHudFramework.UI
                         Index = ClampIndex(Index);
                         UpdateOffset();
 
-                        base.Draw(matrix);
+                        base.Draw();
                     }
 
                     if (blinkTimer.ElapsedMilliseconds > 500)
@@ -615,7 +615,7 @@ namespace RichHudFramework.UI
                 }
             }
 
-            protected override void Draw(object matrix)
+            protected override void Draw()
             {
                 if (lastTextSize != text.Size)
                 {
@@ -631,7 +631,7 @@ namespace RichHudFramework.UI
                         UpdateHighlight();
                     }
 
-                    var ptw = (MatrixD)matrix;
+                    var ptw = HudSpace.PlaneToWorld;
                     Vector2 tbOffset = text.TextOffset, bounds = new Vector2(-text.Size.X / 2f, text.Size.X / 2f);
 
                     for (int n = 0; n < highlightList.Count; n++)

@@ -185,16 +185,16 @@ namespace RichHudFramework
                 }
             }
 
-            protected override bool BeginLayout(bool refresh)
+            protected override void BeginLayout(bool refresh)
             {
+                _hudSpace = _parent?.HudSpace;
+
                 if (Visible)
                 {
                     UpdateCache();
                     Layout();
                     UpdateCache();
                 }
-
-                return refresh;
             }
 
             protected override void Layout()

@@ -37,11 +37,11 @@ namespace RichHudFramework.UI
             hudBoard.Size = cachedSize - cachedPadding;
         }
 
-        protected override void Draw(object planeToWorld)
+        protected override void Draw()
         {
             if (hudBoard.Color.A > 0)
             {
-                var matrix = (MatrixD)planeToWorld;
+                var matrix = HudSpace.PlaneToWorld;
                 hudBoard.Draw(cachedPosition, ref matrix);
             }
         }
