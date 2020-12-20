@@ -165,11 +165,19 @@ namespace RichHudFramework.UI
         {
             body.Height = Height - header.Height;
 
-            if (canMoveWindow)
-                Offset = HudMain.Cursor.ScreenPos + cursorOffset - Origin;
+            if (Visible && WindowActive)
+            {
+                if (canMoveWindow)
+                    Offset = HudMain.Cursor.ScreenPos + cursorOffset - Origin;
 
-            if (canResize)
-                Resize();
+                if (canResize)
+                    Resize();
+            }
+            else
+            {
+                canMoveWindow = false;
+                canResize = false;
+            }
         }
 
         protected void Resize()
