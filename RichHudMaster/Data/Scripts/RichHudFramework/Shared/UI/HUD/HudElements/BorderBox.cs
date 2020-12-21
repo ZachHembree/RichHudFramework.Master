@@ -31,11 +31,14 @@ namespace RichHudFramework.UI
         private float _thickness;
         protected readonly MatBoard hudBoard;
 
-        public BorderBox(HudParentBase parent = null) : base(parent)
+        public BorderBox(HudParentBase parent) : base(parent)
         {
             hudBoard = new MatBoard();
             Thickness = 1f;
         }
+
+        public BorderBox() : this(null)
+        { }
 
         protected override void Draw()
         {

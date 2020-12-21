@@ -61,7 +61,7 @@ namespace RichHudFramework.UI.Server
         protected readonly OnOffButton onOffButton;
         protected readonly HudChain layout;
 
-        public NamedOnOffButton(HudParentBase parent = null) : base(parent)
+        public NamedOnOffButton(HudParentBase parent) : base(parent)
         {
             name = new Label()
             {
@@ -87,6 +87,9 @@ namespace RichHudFramework.UI.Server
             Padding = new Vector2(20f, 0f);
             Size = new Vector2(250f, 74f);
         }
+
+        public NamedOnOffButton() : this(null)
+        { }
 
         protected override void Layout()
         {

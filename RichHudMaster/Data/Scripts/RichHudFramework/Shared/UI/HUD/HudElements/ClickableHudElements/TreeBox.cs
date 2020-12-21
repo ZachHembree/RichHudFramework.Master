@@ -115,7 +115,7 @@ namespace RichHudFramework.UI
         protected readonly HighlightBox highlight, selectionBox;
         private readonly ObjectPool<ListBoxEntry<T>> entryPool;
 
-        public TreeBox(HudParentBase parent = null) : base(parent)
+        public TreeBox(HudParentBase parent) : base(parent)
         {
             entryPool = new ObjectPool<ListBoxEntry<T>>(GetNewEntry, ResetEntry);
 
@@ -147,6 +147,9 @@ namespace RichHudFramework.UI
 
             display.MouseInput.OnLeftClick += ToggleList;
         }
+
+        public TreeBox() : this(null)
+        { }
 
         /// <summary>
         /// Sets the selection to the member associated with the given object.

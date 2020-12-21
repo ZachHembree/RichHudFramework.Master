@@ -78,7 +78,7 @@ namespace RichHudFramework.UI.Server
         private readonly HudChain mainChain, colorChain;
         private Color _color;
 
-        public ColorPickerRGB(HudParentBase parent = null) : base(parent)
+        public ColorPickerRGB(HudParentBase parent) : base(parent)
         {
             // Header
             name = new Label()
@@ -157,6 +157,9 @@ namespace RichHudFramework.UI.Server
 
             Size = new Vector2(318f, 163f);
         }
+
+        public ColorPickerRGB() : this(null)
+        { }
 
         protected override void HandleInput(Vector2 cursorPos)
         {

@@ -72,13 +72,16 @@ namespace RichHudFramework.UI
         private bool mouseCursorEntered;
         private bool hasFocus;
 
-        public MouseInputElement(HudParentBase parent = null) : base(parent)
+        public MouseInputElement(HudParentBase parent) : base(parent)
         {
             UseCursor = true;
             ShareCursor = true;
             HasFocus = false;
             DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding;
         }
+
+        public MouseInputElement() : this(null)
+        { }
 
         /// <summary>
         /// Clears all subscribers to mouse input events.

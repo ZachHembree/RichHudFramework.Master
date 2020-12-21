@@ -57,7 +57,7 @@ namespace RichHudFramework.UI
         private readonly SelectionBox selectionBox;
         private bool canHighlight, allowInput;
 
-        public TextBox(HudParentBase parent = null) : base(parent)
+        public TextBox(HudParentBase parent) : base(parent)
         {
             MouseInput = new MouseInputElement(this) { ShareCursor = true };
             textInput = new TextInput(AddChar, RemoveLastChar, TextInputFilter);
@@ -72,6 +72,9 @@ namespace RichHudFramework.UI
             EnableHighlighting = true;
             UseCursor = true;
         }
+
+        public TextBox() : this(null)
+        { }
 
         /// <summary>
         /// Opens the textbox for input and moves the caret to the end.

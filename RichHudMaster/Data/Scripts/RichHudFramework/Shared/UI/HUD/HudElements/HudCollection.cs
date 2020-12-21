@@ -57,10 +57,13 @@ namespace RichHudFramework
             /// </summary>
             protected readonly List<TElementContainer> chainElements;
 
-            public HudCollection(HudParentBase parent = null) : base(parent)
+            public HudCollection(HudParentBase parent) : base(parent)
             {
                 chainElements = new List<TElementContainer>();
             }
+
+            public HudCollection() : this(null)
+            { }
 
             public IEnumerator<TElementContainer> GetEnumerator() =>
                 chainElements.GetEnumerator();
