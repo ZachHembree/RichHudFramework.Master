@@ -37,11 +37,6 @@ namespace RichHudFramework.UI
     /// </summary>
     public class ListBoxEntry<T> : ScrollBoxEntryTuple<LabelButton, T>
     {
-        /// <summary>
-        /// Object associated with the entry
-        /// </summary>
-        public T AssocMember { get; set; }
-
         private readonly LabelButton button;
 
         public ListBoxEntry()
