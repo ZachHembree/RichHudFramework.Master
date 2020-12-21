@@ -148,12 +148,13 @@ namespace RichHudFramework.UI
         public ListBoxEntry<T> Selection { get; private set; }
 
         public readonly ScrollBox<ListBoxEntry<T>, LabelButton> scrollBox;
+
         protected readonly HighlightBox selectionBox, highlight;
         protected readonly BorderBox border;
         protected Vector2 _memberPadding;
         protected readonly ObjectPool<ListBoxEntry<T>> entryPool;
 
-        public ListBox(HudParentBase parent = null) : base(parent)
+        public ListBox(HudParentBase parent) : base(parent)
         {
             entryPool = new ObjectPool<ListBoxEntry<T>>(GetNewEntry, ResetEntry);
 
@@ -180,6 +181,9 @@ namespace RichHudFramework.UI
             MemberPadding = new Vector2(20f, 6f);
             LineHeight = 30f;
         }
+
+        public ListBox() : this(null)
+        { }
 
         public IEnumerator<ListBoxEntry<T>> GetEnumerator() =>
             scrollBox.ChainEntries.GetEnumerator();
@@ -240,6 +244,20 @@ namespace RichHudFramework.UI
             ListBoxEntry<T> entry = scrollBox.ChainEntries[index];
             scrollBox.RemoveAt(index);
             entryPool.Return(entry);
+        }
+
+        /// <summary>
+        /// Removes the member at the given index from the list box.
+        /// </summary>
+        public bool Remove(ListBoxEntry<T> entry)
+        {
+            if (scrollBox.Remove(entry))
+            {
+                entryPool.Return(entry);
+                return true;
+            }
+            else
+                return false;
         }
 
         /// <summary>
@@ -319,6 +337,9 @@ namespace RichHudFramework.UI
 
         private void ResetEntry(ListBoxEntry<T> entry)
         {
+            if (Selection == entry)
+                Selection = null;
+
             entry.Element.TextBoard.Clear();
             entry.Element.MouseInput.ClearSubscribers();
             entry.AssocMember = default(T);
@@ -328,7 +349,7 @@ namespace RichHudFramework.UI
         protected override void Layout()
         {
             // Make sure the selection box highlights the current selection
-            if (Selection != null)
+            if (Selection != null && Selection.Element.Visible)
             {
                 selectionBox.Offset = Selection.Element.Position - selectionBox.Origin;
                 selectionBox.Size = Selection.Element.Size;
@@ -352,7 +373,7 @@ namespace RichHudFramework.UI
                     highlight.Size = entry.Element.Size;
                     highlight.Offset = entry.Element.Position - highlight.Origin;
 
-                    if (entry.Element.MouseInput.IsNewLeftClicked)
+                    if (SharedBinds.LeftButton.IsNewPressed)
                     {
                         Selection = entry;
                         OnSelectionChanged?.Invoke(this, EventArgs.Empty);
