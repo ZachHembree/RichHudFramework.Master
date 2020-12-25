@@ -218,7 +218,8 @@ namespace RichHudFramework
             private readonly List<Client> hudClients;
 
             private readonly List<HudUpdateAccessors> updateAccessors;
-            private readonly List<HudUpdateAccessors> sortedUpdateAccessors;
+            private readonly Dictionary<Func<Vector3D>, ushort> distMap;
+            private readonly HashSet<Func<Vector3D>> uniqueOriginFuncs;
             private readonly List<ulong> indexList;
             
             private readonly List<Action> depthTestActions;
@@ -237,7 +238,7 @@ namespace RichHudFramework
             private float _aspectRatio;
             private float _fov;
             private float _fovScale;
-            private int tick;
+            private int drawTick;
 
             private Action<byte> LoseFocusCallback;
             private byte unfocusedOffset;
@@ -249,7 +250,8 @@ namespace RichHudFramework
                 hudClients = new List<Client>();
 
                 updateAccessors = new List<HudUpdateAccessors>(200);
-                sortedUpdateAccessors = new List<HudUpdateAccessors>(200);
+                distMap = new Dictionary<Func<Vector3D>, ushort>(50);
+                uniqueOriginFuncs = new HashSet<Func<Vector3D>>();
                 indexList = new List<ulong>(200);
 
                 depthTestActions = new List<Action>(200);
@@ -276,7 +278,74 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Updates cached values for screen scaling, fov and maintains UI update lists.
+            /// Draw UI elements
+            /// </summary>
+            public override void Draw()
+            {
+                // Check for any clients requesting draw list refresh
+                for (int n = 0; n < hudClients.Count; n++)
+                {
+                    if (hudClients[n].RefreshDrawList)
+                        RefreshDrawList = true;
+
+                    hudClients[n].RefreshDrawList = false;
+                }
+
+                _cursor.Visible = EnableCursor;
+
+                // Check for any clients requesting that the cursor be made visible
+                for (int n = 0; n < hudClients.Count; n++)
+                {
+                    if (hudClients[n].EnableCursor)
+                        _cursor.Visible = true;
+                }
+
+                UpdateCache();
+
+                if (RefreshDrawList)
+                    RebuildUpdateLists();
+
+                // Update layout -- refresh every 30 ticks
+                bool refreshLayout = (drawTick % 30) == 0;
+
+                for (int n = 0; n < layoutActions.Count; n++)
+                    layoutActions[n](refreshLayout);
+
+                // Draw UI elements
+                for (int n = 0; n < drawActions.Count; n++)
+                    drawActions[n]();
+
+                // Rebuild sorted lists at 1/10th speed or when draw list is
+                // rebuilt
+                if (RefreshDrawList || (drawTick % 10) == 0)
+                    SortUpdateAccessors();
+
+                if (RefreshDrawList)
+                    RefreshDrawList = false;
+
+                drawTick++;
+
+                if (drawTick == 60)
+                    drawTick = 0;
+            }
+
+            /// <summary>
+            /// Updates input for UI elements
+            /// </summary>
+            public override void HandleInput()
+            {
+                // Reset cursor
+                _cursor.Release();
+
+                for (int n = 0; n < depthTestActions.Count; n++)
+                    depthTestActions[n]();
+
+                for (int n = inputActions.Count - 1; n >= 0; n--)
+                    inputActions[n]();
+            }
+
+            /// <summary>
+            /// Updates cached values for screen scaling and fov.
             /// </summary>
             private void UpdateCache()
             {
@@ -310,12 +379,6 @@ namespace RichHudFramework
                 };
 
                 _pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;
-
-                if (RefreshDrawList)
-                {
-                    RebuildUpdateLists();
-                    RefreshDrawList = false;
-                }
             }
 
             /// <summary>
@@ -339,9 +402,9 @@ namespace RichHudFramework
             {
                 // Clear update lists and rebuild accessor lists from HUD tree
                 updateAccessors.Clear();
-
                 depthTestActions.Clear();
                 layoutActions.Clear();
+                uniqueOriginFuncs.Clear();
 
                 // Add client UI elements
                 for (int n = 0; n < hudClients.Count; n++)
@@ -350,12 +413,12 @@ namespace RichHudFramework
                 // Add master UI elements
                 _root.GetUpdateAccessors(updateAccessors, 0);
 
-                indexList.EnsureCapacity(updateAccessors.Count);
+                // Build distance func dictionary
+                for (int n = 0; n < updateAccessors.Count; n++)
+                    uniqueOriginFuncs.Add(updateAccessors[n].Item2);
 
                 depthTestActions.EnsureCapacity(updateAccessors.Count);
-                inputActions.EnsureCapacity(updateAccessors.Count);
                 layoutActions.EnsureCapacity(updateAccessors.Count);
-                drawActions.EnsureCapacity(updateAccessors.Count);
 
                 // Build depth test list (without sorting)
                 for (int n = 0; n < updateAccessors.Count; n++)
@@ -370,21 +433,39 @@ namespace RichHudFramework
                     HudUpdateAccessors accessors = updateAccessors[n];
                     layoutActions.Add(accessors.Item5);
                 }
-
-                RebuildSortedLists();
             }
 
             /// <summary>
             /// Sorts draw and input accessors first by distance, then by zOffset, then by index
             /// </summary>
-            private void RebuildSortedLists()
+            private void SortUpdateAccessors()
             {
                 indexList.Clear();
-                sortedUpdateAccessors.Clear();
                 inputActions.Clear();
                 drawActions.Clear();
+                distMap.Clear();
 
-                // Lower 32 bits store the index, upper 32 store draw depth 
+                indexList.EnsureCapacity(updateAccessors.Count);
+                inputActions.EnsureCapacity(updateAccessors.Count);
+                drawActions.EnsureCapacity(updateAccessors.Count);
+
+                // Update distance for each unique position delegate
+                // Max distance: 655.35m; Precision: 1cm/unit
+                //
+                // This should help keep profiler overhead for this part to a minimum by reducing the
+                // number of delegate calls to a small handful. This also means the cost difference between
+                // using Distance() and DistanceSquared() will be negligible.
+                Vector3D camPos = MyAPIGateway.Session.Camera.WorldMatrix.Translation;
+
+                foreach (Func<Vector3D> OriginFunc in uniqueOriginFuncs)
+                {
+                    Vector3D nodeOrigin = OriginFunc();
+                    double dist = Math.Round(Vector3D.Distance(nodeOrigin, camPos), 2);
+                    var reverseDist = (ushort)(ushort.MaxValue - (ushort)Math.Min(dist * 100d, ushort.MaxValue));
+                    distMap.Add(OriginFunc, reverseDist);
+                }
+
+                // Lower 32 bits store the index, upper 32 store draw depth and distance
                 ulong indexMask = 0x00000000FFFFFFFF;
 
                 // Build index list and sort by zOffset
@@ -392,118 +473,31 @@ namespace RichHudFramework
                 {
                     HudUpdateAccessors accessors = updateAccessors[n];
                     ulong index = (ulong)n,
-                        zOffset = accessors.Item1;
+                        zOffset = accessors.Item1,
+                        distance = distMap[accessors.Item2];
                     
-                    indexList.Add((zOffset << 32) | index);
+                    indexList.Add((distance << 48) | (zOffset << 32) | index);
                 }
 
-                // Sort in ascending order by zOffset
+                // Sort in ascending order
                 indexList.Sort();
 
+                // Build sorted input list
                 for (int n = 0; n < indexList.Count; n++)
                 {
                     int index = (int)(indexList[n] & indexMask);
-                    sortedUpdateAccessors.Add(updateAccessors[index]);
-                }
-
-                indexList.Clear();
-                Vector3D position = _pixelToWorld.Translation;
-
-                // Rebuild index list and sort by distance
-                for (int n = 0; n < sortedUpdateAccessors.Count; n++)
-                {
-                    HudUpdateAccessors accessors = sortedUpdateAccessors[n];
-                    Vector3D nodeOrigin = accessors.Item2();
-                    ulong index = (ulong)n,
-                        distance = (ulong)Math.Min(Vector3D.DistanceSquared(nodeOrigin, position) * 8d, 4294967295d);
-
-                    indexList.Add((distance << 32) | index);
-                }
-
-                // Sort in ascending order by distance
-                indexList.Sort();
-
-                // Build input list
-                for (int n = 0; n < indexList.Count; n++)
-                {
-                    int index = (int)(indexList[n] & indexMask);
-                    HudUpdateAccessors accessors = sortedUpdateAccessors[index];
+                    HudUpdateAccessors accessors = updateAccessors[index];
 
                     inputActions.Add(accessors.Item4);
                 }
 
-                // Build draw list
+                // Build sorted draw list
                 for (int n = 0; n < indexList.Count; n++)
                 {
                     int index = (int)(indexList[n] & indexMask);
-                    HudUpdateAccessors accessors = sortedUpdateAccessors[index];
+                    HudUpdateAccessors accessors = updateAccessors[index];
 
                     drawActions.Add(accessors.Item6);
-                }
-            }
-
-            /// <summary>
-            /// Draw UI elements
-            /// </summary>
-            public override void Draw()
-            {
-                RebuildSortedLists();
-
-                for (int n = 0; n < hudClients.Count; n++)
-                {
-                    if (hudClients[n].RefreshDrawList)
-                        RefreshDrawList = true;
-
-                    hudClients[n].RefreshDrawList = false;
-                }
-
-                _cursor.Visible = EnableCursor;
-
-                for (int n = 0; n < hudClients.Count; n++)
-                {
-                    if (hudClients[n].EnableCursor)
-                        _cursor.Visible = true;
-                }
-
-                UpdateCache();
-
-                // Update layout
-                bool refresh = tick == 0;
-
-                for (int n = 0; n < layoutActions.Count; n++)
-                {
-                    layoutActions[n](refresh);
-                }
-
-                // Draw UI elements
-                for (int n = 0; n < drawActions.Count; n++)
-                {
-                    drawActions[n]();
-                }
-
-                tick++;
-
-                if (tick == 30)
-                    tick = 0;
-            }
-
-            /// <summary>
-            /// Updates input for UI elements
-            /// </summary>
-            public override void HandleInput()
-            {
-                // Reset cursor
-                _cursor.Release();
-
-                // Update input for UI elements front to back
-                for (int n = 0; n < depthTestActions.Count; n++)
-                {
-                    depthTestActions[n]();
-                }
-
-                for (int n = inputActions.Count - 1; n >= 0; n--)
-                {
-                    inputActions[n]();
                 }
             }
 
