@@ -34,7 +34,7 @@ namespace RichHudFramework
     {
         using Rendering.Server;
         using HudUpdateAccessors = MyTuple<
-            ushort, // ZOffset
+            Func<ushort>, // ZOffset
             Func<Vector3D>, // GetOrigin
             Action, // DepthTest
             Action, // HandleInput
@@ -213,8 +213,6 @@ namespace RichHudFramework
             }
             private static HudMain _instance;
 
-            private static bool refreshDrawListImmediate;
-
             private readonly HudCursor _cursor;
             private readonly HudRoot _root;
             private readonly List<Client> hudClients;
@@ -305,13 +303,13 @@ namespace RichHudFramework
                 UpdateCache();
 
                 bool refreshLayout = (drawTick % 30) == 0,
-                    rebuildLists = (RefreshDrawList && (drawTick % 10) == 0) || refreshDrawListImmediate;
+                    rebuildLists = RefreshDrawList && (drawTick % 10) == 0,
+                    resortLists = rebuildLists || (drawTick % 10) == 0;
 
                 if (rebuildLists)
                 {
                     RebuildUpdateLists();
                     RefreshDrawList = false;
-                    refreshDrawListImmediate = false;
                 }
 
                 for (int n = 0; n < layoutActions.Count; n++)
@@ -323,7 +321,7 @@ namespace RichHudFramework
 
                 // Rebuild sorted lists at 1/10th speed, when draw list is
                 // rebuilt, or when a window tries to take focus
-                if (rebuildLists || (drawTick % 10) == 0)
+                if (resortLists)
                     SortUpdateAccessors();
 
                 drawTick++;
@@ -476,7 +474,7 @@ namespace RichHudFramework
                 {
                     HudUpdateAccessors accessors = updateAccessors[n];
                     ulong index = (ulong)n,
-                        zOffset = accessors.Item1,
+                        zOffset = accessors.Item1(),
                         distance = distMap[accessors.Item2];
                     
                     indexList.Add((distance << 48) | (zOffset << 32) | index);
@@ -533,7 +531,6 @@ namespace RichHudFramework
 
                     this.LoseFocusCallback = LoseFocusCallback;
 
-                    refreshDrawListImmediate = true;
                     return WindowMaxOffset;
                 }
                 else
