@@ -208,10 +208,7 @@ namespace RichHudFramework
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
 
-                    if (MyAPIGateway.Gui.ChatEntryVisible)
-                        warningBox.Visible = false;
-                    else
-                        warningBox.Visible = true;
+                    warningBox.Visible = !HudMain.Cursor.Visible;
                 }
 
                 private void HandleSelectionChange()

@@ -47,7 +47,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Indicates whether the cursor is currently visible
                 /// </summary>
-                public override bool Visible { get { return base.Visible && MyAPIGateway.Gui.ChatEntryVisible; } }
+                public override bool Visible { get { return base.Visible && (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible); } }
 
                 /// <summary>
                 /// Returns true if the cursor has been captured by a UI element
@@ -66,7 +66,6 @@ namespace RichHudFramework
                 {
                     ZOffset = sbyte.MaxValue;
                     zOffsetInner = byte.MaxValue;
-                    //GetNodeOriginFunc = () => Vector3D.Zero;
 
                     cursorBox = new TexturedBox(this)
                     {
@@ -168,6 +167,7 @@ namespace RichHudFramework
                 protected override void BeginLayout(bool refresh)
                 {
                     base.BeginLayout(refresh);
+                    cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
 
                     // Reverse scaling due to differences between rendering resolution and
                     // desktop resolution when running the game in windowed mode
