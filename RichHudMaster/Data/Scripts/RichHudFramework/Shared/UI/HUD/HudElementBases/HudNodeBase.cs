@@ -12,7 +12,7 @@ namespace RichHudFramework
         using Client;
         using Server;
         using HudUpdateAccessors = MyTuple<
-            ushort, // ZOffset
+            Func<ushort>, // ZOffset
             Func<Vector3D>, // GetOrigin
             Action, // DepthTest
             Action, // HandleInput
@@ -91,6 +91,8 @@ namespace RichHudFramework
 
             protected override void BeginLayout(bool refresh)
             {
+                fullZOffset = GetFullZOffset(this, _parent);
+
                 if (Visible || refresh)
                 {
                     parentScale = _parent == null ? 1f : _parent.Scale;
@@ -121,10 +123,9 @@ namespace RichHudFramework
             public override void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, byte treeDepth)
             {
                 _hudSpace = _parent?.HudSpace;
-                fullZOffset = GetFullZOffset(this, _parent);
 
                 DrawActions.EnsureCapacity(DrawActions.Count + children.Count + 1);
-                DrawActions.Add(new HudUpdateAccessors(fullZOffset, _hudSpace.GetNodeOriginFunc, DepthTestAction, InputAction, LayoutAction, DrawAction));
+                DrawActions.Add(new HudUpdateAccessors(GetZOffsetFunc, _hudSpace.GetNodeOriginFunc, DepthTestAction, InputAction, LayoutAction, DrawAction));
 
                 treeDepth++;
 

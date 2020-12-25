@@ -171,6 +171,8 @@ namespace RichHudFramework
 
             protected override void BeginLayout(bool refresh)
             {
+                fullZOffset = GetFullZOffset(this, _parent);
+
                 if (Visible || refresh)
                 {
                     UpdateCache();

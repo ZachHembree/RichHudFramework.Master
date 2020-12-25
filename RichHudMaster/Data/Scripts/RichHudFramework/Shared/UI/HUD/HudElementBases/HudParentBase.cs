@@ -11,7 +11,7 @@ namespace RichHudFramework
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-            ushort, // ZOffset
+            Func<ushort>, // ZOffset
             Func<Vector3D>, // GetOrigin
             Action, // DepthTest
             Action, // HandleInput
@@ -58,6 +58,7 @@ namespace RichHudFramework
 
             protected readonly List<HudNodeBase> children;
 
+            protected readonly Func<ushort> GetZOffsetFunc;
             protected readonly Action DepthTestAction;
             protected readonly Action InputAction;
             protected readonly Action<bool> LayoutAction;
@@ -80,6 +81,7 @@ namespace RichHudFramework
                 _registered = true;
                 children = new List<HudNodeBase>();
 
+                GetZOffsetFunc = () => fullZOffset;
                 DepthTestAction = SafeInputDepth;
                 LayoutAction = SafeBeginLayout;
                 DrawAction = SafeBeginDraw;
@@ -118,6 +120,8 @@ namespace RichHudFramework
             /// </summary>
             protected virtual void BeginLayout(bool refresh)
             {
+                fullZOffset = GetFullZOffset(this);
+
                 if (Visible || refresh)
                     Layout();
             }
@@ -143,10 +147,8 @@ namespace RichHudFramework
             /// </summary>
             public virtual void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
-                fullZOffset = GetFullZOffset(this);
-
                 UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                UpdateActions.Add(new HudUpdateAccessors(fullZOffset, HudSpace.GetNodeOriginFunc, DepthTestAction, InputAction, LayoutAction, DrawAction));
+                UpdateActions.Add(new HudUpdateAccessors(GetZOffsetFunc, HudSpace.GetNodeOriginFunc, DepthTestAction, InputAction, LayoutAction, DrawAction));
 
                 treeDepth++;
 

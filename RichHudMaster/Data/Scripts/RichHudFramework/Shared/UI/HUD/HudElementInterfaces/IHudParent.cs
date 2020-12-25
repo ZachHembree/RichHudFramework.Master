@@ -9,7 +9,7 @@ namespace RichHudFramework
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-            ushort, // ZOffset
+            Func<ushort>, // ZOffset
             Func<Vector3D>, // GetOrigin
             Action, // DepthTest
             Action, // HandleInput
