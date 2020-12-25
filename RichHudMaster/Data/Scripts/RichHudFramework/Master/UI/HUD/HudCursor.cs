@@ -36,7 +36,7 @@ namespace RichHudFramework
             private sealed class HudCursor : ICursor
             {
                 public Vector2 Origin => shadow.Origin + shadow.Offset - new Vector2(12f, -12f) * ResScale;
-                public bool Visible { get { return visible && MyAPIGateway.Gui.ChatEntryVisible; } set { visible = value; } }
+                public bool Visible { get { return visible && (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible); } set { visible = value; } }
                 public bool IsCaptured => CapturedElement != null;
                 public object CapturedElement { get; private set; }
 
@@ -102,7 +102,7 @@ namespace RichHudFramework
 
                 public void Draw()
                 {
-                    if (Visible)
+                    if (Visible && !MyAPIGateway.Gui.IsCursorVisible)
                     {
                         shadow.Scale = ResScale;
 
