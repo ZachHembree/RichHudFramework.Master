@@ -43,10 +43,10 @@ namespace RichHudFramework
             /// <summary>
             /// Determines whether or not an element will be drawn or process input. Visible by default.
             /// </summary>
-            public override bool Visible 
-            { 
-                get { return _visible && parentVisible; } 
-                set { _visible = value; } 
+            public override bool Visible
+            {
+                get { return _visible && parentVisible; }
+                set { _visible = value; }
             }
 
             /// <summary>
@@ -71,7 +71,7 @@ namespace RichHudFramework
             /// <summary>
             /// Indicates whether or not the element has been registered to a parent.
             /// </summary>
-            public bool Registered { get; private set; }
+            public bool Registered { get { return _registered; }  private set { _registered = value; } }
 
             protected HudParentBase _parent;
             protected IReadOnlyHudSpaceNode _hudSpace;
@@ -84,6 +84,7 @@ namespace RichHudFramework
                 parentScale = 1f;
                 localScale = 1f;
                 parentVisible = true;
+                _registered = false;
 
                 Register(parent);
             }
@@ -134,7 +135,7 @@ namespace RichHudFramework
             /// <summary>
             /// Registers the element to the given parent object.
             /// </summary>
-            public virtual void Register(HudParentBase parent)
+            public void Register(HudParentBase parent)
             {
                 if (parent != null && parent == this)
                     throw new Exception("Types of HudNodeBase cannot be parented to themselves!");
@@ -157,7 +158,7 @@ namespace RichHudFramework
             /// <summary>
             /// Unregisters the element from its parent, if it has one.
             /// </summary>
-            public virtual void Unregister()
+            public void Unregister()
             {
                 if (Parent != null)
                 {

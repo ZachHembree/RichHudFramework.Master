@@ -64,6 +64,7 @@ namespace RichHudFramework
             protected readonly Action DrawAction;
 
             protected sbyte _zOffset;
+            protected bool _registered;
 
             /// <summary>
             /// Additional zOffset range used internally; primarily for determining window draw order.
@@ -76,6 +77,7 @@ namespace RichHudFramework
             {
                 Visible = true;
                 Scale = 1f;
+                _registered = true;
                 children = new List<HudNodeBase>();
 
                 DepthTestAction = SafeInputDepth;
@@ -223,7 +225,7 @@ namespace RichHudFramework
 
             private void SafeInputDepth()
             {
-                if (!ExceptionHandler.ClientsPaused)
+                if (!ExceptionHandler.ClientsPaused && _registered)
                 {
                     try
                     {
@@ -238,7 +240,7 @@ namespace RichHudFramework
 
             private void SafeBeginLayout(bool refresh)
             {
-                if (!ExceptionHandler.ClientsPaused)
+                if (!ExceptionHandler.ClientsPaused && _registered)
                 {
                     try
                     {
@@ -253,7 +255,7 @@ namespace RichHudFramework
 
             private void SafeBeginDraw()
             {
-                if (!ExceptionHandler.ClientsPaused)
+                if (!ExceptionHandler.ClientsPaused && _registered)
                 {
                     try
                     {
@@ -268,7 +270,7 @@ namespace RichHudFramework
 
             private void SafeBeginInput()
             {
-                if (!ExceptionHandler.ClientsPaused)
+                if (!ExceptionHandler.ClientsPaused && _registered)
                 {
                     try
                     {
