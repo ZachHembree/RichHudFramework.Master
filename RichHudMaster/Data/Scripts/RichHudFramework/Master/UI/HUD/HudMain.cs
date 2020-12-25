@@ -213,6 +213,8 @@ namespace RichHudFramework
             }
             private static HudMain _instance;
 
+            private static bool refreshDrawListImmediate;
+
             private readonly HudCursor _cursor;
             private readonly HudRoot _root;
             private readonly List<Client> hudClients;
@@ -302,11 +304,15 @@ namespace RichHudFramework
 
                 UpdateCache();
 
-                if (RefreshDrawList)
-                    RebuildUpdateLists();
+                bool refreshLayout = (drawTick % 30) == 0,
+                    rebuildLists = (RefreshDrawList && (drawTick % 10) == 0) || refreshDrawListImmediate;
 
-                // Update layout -- refresh every 30 ticks
-                bool refreshLayout = (drawTick % 30) == 0;
+                if (rebuildLists)
+                {
+                    RebuildUpdateLists();
+                    RefreshDrawList = false;
+                    refreshDrawListImmediate = false;
+                }
 
                 for (int n = 0; n < layoutActions.Count; n++)
                     layoutActions[n](refreshLayout);
@@ -315,13 +321,10 @@ namespace RichHudFramework
                 for (int n = 0; n < drawActions.Count; n++)
                     drawActions[n]();
 
-                // Rebuild sorted lists at 1/10th speed or when draw list is
-                // rebuilt
-                if (RefreshDrawList || (drawTick % 10) == 0)
+                // Rebuild sorted lists at 1/10th speed, when draw list is
+                // rebuilt, or when a window tries to take focus
+                if (rebuildLists || (drawTick % 10) == 0)
                     SortUpdateAccessors();
-
-                if (RefreshDrawList)
-                    RefreshDrawList = false;
 
                 drawTick++;
 
@@ -413,7 +416,7 @@ namespace RichHudFramework
                 // Add master UI elements
                 _root.GetUpdateAccessors(updateAccessors, 0);
 
-                // Build distance func dictionary
+                // Build distance func HashSet
                 for (int n = 0; n < updateAccessors.Count; n++)
                     uniqueOriginFuncs.Add(updateAccessors[n].Item2);
 
@@ -530,7 +533,7 @@ namespace RichHudFramework
 
                     this.LoseFocusCallback = LoseFocusCallback;
 
-                    HudMain.RefreshDrawList = true;
+                    refreshDrawListImmediate = true;
                     return WindowMaxOffset;
                 }
                 else
