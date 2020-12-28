@@ -1,6 +1,8 @@
 ﻿using System;
 using VRage;
 using VRageMath;
+using Sandbox.ModAPI;
+using VRage.ModAPI;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 
@@ -70,36 +72,24 @@ namespace RichHudFramework
                 GetNodeOriginFunc = () => PlaneToWorld.Translation;
             }
 
-            protected override void InputDepth()
-            {
-                if (Visible)
-                {
-                    MatrixD worldToPlane = MatrixD.Invert(PlaneToWorld),
-                    pixelToWorld = HudMain.PixelToWorld;
-
-                    Vector3D worldPos = HudMain.Cursor.WorldPos;
-                    Vector3D.TransformNoProjection(ref worldPos, ref worldToPlane, out worldPos);
-
-                    // I'm not interested in the Z coordinate. That only gives me the distance from the 
-                    // XY plane of the node's matrix.
-                    worldPos.Z = 0d;
-                    Vector3 cursorPos = new Vector3(worldPos.X, worldPos.Y, 0f);
-
-                    // Project worldPos back into screen space to get distance from the screen.
-                    Vector3D.TransformNoProjection(ref worldPos, ref pixelToWorld, out worldPos);
-
-                    // X & Y == Cursor position on the XY plane of the node's matrix. Z == dist from 
-                    // screen to facilitate depth testing.
-                    cursorPos.Z = (float)Math.Abs(worldPos.Z);
-
-                    CursorPos = cursorPos;
-                }
-            }
-
             protected override void BeginLayout(bool refresh)
             {
                 if (UpdateMatrixFunc != null)
                     PlaneToWorld = UpdateMatrixFunc();
+
+                if (Visible)
+                {
+                    MatrixD worldToPlane = MatrixD.Invert(PlaneToWorld);
+                    LineD cursorLine = HudMain.Cursor.WorldLine;
+
+                    PlaneD plane = new PlaneD(PlaneToWorld.Translation, PlaneToWorld.Forward);
+                    Vector3D worldPos = plane.Intersection(ref cursorLine.From, ref cursorLine.Direction);
+
+                    Vector3D planePos;
+                    Vector3D.TransformNoProjection(ref worldPos, ref worldToPlane, out planePos);
+
+                    CursorPos = new Vector3((float)planePos.X, (float)planePos.Y, (float)Vector3D.DistanceSquared(worldPos, cursorLine.From));
+                }
 
                 base.BeginLayout(refresh);
             }

@@ -34,6 +34,12 @@ namespace RichHudFramework
             Vector3D WorldPos { get; }
 
             /// <summary>
+            /// Line projected from the cursor into world space on the -Z axis 
+            /// correcting for apparent warping due to perspective projection.
+            /// </summary>
+            LineD WorldLine { get; }
+
+            /// <summary>
             /// Returns true if the given HUD space is being captured by the cursor
             /// </summary>
             bool IsCapturingSpace(HudSpaceDelegate GetHudSpaceFunc);

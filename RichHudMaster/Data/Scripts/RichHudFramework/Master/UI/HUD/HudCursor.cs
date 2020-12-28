@@ -45,6 +45,12 @@ namespace RichHudFramework
                 public Vector3D WorldPos { get; private set; }
 
                 /// <summary>
+                /// Line projected from the cursor into world space on the -Z axis 
+                /// correcting for apparent warping due to perspective projection.
+                /// </summary>
+                public LineD WorldLine { get; private set; }
+
+                /// <summary>
                 /// Indicates whether the cursor is currently visible
                 /// </summary>
                 public override bool Visible { get { return base.Visible && (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible); } }
@@ -166,9 +172,6 @@ namespace RichHudFramework
 
                 protected override void BeginLayout(bool refresh)
                 {
-                    base.BeginLayout(refresh);
-                    cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
-
                     // Reverse scaling due to differences between rendering resolution and
                     // desktop resolution when running the game in windowed mode
                     Vector2 desktopSize = MyAPIGateway.Input.GetMouseAreaSize();
@@ -178,37 +181,35 @@ namespace RichHudFramework
                         Y = ScreenHeight / desktopSize.Y,
                     };
 
-                    Vector2 pos = MyAPIGateway.Input.GetMousePosition() * invMousePosScale;
+                    Vector2 screenPos = MyAPIGateway.Input.GetMousePosition() * invMousePosScale;
+
+                    // Update world line
+                    WorldLine = MyAPIGateway.Session.Camera.WorldLineFromScreen(screenPos);
 
                     // Reverse Y-axis direction and offset the cursor position s.t. it's 
                     // centered in the middle of the screen rather than the upper left
                     // corner.
-                    pos.Y *= -1f;
-                    pos += new Vector2(-ScreenWidth / 2f, ScreenHeight / 2f);
+                    screenPos.Y *= -1f;
+                    screenPos += new Vector2(-ScreenWidth / 2f, ScreenHeight / 2f);
 
                     // Calculate position of the cursor in world space
                     MatrixD ptw = HudMain.PixelToWorld;
-                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
+                    PlaneToWorld = ptw;
+
+                    Vector3D worldPos = new Vector3D(screenPos.X, screenPos.Y, 0d);
                     Vector3D.TransformNoProjection(ref worldPos, ref ptw, out worldPos);
 
                     WorldPos = worldPos;
-                    ScreenPos = pos;
-                    cursorBox.Offset = pos;
+                    ScreenPos = screenPos;
+                    cursorBox.Offset = screenPos;
 
-                    if (Visible)
+                    fullZOffset = GetFullZOffset(this, _parent);
+                    cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
+
+                    if (Visible || refresh)
                     {
+                        parentScale = _parent == null ? 1f : _parent.Scale;
                         Scale = ResScale;
-
-                        if (GetHudSpaceFunc != null)
-                        {
-                            MyTuple<bool, float, MatrixD> spaceDef = GetHudSpaceFunc();
-
-                            if (spaceDef.Item1)
-                            {
-                                Scale = spaceDef.Item2;
-                                PlaneToWorld = spaceDef.Item3;
-                            }
-                        }
                     }
                 }
 
