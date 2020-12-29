@@ -386,13 +386,12 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Rebuilds update accessor lists
+            /// Rebuilds update accessor list from UI tree
             /// </summary>
             private void RebuildUpdateLists()
             {
                 // Clear update lists and rebuild accessor lists from HUD tree
                 updateAccessors.Clear();
-                depthTestActions.Clear();
                 layoutActions.Clear();
                 uniqueOriginFuncs.Clear();
 
@@ -407,15 +406,7 @@ namespace RichHudFramework
                 for (int n = 0; n < updateAccessors.Count; n++)
                     uniqueOriginFuncs.Add(updateAccessors[n].Item2);
 
-                depthTestActions.EnsureCapacity(updateAccessors.Count);
                 layoutActions.EnsureCapacity(updateAccessors.Count);
-
-                // Build depth test list (without sorting)
-                for (int n = 0; n < updateAccessors.Count; n++)
-                {
-                    HudUpdateAccessors accessors = updateAccessors[n];
-                    depthTestActions.Add(accessors.Item3);
-                }
 
                 // Build layout list (without sorting)
                 for (int n = 0; n < updateAccessors.Count; n++)
@@ -431,11 +422,13 @@ namespace RichHudFramework
             private void SortUpdateAccessors()
             {
                 indexList.Clear();
+                depthTestActions.Clear();
                 inputActions.Clear();
                 drawActions.Clear();
                 distMap.Clear();
 
                 indexList.EnsureCapacity(updateAccessors.Count);
+                depthTestActions.EnsureCapacity(updateAccessors.Count);
                 inputActions.EnsureCapacity(updateAccessors.Count);
                 drawActions.EnsureCapacity(updateAccessors.Count);
 
@@ -471,6 +464,15 @@ namespace RichHudFramework
 
                 // Sort in ascending order
                 indexList.Sort();
+
+                // Build sorted depth test list
+                for (int n = 0; n < indexList.Count; n++)
+                {
+                    int index = (int)(indexList[n] & indexMask);
+                    HudUpdateAccessors accessors = updateAccessors[index];
+
+                    depthTestActions.Add(accessors.Item3);
+                }
 
                 // Build sorted input list
                 for (int n = 0; n < indexList.Count; n++)
