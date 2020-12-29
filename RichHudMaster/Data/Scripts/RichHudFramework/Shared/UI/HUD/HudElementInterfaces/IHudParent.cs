@@ -9,19 +9,20 @@ namespace RichHudFramework
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-            Func<ushort>, // ZOffset
-            Func<Vector3D>, // GetOrigin
+            ApiMemberAccessor,
+            MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
             Action, // DepthTest
             Action, // HandleInput
             Action<bool>, // BeforeLayout
             Action // BeforeDraw
         >;
 
-        public enum HudParentAccessors : int
+        public enum HudElementAccessors : int
         {
-            Add = 1,
-            RemoveChild = 2,
-            SetFocus = 3,
+            /// <summary>
+            /// out: System.Type
+            /// </summary>
+            GetType = 1,
         }
 
         /// <summary>

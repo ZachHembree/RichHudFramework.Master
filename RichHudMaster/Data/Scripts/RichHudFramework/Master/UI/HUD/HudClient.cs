@@ -11,18 +11,12 @@ using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRa
 namespace RichHudFramework
 {
     using CursorMembers = MyTuple<
-        Func<bool>, // Visible
-        Func<bool>, // IsCaptured
-        Func<Vector2>, // Position
-        Func<Vector3D>, // WorldPos
         Func<HudSpaceDelegate, bool>, // IsCapturingSpace
-        MyTuple<
-            Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
-            Func<object, bool>, // IsCapturing
-            Func<object, bool>, // TryCapture
-            Func<object, bool>, // TryRelease
-            ApiMemberAccessor // GetOrSetMember
-        >
+        Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
+        Func<object, bool>, // IsCapturing
+        Func<object, bool>, // TryCapture
+        Func<object, bool>, // TryRelease
+        ApiMemberAccessor // GetOrSetMember
     >;
     using TextBoardMembers = MyTuple<
         // TextBuilderMembers
@@ -50,8 +44,8 @@ namespace RichHudFramework
             Action // Unregister
         >;
         using HudUpdateAccessors = MyTuple<
-            Func<ushort>, // ZOffset
-            Func<Vector3D>, // GetOrigin
+            ApiMemberAccessor,
+            MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
             Action, // DepthTest
             Action, // HandleInput
             Action<bool>, // BeforeLayout

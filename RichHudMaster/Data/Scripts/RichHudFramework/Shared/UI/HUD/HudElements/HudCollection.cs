@@ -4,14 +4,15 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
+using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-            Func<ushort>, // ZOffset
-            Func<Vector3D>, // GetOrigin
+            ApiMemberAccessor,
+            MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
             Action, // DepthTest
             Action, // HandleInput
             Action<bool>, // BeforeLayout
@@ -333,24 +334,33 @@ namespace RichHudFramework
             public void CopyTo(TElementContainer[] array, int arrayIndex) =>
                 chainElements.CopyTo(array, arrayIndex);
 
-            public override void GetUpdateAccessors(List<HudUpdateAccessors> DrawActions, byte treeDepth)
+            public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
                 _hudSpace = _parent?.HudSpace;
                 fullZOffset = GetFullZOffset(this, _parent);
 
-                DrawActions.EnsureCapacity(DrawActions.Count + children.Count + chainElements.Count + 1);
-                DrawActions.Add(new HudUpdateAccessors(GetZOffsetFunc, _hudSpace.GetNodeOriginFunc, DepthTestAction, InputAction, LayoutAction, DrawAction));
+                UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + chainElements.Count + 1);
+                var accessors = new HudUpdateAccessors()
+                {
+                    Item1 = GetOrSetMemberFunc,
+                    Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(GetZOffsetFunc, HudSpace.GetNodeOriginFunc),
+                    Item3 = DepthTestAction,
+                    Item4 = InputAction,
+                    Item5 = LayoutAction,
+                    Item6 = DrawAction
+                };
 
+                UpdateActions.Add(accessors);
                 treeDepth++;
 
                 for (int n = 0; n < chainElements.Count; n++)
                 {
-                    chainElements[n].Element.GetUpdateAccessors(DrawActions, treeDepth);
+                    chainElements[n].Element.GetUpdateAccessors(UpdateActions, treeDepth);
                 }
 
                 for (int n = 0; n < children.Count; n++)
                 {
-                    children[n].GetUpdateAccessors(DrawActions, treeDepth);
+                    children[n].GetUpdateAccessors(UpdateActions, treeDepth);
                 }
             }
         }

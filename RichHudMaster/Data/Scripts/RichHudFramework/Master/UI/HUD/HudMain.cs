@@ -34,8 +34,8 @@ namespace RichHudFramework
     {
         using Rendering.Server;
         using HudUpdateAccessors = MyTuple<
-            Func<ushort>, // ZOffset
-            Func<Vector3D>, // GetOrigin
+            ApiMemberAccessor,
+            MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
             Action, // DepthTest
             Action, // HandleInput
             Action<bool>, // BeforeLayout
@@ -404,7 +404,7 @@ namespace RichHudFramework
 
                 // Build distance func HashSet
                 for (int n = 0; n < updateAccessors.Count; n++)
-                    uniqueOriginFuncs.Add(updateAccessors[n].Item2);
+                    uniqueOriginFuncs.Add(updateAccessors[n].Item2.Item2);
 
                 layoutActions.EnsureCapacity(updateAccessors.Count);
 
@@ -454,7 +454,7 @@ namespace RichHudFramework
                 // Build index list and sort by zOffset
                 for (int n = 0; n < updateAccessors.Count; n++)
                 {
-                    HudUpdateAccessors accessors = updateAccessors[n];
+                    var accessors = updateAccessors[n].Item2;
                     ulong index = (ulong)n,
                         zOffset = accessors.Item1(),
                         distance = distMap[accessors.Item2];

@@ -11,8 +11,8 @@ namespace RichHudFramework
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-            Func<ushort>, // ZOffset
-            Func<Vector3D>, // GetOrigin
+            ApiMemberAccessor,
+            MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
             Action, // DepthTest
             Action, // HandleInput
             Action<bool>, // BeforeLayout
@@ -32,6 +32,11 @@ namespace RichHudFramework
             /// Node defining the coordinate space used to render the UI element
             /// </summary>
             public override IReadOnlyHudSpaceNode HudSpace => this;
+
+            /// <summary>
+            /// Returns true if the space node is visible and rendering.
+            /// </summary>
+            public override bool Visible => _visible && parentVisible && isFacingCamera;
 
             /// <summary>
             /// Returns the current draw matrix
@@ -63,7 +68,9 @@ namespace RichHudFramework
             /// <summary>
             /// Returns the world space position of the node's origin.
             /// </summary>
-            public Func<Vector3D> GetNodeOriginFunc { get; protected set; } 
+            public Func<Vector3D> GetNodeOriginFunc { get; protected set; }
+
+            protected bool isFacingCamera;
 
             public HudSpaceNode(HudParentBase parent = null) : base(parent)
             {
@@ -77,12 +84,22 @@ namespace RichHudFramework
                 if (UpdateMatrixFunc != null)
                     PlaneToWorld = UpdateMatrixFunc();
 
+                // Determine whether the node is in front of the camera and pointed toward it
+                MatrixD camMatrix = MyAPIGateway.Session.Camera.WorldMatrix;
+                Vector3D camOrigin = camMatrix.Translation,
+                    camForward = camMatrix.Forward,
+                    nodeOrigin = PlaneToWorld.Translation,
+                    nodeForward = PlaneToWorld.Forward;
+
+                bool isInFront = Vector3D.Dot((nodeOrigin - camOrigin), camForward) > 0;
+                isFacingCamera = isInFront && Vector3D.Dot(nodeForward, camForward) > 0;
+
                 if (Visible)
                 {
                     MatrixD worldToPlane = MatrixD.Invert(PlaneToWorld);
                     LineD cursorLine = HudMain.Cursor.WorldLine;
 
-                    PlaneD plane = new PlaneD(PlaneToWorld.Translation, PlaneToWorld.Forward);
+                    PlaneD plane = new PlaneD(nodeOrigin, nodeForward);
                     Vector3D worldPos = plane.Intersection(ref cursorLine.From, ref cursorLine.Direction);
 
                     Vector3D planePos;
@@ -104,8 +121,17 @@ namespace RichHudFramework
                 _hudSpace = _parent?.HudSpace;
 
                 UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                UpdateActions.Add(new HudUpdateAccessors(GetZOffsetFunc, GetNodeOriginFunc, DepthTestAction, InputAction, LayoutAction, DrawAction));
+                var accessors = new HudUpdateAccessors()
+                {
+                    Item1 = GetOrSetMemberFunc,
+                    Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(GetZOffsetFunc, HudSpace.GetNodeOriginFunc),
+                    Item3 = DepthTestAction,
+                    Item4 = InputAction,
+                    Item5 = LayoutAction,
+                    Item6 = DrawAction
+                };
 
+                UpdateActions.Add(accessors);
                 treeDepth++;
 
                 for (int n = 0; n < children.Count; n++)

@@ -9,18 +9,12 @@ using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.Matrix
 namespace RichHudFramework
 {
     using CursorMembers = MyTuple<
-        Func<bool>, // Visible
-        Func<bool>, // IsCaptured
-        Func<Vector2>, // Position
-        Func<Vector3D>, // WorldPos
         Func<HudSpaceDelegate, bool>, // IsCapturingSpace
-        MyTuple<
-            Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
-            Func<object, bool>, // IsCapturing
-            Func<object, bool>, // TryCapture
-            Func<object, bool>, // TryRelease
-            ApiMemberAccessor // GetOrSetMember
-        >
+        Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
+        Func<object, bool>, // IsCapturing
+        Func<object, bool>, // TryCapture
+        Func<object, bool>, // TryRelease
+        ApiMemberAccessor // GetOrSetMember
     >;
 
     namespace UI.Server
@@ -32,7 +26,7 @@ namespace RichHudFramework
             /// <summary>
             /// Draws cursor shared by elements in the framework
             /// </summary>
-            private sealed class HudCursor : HudSpaceNode, ICursor
+            public sealed class HudCursor : HudSpaceNode, ICursor
             {
                 /// <summary>
                 /// The position of the cursor in pixels in screen space
@@ -106,11 +100,11 @@ namespace RichHudFramework
                 /// Attempts to capture the cursor at the given depth with the given HUD space. If drawInHudSpace
                 /// is true, then the cursor will be drawn in the given space.
                 /// </summary>
-                public bool TryCaptureHudSpace(float depth, HudSpaceDelegate GetHudSpaceFunc)
+                public bool TryCaptureHudSpace(float depthSquared, HudSpaceDelegate GetHudSpaceFunc)
                 {
-                    if (this.GetHudSpaceFunc == null || depth <= captureDepth)
+                    if (this.GetHudSpaceFunc == null || depthSquared <= captureDepth)
                     {
-                        captureDepth = depth;
+                        captureDepth = depthSquared;
                         this.GetHudSpaceFunc = GetHudSpaceFunc;
 
                         return true;
@@ -215,6 +209,20 @@ namespace RichHudFramework
 
                 private object GetOrSetMember(object data, int memberEnum)
                 {
+                    switch ((HudCursorAccessors)memberEnum)
+                    {
+                        case HudCursorAccessors.Visible:
+                            return Visible;
+                        case HudCursorAccessors.IsCaptured:
+                            return IsCaptured;
+                        case HudCursorAccessors.ScreenPos:
+                            return ScreenPos;
+                        case HudCursorAccessors.WorldPos:
+                            return WorldPos;
+                        case HudCursorAccessors.WorldLine:
+                            return WorldLine;
+                    }
+
                     return null;
                 }
 
@@ -225,19 +233,12 @@ namespace RichHudFramework
                 {
                     return new CursorMembers()
                     {
-                        Item1 = () => Visible,
-                        Item2 = () => IsCaptured,
-                        Item3 = () => ScreenPos,
-                        Item4 = () => WorldPos,
-                        Item5 = IsCapturingSpace,
-                        Item6 = new MyTuple<Func<float, HudSpaceDelegate, bool>, Func<object, bool>, Func<object, bool>, Func<object, bool>, ApiMemberAccessor>()
-                        {
-                            Item1 = TryCaptureHudSpace,
-                            Item2 = IsCapturing,
-                            Item3 = TryCapture,
-                            Item4 = TryRelease,
-                            Item5 = GetOrSetMember
-                        }
+                        Item1 = IsCapturingSpace,
+                        Item2 = TryCaptureHudSpace,
+                        Item3 = IsCapturing,
+                        Item4 = TryCapture,
+                        Item5 = TryRelease,
+                        Item6 = GetOrSetMember
                     };
                 }
             }

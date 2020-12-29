@@ -11,8 +11,8 @@ namespace RichHudFramework
     namespace UI
     {
         using HudUpdateAccessors = MyTuple<
-            Func<ushort>, // ZOffset
-            Func<Vector3D>, // GetOrigin
+            ApiMemberAccessor,
+            MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
             Action, // DepthTest
             Action, // HandleInput
             Action<bool>, // BeforeLayout
@@ -58,6 +58,7 @@ namespace RichHudFramework
 
             protected readonly List<HudNodeBase> children;
 
+            protected readonly ApiMemberAccessor GetOrSetMemberFunc;
             protected readonly Func<ushort> GetZOffsetFunc;
             protected readonly Action DepthTestAction;
             protected readonly Action InputAction;
@@ -81,6 +82,7 @@ namespace RichHudFramework
                 _registered = true;
                 children = new List<HudNodeBase>();
 
+                GetOrSetMemberFunc = GetOrSetApiMember;
                 GetZOffsetFunc = () => fullZOffset;
                 DepthTestAction = SafeInputDepth;
                 LayoutAction = SafeBeginLayout;
@@ -148,8 +150,17 @@ namespace RichHudFramework
             public virtual void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
                 UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                UpdateActions.Add(new HudUpdateAccessors(GetZOffsetFunc, HudSpace.GetNodeOriginFunc, DepthTestAction, InputAction, LayoutAction, DrawAction));
+                var accessors = new HudUpdateAccessors()
+                {
+                    Item1 = GetOrSetMemberFunc,
+                    Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(GetZOffsetFunc, HudSpace.GetNodeOriginFunc),
+                    Item3 = DepthTestAction, 
+                    Item4 = InputAction,
+                    Item5 = LayoutAction,
+                    Item6 = DrawAction
+                };
 
+                UpdateActions.Add(accessors);
                 treeDepth++;
 
                 for (int n = 0; n < children.Count; n++)
@@ -223,6 +234,17 @@ namespace RichHudFramework
                 }
 
                 return (ushort)(innerOffset | outerOffset);
+            }
+
+            protected object GetOrSetApiMember(object data, int memberEnum)
+            {
+                switch((HudElementAccessors)memberEnum)
+                {
+                    case HudElementAccessors.GetType:
+                        return GetType();
+                }
+
+                return null;
             }
 
             private void SafeInputDepth()
