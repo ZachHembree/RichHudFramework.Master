@@ -88,7 +88,12 @@ namespace RichHudFramework
                     Vector3D planePos;
                     Vector3D.TransformNoProjection(ref worldPos, ref worldToPlane, out planePos);
 
-                    CursorPos = new Vector3((float)planePos.X, (float)planePos.Y, (float)Vector3D.DistanceSquared(worldPos, cursorLine.From));
+                    CursorPos = new Vector3() 
+                    { 
+                        X = (float)planePos.X, 
+                        Y = (float)planePos.Y, 
+                        Z = (float)Math.Round(Vector3D.DistanceSquared(worldPos, cursorLine.From), 6) 
+                    };
                 }
 
                 base.BeginLayout(refresh);
