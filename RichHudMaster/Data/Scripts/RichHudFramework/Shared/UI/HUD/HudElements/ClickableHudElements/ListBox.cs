@@ -346,7 +346,7 @@ namespace RichHudFramework.UI
             entry.Enabled = true;
         }
 
-        protected override void Layout()
+        protected override void HandleInput(Vector2 cursorPos)
         {
             // Make sure the selection box highlights the current selection
             if (Selection != null && Selection.Element.Visible)
@@ -357,10 +357,7 @@ namespace RichHudFramework.UI
             }
             else
                 selectionBox.Visible = false;
-        }
 
-        protected override void HandleInput(Vector2 cursorPos)
-        {
             highlight.Visible = false;
 
             for (int n = 0; n < scrollBox.ChainEntries.Count; n++)

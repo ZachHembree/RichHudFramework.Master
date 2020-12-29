@@ -304,7 +304,7 @@ namespace RichHudFramework.UI
             ListOpen = false;
         }
 
-        protected override void Layout()
+        protected override void HandleInput(Vector2 cursorPos)
         {
             if (Selection != null)
             {
@@ -320,10 +320,7 @@ namespace RichHudFramework.UI
                 ListBoxEntry<T> entry = entryChain.ChainEntries[n];
                 entry.Element.Visible = entry.Enabled;
             }
-        }
 
-        protected override void HandleInput(Vector2 cursorPos)
-        {
             highlight.Visible = false;
 
             for (int n = 0; n < entryChain.ChainEntries.Count; n++)
