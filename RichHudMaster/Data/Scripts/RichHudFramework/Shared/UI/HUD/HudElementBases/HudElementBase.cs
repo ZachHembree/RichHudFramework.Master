@@ -132,7 +132,7 @@ namespace RichHudFramework
 
             protected override void InputDepth()
             {
-                if (Visible && UseCursor)
+                if (Visible && UseCursor && (_hudSpace?.IsFacingCamera ?? false))
                 {
                     Vector3 cursorPos = _hudSpace.CursorPos;
                     Vector2 offset = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) / 2f;
@@ -142,6 +142,8 @@ namespace RichHudFramework
                     if (mouseInBounds)
                         HudMain.Cursor.TryCaptureHudSpace(cursorPos.Z, _hudSpace.GetHudSpaceFunc);
                 }
+                else
+                    mouseInBounds = false;
             }
 
             protected override void BeginInput()
@@ -157,7 +159,7 @@ namespace RichHudFramework
                         HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
 
                         if (!ShareCursor)
-                            HudMain.Cursor.Capture(this);
+                            HudMain.Cursor.Capture(GetOrSetMemberFunc);
                     }
                     else
                     {
@@ -278,6 +280,41 @@ namespace RichHudFramework
                     alignment.X = max.X;
 
                 return alignment;
+            }
+
+            protected override object GetOrSetApiMember(object data, int memberEnum)
+            {
+                switch ((HudElementAccessors)memberEnum)
+                {
+                    case HudElementAccessors.GetType:
+                        return GetType();
+                    case HudElementAccessors.ZOffset:
+                        return ZOffset;
+                    case HudElementAccessors.FullZOffset:
+                        return fullZOffset;
+                    case HudElementAccessors.Position:
+                        return cachedPosition;
+                    case HudElementAccessors.Size:
+                        return cachedSize;
+                    case HudElementAccessors.GetHudSpaceFunc:
+                        return HudSpace?.GetHudSpaceFunc;
+                    case HudElementAccessors.ModName:
+                        return Internal.ExceptionHandler.ModName;
+                    case HudElementAccessors.LocalCursorPos:
+                        return HudSpace?.CursorPos ?? Vector3.Zero;
+                    case HudElementAccessors.DrawCursorInHudSpace:
+                        return HudSpace?.DrawCursorInHudSpace ?? false;
+                    case HudElementAccessors.PlaneToWorld:
+                        return HudSpace?.PlaneToWorld ?? default(MatrixD);
+                    case HudElementAccessors.IsInFront:
+                        return HudSpace?.IsInFront ?? false;
+                    case HudElementAccessors.IsFacingCamera:
+                        return HudSpace?.IsFacingCamera ?? false;
+                    case HudElementAccessors.NodeOrigin:
+                        return HudSpace?.PlaneToWorld.Translation ?? Vector3D.Zero;
+                }
+
+                return null;
             }
         }
     }

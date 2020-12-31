@@ -20,9 +20,69 @@ namespace RichHudFramework
         public enum HudElementAccessors : int
         {
             /// <summary>
+            /// out: string
+            /// </summary>
+            ModName = 0,
+
+            /// <summary>
             /// out: System.Type
             /// </summary>
             GetType = 1,
+
+            /// <summary>
+            /// out: byte
+            /// </summary>
+            ZOffset = 2,
+
+            /// <summary>
+            /// out: ushort
+            /// </summary>
+            FullZOffset = 3,
+
+            /// <summary>
+            /// out: Vector2
+            /// </summary>
+            Position = 4,
+
+            /// <summary>
+            /// out: Vector2
+            /// </summary>
+            Size = 5,
+
+            /// <summary>
+            /// out: Vector3
+            /// </summary>
+            LocalCursorPos = 6,
+
+            /// <summary>
+            /// out: bool
+            /// </summary>
+            DrawCursorInHudSpace = 7,
+
+            /// <summary>
+            /// out: HudSpaceDelegate
+            /// </summary>
+            GetHudSpaceFunc = 8,
+
+            /// <summary>
+            /// out: Vector3D
+            /// </summary>
+            NodeOrigin = 9,
+
+            /// <summary>
+            /// out: MatrixD
+            /// </summary>
+            PlaneToWorld = 10,
+
+            /// <summary>
+            /// out: bool
+            /// </summary>
+            IsInFront = 11,
+
+            /// <summary>
+            /// out: bool
+            /// </summary>
+            IsFacingCamera = 12,
         }
 
         /// <summary>
@@ -43,7 +103,7 @@ namespace RichHudFramework
 
             /// <summary>
             /// Scales the size and offset of an element. Any offset or size set at a given
-            /// be increased or decreased with scale. Defaults to 1f. Includes parent scale.
+            /// be increased or decreased with scale. Defaults to 1f.
             /// </summary>
             float Scale { get; }
 
