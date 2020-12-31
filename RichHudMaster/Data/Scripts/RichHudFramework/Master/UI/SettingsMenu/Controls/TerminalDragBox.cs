@@ -63,7 +63,7 @@ namespace RichHudFramework.UI.Server
             };
             Element = openButton;
 
-            window = new DragWindow()
+            window = new DragWindow(Update)
             {
                 Size = new Vector2(300f, 250f),
                 Visible = false
@@ -129,12 +129,16 @@ namespace RichHudFramework.UI.Server
             public event Action OnConfirm;
 
             /// <summary>
-            /// Returns the absolute position of the window in screen space on [-1, 1]
+            /// Returns the absolute position of the window in screen space on [-0.5, 0.5]
             /// </summary>
             public Vector2 AbsolutePosition
             {
-                get { return HudMain.GetAbsoluteVector(cachedPosition); }
-                set { base.Offset = HudMain.GetPixelVector(value); }
+                get { return _absolutePosition; } 
+                set 
+                {
+                    value = Vector2.Clamp(value, -Vector2.One / 2f, Vector2.One / 2f);
+                    _absolutePosition = value; 
+                } 
             }
 
             /// <summary>
@@ -144,9 +148,12 @@ namespace RichHudFramework.UI.Server
             public bool AlignToEdge { get; set; }
 
             private readonly BorderedButton confirmButton;
+            private readonly Action DragUpdateAction;
+            private Vector2 alignment, _absolutePosition;
 
-            public DragWindow() : base(HudMain.Root)
+            public DragWindow(Action UpdateAction) : base(HudMain.Root)
             {
+                DragUpdateAction = UpdateAction;
                 MinimumSize = new Vector2(100f);
                 AllowResizing = false;
 
@@ -168,27 +175,30 @@ namespace RichHudFramework.UI.Server
             protected override void Layout()
             {
                 Scale = HudMain.ResScale;
+                Offset = HudMain.GetPixelVector(_absolutePosition) - Origin - alignment;
 
                 base.Layout();
-                Vector2 offset = Offset;
 
-                if (canMoveWindow)
-                    offset = HudMain.Cursor.ScreenPos + cursorOffset - cachedOrigin;
+                _absolutePosition = HudMain.GetAbsoluteVector(Position + alignment);
+                UpdateAlignment();
+            }
+
+            private void UpdateAlignment()
+            {
+                alignment = new Vector2();
 
                 if (AlignToEdge)
                 {
-                    if (offset.X < 0)
-                        offset.X = Width / 2f;
+                    if (cachedPosition.X > 0f)
+                        alignment.X = Width / 2f;
                     else
-                        offset.X = -Width / 2f;
+                        alignment.X = -Width / 2f;
 
-                    if (offset.Y < 0)
-                        offset.Y = Height / 2f;
+                    if (cachedPosition.Y > 0f)
+                        alignment.Y = Height / 2f;
                     else
-                        offset.Y = -Height / 2f;  
+                        alignment.Y = -Height / 2f;
                 }
-
-                Offset = offset;
             }
 
             protected override void HandleInput(Vector2 cursorPos)
@@ -197,6 +207,8 @@ namespace RichHudFramework.UI.Server
 
                 if (SharedBinds.Escape.IsNewPressed)
                     OnConfirm?.Invoke();
+
+                DragUpdateAction();
             }
         }
     }

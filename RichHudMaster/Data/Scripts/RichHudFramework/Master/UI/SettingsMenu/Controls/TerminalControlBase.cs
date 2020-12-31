@@ -130,8 +130,8 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public virtual Func<TValue> CustomValueGetter { get; set; }
 
-        private TValue lastValue;
-        private bool controlUpdating;
+        protected TValue lastValue;
+        protected bool controlUpdating;
 
         public TerminalValue()
         { }
