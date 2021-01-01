@@ -6,7 +6,7 @@
 [subrepo]
 	remote = git@github.com:ZachHembree/RichHudFramework.Shared.git
 	branch = WorldDraw
-	commit = 21a0256616acb0ac8270796f4ccd5dc28b731e01
+	commit = f3315661b1c8866a1d1e45c5ab5efcd919314c20
 	method = merge
 	cmdver = 0.4.1
-	parent = f3d1ebb882f779fe179cdb9e93e8e8b8bbc85301
+	parent = 3ae9d76041a24f0e73ca358237d4993e6fb7385e
