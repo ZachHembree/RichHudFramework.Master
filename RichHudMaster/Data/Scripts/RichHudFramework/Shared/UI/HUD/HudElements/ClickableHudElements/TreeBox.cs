@@ -238,6 +238,7 @@ namespace RichHudFramework.UI
         public void RemoveAt(int index)
         {
             ListBoxEntry<T> entry = entryChain.ChainEntries[index];
+<<<<<<< 3c853b91181551c7b8bd71527a29d192d6ee733b
             entryChain.RemoveAt(index);
             entryPool.Return(entry);
         }
@@ -250,7 +251,7 @@ namespace RichHudFramework.UI
             for (int n = index; n < index + count; n++)
                 entryPool.Return(entryChain.ChainEntries[n]);
 
-            entryChain.RemoveRange(index, count);
+            entryChain.RemoveRange(index, count, true);
         }
 
         /// <summary>
@@ -261,7 +262,7 @@ namespace RichHudFramework.UI
             for (int n = 0; n < entryChain.ChainEntries.Count; n++)
                 entryPool.Return(entryChain.ChainEntries[n]);
 
-            entryChain.Clear();
+            entryChain.Clear(true);
         }
 
         private ListBoxEntry<T> GetNewEntry()

@@ -1,4 +1,4 @@
-using RichHudFramework.Server;
+﻿using RichHudFramework.Server;
 using RichHudFramework.Internal;
 using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
@@ -214,7 +214,7 @@ namespace RichHudFramework
                 private void HandleSelectionChange()
                 {
                     if (lastPage != null)
-                        layout.Remove(lastPage);
+                        layout.Remove(lastPage, true);
 
                     if (CurrentPage != null)
                         layout.Add(CurrentPage);
