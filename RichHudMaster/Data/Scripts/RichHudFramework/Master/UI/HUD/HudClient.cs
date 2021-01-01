@@ -161,6 +161,10 @@ namespace RichHudFramework
                             }
                         case HudMainAccessors.GetFocusOffset:
                             return GetFocusOffset(data as Action<byte>);
+                        case HudMainAccessors.GetPixelSpaceFunc:
+                            return _instance._root.GetHudSpaceFunc;
+                        case HudMainAccessors.GetPixelSpaceOriginFunc:
+                            return _instance._root.GetNodeOriginFunc;
                     }
 
                     return null;
