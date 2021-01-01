@@ -111,7 +111,7 @@ namespace RichHudFramework
 
             private class TileElement : HudElementBase
             {
-                public IReadOnlyList<TerminalControlBase> Controls => controls.ChainEntries;
+                public IReadOnlyList<TerminalControlBase> Controls => controls.Collection;
 
                 private readonly HudChain<TerminalControlBase> controls;
                 private readonly TexturedBox background;
@@ -157,8 +157,8 @@ namespace RichHudFramework
 
                 protected override void HandleInput(Vector2 cursorPos)
                 {
-                    for (int n = 0; n < controls.ChainEntries.Count; n++)
-                        controls.ChainEntries[n].Update();
+                    for (int n = 0; n < controls.Collection.Count; n++)
+                        controls.Collection[n].Update();
                 }
             }
         }

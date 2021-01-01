@@ -122,7 +122,7 @@ namespace RichHudFramework.UI.Server
                 hudChain = new HudChain(true, this)
                 {
                     SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                    ChainContainer = { name, dropdown },
+                    CollectionContainer = { name, dropdown },
                 };
 
                 Padding = new Vector2(20f, 0f);

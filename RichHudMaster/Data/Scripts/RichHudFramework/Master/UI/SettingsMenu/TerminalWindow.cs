@@ -85,7 +85,7 @@ namespace RichHudFramework
                         ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.InnerH,
                         Padding = new Vector2(80f, 40f),
                         Spacing = 12f,
-                        ChainContainer = { modList, middleDivider },
+                        CollectionContainer = { modList, middleDivider },
                     };
 
                     bottomDivider = new TexturedBox(this)
@@ -245,7 +245,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Returns a read only list of mod root containers registered to the list
                     /// </summary>
-                    public IReadOnlyList<ModControlRoot> ModRoots => scrollBox.ChainEntries;
+                    public IReadOnlyList<ModControlRoot> ModRoots => scrollBox.Collection;
 
                     public override float Width
                     {
@@ -336,10 +336,10 @@ namespace RichHudFramework
 
                         if (CurrentPage != newPage)
                         {
-                            for (int n = 0; n < scrollBox.ChainEntries.Count; n++)
+                            for (int n = 0; n < scrollBox.Collection.Count; n++)
                             {
-                                if (scrollBox.ChainEntries[n] != SelectedMod)
-                                    scrollBox.ChainEntries[n].Element.ClearSelection();
+                                if (scrollBox.Collection[n] != SelectedMod)
+                                    scrollBox.Collection[n].Element.ClearSelection();
                             }
 
                             CurrentPage = newPage;

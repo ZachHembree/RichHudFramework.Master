@@ -28,7 +28,7 @@ namespace RichHudFramework
             /// <summary>
             /// List of control categories registered to the page.
             /// </summary>
-            public IReadOnlyList<IControlCategory> Categories => catBox.ChainEntries;
+            public IReadOnlyList<IControlCategory> Categories => catBox.Collection;
 
             public IControlPage CategoryContainer => this;
 
@@ -68,8 +68,8 @@ namespace RichHudFramework
                         case ControlPageAccessors.CategoryData:
                             return new MyTuple<object, Func<int>>()
                             {
-                                Item1 = (Func<int, ControlContainerMembers>)(x => catBox.ChainEntries[x].GetApiData()),
-                                Item2 = () => catBox.ChainEntries.Count
+                                Item1 = (Func<int, ControlContainerMembers>)(x => catBox.Collection[x].GetApiData()),
+                                Item2 = () => catBox.Collection.Count
                             };
                     }
 

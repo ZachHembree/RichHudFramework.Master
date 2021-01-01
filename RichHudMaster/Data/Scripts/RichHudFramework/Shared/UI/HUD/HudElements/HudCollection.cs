@@ -27,7 +27,7 @@ namespace RichHudFramework
             /// Used to allow the addition of child elements using collection-initializer syntax in
             /// conjunction with normal initializers.
             /// </summary>
-            public HudCollection<TElementContainer, TElement> ChainContainer => this;
+            public HudCollection<TElementContainer, TElement> CollectionContainer => this;
 
             /// <summary>
             /// Retrieves the element container at the given index.

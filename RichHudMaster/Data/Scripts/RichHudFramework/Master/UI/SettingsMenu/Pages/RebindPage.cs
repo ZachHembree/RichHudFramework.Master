@@ -36,8 +36,8 @@ namespace RichHudFramework
 
                 BindGroups = new ReadOnlyCollectionData<IBindGroup>
                 (
-                    x => bindGroups.ChainEntries[x].Element.BindGroup, 
-                    () => bindGroups.ChainEntries.Count
+                    x => bindGroups.Collection[x].Element.BindGroup, 
+                    () => bindGroups.Collection.Count
                 );
             }
 
@@ -212,7 +212,7 @@ namespace RichHudFramework
                     {
                         SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                         DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
-                        ChainContainer = { name, divider1, scrollBox, divider2 },
+                        CollectionContainer = { name, divider1, scrollBox, divider2 },
                     };
 
                     Height = 255f;
@@ -247,11 +247,11 @@ namespace RichHudFramework
 
                         for (int n = 0; n < BindGroup.Count; n++)
                         {
-                            if (scrollBox.ChainEntries.Count == n)
+                            if (scrollBox.Collection.Count == n)
                                 scrollBox.Add(new BindBox());
 
-                            scrollBox.ChainEntries[n].Enabled = true;
-                            scrollBox.ChainEntries[n].Element.SetBind(BindGroup[n], BindGroup);
+                            scrollBox.Collection[n].Enabled = true;
+                            scrollBox.Collection[n].Element.SetBind(BindGroup[n], BindGroup);
                         }
                     }
                 }
@@ -321,7 +321,7 @@ namespace RichHudFramework
                         Spacing = 13f,
                         Padding = new Vector2(32f, 0f),
                         ParentAlignment = ParentAlignments.Right | ParentAlignments.InnerH,
-                        ChainContainer = { con1, con2, con3 }
+                        CollectionContainer = { con1, con2, con3 }
                     };
 
                     Size = new Vector2(400f, 44f);

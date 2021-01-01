@@ -124,7 +124,7 @@ namespace RichHudFramework.UI.Server
                 hudChain = new HudChain(true, this)
                 {
                     SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                    ChainContainer = { name, listBox },
+                    CollectionContainer = { name, listBox },
                 };
 
                 Padding = new Vector2(20f, 0f);

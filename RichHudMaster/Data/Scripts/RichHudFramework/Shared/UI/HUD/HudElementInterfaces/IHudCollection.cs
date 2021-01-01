@@ -15,7 +15,7 @@ namespace RichHudFramework
             /// <summary>
             /// UI elements in the collection
             /// </summary>
-            IReadOnlyList<TElementContainer> ChainEntries { get; }
+            IReadOnlyList<TElementContainer> Collection { get; }
 
             /// <summary>
             /// Finds the chain member that meets the conditions required by the predicate.

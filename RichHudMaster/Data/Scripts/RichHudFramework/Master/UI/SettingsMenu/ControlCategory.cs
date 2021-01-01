@@ -147,7 +147,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Read only collection of <see cref="IControlTile"/>s assigned to this category
                 /// </summary>
-                public IReadOnlyList<IControlTile> Tiles => scrollBox.ChainEntries;
+                public IReadOnlyList<IControlTile> Tiles => scrollBox.Collection;
 
                 public override float Width
                 {
@@ -211,7 +211,7 @@ namespace RichHudFramework
                     layout = new HudChain(true, this)
                     {
                         SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                        ChainContainer = { header, subheader, scrollBox }
+                        CollectionContainer = { header, subheader, scrollBox }
                     };
 
                     HeaderText = "NewSettingsCategory";

@@ -315,7 +315,7 @@ namespace RichHudFramework.UI
                 {
                     SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                     DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
-                    ChainContainer = { name, divider, arrow }
+                    CollectionContainer = { name, divider, arrow }
                 };
 
                 mouseInput = new MouseInputElement(this) 
