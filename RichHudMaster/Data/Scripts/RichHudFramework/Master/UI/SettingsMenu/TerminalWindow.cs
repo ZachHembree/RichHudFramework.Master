@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Server;
+using RichHudFramework.Server;
 using RichHudFramework.Internal;
 using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
@@ -195,7 +195,7 @@ namespace RichHudFramework
 
                 protected override void Layout()
                 {
-                    Scale = HudMain.ResScale;
+                    LocalScale = HudMain.ResScale;
 
                     base.Layout();
 

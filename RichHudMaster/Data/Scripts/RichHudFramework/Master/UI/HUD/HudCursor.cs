@@ -11,9 +11,9 @@ namespace RichHudFramework
     using CursorMembers = MyTuple<
         Func<HudSpaceDelegate, bool>, // IsCapturingSpace
         Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
-        Func<object, bool>, // IsCapturing
-        Func<object, bool>, // TryCapture
-        Func<object, bool>, // TryRelease
+        Func<ApiMemberAccessor, bool>, // IsCapturing
+        Func<ApiMemberAccessor, bool>, // TryCapture
+        Func<ApiMemberAccessor, bool>, // TryRelease
         ApiMemberAccessor // GetOrSetMember
     >;
 
@@ -57,7 +57,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Returns the object capturing the cursor
                 /// </summary>
-                public object CapturedElement { get; private set; }
+                public ApiMemberAccessor CapturedElement { get; private set; }
 
                 private float captureDepth;
                 private readonly TexturedBox cursorBox;
@@ -116,19 +116,19 @@ namespace RichHudFramework
                 /// <summary>
                 /// Indicates whether the cursor is being captured by the given element.
                 /// </summary>
-                public bool IsCapturing(object capturedElement) =>
+                public bool IsCapturing(ApiMemberAccessor capturedElement) =>
                     Visible && capturedElement == CapturedElement;
 
                 /// <summary>
                 /// Attempts to capture the cursor with the given object
                 /// </summary>
-                public void Capture(object capturedElement) =>
+                public void Capture(ApiMemberAccessor capturedElement) =>
                     TryCapture(capturedElement);
 
                 /// <summary>
                 /// Attempts to capture the cursor using the given object. Returns true on success.
                 /// </summary>
-                public bool TryCapture(object capturedElement)
+                public bool TryCapture(ApiMemberAccessor capturedElement)
                 {
                     if (capturedElement != null && CapturedElement == null)
                     {
@@ -143,7 +143,7 @@ namespace RichHudFramework
                 /// Attempts to release the cursor from the given element. Returns false if
                 /// not capture or if not captured by the object given.
                 /// </summary>
-                public bool TryRelease(object capturedElement)
+                public bool TryRelease(ApiMemberAccessor capturedElement)
                 {
                     if (CapturedElement == capturedElement && capturedElement != null)
                     {
@@ -200,11 +200,7 @@ namespace RichHudFramework
                     fullZOffset = GetFullZOffset(this, _parent);
                     cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
 
-                    if (Visible || refresh)
-                    {
-                        parentScale = _parent == null ? 1f : _parent.Scale;
-                        Scale = ResScale;
-                    }
+                    base.BeginLayout(refresh);
                 }
 
                 private object GetOrSetMember(object data, int memberEnum)
