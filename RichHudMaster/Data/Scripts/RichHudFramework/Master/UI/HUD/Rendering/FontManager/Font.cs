@@ -45,12 +45,12 @@ namespace RichHudFramework
                     /// <summary>
                     /// Retrieves the font style at the given index.
                     /// </summary>
-                    public IFontStyle this[int index] => styles[index];
+                    public IFontStyle this[int index] => styles[index & 1];
 
                     // <summary>
                     /// Retrieves the font style at the given index.
                     /// </summary>
-                    public IFontStyle this[FontStyles type] => styles[(int)type];
+                    public IFontStyle this[FontStyles type] => styles[(int)type & 1];
 
                     /// <summary>
                     /// Font name
@@ -104,7 +104,7 @@ namespace RichHudFramework
                         Index = index;
 
                         BaseScale = 12f / ptSize;
-                        styles = new FontStyle[4];
+                        styles = new FontStyle[2];
                     }
 
                     /// <summary>
@@ -114,7 +114,7 @@ namespace RichHudFramework
                     {
                         var styleData = fontData.Item3;
 
-                        for (int n = 0; n < styleData.Length; n++)
+                        for (int n = 0; n < 2; n++)
                         {
                             if (styleData[n].Item4 != null)
                                 TryAddStyle(styleData[n]);
@@ -150,7 +150,7 @@ namespace RichHudFramework
                             for (int n = 0; n < kernData.Length; n++)
                                 kerningPairs.Add(kernData[n].Key, kernData[n].Value);
 
-                            styles[style] = new FontStyle(this, (FontStyles)style, height, baseLine, glyphs, kerningPairs);
+                            styles[style] = new FontStyle(this, height, baseLine, glyphs, kerningPairs);
                             return true;
                         }
                         else
@@ -161,13 +161,13 @@ namespace RichHudFramework
                     /// Returns true if the font is defined for the given style.
                     /// </summary>
                     public bool IsStyleDefined(FontStyles styleEnum) =>
-                        styles[(int)styleEnum] != null;
+                        styles[(int)styleEnum & 1] != null;
 
                     /// <summary>
                     /// Returns true if the font is defined for the given style.
                     /// </summary>
                     public bool IsStyleDefined(int style) =>
-                        styles[style] != null;
+                        styles[style & 1] != null;
 
                     /// <summary>
                     /// Retrieves the full index of the font style

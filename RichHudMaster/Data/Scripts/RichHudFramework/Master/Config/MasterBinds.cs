@@ -29,7 +29,7 @@ namespace RichHudFramework.Server
 
         private MasterBinds() : base(false, true)
         {
-            bindGroup = BindManager.GetOrCreateGroup("BvMain");
+            bindGroup = BindManager.GetOrCreateGroup("Main");
             bindGroup.RegisterBinds(bindNames);
         }
 

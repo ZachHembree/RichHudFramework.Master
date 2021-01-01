@@ -1,40 +1,18 @@
 using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
-using System.Text;
 using System.Collections.Generic;
 using VRage;
-using VRage.Game.ModAPI;
 using VRageMath;
-using VRage.Utils;
-
 using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 
 namespace RichHudFramework
 {
-    using CursorMembers = MyTuple<
-        Func<bool>, // Visible
-        Func<bool>, // IsCaptured
-        Func<Vector2>, // Origin
-        Action<object>, // Capture
-        Func<object, bool>, // IsCapturing
-        MyTuple<
-            Func<object, bool>, // TryCapture
-            Func<object, bool>, // TryRelease
-            ApiMemberAccessor  // GetOrSetMembers
-        >
-    >;
-    using HudElementMembers = MyTuple<
-        Func<bool>, // Visible
-        object, // ID
-        Action<bool>, // BeforeLayout
-        Action<int>, // BeforeDraw
-        Action<int>, // HandleInput
-        ApiMemberAccessor // GetOrSetMembers
-    >;
+    using Server;
     using TextBoardMembers = MyTuple<
         // TextBuilderMembers
         MyTuple<
@@ -49,32 +27,36 @@ namespace RichHudFramework
         Func<Vector2>, // Size
         Func<Vector2>, // TextSize
         Vec2Prop, // FixedSize
-        Action<Vector2> // Draw 
+        Action<Vector2, MatrixD> // Draw 
     >;
 
     namespace UI.Server
     {
         using Rendering.Server;
-        using HudMainMembers = MyTuple<
-            HudElementMembers, // HudRoot
-            CursorMembers, // Cursor
-            Func<TextBoardMembers>, // GetNewTextBoard
-            ApiMemberAccessor // GetOrSetMembers
+        using HudUpdateAccessors = MyTuple<
+            ApiMemberAccessor,
+            MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
+            Action, // DepthTest
+            Action, // HandleInput
+            Action<bool>, // BeforeLayout
+            Action // BeforeDraw
         >;
 
         public sealed partial class HudMain : RichHudComponentBase
         {
+            public const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
+
             /// <summary>
             /// Root parent for all HUD elements.
             /// </summary>
-            public static IHudParent Root
+            public static HudParentBase Root
             {
                 get
                 {
                     if (_instance == null)
                         Init();
 
-                    return _instance.root;
+                    return _instance._root;
                 }
             }
 
@@ -88,29 +70,33 @@ namespace RichHudFramework
                     if (_instance == null)
                         Init();
 
-                    return _instance.cursor;
+                    return _instance._cursor;
                 }
             }
 
             /// <summary>
             /// Shared clipboard.
             /// </summary>
-            public static RichText ClipBoard 
-            { 
-                get { return Instance._clipBoard ?? new RichText(); } 
-                set { Instance._clipBoard = value; } 
+            public static RichText ClipBoard
+            {
+                get { return Instance._clipBoard ?? new RichText(); }
+                set { Instance._clipBoard = value; }
             }
 
             /// <summary>
             /// Resolution scale normalized to 1080p for resolutions over 1080p. Returns a scale of 1f
             /// for lower resolutions.
             /// </summary>
-            public static float ResScale { get { return Instance._resScale; } set { Instance._resScale = value; } }
+            public static float ResScale
+            {
+                get
+                {
+                    if (_instance == null)
+                        Init();
 
-            /// <summary>
-            /// Debugging element used to test scaling and positioning of members.
-            /// </summary>
-            public static UiTestPattern TestPattern { get { return Instance._uiTestPattern; } set { Instance._uiTestPattern = value; } }
+                    return _instance._resScale;
+                }
+            }
 
             /// <summary>
             /// Matrix used to convert from 2D pixel-value screen space coordinates to worldspace.
@@ -122,7 +108,7 @@ namespace RichHudFramework
                     if (_instance == null)
                         Init();
 
-                    return _instance.pixelToWorld;
+                    return _instance._pixelToWorld;
                 }
             }
 
@@ -136,7 +122,7 @@ namespace RichHudFramework
                     if (_instance == null)
                         Init();
 
-                    return _instance.screenWidth;
+                    return _instance._screenWidth;
                 }
             }
 
@@ -150,7 +136,7 @@ namespace RichHudFramework
                     if (_instance == null)
                         Init();
 
-                    return _instance.screenHeight;
+                    return _instance._screenHeight;
                 }
             }
 
@@ -164,7 +150,7 @@ namespace RichHudFramework
                     if (_instance == null)
                         Init();
 
-                    return _instance.fov;
+                    return _instance._fov;
                 }
             }
 
@@ -178,7 +164,7 @@ namespace RichHudFramework
                     if (_instance == null)
                         Init();
 
-                    return _instance.aspectRatio;
+                    return _instance._aspectRatio;
                 }
             }
 
@@ -193,7 +179,7 @@ namespace RichHudFramework
                     if (_instance == null)
                         Init();
 
-                    return _instance.fovScale;
+                    return _instance._fovScale;
                 }
             }
 
@@ -207,40 +193,74 @@ namespace RichHudFramework
                     if (_instance == null)
                         Init();
 
-                    return _instance.uiBkOpacity;
+                    return _instance._uiBkOpacity;
                 }
             }
+
+            /// <summary>
+            /// Used to indicate when the draw list should be refreshed. Resets every frame.
+            /// </summary>
+            public static bool RefreshDrawList;
+
+            /// <summary>
+            /// If true then the cursor will be visible while chat is open
+            /// </summary>
+            public static bool EnableCursor;
 
             private static HudMain Instance
             {
                 get { Init(); return _instance; }
-                set { _instance = value; }
             }
             private static HudMain _instance;
 
+            private readonly HudCursor _cursor;
+            private readonly HudRoot _root;
+            private readonly List<Client> hudClients;
+
+            private readonly List<HudUpdateAccessors> updateAccessors;
+            private readonly Dictionary<Func<Vector3D>, ushort> distMap;
+            private readonly HashSet<Func<Vector3D>> uniqueOriginFuncs;
+            private readonly List<ulong> indexList;
+            
+            private readonly List<Action> depthTestActions;
+            private readonly List<Action> inputActions;
+            private readonly List<Action<bool>> layoutActions;
+            private readonly List<Action> drawActions;
+
             private RichText _clipBoard;
             private float _resScale;
-            private UiTestPattern _uiTestPattern;
+            private float _uiBkOpacity;
 
-            private readonly HudRoot root;
-            private readonly HudCursor cursor;
             private readonly Utils.Stopwatch cacheTimer;
-            private MatrixD pixelToWorld;
-            private float screenWidth, screenHeight, aspectRatio, fov, fovScale, uiBkOpacity;
-            private int tick;
+            private MatrixD _pixelToWorld;
+            private float _screenWidth;
+            private float _screenHeight;
+            private float _aspectRatio;
+            private float _fov;
+            private float _fovScale;
+            private int drawTick;
+
+            private Action<byte> LoseFocusCallback;
+            private byte unfocusedOffset;
 
             private HudMain() : base(false, true)
             {
-                root = new HudRoot();
-                cursor = new HudCursor();
+                _root = new HudRoot();
+                _cursor = new HudCursor(_root);
+                hudClients = new List<Client>();
+
+                updateAccessors = new List<HudUpdateAccessors>(200);
+                distMap = new Dictionary<Func<Vector3D>, ushort>(50);
+                uniqueOriginFuncs = new HashSet<Func<Vector3D>>();
+                indexList = new List<ulong>(200);
+
+                depthTestActions = new List<Action>(200);
+                inputActions = new List<Action>(200);
+                layoutActions = new List<Action<bool>>(200);
+                drawActions = new List<Action>(200);
 
                 cacheTimer = new Utils.Stopwatch();
                 cacheTimer.Start();
-
-                _uiTestPattern = new UiTestPattern();
-                _uiTestPattern.Hide();
-
-                cursor.Visible = true;
             }
 
             public static void Init()
@@ -248,83 +268,268 @@ namespace RichHudFramework
                 if (_instance == null)
                 {
                     _instance = new HudMain();
-                    Instance.UpdateResScaling();
-                    Instance.UpdateFovScaling();
+                    _instance.UpdateScreenScaling();
                 }
             }
 
             public override void Close()
             {
-                Instance = null;
+                _instance = null;
             }
 
+            /// <summary>
+            /// Draw UI elements
+            /// </summary>
             public override void Draw()
+            {
+                // Check for any clients requesting draw list refresh
+                for (int n = 0; n < hudClients.Count; n++)
+                {
+                    if (hudClients[n].RefreshDrawList)
+                        RefreshDrawList = true;
+
+                    hudClients[n].RefreshDrawList = false;
+                }
+
+                _cursor.Visible = EnableCursor;
+
+                // Check for any clients requesting that the cursor be made visible
+                for (int n = 0; n < hudClients.Count; n++)
+                {
+                    if (hudClients[n].EnableCursor)
+                        _cursor.Visible = true;
+                }
+
+                UpdateCache();
+
+                bool refreshLayout = (drawTick % 30) == 0,
+                    rebuildLists = RefreshDrawList && (drawTick % 10) == 0,
+                    resortLists = rebuildLists || (drawTick % 10) == 0;
+
+                if (rebuildLists)
+                {
+                    RebuildUpdateLists();
+                    RefreshDrawList = false;
+                }
+
+                for (int n = 0; n < layoutActions.Count; n++)
+                    layoutActions[n](refreshLayout);
+
+                // Draw UI elements
+                for (int n = 0; n < drawActions.Count; n++)
+                    drawActions[n]();
+
+                // Rebuild sorted lists at 1/10th speed, when draw list is
+                // rebuilt, or when a window tries to take focus
+                if (resortLists)
+                    SortUpdateAccessors();
+
+                drawTick++;
+
+                if (drawTick == 60)
+                    drawTick = 0;
+            }
+
+            /// <summary>
+            /// Updates input for UI elements
+            /// </summary>
+            public override void HandleInput()
+            {
+                // Reset cursor
+                _cursor.Release();
+
+                for (int n = 0; n < depthTestActions.Count; n++)
+                    depthTestActions[n]();
+
+                for (int n = inputActions.Count - 1; n >= 0; n--)
+                    inputActions[n]();
+            }
+
+            /// <summary>
+            /// Updates cached values for screen scaling and fov.
+            /// </summary>
+            private void UpdateCache()
             {
                 if (cacheTimer.ElapsedMilliseconds > 2000)
                 {
-                    if (screenHeight != MyAPIGateway.Session.Camera.ViewportSize.Y || screenWidth != MyAPIGateway.Session.Camera.ViewportSize.X)
-                        UpdateResScaling();
+                    UpdateScreenScaling();
 
-                    if (fov != MyAPIGateway.Session.Camera.FovWithZoom)
-                        UpdateFovScaling();
-
-                    uiBkOpacity = MyAPIGateway.Session.Config.UIBkOpacity;
+                    _uiBkOpacity = MyAPIGateway.Session.Config.UIBkOpacity;
                     cacheTimer.Reset();
                 }
 
-                pixelToWorld = new MatrixD
+                // Update screen to world matrix transform
+                _pixelToWorld = new MatrixD
                 {
-                    M11 = (FovScale / ScreenHeight),    M12 = 0d,                           M13 = 0d,       M14 = 0d,
-                    M21 = 0d,                           M22 = (FovScale / ScreenHeight),    M23 = 0d,       M24 = 0d,
-                    M31 = 0d,                           M32 = 0d,                           M33 = -0.05,    M34 = 0d,
-                    M41 = 0d,                           M42 = 0d,                           M43 = 0d,       M44 = 1d
+                    M11 = (FovScale / ScreenHeight),
+                    M22 = (FovScale / ScreenHeight),
+                    M33 = 1d,
+                    M43 = -MyAPIGateway.Session.Camera.NearPlaneDistance,
+                    M44 = 1d
                 };
 
-                pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;
-
-                root.BeforeLayout(tick == 0);
-                root.BeforeDraw(HudLayers.Background);
-                root.BeforeDraw(HudLayers.Normal);
-                root.BeforeDraw(HudLayers.Foreground);
-                cursor.Draw();
-
-                tick++;
-
-                if (tick == 30)
-                    tick = 0;
+                _pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;
             }
 
-            public override void HandleInput()
+            /// <summary>
+            /// Updates scaling values used to compensate for resolution, aspect ratio and FOV.
+            /// </summary>
+            private void UpdateScreenScaling()
             {
-                cursor.Release();
+                _screenWidth = MyAPIGateway.Session.Camera.ViewportSize.X;
+                _screenHeight = MyAPIGateway.Session.Camera.ViewportSize.Y;
+                _aspectRatio = (_screenWidth / _screenHeight);
+                _resScale = (_screenHeight > 1080f) ? _screenHeight / 1080f : 1f;
 
-                root.BeforeInput(HudLayers.Background);
-                root.BeforeInput(HudLayers.Normal);
-                root.BeforeInput(HudLayers.Foreground);
-
-                cursor.HandleInput();
+                _fov = MyAPIGateway.Session.Camera.FovWithZoom;
+                _fovScale = (float)(0.1f * Math.Tan(_fov / 2d));
             }
 
-            private void UpdateResScaling()
+            /// <summary>
+            /// Rebuilds update accessor list from UI tree
+            /// </summary>
+            private void RebuildUpdateLists()
             {
-                screenWidth = MyAPIGateway.Session.Camera.ViewportSize.X;
-                screenHeight = MyAPIGateway.Session.Camera.ViewportSize.Y;
-                aspectRatio = (screenWidth / screenHeight);
+                // Clear update lists and rebuild accessor lists from HUD tree
+                updateAccessors.Clear();
+                layoutActions.Clear();
+                uniqueOriginFuncs.Clear();
 
-                ResScale = (screenHeight > 1080f) ? screenHeight / 1080f : 1f;
+                // Add client UI elements
+                for (int n = 0; n < hudClients.Count; n++)
+                    hudClients[n].GetUpdateAccessors?.Invoke(updateAccessors, 0);
+
+                // Add master UI elements
+                _root.GetUpdateAccessors(updateAccessors, 0);
+
+                // Build distance func HashSet
+                for (int n = 0; n < updateAccessors.Count; n++)
+                    uniqueOriginFuncs.Add(updateAccessors[n].Item2.Item2);
+
+                layoutActions.EnsureCapacity(updateAccessors.Count);
+
+                // Build layout list (without sorting)
+                for (int n = 0; n < updateAccessors.Count; n++)
+                {
+                    HudUpdateAccessors accessors = updateAccessors[n];
+                    layoutActions.Add(accessors.Item5);
+                }
             }
 
-            private void UpdateFovScaling()
+            /// <summary>
+            /// Sorts draw and input accessors first by distance, then by zOffset, then by index
+            /// </summary>
+            private void SortUpdateAccessors()
             {
-                fov = MyAPIGateway.Session.Camera.FovWithZoom;
-                fovScale = (float)(0.1f * Math.Tan(fov / 2d));
+                indexList.Clear();
+                depthTestActions.Clear();
+                inputActions.Clear();
+                drawActions.Clear();
+                distMap.Clear();
+
+                indexList.EnsureCapacity(updateAccessors.Count);
+                depthTestActions.EnsureCapacity(updateAccessors.Count);
+                inputActions.EnsureCapacity(updateAccessors.Count);
+                drawActions.EnsureCapacity(updateAccessors.Count);
+
+                // Update distance for each unique position delegate
+                // Max distance: 655.35m; Precision: 1cm/unit
+                //
+                // This should help keep profiler overhead for this part to a minimum by reducing the
+                // number of delegate calls to a small handful. This also means the cost difference between
+                // using Distance() and DistanceSquared() will be negligible.
+                Vector3D camPos = MyAPIGateway.Session.Camera.WorldMatrix.Translation;
+
+                foreach (Func<Vector3D> OriginFunc in uniqueOriginFuncs)
+                {
+                    Vector3D nodeOrigin = OriginFunc();
+                    double dist = Math.Round(Vector3D.Distance(nodeOrigin, camPos), 2);
+                    var reverseDist = (ushort)(ushort.MaxValue - (ushort)Math.Min(dist * 100d, ushort.MaxValue));
+                    distMap.Add(OriginFunc, reverseDist);
+                }
+
+                // Lower 32 bits store the index, upper 32 store draw depth and distance
+                ulong indexMask = 0x00000000FFFFFFFF;
+
+                // Build index list and sort by zOffset
+                for (int n = 0; n < updateAccessors.Count; n++)
+                {
+                    var accessors = updateAccessors[n].Item2;
+                    ulong index = (ulong)n,
+                        zOffset = accessors.Item1(),
+                        distance = distMap[accessors.Item2];
+                    
+                    indexList.Add((distance << 48) | (zOffset << 32) | index);
+                }
+
+                // Sort in ascending order
+                indexList.Sort();
+
+                // Build sorted depth test list
+                for (int n = 0; n < indexList.Count; n++)
+                {
+                    int index = (int)(indexList[n] & indexMask);
+                    HudUpdateAccessors accessors = updateAccessors[index];
+
+                    depthTestActions.Add(accessors.Item3);
+                }
+
+                // Build sorted input list
+                for (int n = 0; n < indexList.Count; n++)
+                {
+                    int index = (int)(indexList[n] & indexMask);
+                    HudUpdateAccessors accessors = updateAccessors[index];
+
+                    inputActions.Add(accessors.Item4);
+                }
+
+                // Build sorted draw list
+                for (int n = 0; n < indexList.Count; n++)
+                {
+                    int index = (int)(indexList[n] & indexMask);
+                    HudUpdateAccessors accessors = updateAccessors[index];
+
+                    drawActions.Add(accessors.Item6);
+                }
             }
 
+            /// <summary>
+            /// Returns API accessors for a new TextBoard instance.
+            /// </summary>
             public static TextBoardMembers GetTextBoardData() =>
                 new TextBoard().GetApiData();
 
             /// <summary>
-            /// Converts from a value in the relative coordinate system to a concrete value in pixels.
+            /// Returns the ZOffset for focusing a window and registers a callback
+            /// for when another object takes focus.
+            /// </summary>
+            public static byte GetFocusOffset(Action<byte> LoseFocusCallback) =>
+                Instance.GetFocusOffsetInternal(LoseFocusCallback);
+
+            /// <summary>
+            /// Returns the ZOffset for focusing a window and registers a callback
+            /// for when another object takes focus.
+            /// </summary>
+            private byte GetFocusOffsetInternal(Action<byte> LoseFocusCallback)
+            {
+                if (LoseFocusCallback != null)
+                {
+                    this.LoseFocusCallback?.Invoke(unfocusedOffset);
+                    unfocusedOffset++;
+
+                    if (unfocusedOffset >= WindowMaxOffset)
+                        unfocusedOffset = WindowBaseOffset;
+
+                    this.LoseFocusCallback = LoseFocusCallback;
+
+                    return WindowMaxOffset;
+                }
+                else
+                    return 0;
+            }
+
+            /// <summary>
+            /// Converts from a position in absolute screen space coordinates to a position in pixels.
             /// </summary>
             public static Vector2 GetPixelVector(Vector2 scaledVec)
             {
@@ -333,79 +538,65 @@ namespace RichHudFramework
 
                 return new Vector2
                 (
-                    (int)(scaledVec.X * _instance.screenWidth),
-                    (int)(scaledVec.Y * _instance.screenHeight)
+                    (int)(scaledVec.X * _instance._screenWidth),
+                    (int)(scaledVec.Y * _instance._screenHeight)
                 );
             }
 
             /// <summary>
-            /// Converts from a coordinate given in pixels to a scaled system independent of screen resolution.
+            /// Converts from a coordinate given in pixels to a position in absolute units.
             /// </summary>
-            public static Vector2 GetRelativeVector(Vector2 pixelVec)
+            public static Vector2 GetAbsoluteVector(Vector2 pixelVec)
             {
                 if (_instance == null)
                     Init();
 
                 return new Vector2
                 (
-                    pixelVec.X / _instance.screenWidth,
-                    pixelVec.Y / _instance.screenHeight
+                    pixelVec.X / _instance._screenWidth,
+                    pixelVec.Y / _instance._screenHeight
                 );
-            }
-
-            private static object GetOrSetMember(object data, int memberEnum)
-            {
-                switch ((HudMainAccessors)memberEnum)
-                {
-                    case HudMainAccessors.ScreenWidth:
-                        return ScreenWidth;
-                    case HudMainAccessors.ScreenHeight:
-                        return ScreenHeight;
-                    case HudMainAccessors.AspectRatio:
-                        return AspectRatio;
-                    case HudMainAccessors.ResScale:
-                        return ResScale;
-                    case HudMainAccessors.Fov:
-                        return Fov;
-                    case HudMainAccessors.FovScale:
-                        return FovScale;
-                    case HudMainAccessors.PixelToWorldTransform:
-                        return PixelToWorld;
-                    case HudMainAccessors.ClipBoard:
-                        {
-                            if (data == null)
-                                return ClipBoard?.ApiData;
-                            else
-                                ClipBoard = new RichText(data as IList<RichStringMembers>);
-                            break;
-                        }
-                }
-
-                return null;
-            }
-
-            public static HudMainMembers GetApiData()
-            {
-                Init();
-
-                return new HudMainMembers()
-                {
-                    Item1 = _instance.root.GetApiData(),
-                    Item2 = _instance.cursor.GetApiData(),
-                    Item3 = GetTextBoardData,
-                    Item4 = GetOrSetMember
-                };
             }
 
             /// <summary>
             /// Root parent for all hud elements.
             /// </summary>
-            private sealed class HudRoot : HudParentBase
+            private sealed class HudRoot : HudParentBase, IReadOnlyHudSpaceNode
             {
                 public override bool Visible => true;
 
-                public HudRoot() : base()
-                { }
+                public bool DrawCursorInHudSpace { get; }
+
+                public Vector3 CursorPos { get; private set; }
+
+                public HudSpaceDelegate GetHudSpaceFunc { get; }
+
+                public MatrixD PlaneToWorld { get; private set; }
+
+                public Func<MatrixD> UpdateMatrixFunc { get; }
+
+                public Func<Vector3D> GetNodeOriginFunc { get; }
+
+                public bool IsInFront { get; }
+
+                public bool IsFacingCamera { get; }
+
+                public HudRoot()
+                {
+                    DrawCursorInHudSpace = true;
+                    HudSpace = this;
+                    IsInFront = true;
+                    IsFacingCamera = true;
+
+                    GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorld);
+                    GetNodeOriginFunc = () => PixelToWorld.Translation;
+                }
+
+                protected override void Layout()
+                {
+                    PlaneToWorld = PixelToWorld;
+                    CursorPos = new Vector3(Cursor.ScreenPos.X, Cursor.ScreenPos.Y, 0f);
+                }
             }
         }
     }

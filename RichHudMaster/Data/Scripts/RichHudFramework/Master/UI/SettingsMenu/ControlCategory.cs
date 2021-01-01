@@ -22,111 +22,40 @@ namespace RichHudFramework
         /// <summary>
         /// Horizontally scrolling list of control tiles.
         /// </summary>
-        public class ControlCategory : HudElementBase, IListBoxEntry, IControlCategory
+        public class ControlCategory : ScrollBoxEntry, IControlCategory
         {
-            public override float Width
-            {
-                get { return layout.Width; }
-                set { layout.Width = value; }
-            }
-
-            public override float Height
-            {
-                get { return layout.Height; }
-                set
-                {
-                    layout.Height = value;
-                    scrollBox.Height = value - Padding.Y - header.Height - subheader.Height;
-                }
-            }
-
-            public override Vector2 Padding { get { return layout.Padding; } set { layout.Padding = value; } }
-
             /// <summary>
             /// Category name
             /// </summary>
-            public string HeaderText { get { return header.TextBoard.ToString(); } set { header.TextBoard.SetText(value); } }
+            public string HeaderText { get { return categoryElement.HeaderText; } set { categoryElement.HeaderText = value; } }
 
             /// <summary>
             /// Category information
             /// </summary>
-            public string SubheaderText { get { return subheader.TextBoard.ToString(); } set { subheader.TextBoard.SetText(value); } }
+            public string SubheaderText { get { return categoryElement.SubheaderText; } set { categoryElement.SubheaderText = value; } }
 
             /// <summary>
             /// Read only collection of <see cref="IControlTile"/>s assigned to this category
             /// </summary>
-            public IReadOnlyCollection<IControlTile> Tiles { get; }
+            public IReadOnlyList<IControlTile> Tiles => categoryElement.Tiles;
 
+            /// <summary>
+            /// Used to allow the addition of control tiles to categories using collection-initializer syntax in
+            /// conjunction with normal initializers.
+            /// </summary>
             public IControlCategory TileContainer => this;
 
             /// <summary>
-            /// Determines whether or not the element will be drawn.
+            /// Unique identifier.
             /// </summary>
-            public bool Enabled { get; set; }
+            public object ID => this;
 
-            private readonly ScrollBox<ControlTile> scrollBox;
-            private readonly Label header, subheader;
-            private readonly HudChain<HudElementBase> layout;
+            private readonly CategoryElement categoryElement;
 
-            public ControlCategory(IHudParent parent = null) : base(parent)
+            public ControlCategory()
             {
-                header = new Label()
-                {
-                    AutoResize = false,
-                    Height = 24f,
-                    Format = GlyphFormat.White,
-                };
-
-                subheader = new Label()
-                {
-                    AutoResize = false,
-                    VertCenterText = false,
-                    Height = 20f,
-                    Padding = new Vector2(0f, 10f),
-                    Format = GlyphFormat.White.WithSize(.8f),
-                    BuilderMode = TextBuilderModes.Wrapped,
-                };
-
-                scrollBox = new ScrollBox<ControlTile>()
-                {
-                    Spacing = 12f,
-                    SizingMode = ScrollBoxSizingModes.None,
-                    AlignVertical = false,
-                    MinimumVisCount = 1,
-                    Color = Color.Red,
-                };
-
-                scrollBox.background.Visible = false;
-
-                layout = new HudChain<HudElementBase>(this)
-                {
-                    AlignVertical = true,
-                    AutoResize = true,
-                    ChildContainer = { header, subheader, scrollBox }
-                };
-
-                Tiles = new ReadOnlyCollectionData<IControlTile>(x => scrollBox.List[x], () => scrollBox.List.Count);
-
-                HeaderText = "NewSettingsCategory";
-                SubheaderText = "Subheading\nLine 1\nLine 2\nLine 3\nLine 4";
-
-                scrollBox.List.AutoResize = false;
-                Enabled = true;
-            }
-
-            public void Reset()
-            {
-                header.TextBoard.Clear();
-                subheader.TextBoard.Clear();
-                scrollBox.Clear();
-            }
-
-            protected override void Layout()
-            {
-                SliderBar slider = scrollBox.scrollBar.slide;
-                slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
-
-                base.Layout();
+                categoryElement = new CategoryElement();
+                Element = categoryElement;
             }
 
             /// <summary>
@@ -134,7 +63,7 @@ namespace RichHudFramework
             /// </summary>
             public void Add(ControlTile tile)
             {
-                scrollBox.AddToList(tile);
+                categoryElement.Add(tile);
             }
 
             IEnumerator<IControlTile> IEnumerable<IControlTile>.GetEnumerator() =>
@@ -146,21 +75,21 @@ namespace RichHudFramework
             /// <summary>
             /// Retrieves information used by the Framework API
             /// </summary>
-            public new ControlContainerMembers GetApiData()
+            public ControlContainerMembers GetApiData()
             {
                 return new ControlContainerMembers()
                 {
                     Item1 = GetOrSetMember,
                     Item2 = new MyTuple<object, Func<int>>()
                     {
-                        Item1 = (Func<int, ControlContainerMembers>)(x => scrollBox.List[x].GetApiData()),
-                        Item2 = () => scrollBox.List.Count
+                        Item1 = (Func<int, ControlContainerMembers>)(x => categoryElement.Tiles[x].GetApiData()),
+                        Item2 = () => categoryElement.Tiles.Count
                     },
                     Item3 = this
                 };
             }
 
-            private new object GetOrSetMember(object data, int memberEnum)
+            private object GetOrSetMember(object data, int memberEnum)
             {
                 var member = (ControlCatAccessors)memberEnum;
 
@@ -201,6 +130,105 @@ namespace RichHudFramework
                 }
 
                 return null;
+            }
+
+            private class CategoryElement : HudElementBase
+            {
+                /// <summary>
+                /// Category name
+                /// </summary>
+                public string HeaderText { get { return header.TextBoard.ToString(); } set { header.TextBoard.SetText(value); } }
+
+                /// <summary>
+                /// Category information
+                /// </summary>
+                public string SubheaderText { get { return subheader.TextBoard.ToString(); } set { subheader.TextBoard.SetText(value); } }
+
+                /// <summary>
+                /// Read only collection of <see cref="IControlTile"/>s assigned to this category
+                /// </summary>
+                public IReadOnlyList<IControlTile> Tiles => scrollBox.Collection;
+
+                public override float Width
+                {
+                    get { return layout.Width + Padding.X; }
+                    set 
+                    {
+                        if (value > Padding.X)
+                            value -= Padding.X;
+
+                        layout.Width = value; 
+                    }
+                }
+
+                public override float Height
+                {
+                    get { return layout.Height + Padding.Y; }
+                    set 
+                    {
+                        if (value > Padding.Y)
+                            value -= Padding.Y;
+
+                        layout.Height = value;
+                        scrollBox.Height = value - header.Height - subheader.Height; 
+                    }
+                }
+
+                private readonly ScrollBox<ControlTile> scrollBox;
+                private readonly Label header, subheader;
+                private readonly HudChain layout;
+
+                public CategoryElement(HudParentBase parent = null) : base(parent)
+                {
+                    header = new Label()
+                    {
+                        AutoResize = false,
+                        Height = 24f,
+                        Format = GlyphFormat.White,
+                    };
+
+                    subheader = new Label()
+                    {
+                        AutoResize = false,
+                        VertCenterText = false,
+                        Height = 20f,
+                        Padding = new Vector2(0f, 10f),
+                        Format = GlyphFormat.White.WithSize(.8f),
+                        BuilderMode = TextBuilderModes.Wrapped,
+                    };
+
+                    scrollBox = new ScrollBox<ControlTile>(false)
+                    {
+                        SizingMode = HudChainSizingModes.FitChainOffAxis | HudChainSizingModes.ClampChainAlignAxis,
+                        MinVisibleCount = 1,
+                        Spacing = 12f,
+                        Height = 280f,
+                        Color = Color.Red,
+                    };
+
+                    scrollBox.background.Visible = false;
+
+                    layout = new HudChain(true, this)
+                    {
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
+                        CollectionContainer = { header, subheader, scrollBox }
+                    };
+
+                    HeaderText = "NewSettingsCategory";
+                    SubheaderText = "Subheading\nLine 1\nLine 2\nLine 3\nLine 4";
+                    Height = 334f;
+                }
+
+                public void Add(ControlTile tile)
+                {
+                    scrollBox.Add(tile);
+                }
+
+                protected override void Layout()
+                {
+                    SliderBar slider = scrollBox.scrollBar.slide;
+                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                }
             }
         }
     }

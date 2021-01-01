@@ -22,7 +22,9 @@ namespace RichHudFramework.Server
                 { "resetConfig", x => MasterConfig.ResetConfig()},
                 { "open", x => RichHudTerminal.Open = true},
                 { "close", x => RichHudTerminal.Open = false },
+                { "toggleCursor", x => HudMain.EnableCursor = !HudMain.EnableCursor },
                 { "crash", x => ThrowException()},
+                { "refreshDrawList", x => HudMain.RefreshDrawList = true }
             };
         }
 

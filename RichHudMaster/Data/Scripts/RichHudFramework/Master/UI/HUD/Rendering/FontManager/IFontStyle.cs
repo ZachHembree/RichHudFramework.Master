@@ -53,11 +53,6 @@ namespace RichHudFramework
                 Glyph this[char ch] { get; }
 
                 /// <summary>
-                /// Gets the style enum associated with the <see cref="IFontStyle"/>
-                /// </summary>
-                FontStyles Style { get; }
-
-                /// <summary>
                 /// Position of the base line starting from the origin
                 /// </summary>
                 float BaseLine { get; }
@@ -76,8 +71,6 @@ namespace RichHudFramework
                 /// Size of the font as it appears in its textures.
                 /// </summary>
                 float PtSize { get; }
-
-                Vector2I GetIndex();
 
                 float GetKerningAdjustment(char left, char right);
             }

@@ -12,28 +12,42 @@ namespace RichHudFramework.Server
 
     public sealed partial class RichHudMaster
     {
-        private class RichHudClient
+        public class Client
         {
-            public readonly string debugName;
+            /// <summary>
+            /// Name of the client mod as reported by the client
+            /// </summary>
+            public readonly string name;
+
+            /// <summary>
+            /// VersionID of the client
+            /// </summary>
             public readonly int versionID;
 
-            private readonly IBindClient bindClient;
+            /// <summary>
+            /// If true then the client is currently registered with master
+            /// </summary>
+            public bool Registered { get; private set; }
 
             private readonly Action<int, object> SendMsgAction;
             private readonly Action ReloadAction;
-            private MyTuple<object, IHudElement> menuData;
-            private bool registered;
 
-            public RichHudClient(ClientData data)
+            private readonly HudMain.Client hudClient;
+            private readonly BindManager.Client bindClient;
+            private MyTuple<object, HudElementBase> menuData;
+
+            public Client(ClientData data)
             {
-                debugName = data.Item1;
+                name = data.Item1;
                 SendMsgAction = data.Item2;
                 ReloadAction = data.Item3;
                 versionID = data.Item4;
 
-                bindClient = BindManager.GetNewBindClient();
-                menuData = RichHudTerminal.GetClientData(debugName);
-                registered = true;
+                hudClient = new HudMain.Client();
+                bindClient = new BindManager.Client();
+                menuData = RichHudTerminal.GetClientData(name);
+
+                Registered = true;
 
                 SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => ExceptionHandler.Run(Unregister), GetApiData, versionID));
             }
@@ -48,7 +62,7 @@ namespace RichHudFramework.Server
                     case ApiModuleTypes.BindManager:
                         return bindClient.GetApiData();
                     case ApiModuleTypes.HudMain:
-                        return HudMain.GetApiData();
+                        return hudClient.GetApiData();
                     case ApiModuleTypes.FontManager:
                         return FontManager.GetApiData();
                     case ApiModuleTypes.SettingsMenu:
@@ -66,9 +80,9 @@ namespace RichHudFramework.Server
 
             public void Unregister()
             {
-                if (registered)
+                if (Registered)
                 {
-                    registered = false;
+                    Registered = false;
                     Instance.clients.Remove(this);
 
                     bindClient.Unload();

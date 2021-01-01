@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
@@ -13,111 +14,34 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// A dropdown list with a label. Designed to mimic the appearance of the dropdown in the SE terminal.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class TerminalDropdown<T> : TerminalValue<ListBoxEntry<T>, TerminalDropdown<T>>
+    public class TerminalDropdown<TValue> : TerminalValue<ListBoxEntry<TValue>>
     {
         /// <summary>
         /// The name of the control as it appears in the terminal.
         /// </summary>
-        public override string Name { get { return name.TextBoard.ToString(); } set { name.TextBoard.SetText(value); } }
+        public override string Name { get { return dropdown.Name.ToString(); } set { dropdown.Name = value; } }
 
         /// <summary>
         /// Currently selected list member.
         /// </summary>
-        public override ListBoxEntry<T> Value { get { return List.Selection; } set { List.SetSelection(value); } }
+        public override ListBoxEntry<TValue> Value { get { return dropdown.Selection; } set { dropdown.SetSelection(value); } }
 
         /// <summary>
         /// Used to periodically update the value associated with the control. Optional.
         /// </summary>
-        public override Func<ListBoxEntry<T>> CustomValueGetter { get; set; }
+        public override Func<ListBoxEntry<TValue>> CustomValueGetter { get; set; }
 
         /// <summary>
-        /// Dropdown instance backing this control.
+        /// List of entries in the dropdown.
         /// </summary>
-        public Dropdown<T> List { get; }
+        public IReadOnlyList<ListBoxEntry<TValue>> List => dropdown.ListEntries;
 
-        public override float Width
+        private readonly NamedDropdown<TValue> dropdown;
+
+        public TerminalDropdown()
         {
-            get { return hudChain.Width; }
-            set { hudChain.Width = value; }
-        }
-
-        public override float Height
-        {
-            get { return hudChain.Height; }
-            set { List.Height = value - name.Height - Padding.Y; }
-        }
-
-        public override Vector2 Padding
-        {
-            get { return hudChain.Padding; }
-            set { hudChain.Padding = value; }
-        }
-
-        private readonly Label name;
-        private readonly HudChain<HudElementBase> hudChain;
-        private readonly TexturedBox highlight;
-        private readonly BorderBox border;
-
-        public TerminalDropdown(IHudParent parent = null) : base(parent)
-        {
-            name = new Label()
-            {
-                Format = RichHudTerminal.ControlFormat,
-                Text = "NewDropdown",
-                AutoResize = false,
-                Height = 24f,
-            };
-
-            List = new Dropdown<T>()
-            {
-                Format = RichHudTerminal.ControlFormat,
-            };
-
-            List.listBox.scrollBox.MinimumSize = Vector2.Zero;
-
-            border = new BorderBox(List)
-            {
-                Color = RichHudTerminal.BorderColor,
-                Thickness = 1f,
-                DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
-            };
-
-            highlight = new TexturedBox(List)
-            {
-                Color = RichHudTerminal.HighlightOverlayColor,
-                DimAlignment = DimAlignments.Both,
-                Visible = false,
-            };
-
-            hudChain = new HudChain<HudElementBase>(this)
-            {
-                AutoResize = true,
-                AlignVertical = true,
-                ChildContainer = { name, List },
-            };
-
-            Padding = new Vector2(20f, 0f);
-            Size = new Vector2(250f, 66f);
-        }
-
-        public override void Reset()
-        {
-            name.TextBoard.Clear();
-            List.Clear();
-            base.Reset();
-        }
-
-        protected override void HandleInput()
-        {
-            if (List.IsMousedOver || List.Open)
-            {
-                highlight.Visible = true;
-            }
-            else
-            {
-                highlight.Visible = false;
-            }
+            dropdown = new NamedDropdown<TValue>();
+            Element = dropdown;
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)
@@ -131,10 +55,85 @@ namespace RichHudFramework.UI.Server
                 var member = (ListControlAccessors)memberEnum;
 
                 if (member == ListControlAccessors.ListAccessors)
-                    return (ApiMemberAccessor)List.GetOrSetMember;
+                    return (ApiMemberAccessor)dropdown.GetOrSetMember;
 
                 return null;
             }
         }
-    }
+
+        private class NamedDropdown<T> : HudElementBase
+        {
+            /// <summary>
+            /// Text rendered by the label.
+            /// </summary>
+            public RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
+
+            /// <summary>
+            /// Default formatting used by the label.
+            /// </summary>
+            public GlyphFormat Format { get { return name.TextBoard.Format; } set { name.TextBoard.Format = value; } }
+
+            /// <summary>
+            /// List of entries in the dropdown.
+            /// </summary>
+            public IReadOnlyList<ListBoxEntry<T>> ListEntries => dropdown.ListEntries;
+
+            /// <summary>
+            /// Currently selected list member.
+            /// </summary>
+            public ListBoxEntry<T> Selection => dropdown.Selection;
+
+            public override float Width
+            {
+                get { return hudChain.Width; }
+                set { hudChain.Width = value; }
+            }
+
+            public override float Height
+            {
+                get { return hudChain.Height; }
+            }
+
+            public override Vector2 Padding
+            {
+                get { return hudChain.Padding; }
+                set { hudChain.Padding = value; }
+            }
+
+            private readonly Label name;
+            private readonly Dropdown<T> dropdown;
+            private readonly HudChain hudChain;
+
+            public NamedDropdown(HudParentBase parent = null) : base(parent)
+            {
+                name = new Label()
+                {
+                    Format = TerminalFormatting.ControlFormat,
+                    Text = "NewDropdown",
+                    AutoResize = false,
+                    Height = 24f,
+                };
+
+                dropdown = new Dropdown<T>()
+                {
+                    Format = TerminalFormatting.ControlFormat,
+                };
+
+                hudChain = new HudChain(true, this)
+                {
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
+                    CollectionContainer = { name, dropdown },
+                };
+
+                Padding = new Vector2(20f, 0f);
+                Size = new Vector2(250f, 66f);
+            }
+
+            public void SetSelection(ListBoxEntry<T> entry) =>
+                dropdown.SetSelection(entry);
+
+            public object GetOrSetMember(object data, int memberEnum) =>
+                dropdown.GetOrSetMember(data, memberEnum);
+        }
+    }    
 }

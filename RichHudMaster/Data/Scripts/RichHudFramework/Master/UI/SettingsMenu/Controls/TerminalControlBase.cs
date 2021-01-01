@@ -16,35 +16,49 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// Base type for all controls in the Rich Hud Terminal.
     /// </summary>
-    public abstract class TerminalControlBase : HudElementBase, IListBoxEntry, ITerminalControl
+    public class TerminalControlBase : ScrollBoxEntry, ITerminalControl
     {
         /// <summary>
         /// Invoked whenver a change occurs to a control that requires a response, like a change
         /// to a value.
         /// </summary>
-        public abstract event Action OnControlChanged;
+        public virtual event EventHandler OnControlChanged;
 
         /// <summary>
         /// The name of the control as it appears in the terminal.
         /// </summary>
-        public abstract string Name { get; set; }
+        public virtual string Name { get; set; }
 
         /// <summary>
-        /// Determines whether or not the control should be visible in the terminal.
+        /// Unique identifer.
         /// </summary>
-        public bool Enabled { get; set; }
+        public object ID => this;
 
-        public TerminalControlBase(IHudParent parent) : base(parent)
+        public EventHandler ControlChangedHandler { get; set; }
+
+        protected Action ControlCallbackAction;
+
+        public TerminalControlBase()
         {
-            Enabled = true;
+            OnControlChanged += InvokeApiCallback;
         }
 
-        public abstract void Reset();
+        /// <summary>
+        /// Used to update the internal state of the control.
+        /// </summary>
+        public virtual void Update()
+        { }
+
+        protected virtual void InvokeApiCallback(object sender, EventArgs args)
+        {
+            ControlCallbackAction?.Invoke();
+            ControlChangedHandler?.Invoke(this, EventArgs.Empty);
+        }
 
         /// <summary>
         /// Faciltates access to object members via the Framework API.
         /// </summary>
-        public new ControlMembers GetApiData()
+        public ControlMembers GetApiData()
         {
             return new ControlMembers()
             {
@@ -56,20 +70,18 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Used for accessing arbitrary control members via the Framework API.
         /// </summary>
-        protected new virtual object GetOrSetMember(object data, int memberEnum)
+        protected virtual object GetOrSetMember(object data, int memberEnum)
         {
             var member = (TerminalControlAccessors)memberEnum;
 
             switch (member)
             {
-                case TerminalControlAccessors.OnSettingChanged:
+                case TerminalControlAccessors.GetOrSetControlCallback:
                     {
-                        var eventData = (MyTuple<bool, Action>)data;
-
-                        if (eventData.Item1)
-                            OnControlChanged += eventData.Item2;
+                        if (data == null)
+                            return ControlCallbackAction;
                         else
-                            OnControlChanged -= eventData.Item2;
+                            ControlCallbackAction = data as Action;
 
                         break;
                     }
@@ -98,46 +110,15 @@ namespace RichHudFramework.UI.Server
     }
 
     /// <summary>
-    /// Clickable control used in conjunction by the settings menu.
-    /// </summary>
-    public abstract class TerminalControlBase<T> : TerminalControlBase, ITerminalControl<T> where T : TerminalControlBase<T>
-    {
-        /// <summary>
-        /// Delegate invoked by OnControlChanged. Passes in a reference to the control.
-        /// </summary>
-        public Action<T> ControlChangedAction { get; set; }
-
-        public TerminalControlBase(IHudParent parent) : base(parent)
-        {
-            OnControlChanged += UpdateControl;
-        }
-
-        private void UpdateControl() =>
-            ControlChangedAction?.Invoke(this as T);
-
-        /// <summary>
-        /// Faciltates access to object members via the Framework API.
-        /// </summary>
-        public new ControlMembers GetApiData()
-        {
-            return new ControlMembers()
-            {
-                Item1 = GetOrSetMember,
-                Item2 = this
-            };
-        }
-    }
-
-    /// <summary>
     /// Base type for settings menu controls associated with a value of a given type.
     /// </summary>
-    public abstract class TerminalValue<TValue, TCon> : TerminalControlBase<TCon>, ITerminalValue<TValue, TCon> where TCon : TerminalControlBase<TCon>
+    public abstract class TerminalValue<TValue> : TerminalControlBase, ITerminalValue<TValue>
     {
         /// <summary>
         /// Invoked whenver a change occurs to a control that requires a response, like a change
         /// to a value.
         /// </summary>
-        public override event Action OnControlChanged;
+        public override event EventHandler OnControlChanged;
 
         /// <summary>
         /// Value associated with the control.
@@ -147,27 +128,21 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Used to periodically update the value associated with the control. Optional.
         /// </summary>
-        public abstract Func<TValue> CustomValueGetter { get; set; }
+        public virtual Func<TValue> CustomValueGetter { get; set; }
 
-        private TValue lastValue;
-        private bool controlUpdating;
+        protected TValue lastValue;
+        protected bool controlUpdating;
 
-        public TerminalValue(IHudParent parent) : base(parent)
+        public TerminalValue()
         { }
 
-        public override void Reset()
-        {
-            OnControlChanged = null;
-            CustomValueGetter = null;
-        }
-
-        protected override void Layout()
+        public override void Update()
         {
             if (Value != null && !Value.Equals(lastValue) && !controlUpdating)
             {
                 controlUpdating = true;
                 lastValue = Value;
-                OnControlChanged?.Invoke();
+                OnControlChanged?.Invoke(this, EventArgs.Empty);
                 controlUpdating = false;
             }
 

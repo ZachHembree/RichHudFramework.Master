@@ -42,10 +42,7 @@ namespace RichHudFramework
                 /// </summary>
                 public int Count => lines.Count;
 
-                /// <summary>
-                /// Base text size. Compounds text scaling specified by <see cref="GlyphFormat"/>ting.
-                /// </summary>
-                public virtual float Scale { get { return formatter.Scale; } set { formatter.Scale = value; } }
+                public abstract float Scale { get; set; }
 
                 /// <summary>
                 /// Default text format. Applied to strings added without any other formatting specified.
@@ -105,10 +102,9 @@ namespace RichHudFramework
 
                 public TextBuilder()
                 {
-                    lines = new LinePool();
+                    lines = new LinePool(this);
                     BuilderMode = TextBuilderModes.Unlined;
                     Format = GlyphFormat.White;
-                    Scale = 1f;
                 }
 
                 /// <summary>
@@ -182,6 +178,8 @@ namespace RichHudFramework
                             return lines[index].Count;
                         case LineAccessors.Size:
                             return lines[index].Size;
+                        case LineAccessors.VerticalOffset:
+                            return lines[index].VerticalOffset;
                     }
 
                     return null;
@@ -199,9 +197,9 @@ namespace RichHudFramework
                         case RichCharAccessors.Format:
                             return lines[i.X].FormattedGlyphs[i.Y].format.data;
                         case RichCharAccessors.Offset:
-                            return lines[i.X].LocData[i.Y].bbOffset;
+                            return lines[i.X].LocData[i.Y].bbOffset * Scale;
                         case RichCharAccessors.Size:
-                            return lines[i.X].LocData[i.Y].chSize;
+                            return lines[i.X].LocData[i.Y].chSize * Scale;
                     }
 
                     return null;
@@ -421,6 +419,10 @@ namespace RichHudFramework
                         return false;
                 }
 
+                /// <summary>
+                /// Returns true if the text supplied has the same number of characters as
+                /// the text builder.
+                /// </summary>
                 private bool IsTextLengthEqual(IList<RichStringMembers> text)
                 {
                     int newTextLength = 0, currentLength = 0;

@@ -24,10 +24,15 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int versionID = 6;
+        private const int versionID = 7, minSupportedVersion = 7;
+
+        /// <summary>
+        /// Read-only list of currently registered clients
+        /// </summary>
+        public static IReadOnlyList<Client> Clients => Instance.clients;
 
         private static RichHudMaster Instance { get; set; }
-        private readonly List<RichHudClient> clients;
+        private readonly List<Client> clients;
         private ICommandGroup rhdCommands;
 
         public RichHudMaster() : base(false, true)
@@ -43,7 +48,7 @@ namespace RichHudFramework.Server
             ExceptionHandler.RecoveryLimit = 5;
             ExceptionHandler.ModName = "Rich HUD Master";
 
-            clients = new List<RichHudClient>();
+            clients = new List<Client>();
         }
 
         protected override void AfterLoadData()
@@ -110,25 +115,29 @@ namespace RichHudFramework.Server
                 Utils.Debug.AssertNotNull(clientData.Item2);
                 Utils.Debug.AssertNotNull(clientData.Item3);
 
-                RichHudClient client = clients.Find(x => (x.debugName == clientData.Item1));
+                Client client = clients.Find(x => (x.name == clientData.Item1));
 
-                if (client == null && clientData.Item4 == versionID)
+                int clientVID = clientData.Item4;
+                bool supported = clientVID <= versionID && clientVID >= minSupportedVersion;
+
+                if (client == null && supported)
                 {
-                    clients.Add(new RichHudClient(clientData));
+                    clients.Add(new Client(clientData));
                 }
                 else
                 {
-                    Action<int, object> SendMsgAction = clientData.Item2;
+                    Action<int, object> GetOrSendFunc = clientData.Item2;
 
-                    if (clientData.Item4 != versionID)
+                    if (!supported)
                     {
-                        string error = $"Error: Client version for {clientData.Item1} does not match. API vID: {versionID}, Client vID: {clientData.Item4}";
+                        string error = $"Error: Client version for {clientData.Item1} is not supported. " +
+                        $"API vID: Min: {minSupportedVersion}, Max: {versionID}; Client vID: {clientVID}";
 
-                        SendMsgAction((int)MsgTypes.RegistrationFailed, error);
+                        GetOrSendFunc((int)MsgTypes.RegistrationFailed, error);
                         ExceptionHandler.SendChatMessage(error);
                     }
                     else
-                        SendMsgAction((int)MsgTypes.RegistrationFailed, "Client already registered.");
+                        GetOrSendFunc((int)MsgTypes.RegistrationFailed, "Client already registered.");
                 }
             }
         }

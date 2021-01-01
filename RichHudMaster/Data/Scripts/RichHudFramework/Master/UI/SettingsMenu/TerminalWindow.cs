@@ -1,4 +1,5 @@
 ﻿using RichHudFramework.Server;
+using RichHudFramework.Internal;
 using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
@@ -32,32 +33,29 @@ namespace RichHudFramework
                 /// <summary>
                 /// Currently selected mod root
                 /// </summary>
-                public ModControlRoot Selection { get; private set; }
+                public ModControlRoot SelectedMod => modList.SelectedMod;
 
                 /// <summary>
                 /// Currently selected control page.
                 /// </summary>
-                public TerminalPageBase CurrentPage => Selection?.SelectedElement;
+                public TerminalPageBase CurrentPage => modList.CurrentPage;
 
                 /// <summary>
                 /// Read only collection of mod roots registered with the terminal
                 /// </summary>
-                public HudList<ModControlRoot> ModRoots => modList.scrollBox.List;
-
-                public override bool Visible => base.Visible && MyAPIGateway.Gui.ChatEntryVisible;
+                public IReadOnlyList<ModControlRoot> ModRoots => modList.ModRoots;
 
                 private readonly ModList modList;
-                private readonly HudChain<HudElementBase> chain;
+                private readonly HudChain layout;
                 private readonly TexturedBox topDivider, middleDivider, bottomDivider;
                 private readonly Button closeButton;
-                private readonly List<TerminalPageBase> pages;
+                private readonly LabelBox warningBox;
+                private TerminalPageBase lastPage;
                 private static readonly Material closeButtonMat = new Material("RichHudCloseButton", new Vector2(32f));
 
-                public TerminalWindow(IHudParent parent = null) : base(parent)
+                public TerminalWindow(HudParentBase parent = null) : base(parent)
                 {
-                    pages = new List<TerminalPageBase>();
-
-                    Header.Format = HeaderFormat;
+                    Header.Format = TerminalFormatting.HeaderFormat;
                     Header.SetText("Rich HUD Terminal");
 
                     header.Height = 60f;
@@ -70,7 +68,10 @@ namespace RichHudFramework
                         Height = 1f,
                     };
 
-                    modList = new ModList();
+                    modList = new ModList() 
+                    {
+                        Width = 250f
+                    };
 
                     middleDivider = new TexturedBox()
                     {
@@ -78,14 +79,13 @@ namespace RichHudFramework
                         Width = 26f,
                     };
 
-                    chain = new HudChain<HudElementBase>(topDivider)
+                    layout = new HudChain(false, topDivider)
                     {
-                        AutoResize = true,
-                        AlignVertical = false,
-                        Spacing = 12f,
-                        Padding = new Vector2(80f, 40f),
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                         ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.InnerH,
-                        ChildContainer = { modList, middleDivider },
+                        Padding = new Vector2(80f, 40f),
+                        Spacing = 12f,
+                        CollectionContainer = { modList, middleDivider },
                     };
 
                     bottomDivider = new TexturedBox(this)
@@ -100,14 +100,33 @@ namespace RichHudFramework
                     closeButton = new Button(header)
                     {
                         Material = closeButtonMat,
+                        highlightColor = Color.White,
+                        ParentAlignment = ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.Inner,
                         Size = new Vector2(30f),
                         Offset = new Vector2(-18f, -14f),
                         Color = new Color(173, 182, 189),
-                        highlightColor = Color.White,
-                        ParentAlignment = ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.Inner
                     };
 
-                    closeButton.MouseInput.OnLeftClick += CloseMenu;
+                    warningBox = new LabelBox(this)
+                    {
+                        Height = 30f,
+                        AutoResize = false,
+                        ParentAlignment = ParentAlignments.Bottom,
+                        DimAlignment = DimAlignments.Width,
+                        TextPadding = new Vector2(30f, 0f),
+                        Color = new Color(126, 39, 44),
+                        Format = new GlyphFormat(Color.White, textSize: .8f),
+                        Text = "Input disabled. Open chat to enable cursor.",
+                    };
+
+                    var warningBorder = new BorderBox(warningBox)
+                    {
+                        DimAlignment = DimAlignments.Both,
+                        Color = new Color(156, 65, 74)
+                    };
+
+                    modList.OnSelectionChanged += HandleSelectionChange;
+                    closeButton.MouseInput.OnLeftClick += (sender, args) => CloseMenu();
                     SharedBinds.Escape.OnNewPress += CloseMenu;
                     MasterBinds.ToggleTerminal.OnNewPress += ToggleMenu;
 
@@ -117,97 +136,90 @@ namespace RichHudFramework
                     Padding = new Vector2(80f, 40f);
                     MinimumSize = new Vector2(1024f, 500f);
 
-                    modList.Width = 200f;
-                    Size = new Vector2(1320, 850f);
-                    Offset = new Vector2(252f, 70f);
+                    Size = new Vector2(1024f, 850f);
+                    Vector2 screenSize = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight);
 
-                    if (HudMain.ScreenWidth < 1920)
-                        Width = MinimumSize.X;
-
-                    if (HudMain.ScreenHeight < 1050)
+                    if (screenSize.Y < 1080 || HudMain.AspectRatio < (16f/9f))
                         Height = MinimumSize.Y;
+
+                    Offset = (screenSize - Size) / 2f - new Vector2(40f);
                 }
 
                 /// <summary>
                 /// Creates and returns a new control root with the name given.
                 /// </summary>
-                public ModControlRoot AddModRoot(string clientName)
-                {
-                    ModControlRoot modSettings = new ModControlRoot(this) { Name = clientName };
-
-                    modList.AddToList(modSettings);
-                    modSettings.OnModUpdate += UpdateSelection;
-
-                    return modSettings;
-                }
+                public ModControlRoot AddModRoot(string clientName) =>
+                    modList.AddModRoot(clientName);
 
                 /// <summary>
-                /// Adds a new control page to the settings menu.
+                /// Opens the given terminal page
                 /// </summary>
-                public void AddPage(TerminalPageBase page)
-                {
-                    pages.Add(page);
-                    chain.Add(page);
-                }
+                public void SetSelection(ModControlRoot modRoot, TerminalPageBase newPage) =>
+                    modList.SetSelection(modRoot, newPage);
 
                 /// <summary>
-                /// Toggles menu visiblity, but only if chat is open.
+                /// Toggles menu visiblity
                 /// </summary>
                 public void ToggleMenu()
                 {
-                    if (MyAPIGateway.Gui.ChatEntryVisible)
-                    {
-                        Visible = !Visible;
+                    if (!Visible)
+                        OpenMenu();
+                    else
+                        CloseMenu();
+                }
 
-                        if (Visible)
-                            GetFocus();
+                /// <summary>
+                /// Opens the window if chat is visible
+                /// </summary>
+                public void OpenMenu()
+                {
+                    if (!Visible)
+                    {
+                        Visible = true;
+                        HudMain.EnableCursor = true;
+                        GetFocus();
                     }
                 }
 
                 /// <summary>
-                /// Closes the settings menu.
+                /// Closes the window
                 /// </summary>
                 public void CloseMenu()
                 {
                     if (Visible)
+                    {
                         Visible = false;
+                        HudMain.EnableCursor = false;
+                    }
                 }
 
                 protected override void Layout()
                 {
-                    Scale = HudMain.ResScale;
+                    LocalScale = HudMain.ResScale;
 
                     base.Layout();
 
                     if (CurrentPage != null)
-                        CurrentPage.Width = Width - Padding.X - modList.Width - chain.Spacing;
+                        CurrentPage.Element.Width = Width - Padding.X - modList.Width - layout.Spacing;
 
-                    chain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
+                    layout.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
                     modList.Width = 250f * Scale;
 
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
+
+                    warningBox.Visible = !HudMain.Cursor.Visible;
                 }
 
-                private void UpdateSelection(ModControlRoot selection)
+                private void HandleSelectionChange()
                 {
-                    Selection = selection;
-                    UpdateSelectionVisibilty();
-
-                    for (int n = 0; n < modList.scrollBox.List.Count; n++)
-                    {
-                        if (modList.scrollBox.List[n] != selection)
-                            modList.scrollBox.List[n].ClearSelection();
-                    }
-                }
-
-                private void UpdateSelectionVisibilty()
-                {
-                    for (int n = 0; n < pages.Count; n++)
-                        pages[n].Visible = false;
+                    if (lastPage != null)
+                        layout.Remove(lastPage, true);
 
                     if (CurrentPage != null)
-                        CurrentPage.Visible = true;
+                        layout.Add(CurrentPage);
+
+                    lastPage = CurrentPage;
                 }
 
                 /// <summary>
@@ -215,6 +227,26 @@ namespace RichHudFramework
                 /// </summary>
                 private class ModList : HudElementBase
                 {
+                    /// <summary>
+                    /// Invoked whenever the page selection changes
+                    /// </summary>
+                    public event Action OnSelectionChanged;
+
+                    /// <summary>
+                    /// Currently selected mod root
+                    /// </summary>
+                    public ModControlRoot SelectedMod { get; private set; }
+
+                    /// <summary>
+                    /// Currently selected control page.
+                    /// </summary>
+                    public TerminalPageBase CurrentPage { get; private set; }
+
+                    /// <summary>
+                    /// Returns a read only list of mod root containers registered to the list
+                    /// </summary>
+                    public IReadOnlyList<ModControlRoot> ModRoots => scrollBox.Collection;
+
                     public override float Width
                     {
                         get { return scrollBox.Width; }
@@ -231,66 +263,98 @@ namespace RichHudFramework
                         set { scrollBox.Height = value - header.Height; }
                     }
 
-                    public readonly LabelBox header;
-                    public readonly ScrollBox<ModControlRoot> scrollBox;
+                    private readonly LabelBox header;
+                    private readonly ScrollBox<ModControlRoot, ModControlRootTreeBox> scrollBox;
+                    private readonly EventHandler SelectionHandler;
 
-                    public ModList(IHudParent parent = null) : base(parent)
+                    public ModList(HudParentBase parent = null) : base(parent)
                     {
-                        scrollBox = new ScrollBox<ModControlRoot>(this)
+                        scrollBox = new ScrollBox<ModControlRoot, ModControlRootTreeBox>(true, this)
                         {
-                            AlignVertical = true,
-                            SizingMode = ScrollBoxSizingModes.FitMembersToBox,
-                            Color = ListBgColor,
+                            SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
+                            Color = TerminalFormatting.ListBgColor,
                         };
-
-                        //scrollBox.Members.Padding = new Vector2(8f, 8f);
 
                         header = new LabelBox(scrollBox)
                         {
                             AutoResize = false,
-                            Format = ControlFormat,
+                            ParentAlignment = ParentAlignments.Top,
+                            DimAlignment = DimAlignments.Width,
+                            Size = new Vector2(200f, 36f),
+                            Color = new Color(32, 39, 45),
+                            Format = TerminalFormatting.ControlFormat,
                             Text = "Mod List:",
                             TextPadding = new Vector2(30f, 0f),
-                            Color = new Color(32, 39, 45),
-                            Size = new Vector2(200f, 36f),
-                            ParentAlignment = ParentAlignments.Top,
-                            DimAlignment = DimAlignments.Width
                         };
 
                         var listDivider = new TexturedBox(header)
                         {
-                            Color = new Color(53, 66, 75),
-                            Height = 1f,
                             ParentAlignment = ParentAlignments.Bottom,
                             DimAlignment = DimAlignments.Width,
+                            Height = 1f,
+                            Color = new Color(53, 66, 75),
                         };
 
                         var listBorder = new BorderBox(this)
                         {
-                            Color = new Color(53, 66, 75),
-                            Thickness = 1f,
                             DimAlignment = DimAlignments.Both,
+                            Thickness = 1f,
+                            Color = new Color(53, 66, 75),
                         };
+
+                        SelectionHandler = UpdateSelection;
+                    }
+
+                    private void UpdateSelection(object sender, EventArgs args)
+                    {
+                        var modRoot = sender as ModControlRoot;
+                        var newPage = modRoot?.Selection as TerminalPageBase;
+
+                        SetSelection(modRoot, newPage);
                     }
 
                     /// <summary>
-                    /// Adds a new mod control root to the list.
+                    /// Creates and returns a new control root with the name given.
                     /// </summary>
-                    public void AddToList(ModControlRoot modSettings)
+                    public ModControlRoot AddModRoot(string clientName)
                     {
-                        scrollBox.AddToList(modSettings);
+                        ModControlRoot modSettings = new ModControlRoot() { Name = clientName };
+
+                        scrollBox.Add(modSettings);
+                        modSettings.OnSelectionChanged += SelectionHandler;
+
+                        return modSettings;
+                    }
+
+                    /// <summary>
+                    /// Opens the given terminal page
+                    /// </summary>
+                    public void SetSelection(ModControlRoot modRoot, TerminalPageBase newPage)
+                    {
+                        SelectedMod = modRoot;
+
+                        if (CurrentPage != newPage)
+                        {
+                            for (int n = 0; n < scrollBox.Collection.Count; n++)
+                            {
+                                if (scrollBox.Collection[n] != SelectedMod)
+                                    scrollBox.Collection[n].Element.ClearSelection();
+                            }
+
+                            CurrentPage = newPage;
+                            SelectedMod.SetSelection(newPage);
+                            OnSelectionChanged?.Invoke();
+                        }
                     }
 
                     protected override void Layout()
                     {
-                        header.Width = scrollBox.Width;
-
-                        header.Color = ListHeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
-                        scrollBox.Color = ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        header.Color = TerminalFormatting.ListHeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        scrollBox.Color = TerminalFormatting.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
 
                         SliderBar slider = scrollBox.scrollBar.slide;
-                        slider.BarColor = RichHudTerminal.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
                     }
                 }
             }

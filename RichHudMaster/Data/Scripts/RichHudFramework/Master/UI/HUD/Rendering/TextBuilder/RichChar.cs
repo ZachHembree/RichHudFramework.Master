@@ -51,32 +51,34 @@ namespace RichHudFramework
                         /// <summary>
                         /// The size of the character as it appears.
                         /// </summary>
-                        public Vector2 Size => line.locData[index].chSize;
+                        public Vector2 Size => line.locData[index].chSize * builder.Scale;
 
                         /// <summary>
                         /// The actual size of the character as rendered by the billboard.
                         /// </summary>
-                        public Vector2 BbSize => line.locData[index].bbSize;
+                        public Vector2 BbSize => line.locData[index].bbSize * builder.Scale;
 
                         /// <summary>
                         /// The position of the character's center relative to its TextBoard.
                         /// </summary>
                         public Vector2 Offset 
                         { 
-                            get { return line.locData[index].bbOffset; } 
-                            set { line.locData[index] = line.locData[index].SetOffset(value); }
+                            get { return line.locData[index].bbOffset * builder.Scale; } 
+                            set { line.locData[index] = line.locData[index].SetOffset(value / builder.Scale); }
                         }
 
                         public readonly int index;
                         public readonly Line line;
+                        private readonly TextBuilder builder;
 
-                        public RichChar(Line line, int index)
+                        public RichChar(TextBuilder builder, Line line, int index)
                         {
+                            this.builder = builder;
                             this.line = line;
                             this.index = index;
                         }
 
-                        public bool IsWordBreak(Line.RichChar right) =>
+                        public bool IsWordBreak(RichChar right) =>
                             (IsSeparator && !right.IsSeparator);
                     }
                 }

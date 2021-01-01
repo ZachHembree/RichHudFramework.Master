@@ -26,7 +26,7 @@ namespace RichHudFramework
                         get
                         {
                             if (index >= 0 && index < Count)
-                                return new RichChar(this, index);
+                                return new RichChar(builder, this, index);
                             else
                                 throw new Exception("Index was out of range. Must be non-negative and less than the size of the collection.");
                         }
@@ -53,9 +53,19 @@ namespace RichHudFramework
                     }
 
                     /// <summary>
-                    /// The total size of the line in pixels.
+                    /// Physical size of the line as rendered
                     /// </summary>
-                    public Vector2 Size => size;
+                    public Vector2 Size => _size * builder.Scale;
+
+                    /// <summary>
+                    /// Size of the line before scaling
+                    /// </summary>
+                    public Vector2 UnscaledSize => _size;
+
+                    /// <summary>
+                    /// Starting vertical position of the line starting from the center of the text element, sans text offset.
+                    /// </summary>
+                    public float VerticalOffset => _verticalOffset * builder.Scale;
 
                     /// <summary>
                     /// Read-only list of the characters in the line.
@@ -77,18 +87,22 @@ namespace RichHudFramework
                     /// </summary>
                     public readonly IReadOnlyList<QuadBoard> GlyphBoards;
 
+                    public float _verticalOffset;
+
                     private readonly List<char> chars;
                     private readonly List<FormattedGlyph> formattedGlyphs;
                     private readonly List<GlyphLocData> locData;
                     private readonly List<QuadBoard> glyphBoards;
 
-                    private Vector2 size;
+                    private Vector2 _size;
+                    private readonly TextBuilder builder;
 
                     /// <summary>
                     /// Initializes a new TextBuilder Line with capacity for the given number of rich characters.
                     /// </summary>
-                    protected Line(int capacity = 6)
+                    protected Line(TextBuilder builder, int capacity = 6)
                     {
+                        this.builder = builder;
                         chars = new List<char>(capacity);
                         formattedGlyphs = new List<FormattedGlyph>(capacity);
                         locData = new List<GlyphLocData>(capacity);
@@ -101,33 +115,31 @@ namespace RichHudFramework
                     }
 
                     /// <summary>
-                    /// Sets the formatting for the given range of characters in the line using the given
-                    /// scale.
+                    /// Sets the formatting for the given range of characters
                     /// </summary>
-                    public void SetFormatting(GlyphFormat format, float scale)
+                    public void SetFormatting(GlyphFormat format)
                     {
                         for (int n = 0; n < Count; n++)
                         {
-                            SetFormattingAt(n, format, scale);
+                            SetFormattingAt(n, format);
                         }
                     }
 
                     /// <summary>
-                    /// Sets the formatting for the given range of characters in the line using the given
-                    /// scale.
+                    /// Sets the formatting for the given range of characters in the line
                     /// </summary>
-                    public void SetFormatting(int start, int end, GlyphFormat format, float scale)
+                    public void SetFormatting(int start, int end, GlyphFormat format)
                     {
                         for (int n = start; n <= end; n++)
                         {
-                            SetFormattingAt(n, format, scale);
+                            SetFormattingAt(n, format);
                         }
                     }
 
                     /// <summary>
                     /// Sets the formatting of the character at the given index.
                     /// </summary>
-                    public void SetFormattingAt(int index, GlyphFormat format, float scale)
+                    public void SetFormattingAt(int index, GlyphFormat format)
                     {
                         if (!formattedGlyphs[index].format.data.Equals(format.data))
                         {
@@ -135,7 +147,7 @@ namespace RichHudFramework
                             Vector2 glyphSize;
                             Glyph glyph;
 
-                            scale *= format.TextSize * fontStyle.FontScale;
+                            float scale = format.TextSize * fontStyle.FontScale;
 
                             if (chars[index] == '\n')
                             {
@@ -150,7 +162,7 @@ namespace RichHudFramework
 
                             formattedGlyphs[index] = new FormattedGlyph(glyph, format);
                             locData[index] = new GlyphLocData(glyph.material.size * scale, glyphSize);
-                            glyphBoards[index] = glyph.GetQuadBoard(scale, format.Color);
+                            glyphBoards[index] = glyph.GetQuadBoard(scale, format);
                         }
                     }
 
@@ -197,10 +209,10 @@ namespace RichHudFramework
                     }
 
                     /// <summary>
-                    /// Adds a new character to the end of the line with the given format and scale.
+                    /// Adds a new character to the end of the line with the given format
                     /// </summary>
-                    public void AddNew(char ch, GlyphFormat format, float scale) =>
-                        InsertNew(Count, ch, format, scale);
+                    public void AddNew(char ch, GlyphFormat format) =>
+                        InsertNew(Count, ch, format);
 
                     /// <summary>
                     /// Adds the characters in the line given to the end of this line.
@@ -209,15 +221,15 @@ namespace RichHudFramework
                         InsertRange(Count, newChars);
 
                     /// <summary>
-                    /// Inserts a new character at the index specified with the given format and scale.
+                    /// Inserts a new character at the index specified with the given format
                     /// </summary>
-                    public void InsertNew(int index, char ch, GlyphFormat format, float scale)
+                    public void InsertNew(int index, char ch, GlyphFormat format)
                     {
                         IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
                         Vector2 glyphSize;
                         Glyph glyph;
 
-                        scale *= format.TextSize * fontStyle.FontScale;
+                        float scale = format.TextSize * fontStyle.FontScale;
 
                         if (ch == '\n')
                         {
@@ -233,7 +245,7 @@ namespace RichHudFramework
                         chars.Insert(index, ch);
                         formattedGlyphs.Insert(index, new FormattedGlyph(glyph, format));
                         locData.Insert(index, new GlyphLocData(glyph.material.size * scale, glyphSize));
-                        glyphBoards.Insert(index, glyph.GetQuadBoard(scale, format.Color));
+                        glyphBoards.Insert(index, glyph.GetQuadBoard(scale, format));
 
                         TrimExcess();
                     }
@@ -296,34 +308,20 @@ namespace RichHudFramework
                     }
 
                     /// <summary>
-                    /// Resizes the offsets and sizes of the line and its characters using the given
-                    /// scale.
-                    /// </summary>
-                    public void Rescale(float scale)
-                    {
-                        size *= scale;
-
-                        for (int ch = 0; ch < chars.Count; ch++)
-                        {
-                            locData[ch] = locData[ch].Rescale(scale);
-                        }
-                    }
-
-                    /// <summary>
                     /// Recalculates the width and height of the line.
                     /// </summary>
                     public void UpdateSize()
                     {
-                        size = Vector2.Zero;
+                        _size = Vector2.Zero;
 
                         for (int n = 0; n < locData.Count; n++)
                         {
-                            if (locData[n].chSize.Y > size.Y)
+                            if (locData[n].chSize.Y > _size.Y)
                             {
-                                size.Y = locData[n].chSize.Y;
+                                _size.Y = locData[n].chSize.Y;
                             }
 
-                            size.X += locData[n].chSize.X;
+                            _size.X += locData[n].chSize.X;
                         }
                     }
 

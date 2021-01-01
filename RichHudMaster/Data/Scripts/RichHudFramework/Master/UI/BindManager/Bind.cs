@@ -1,16 +1,6 @@
 ﻿using RichHudFramework.Internal;
 using System;
 using System.Collections.Generic;
-using VRage;
-using BindDefinitionData = VRage.MyTuple<string, string[]>;
-using BindMembers = VRage.MyTuple<
-    System.Func<object, int, object>, // GetOrSetMember
-    System.Func<bool>, // IsPressed
-    System.Func<bool>, // IsPressedAndHeld
-    System.Func<bool>, // IsNewPressed
-    System.Func<bool> // IsReleased
->;
-using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
@@ -129,7 +119,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Returns a list of the current key combo for this bind.
                     /// </summary>
-                    public IList<IControl> GetCombo()
+                    public List<IControl> GetCombo()
                     {
                         List<IControl> combo = new List<IControl>();
 
@@ -142,7 +132,7 @@ namespace RichHudFramework
                         return combo;
                     }
 
-                    private List<int> GetComboIndices()
+                    public List<int> GetComboIndices()
                     {
                         List<int> combo = new List<int>();
 
@@ -158,19 +148,19 @@ namespace RichHudFramework
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IList<int> combo, bool strict = true, bool silent = true) =>
+                    public bool TrySetCombo(IReadOnlyList<int> combo, bool strict = true, bool silent = true) =>
                         TrySetCombo(BindManager.GetCombo(combo), strict, silent);
 
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IList<string> combo, bool strict = true, bool silent = true) =>
+                    public bool TrySetCombo(IReadOnlyList<string> combo, bool strict = true, bool silent = true) =>
                         TrySetCombo(BindManager.GetCombo(combo), strict, silent);
 
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IList<IControl> combo, bool strict = true, bool silent = true)
+                    public bool TrySetCombo(IReadOnlyList<IControl> combo, bool strict = true, bool silent = true)
                     {
                         if (combo == null)
                             combo = new IControl[0];
@@ -210,81 +200,6 @@ namespace RichHudFramework
                         OnNewPress = null;
                         OnPressAndHold = null;
                         OnRelease = null;
-                    }
-
-                    private object GetOrSetMember(object data, int memberEnum)
-                    {
-                        var member = (BindAccesssors)memberEnum;
-
-                        if (member == BindAccesssors.Name)
-                        {
-                            return Name;
-                        }
-                        else if (member == BindAccesssors.Analog)
-                        {
-                            return Analog;
-                        }
-                        else if (member == BindAccesssors.Index)
-                        {
-                            return Index;
-                        }
-                        else if (member == BindAccesssors.OnNewPress)
-                        {
-                            var eventData = (MyTuple<bool, Action>)data;
-
-                            if (eventData.Item1)
-                                OnNewPress += eventData.Item2;
-                            else
-                                OnNewPress -= eventData.Item2;
-                        }
-                        else if (member == BindAccesssors.OnPressAndHold)
-                        {
-                            var eventData = (MyTuple<bool, Action>)data;
-
-                            if (eventData.Item1)
-                                OnPressAndHold += eventData.Item2;
-                            else
-                                OnPressAndHold -= eventData.Item2;
-                        }
-                        else if (member == BindAccesssors.OnRelease)
-                        {
-                            var eventData = (MyTuple<bool, Action>)data;
-
-                            if (eventData.Item1)
-                                OnRelease += eventData.Item2;
-                            else
-                                OnRelease -= eventData.Item2;
-                        }
-                        else if (member == BindAccesssors.GetCombo)
-                            return GetComboIndices();
-                        else if (member == BindAccesssors.SetCombo)
-                        {
-                            var comboData = (MyTuple<IList<int>, bool, bool>)data;
-                            return TrySetCombo(comboData.Item1, comboData.Item2, comboData.Item3);
-                        }
-                        else if (member == BindAccesssors.ClearCombo)
-                        {
-                            ClearCombo();
-                        }
-                        else if (member == BindAccesssors.ClearSubscribers)
-                            ClearSubscribers();
-
-                        return null;
-                    }
-
-                    /// <summary>
-                    /// Returns information needed to access the bind via the API.
-                    /// </summary>
-                    public BindMembers GetApiData()
-                    {
-                        return new BindMembers()
-                        {
-                            Item1 = GetOrSetMember,
-                            Item2 = () => IsPressed,
-                            Item3 = () => IsNewPressed,
-                            Item4 = () => IsPressedAndHeld,
-                            Item5 = () => IsReleased
-                        };
                     }
                 }
             }

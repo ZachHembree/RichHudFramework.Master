@@ -27,89 +27,74 @@ namespace RichHudFramework
 
         public sealed partial class RichHudTerminal : RichHudComponentBase
         {
-            /// <summary>
-            /// Indented dropdown list of terminal pages. Root UI element for all terminal controls
-            /// associated with a given mod.
-            /// </summary>
-            private class ModControlRoot : HudElementBase, IModControlRoot, IListBoxEntry
+            private class ModControlRoot : ScrollBoxEntry<ModControlRootTreeBox>, IModControlRoot
             {
                 /// <summary>
                 /// Invoked when a new page is selected
                 /// </summary>
-                public event Action OnSelectionChanged
-                {
-                    add { pageControl.OnSelectionChanged += value; }
-                    remove { pageControl.OnSelectionChanged -= value; }
-                }
-
-                public event Action<ModControlRoot> OnModUpdate;
-
-                /// <summary>
-                /// Name of the mod as it appears in the <see cref="RichHudTerminal"/> mod list
-                /// </summary>
-                public string Name { get { return pageControl.Name.ToString(); } set { pageControl.Name = value; } }
-
-                /// <summary>
-                /// Read only collection of <see cref="ITerminalPage"/>s assigned to this object.
-                /// </summary>
-                public IReadOnlyCollection<ITerminalPage> Pages { get; }
-
-                public IModControlRoot PageContainer => this;
-
-                /// <summary>
-                /// Currently selected <see cref="ITerminalPage"/>.
-                /// </summary>
-                public ITerminalPage Selection => SelectedElement;
-
-                public TerminalPageBase SelectedElement => pageControl.Selection?.AssocMember;
-
-                public override float Width { get { return pageControl.Width; } set { pageControl.Width = value; } }
-                public override float Height { get { return pageControl.Height; } set { pageControl.Height = value; } }
-                public override Vector2 Padding { get { return pageControl.Padding; } set { pageControl.Padding = value; } }
-
-                public override bool Visible { get { return base.Visible && Enabled; } }
+                public event EventHandler OnSelectionChanged;
 
                 /// <summary>
                 /// Determines whether or not the element will appear in the list.
                 /// Disabled by default.
                 /// </summary>
-                public bool Enabled { get { return _enabled && pageControl.List.Count > 0; } set { _enabled = value; } }
+                public override bool Enabled 
+                { 
+                    get { return _enabled && Element.ListEntries.Count > 0; } 
+                    set { _enabled = value; } 
+                }
 
-                private readonly TreeBox<TerminalPageBase> pageControl;
-                private readonly TerminalWindow menu;
+                /// <summary>
+                /// Name of the mod as it appears in the <see cref="RichHudTerminal"/> mod list
+                /// </summary>
+                public string Name { get { return Element.Name.ToString(); } set { Element.Name = value; } }
+
+                /// <summary>
+                /// Currently selected <see cref="ITerminalPage"/>.
+                /// </summary>
+                public ITerminalPage Selection => Element.Selection?.AssocMember;
+
+                /// <summary>
+                /// Read only collection of <see cref="ITerminalPage"/>s assigned to this object.
+                /// </summary>
+                public IReadOnlyList<ITerminalPage> Pages { get; }
+
+                /// <summary>
+                /// Used to allow the addition of child elements using collection-initializer syntax in
+                /// conjunction with normal initializers.
+                /// </summary>
+                public IModControlRoot PageContainer => this;
+
+                private Action ApiCallbackAction;
+                private readonly ModControlRootTreeBox treeBox;
                 private bool _enabled;
 
-                public ModControlRoot(TerminalWindow menu) : base(null)
+                public ModControlRoot()
                 {
-                    this.menu = menu;
+                    treeBox = new ModControlRootTreeBox();
+                    Element = treeBox;
+                    Pages = new ReadOnlyCollectionData<ITerminalPage>
+                    (
+                        x => Element.ListEntries[x].AssocMember,
+                        () => Element.ListEntries.Count
+                    );
 
-                    pageControl = new TreeBox<TerminalPageBase>(this) 
-                    { 
-                        HeaderColor = TileColor,
-                    };
-
-                    Pages = new ReadOnlyCollectionData<ITerminalPage>(x => pageControl.List[x].AssocMember, () => pageControl.List.Count);
-                    pageControl.OnSelectionChanged += UpdateSelection;
-
-                    Enabled = false;
-                    Visible = true;
+                    treeBox.OnSelectionChanged += InvokeCallback;
                 }
 
-                protected override void Layout()
-                {
-                    pageControl.HeaderColor = pageControl.HeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
+                public IEnumerator<ITerminalPage> GetEnumerator() =>
+                    Pages.GetEnumerator();
 
-                    base.Layout();
-                }
+                IEnumerator IEnumerable.GetEnumerator() =>
+                    Pages.GetEnumerator();
 
-                private void UpdateSelection()
+                /// <summary>
+                /// Sets the selection to the given page
+                /// </summary>
+                public void SetSelection(TerminalPageBase page)
                 {
-                    OnModUpdate?.Invoke(this);
-                }
-
-                public void ClearSelection()
-                {
-                    pageControl.ClearSelection();
+                    treeBox.SetSelection(page);
+                    treeBox.OpenList();
                 }
 
                 /// <summary>
@@ -117,53 +102,52 @@ namespace RichHudFramework
                 /// </summary>
                 public void Add(TerminalPageBase page)
                 {
-                    ListBoxEntry<TerminalPageBase> listMember = pageControl.Add(page.Name, page);
-                    page.NameBuilder = listMember.TextBoard;
-                    menu.AddPage(page);
+                    ListBoxEntry<TerminalPageBase> listMember = Element.Add(page.Name, page);
+                    page.NameBuilder = listMember.Element.TextBoard;
                 }
-
-                public void Reset()
-                {
-                    pageControl.Clear();
-                }
-
-                IEnumerator<ITerminalPage> IEnumerable<ITerminalPage>.GetEnumerator() =>
-                    Pages.GetEnumerator();
-
-                IEnumerator IEnumerable.GetEnumerator() =>
-                    Pages.GetEnumerator();
 
                 /// <summary>
-                /// Retrieves data used by the Framework API
+                /// Adds the given ranges of pages to the control root.
                 /// </summary>
-                public new ControlContainerMembers GetApiData()
+                public void AddRange(IReadOnlyList<TerminalPageBase> pages)
                 {
-                    return new ControlContainerMembers()
+                    foreach (TerminalPageBase page in pages)
                     {
-                        Item1 = GetOrSetMember,
-                        Item2 = new MyTuple<object, Func<int>>()
-                        {
-                            Item1 = (Func<int, ControlMembers>)(x => pageControl.List[x].AssocMember.GetApiData()),
-                            Item2 = () => pageControl.List.Count
-                        },
-                        Item3 = this
-                    };
+                        ListBoxEntry<TerminalPageBase> listMember = Element.Add(page.Name, page);
+                        page.NameBuilder = listMember.Element.TextBoard;
+                    }
                 }
 
-                private new object GetOrSetMember(object data, int memberEnum)
+                /// <summary>
+                /// Adds the given ranges of pages to the control root.
+                /// </summary>
+                private void AddRangeInternal(IReadOnlyList<object> pages)
+                {
+                    foreach (TerminalPageBase page in pages)
+                    {
+                        ListBoxEntry<TerminalPageBase> listMember = Element.Add(page.Name, page);
+                        page.NameBuilder = listMember.Element.TextBoard;
+                    }
+                }
+
+                private void InvokeCallback(object sender, EventArgs args)
+                {
+                    OnSelectionChanged?.Invoke(this, EventArgs.Empty);
+                    ApiCallbackAction?.Invoke();
+                }
+
+                private object GetOrSetMember(object data, int memberEnum)
                 {
                     var member = (ModControlRootAccessors)memberEnum;
 
                     switch (member)
                     {
-                        case ModControlRootAccessors.OnSelectionChanged:
+                        case ModControlRootAccessors.GetOrSetCallback:
                             {
-                                var eventData = (MyTuple<bool, Action>)data;
-
-                                if (eventData.Item1)
-                                    OnSelectionChanged += eventData.Item2;
+                                if (data == null)
+                                    return ApiCallbackAction;
                                 else
-                                    OnSelectionChanged -= eventData.Item2;
+                                    ApiCallbackAction = data as Action;
 
                                 break;
                             }
@@ -187,16 +171,55 @@ namespace RichHudFramework
                             }
                         case ModControlRootAccessors.Selection:
                             {
-                                return SelectedElement.GetApiData();
+                                return Element.Selection?.AssocMember;
                             }
                         case ModControlRootAccessors.AddPage:
-                            {
-                                Add(data as TerminalPageBase);
-                                break;
-                            }
+                            Add(data as TerminalPageBase); break;
+                        case ModControlRootAccessors.AddRange:
+                            AddRangeInternal(data as object[]); break;
                     }
 
                     return null;
+                }
+
+                /// <summary>
+                /// Retrieves data used by the Framework API
+                /// </summary>
+                public ControlContainerMembers GetApiData()
+                {
+                    return new ControlContainerMembers()
+                    {
+                        Item1 = GetOrSetMember,
+                        Item2 = new MyTuple<object, Func<int>>()
+                        {
+                            Item1 = (Func<int, ControlMembers>)(x => Element.ListEntries[x].AssocMember.GetApiData()),
+                            Item2 = () => Element.ListEntries.Count
+                        },
+                        Item3 = this
+                    };
+                }
+            }
+
+            /// <summary>
+            /// TreeBox modified for use as the ModControlRoot's UI element.
+            /// </summary>
+            private class ModControlRootTreeBox : TreeBox<TerminalPageBase>
+            {
+                public ModControlRootTreeBox(HudParentBase parent = null) : base(parent)
+                {
+                    HeaderColor = TerminalFormatting.TileColor;
+                }
+
+                protected override void Layout()
+                {
+                    display.Color = display.Color.SetAlphaPct(HudMain.UiBkOpacity);
+                    base.Layout();
+                }
+
+                public override bool Unregister(bool fast = false)
+                {
+                    entryChain.Clear(fast);
+                    return base.Unregister(fast);
                 }
             }
         }

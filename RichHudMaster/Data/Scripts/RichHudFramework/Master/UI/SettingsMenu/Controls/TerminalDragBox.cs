@@ -15,7 +15,7 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// A terminal control that uses a draggable window to indicate a position on the screen.
     /// </summary>
-    public class TerminalDragBox : TerminalValue<Vector2, TerminalDragBox>
+    public class TerminalDragBox : TerminalValue<Vector2>
     {
         /// <summary>
         /// The name of the control as it appears in the terminal.
@@ -26,19 +26,14 @@ namespace RichHudFramework.UI.Server
             set
             {
                 window.Header.SetText(value);
-                openButton.Name = value;
+                openButton.Text = value;
             }
         }
 
         /// <summary>
         /// Value associated with the control.
         /// </summary>
-        public override Vector2 Value { get { return window.Value; } set { window.Value = value; } }
-
-        /// <summary>
-        /// Used to periodically update the value associated with the control. Optional.
-        /// </summary>
-        public override Func<Vector2> CustomValueGetter { get { return window.CustomValueGetter; } set { window.CustomValueGetter = value; } }
+        public override Vector2 Value { get { return window.AbsolutePosition; } set { window.AbsolutePosition = value; } }
 
         /// <summary>
         /// Determines whether or not the window will automatically align itself to one side of the screen
@@ -51,41 +46,34 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public Vector2 BoxSize
         {
-            get { return HudMain.GetRelativeVector(window.Size); }
+            get { return HudMain.GetAbsoluteVector(window.Size); }
             set { window.Size = HudMain.GetPixelVector(value); }
         }
 
-        private readonly TerminalButton openButton;
+        private readonly BorderedButton openButton;
         private readonly DragWindow window;
 
-        public TerminalDragBox(IHudParent parent = null) : base(parent)
+        public TerminalDragBox()
         {
-            window = new DragWindow()
+            openButton = new BorderedButton()
+            {
+                Text = "NewDragBox",
+                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                Size = new Vector2(253f, 50f)
+            };
+            Element = openButton;
+
+            window = new DragWindow(Update)
             {
                 Size = new Vector2(300f, 250f),
                 Visible = false
             };
 
-            openButton = new TerminalButton(this)
-            {
-                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
-            };
-
             openButton.MouseInput.OnLeftClick += Open;
             window.OnConfirm += Close;
-
-            Name = "NewDragBox";
-            Size = new Vector2(253f, 50f);
         }
 
-        public override void Reset()
-        {
-            window.Header.Clear();
-            window.Visible = false;
-            base.Reset();
-        }
-
-        private void Open()
+        private void Open(object sender, EventArgs args)
         {
             RichHudTerminal.Open = false;
             window.Visible = true;
@@ -130,79 +118,97 @@ namespace RichHudFramework.UI.Server
             }
         }
 
+        /// <summary>
+        /// Customized window with a confirm button used to specify a position on the screen.
+        /// </summary>
         private class DragWindow : WindowBase
         {
+            /// <summary>
+            /// Invoked when the window's confirm button is clicked
+            /// </summary>
             public event Action OnConfirm;
 
-            public Vector2 Value
+            /// <summary>
+            /// Returns the absolute position of the window in screen space on [-0.5, 0.5]
+            /// </summary>
+            public Vector2 AbsolutePosition
             {
-                get { return HudMain.GetRelativeVector(base.Offset); }
-                set { base.Offset = HudMain.GetPixelVector(value); }
+                get { return _absolutePosition; } 
+                set 
+                {
+                    value = Vector2.Clamp(value, -Vector2.One / 2f, Vector2.One / 2f);
+                    _absolutePosition = value; 
+                } 
             }
 
-            public override Vector2 Offset 
-            {
-                get { return base.Offset + alignment; }
-            }
-
-            public Func<Vector2> CustomValueGetter { get; set; }
-
+            /// <summary>
+            /// If set to true, then the window will align its position to the screen 
+            /// quadrant nearest to its position.
+            /// </summary>
             public bool AlignToEdge { get; set; }
 
-            private readonly TerminalButton confirm;
-            private Vector2 alignment;
+            private readonly BorderedButton confirmButton;
+            private readonly Action DragUpdateAction;
+            private Vector2 alignment, _absolutePosition;
 
-            public DragWindow() : base(HudMain.Root)
+            public DragWindow(Action UpdateAction) : base(HudMain.Root)
             {
+                DragUpdateAction = UpdateAction;
                 MinimumSize = new Vector2(100f);
                 AllowResizing = false;
 
                 BodyColor = new Color(41, 54, 62, 150);
                 BorderColor = new Color(58, 68, 77);
 
-                Header.Format = RichHudTerminal.ControlFormat.WithAlignment(TextAlignment.Center);
+                Header.Format = TerminalFormatting.ControlFormat.WithAlignment(TextAlignment.Center);
                 header.Height = 40f;
 
-                confirm = new TerminalButton(this)
+                confirmButton = new BorderedButton(this)
                 {
-                    Name = "Confirm",
-                    DimAlignment = DimAlignments.Width,
+                    Text = "Confirm",
+                    DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                 };
 
-                confirm.button.MouseInput.OnLeftClick += () => OnConfirm?.Invoke();
+                confirmButton.MouseInput.OnLeftClick += (sender, args) => OnConfirm?.Invoke();
             }
 
             protected override void Layout()
             {
-                Scale = HudMain.ResScale;
+                LocalScale = HudMain.ResScale;
+                Offset = HudMain.GetPixelVector(_absolutePosition) - Origin - alignment;
 
                 base.Layout();
 
-                if (canMoveWindow)
-                    Offset = HudMain.Cursor.Origin + cursorOffset - Origin - alignment;
+                _absolutePosition = HudMain.GetAbsoluteVector(Position + alignment);
+                UpdateAlignment();
+            }
+
+            private void UpdateAlignment()
+            {
+                alignment = new Vector2();
 
                 if (AlignToEdge)
                 {
-                    if (base.Offset.X < 0)
+                    if (cachedPosition.X > 0f)
                         alignment.X = Width / 2f;
                     else
                         alignment.X = -Width / 2f;
 
-                    if (base.Offset.Y < 0)
+                    if (cachedPosition.Y > 0f)
                         alignment.Y = Height / 2f;
                     else
                         alignment.Y = -Height / 2f;
                 }
-                else
-                    alignment = Vector2.Zero;
             }
 
-            protected override void HandleInput()
+            protected override void HandleInput(Vector2 cursorPos)
             {
-                base.HandleInput();
+                base.HandleInput(cursorPos);
 
                 if (SharedBinds.Escape.IsNewPressed)
                     OnConfirm?.Invoke();
+
+                DragUpdateAction();
             }
         }
     }

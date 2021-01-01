@@ -58,11 +58,19 @@ namespace RichHudFramework
                     };
                 }
 
-                public QuadBoard GetQuadBoard(float scale, Color color) =>
-                    new QuadBoard(material.TextureID, GetMaterialAlignment(material.size * scale), color);
+                public QuadBoard GetQuadBoard(float scale, GlyphFormat format)
+                {
+                    return new QuadBoard
+                    (
+                        material.TextureID, 
+                        GetMaterialAlignment(material.size * scale), 
+                        format.Color, 
+                        (format.FontStyle & FontStyles.Italic) > 0 ? .4f : 0f
+                    );
+                }
 
                 public FlatQuad GetMaterialAlignment(Vector2 bbSize) =>
-                    matFrame.GetMaterialAlignment(bbSize);
+                    matFrame.GetMaterialAlignment(bbSize.X / bbSize.Y);
             }
         }
     }
