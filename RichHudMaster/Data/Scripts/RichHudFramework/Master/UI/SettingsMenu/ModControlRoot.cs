@@ -94,7 +94,7 @@ namespace RichHudFramework
                 public void SetSelection(TerminalPageBase page)
                 {
                     treeBox.SetSelection(page);
-                    treeBox.ListOpen = true;
+                    treeBox.OpenList();
                 }
 
                 /// <summary>
@@ -214,6 +214,12 @@ namespace RichHudFramework
                 {
                     display.Color = display.Color.SetAlphaPct(HudMain.UiBkOpacity);
                     base.Layout();
+                }
+
+                public override bool Unregister(bool fast = false)
+                {
+                    entryChain.Clear(fast);
+                    return base.Unregister(fast);
                 }
             }
         }

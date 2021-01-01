@@ -184,12 +184,12 @@ namespace RichHudFramework.UI
                 CloseList();
         }
 
-        private void OpenList()
+        public void OpenList()
         {
             listBox.Visible = true;
         }
 
-        private void CloseList()
+        public void CloseList()
         {
             listBox.Visible = false;
         }

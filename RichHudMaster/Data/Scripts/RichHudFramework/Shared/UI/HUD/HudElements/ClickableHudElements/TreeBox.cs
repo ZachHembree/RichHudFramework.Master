@@ -32,7 +32,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// If true, then the dropdown list will be open
         /// </summary>
-        public bool ListOpen { get; set; }
+        public bool ListOpen { get; protected set; }
 
         /// <summary>
         /// Height of the treebox in pixels.
@@ -290,14 +290,14 @@ namespace RichHudFramework.UI
                 CloseList();
         }
 
-        private void OpenList()
+        public void OpenList()
         {
             entryChain.Visible = true;
             display.Open = true;
             ListOpen = true;
         }
 
-        private void CloseList()
+        public void CloseList()
         {
             entryChain.Visible = false;
             display.Open = false;
