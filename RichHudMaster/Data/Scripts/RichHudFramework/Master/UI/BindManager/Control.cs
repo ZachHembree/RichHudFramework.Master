@@ -63,18 +63,6 @@ namespace RichHudFramework
                     IsPressedFunc = IsPressed;
                     Analog = analog;
                 }
-
-                /*public ControlMembers GetApiData()
-                {
-                    return new ControlMembers()
-                    {
-                        Item1 = Name,
-                        Item2 = DisplayName,
-                        Item3 = Index,
-                        Item4 = IsPressedFunc,
-                        Item5 = Analog
-                    };
-                }*/
             }
         }
     }

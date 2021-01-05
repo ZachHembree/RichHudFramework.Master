@@ -16,16 +16,13 @@ namespace RichHudFramework.UI.Rendering.Server
             public Line this[int index] => lines[index];
             public virtual int Count => lines.Count;
             public virtual float MaxLineWidth { get; protected set; }
-            //public float Scale { get { return _scale; } set { RescaleText(value / _scale); _scale = value; } }
 
             protected readonly LinePool lines;
             protected readonly Line charBuffer;
-            private float _scale;
 
             protected FormattedTextBase(LinePool lines)
             {
                 this.lines = lines;
-                _scale = 1f;
                 MaxLineWidth = 0f;
                 charBuffer = lines.GetNewLine();
             }
