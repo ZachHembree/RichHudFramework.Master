@@ -80,8 +80,7 @@ namespace RichHudFramework
 
             public override void Close()
             {
-                for (int n = 0; n < bindClients.Count; n++)
-                    bindClients[n].ClearBindGroups();
+                _instance.bindClients.Clear();
 
                 if (ExceptionHandler.Unloading)
                     _instance = null;
