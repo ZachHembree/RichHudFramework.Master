@@ -84,7 +84,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Unregister()
                 {
-                    if (_instance.hudClients[index] == this)
+                    if (_instance?.hudClients != null && _instance.hudClients[index] == this)
                         _instance.hudClients.RemoveAt(index);
                 }
 

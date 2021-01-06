@@ -49,7 +49,7 @@ namespace RichHudFramework.Server
 
                 Registered = true;
 
-                SendData(MsgTypes.RegistrationSuccessful, new ServerData(() => ExceptionHandler.Run(Unregister), GetApiData, versionID));
+                SendData(MsgTypes.RegistrationSuccessful, new ServerData(Unregister, GetApiData, versionID));
             }
 
             /// <summary>

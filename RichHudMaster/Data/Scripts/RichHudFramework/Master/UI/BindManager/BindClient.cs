@@ -100,7 +100,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Unload()
                 {
-                    if (_instance.bindClients.Count > index && _instance.bindClients[index] == this)
+                    if (_instance?.bindClients != null && _instance.bindClients.Count > index && _instance.bindClients[index] == this)
                         _instance.bindClients.RemoveAt(index);
                 }
 
