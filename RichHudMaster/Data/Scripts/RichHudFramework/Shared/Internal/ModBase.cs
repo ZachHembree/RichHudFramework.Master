@@ -59,11 +59,10 @@ namespace RichHudFramework.Internal
             if (!Loaded && !ExceptionHandler.Unloading && !closing)
             {
                 CanUpdate = true;
-
                 ExceptionHandler.RegisterClient(this);
 
                 if (CanUpdate)
-                    AfterLoadData();
+                    ExceptionHandler.Run(AfterLoadData);
             }
         }
 
@@ -87,12 +86,8 @@ namespace RichHudFramework.Internal
             if (!Loaded && !closing)
             {
                 CanUpdate = true;
-
-                ExceptionHandler.Run(() =>
-                {
-                    LoadData();
-                    Init(null);
-                });
+                LoadData();
+                Init(null);
             }
         }
 
@@ -174,21 +169,37 @@ namespace RichHudFramework.Internal
                 CanUpdate = false;
                 closing = true;
 
-                for (int n = clientComponents.Count - 1; n >= 0; n--)
-                {
-                    ExceptionHandler.Run(() => clientComponents[n].Close());
-                    clientComponents[n].UnregisterComponent(n);
-                }
-
-                for (int n = serverComponents.Count - 1; n >= 0; n--)
-                {
-                    ExceptionHandler.Run(() => serverComponents[n].Close());
-                    serverComponents[n].UnregisterComponent(n);
-                }
+                CloseComponents(clientComponents);
+                CloseComponents(serverComponents);
 
                 clientComponents.Clear();
                 serverComponents.Clear();
                 closing = false;
+            }
+        }
+
+        private void CloseComponents(IReadOnlyList<ComponentBase> components)
+        {
+            string typeName = GetType().Name;
+
+            for (int n = components.Count - 1; n >= 0; n--)
+            {
+                var module = components[n];
+                bool success = false;
+
+                ExceptionHandler.Run(() =>
+                {
+                    ExceptionHandler.WriteToLog($"[{typeName}] Closing {module.GetType().Name} module...", true);
+                    module.Close();
+                    success = true;
+                });
+
+                if (success)
+                    ExceptionHandler.WriteToLog($"[{typeName}] Closed {module.GetType().Name} module.", true);
+                else
+                    ExceptionHandler.WriteToLog($"[{typeName}] Failed to close {module.GetType().Name} module.");
+
+                module.UnregisterComponent(n);
             }
         }
 
@@ -225,6 +236,7 @@ namespace RichHudFramework.Internal
                         parent.serverComponents.Add(this);
 
                     Parent = parent;
+                    ExceptionHandler.WriteToLog($"[{Parent.GetType().Name}] Registered {GetType().Name} module.", true);
                 }
             }
 
@@ -241,6 +253,7 @@ namespace RichHudFramework.Internal
                     else if (ExceptionHandler.IsDedicated && runOnServer)
                         Parent.serverComponents.Remove(this);
 
+                    ExceptionHandler.WriteToLog($"[{Parent.GetType().Name}] Unregistered {GetType().Name} module.", true);
                     Parent = null;
                 }
             }
@@ -258,6 +271,8 @@ namespace RichHudFramework.Internal
                         if (index < Parent.clientComponents.Count && Parent.clientComponents[index] == this)
                         {
                             Parent.clientComponents.RemoveAt(index);
+
+                            ExceptionHandler.WriteToLog($"[{Parent.GetType().Name}] Unregistered {GetType().Name} module.", true);
                             Parent = null;
                         }
                     }
@@ -266,6 +281,8 @@ namespace RichHudFramework.Internal
                         if (index < Parent.serverComponents.Count && Parent.serverComponents[index] == this)
                         {
                             Parent.serverComponents.RemoveAt(index);
+
+                            ExceptionHandler.WriteToLog($"[{Parent.GetType().Name}] Unregistered {GetType().Name} module.", true);
                             Parent = null;
                         }
                     }
