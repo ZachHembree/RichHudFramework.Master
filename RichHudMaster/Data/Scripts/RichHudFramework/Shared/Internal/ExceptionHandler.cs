@@ -176,7 +176,7 @@ namespace RichHudFramework.Internal
 
         public override void Draw()
         {
-            if (exceptionCount > 0 && errorTimer.ElapsedMilliseconds > exceptionReportInterval)
+            if (errorTimer.ElapsedMilliseconds > exceptionReportInterval)
                 HandleExceptions();
 
             // This is a workaround. If you try to create a mission screen while the chat is open, 
@@ -198,36 +198,39 @@ namespace RichHudFramework.Internal
         /// </summary>
         private void HandleExceptions()
         {
-            string exceptionText = GetExceptionText();
-            exceptionCount = 0;
-
-            WriteToLog("Mod encountered an unhandled exception.\n" + exceptionText + '\n');
-            exceptionMessages.Clear();
-
-            if (!Unloading && !Reloading)
+            if (exceptionCount > 0)
             {
-                if (IsClient && PromptForReload)
-                {
-                    if (RecoveryAttempts < RecoveryLimit)
-                    {
-                        PauseClients();
-                        ShowErrorPrompt(exceptionText, true);
-                    }
-                    else
-                    {
-                        UnloadClients();
-                        ShowErrorPrompt(exceptionText, false);
-                    }
-                }
-                else
-                {
-                    if (RecoveryAttempts < RecoveryLimit)
-                        StartReload();
-                    else
-                        UnloadClients();
-                }
+                string exceptionText = GetExceptionText();
+                exceptionCount = 0;
 
-                RecoveryAttempts++;
+                WriteToLog("Mod encountered an unhandled exception.\n" + exceptionText + '\n');
+                exceptionMessages.Clear();
+
+                if (!Unloading && !Reloading)
+                {
+                    if (IsClient && PromptForReload)
+                    {
+                        if (RecoveryAttempts < RecoveryLimit)
+                        {
+                            PauseClients();
+                            ShowErrorPrompt(exceptionText, true);
+                        }
+                        else
+                        {
+                            UnloadClients();
+                            ShowErrorPrompt(exceptionText, false);
+                        }
+                    }
+                    else
+                    {
+                        if (RecoveryAttempts < RecoveryLimit)
+                            StartReload();
+                        else
+                            UnloadClients();
+                    }
+
+                    RecoveryAttempts++;
+                }
             }
         }
 
@@ -434,6 +437,7 @@ namespace RichHudFramework.Internal
             if (!Unloading)
             {
                 Unloading = true;
+                Reloading = false;
 
                 for (int n = 0; n < clients.Count; n++)
                 {
