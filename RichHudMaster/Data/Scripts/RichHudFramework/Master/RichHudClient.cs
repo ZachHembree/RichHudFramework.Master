@@ -83,10 +83,14 @@ namespace RichHudFramework.Server
                 if (Registered)
                 {
                     Registered = false;
-                    Instance.clients.Remove(this);
 
-                    bindClient.Unload();
-                    menuData.Item2.Unregister();
+                    if (Instance != null && !ExceptionHandler.Unloading)
+                    {
+                        Instance.clients.Remove(this);
+                        bindClient.Unload();
+                        menuData.Item2.Unregister();
+                    }
+
                     ReloadAction();
                 }
             }
