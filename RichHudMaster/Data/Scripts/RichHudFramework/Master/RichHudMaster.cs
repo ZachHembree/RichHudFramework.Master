@@ -157,7 +157,13 @@ namespace RichHudFramework.Server
 
                 clients.Clear();
             }
-            else if (ExceptionHandler.Unloading)
+        }
+
+        public override void Close()
+        {
+            base.Close();
+
+            if (ExceptionHandler.Unloading)
             {
                 Instance = null;
             }

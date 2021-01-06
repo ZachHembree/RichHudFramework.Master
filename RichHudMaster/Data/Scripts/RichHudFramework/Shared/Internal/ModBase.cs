@@ -156,8 +156,14 @@ namespace RichHudFramework.Internal
             Update();
         }
 
+        /// <summary>
+        /// Sim update.
+        /// </summary>
         protected virtual void Update() { }
 
+        /// <summary>
+        /// Called before close and only if the session component is loaded.
+        /// </summary>
         public virtual void BeforeClose() { }
 
         public virtual void Close()
