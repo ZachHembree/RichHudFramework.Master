@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Internal;
+using RichHudFramework.Internal;
 using RichHudFramework.IO;
 using RichHudFramework.UI;
 using RichHudFramework.UI.Rendering;
@@ -134,7 +134,7 @@ namespace RichHudFramework.Server
                         $"API vID: Min: {minSupportedVersion}, Max: {versionID}; Client vID: {clientVID}";
 
                         GetOrSendFunc((int)MsgTypes.RegistrationFailed, error);
-                        ExceptionHandler.SendChatMessage(error);
+                        ExceptionHandler.WriteToLogAndConsole($" [RHF] {error}");
                     }
                     else
                         GetOrSendFunc((int)MsgTypes.RegistrationFailed, "Client already registered.");

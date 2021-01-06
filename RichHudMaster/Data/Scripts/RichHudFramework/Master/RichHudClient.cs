@@ -50,6 +50,7 @@ namespace RichHudFramework.Server
                 Registered = true;
 
                 SendData(MsgTypes.RegistrationSuccessful, new ServerData(Unregister, GetApiData, versionID));
+                ExceptionHandler.WriteToLogAndConsole($" [RHF] Successfully registered {name} with the API.");
             }
 
             /// <summary>
@@ -92,6 +93,7 @@ namespace RichHudFramework.Server
                     }
 
                     ReloadAction();
+                    ExceptionHandler.WriteToLogAndConsole($" [RHF] Unregistered {name} from API.");
                 }
             }
         }
