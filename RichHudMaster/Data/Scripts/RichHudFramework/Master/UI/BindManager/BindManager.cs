@@ -62,12 +62,11 @@ namespace RichHudFramework
             public static void Init()
             {
                 if (_instance == null)
-                {
                     _instance = new BindManager();
-                    _instance.mainClient = new Client();
-                }
                 else if (_instance.Parent == null)
                     _instance.RegisterComponent(RichHudCore.Instance);
+
+                _instance.mainClient = new Client();
             }
 
             public override void HandleInput()
