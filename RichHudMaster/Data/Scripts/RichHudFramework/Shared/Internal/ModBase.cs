@@ -17,12 +17,12 @@ namespace RichHudFramework.Internal
         /// <summary>
         /// Determines whether or not the main class will be allowed to run on a dedicated server.
         /// </summary>
-        public bool RunOnServer { get; protected set; }
+        public bool RunOnServer { get; }
 
         /// <summary>
         /// If true, then the mod will be allowed to run on a client.
         /// </summary>
-        public bool RunOnClient { get; protected set; }
+        public bool RunOnClient { get; }
 
         /// <summary>
         /// If true, the mod is currently loaded.
@@ -34,22 +34,16 @@ namespace RichHudFramework.Internal
         /// </summary>
         public bool CanUpdate
         {
-            get { return _canUpdate; }
-
-            set
-            {
-                if ((RunOnClient && ExceptionHandler.IsClient) || (RunOnServer && ExceptionHandler.IsDedicated))
-                    _canUpdate = value;
-            }
+            get { return _canUpdate && ((RunOnClient && ExceptionHandler.IsClient) || (RunOnServer && ExceptionHandler.IsDedicated)); }
+            set { _canUpdate = value; }
         }
 
-        private readonly List<ComponentBase> clientComponents, serverComponents;
+        private readonly List<ModuleBase> modules;
         private bool _canUpdate, closing;
 
         protected ModBase(bool runOnServer, bool runOnClient)
         {
-            clientComponents = new List<ComponentBase>();
-            serverComponents = new List<ComponentBase>();
+            modules = new List<ModuleBase>();
             RunOnServer = runOnServer;
             RunOnClient = runOnClient;
         }
@@ -62,7 +56,7 @@ namespace RichHudFramework.Internal
                 ExceptionHandler.RegisterClient(this);
 
                 if (CanUpdate)
-                    ExceptionHandler.Run(AfterLoadData);
+                    AfterLoadData();
             }
         }
 
@@ -83,9 +77,8 @@ namespace RichHudFramework.Internal
 
         public void ManualStart()
         {
-            if (!Loaded && !closing)
+            if (!Loaded && !ExceptionHandler.Unloading && !closing)
             {
-                CanUpdate = true;
                 LoadData();
                 Init(null);
             }
@@ -97,11 +90,14 @@ namespace RichHudFramework.Internal
             {
                 ExceptionHandler.Run(() =>
                 {
-                    for (int n = 0; n < serverComponents.Count; n++)
-                        serverComponents[n].Draw();
+                    for (int n = 0; n < modules.Count; n++)
+                    {
+                        bool updateClient = modules[n].runOnClient && ExceptionHandler.IsClient,
+                            updateServer = modules[n].runOnServer && ExceptionHandler.IsDedicated;
 
-                    for (int n = 0; n < clientComponents.Count; n++)
-                        clientComponents[n].Draw();
+                        if (updateClient || updateServer)
+                            modules[n].Draw();
+                    }
                 });
             }
         }
@@ -112,11 +108,14 @@ namespace RichHudFramework.Internal
             {
                 ExceptionHandler.Run(() =>
                 {
-                    for (int n = 0; n < serverComponents.Count; n++)
-                        serverComponents[n].HandleInput();
+                    for (int n = 0; n < modules.Count; n++)
+                    {
+                        bool updateClient = modules[n].runOnClient && ExceptionHandler.IsClient,
+                            updateServer = modules[n].runOnServer && ExceptionHandler.IsDedicated;
 
-                    for (int n = 0; n < clientComponents.Count; n++)
-                        clientComponents[n].HandleInput();
+                        if (updateClient || updateServer)
+                            modules[n].HandleInput();
+                    }
                 });
             }
         }
@@ -134,21 +133,24 @@ namespace RichHudFramework.Internal
         /// The update function used (Before/Sim/After) is determined by the settings used by
         /// the MySessionComponentDescriptorAttribute applied to the child class.
         /// </summary>
-        protected void BeforeUpdate()
+        protected virtual void BeforeUpdate()
         {
             if (Loaded && CanUpdate)
-                ExceptionHandler.Run(UpdateComponents);
-        }
+            {
+                ExceptionHandler.Run(() =>
+                {
+                    for (int n = 0; n < modules.Count; n++)
+                    {
+                        bool updateClient = modules[n].runOnClient && ExceptionHandler.IsClient,
+                            updateServer = modules[n].runOnServer && ExceptionHandler.IsDedicated;
 
-        private void UpdateComponents()
-        {
-            for (int n = 0; n < serverComponents.Count; n++)
-                serverComponents[n].Update();
+                        if (updateClient || updateServer)
+                            modules[n].Update();
+                    }
 
-            for (int n = 0; n < clientComponents.Count; n++)
-                clientComponents[n].Update();
-
-            Update();
+                    Update();
+                });
+            }
         }
 
         /// <summary>
@@ -157,34 +159,36 @@ namespace RichHudFramework.Internal
         protected virtual void Update() { }
 
         /// <summary>
-        /// Called before close and only if the session component is loaded.
+        /// Called before close used to stop, clean up and save before other components
+        /// start to unload.
         /// </summary>
         public virtual void BeforeClose() { }
 
+        /// <summary>
+        /// Called for final cleanup. Other components may have already unloaded by this point.
+        /// </summary>
         public virtual void Close()
         {
-            if (Loaded && !closing)
+            if (!closing)
             {
                 Loaded = false;
                 CanUpdate = false;
                 closing = true;
 
-                CloseComponents(clientComponents);
-                CloseComponents(serverComponents);
+                CloseModules();
+                modules.Clear();
 
-                clientComponents.Clear();
-                serverComponents.Clear();
                 closing = false;
             }
         }
 
-        private void CloseComponents(IReadOnlyList<ComponentBase> components)
+        private void CloseModules()
         {
             string typeName = GetType().Name;
 
-            for (int n = components.Count - 1; n >= 0; n--)
+            for (int n = modules.Count - 1; n >= 0; n--)
             {
-                var module = components[n];
+                var module = modules[n];
                 bool success = false;
 
                 ExceptionHandler.Run(() =>
@@ -203,13 +207,13 @@ namespace RichHudFramework.Internal
             }
         }
 
-        protected sealed override void UnloadData()
+        protected override void UnloadData()
         { }
 
         /// <summary>
         /// Base class for ModBase components.
         /// </summary>
-        public abstract class ComponentBase
+        public abstract class ModuleBase
         {
             protected ModBase Parent { get; private set; }
 
@@ -218,7 +222,7 @@ namespace RichHudFramework.Internal
             /// </summary>
             public readonly bool runOnServer, runOnClient;
 
-            protected ComponentBase(bool runOnServer, bool runOnClient, ModBase parent)
+            protected ModuleBase(bool runOnServer, bool runOnClient, ModBase parent)
             {
                 this.runOnServer = runOnServer;
                 this.runOnClient = runOnClient;
@@ -230,10 +234,7 @@ namespace RichHudFramework.Internal
             {
                 if (Parent == null)
                 {
-                    if (!ExceptionHandler.IsDedicated && runOnClient)
-                        parent.clientComponents.Add(this);
-                    else if (ExceptionHandler.IsDedicated && runOnServer)
-                        parent.serverComponents.Add(this);
+                    parent.modules.Add(this);
 
                     Parent = parent;
                     ExceptionHandler.WriteToLog($"[{Parent.GetType().Name}] Registered {GetType().Name} module.", true);
@@ -248,10 +249,7 @@ namespace RichHudFramework.Internal
             {
                 if (Parent != null)
                 {
-                    if (!ExceptionHandler.IsDedicated && runOnClient)
-                        Parent.clientComponents.Remove(this);
-                    else if (ExceptionHandler.IsDedicated && runOnServer)
-                        Parent.serverComponents.Remove(this);
+                    Parent.modules.Remove(this);
 
                     ExceptionHandler.WriteToLog($"[{Parent.GetType().Name}] Unregistered {GetType().Name} module.", true);
                     Parent = null;
@@ -264,28 +262,12 @@ namespace RichHudFramework.Internal
             /// </summary>
             public void UnregisterComponent(int index)
             {
-                if (Parent != null)
+                if (Parent != null && index < Parent.modules.Count && Parent.modules[index] == this)
                 {
-                    if (!ExceptionHandler.IsDedicated && runOnClient)
-                    {
-                        if (index < Parent.clientComponents.Count && Parent.clientComponents[index] == this)
-                        {
-                            Parent.clientComponents.RemoveAt(index);
+                    Parent.modules.RemoveAt(index);
 
-                            ExceptionHandler.WriteToLog($"[{Parent.GetType().Name}] Unregistered {GetType().Name} module.", true);
-                            Parent = null;
-                        }
-                    }
-                    else if (ExceptionHandler.IsDedicated && runOnServer)
-                    {
-                        if (index < Parent.serverComponents.Count && Parent.serverComponents[index] == this)
-                        {
-                            Parent.serverComponents.RemoveAt(index);
-
-                            ExceptionHandler.WriteToLog($"[{Parent.GetType().Name}] Unregistered {GetType().Name} module.", true);
-                            Parent = null;
-                        }
-                    }
+                    ExceptionHandler.WriteToLog($"[{Parent.GetType().Name}] Unregistered {GetType().Name} module.", true);
+                    Parent = null;
                 }
             }
 
@@ -299,13 +281,13 @@ namespace RichHudFramework.Internal
         }
 
         /// <summary>
-        /// Extension of <see cref="ComponentBase"/> that includes a task pool.
+        /// Extension of <see cref="ModuleBase"/> that includes a task pool.
         /// </summary>
-        public abstract class ParallelComponentBase : ComponentBase
+        public abstract class ParallelModuleBase : ModuleBase
         {
             private readonly TaskPool taskPool;
 
-            protected ParallelComponentBase(bool runOnServer, bool runOnClient, ModBase parent) : base(runOnServer, runOnClient, parent)
+            protected ParallelModuleBase(bool runOnServer, bool runOnClient, ModBase parent) : base(runOnServer, runOnClient, parent)
             {
                 taskPool = new TaskPool(ErrorCallback);
             }

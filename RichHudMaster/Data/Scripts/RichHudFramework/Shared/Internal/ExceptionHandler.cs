@@ -103,6 +103,8 @@ namespace RichHudFramework.Internal
             IsDedicated = MyAPIGateway.Utilities.IsDedicated;
             IsServer = MyAPIGateway.Session.OnlineMode == MyOnlineModeEnum.OFFLINE || MyAPIGateway.Multiplayer.IsServer || IsDedicated;
             IsClient = !IsDedicated;
+
+            WriteToLogAndConsole($"Exception Handler Init. Dedicated: {IsDedicated}, IsServer: {IsServer}, IsClient: {IsClient}", true);
         }
 
         /// <summary>
@@ -442,7 +444,7 @@ namespace RichHudFramework.Internal
                     {
                         WriteToLog($"[{typeName}] Restarting session component...", true);
                         clients[n].ManualStart();
-                        success = true;
+                        success = clients[n].Loaded;
                     });
 
                     if (success)
@@ -451,8 +453,8 @@ namespace RichHudFramework.Internal
                         WriteToLog($"[{typeName}] Failed to start session component.");
                 }
 
-                UnpauseClients();
                 Reloading = false;
+                ClientsPaused = false;
                 WriteToLog("Mod reloaded.");
             }
         }
@@ -478,26 +480,24 @@ namespace RichHudFramework.Internal
         {
             for (int n = 0; n < clients.Count; n++)
             {
-                if (clients[n].Loaded && clients[n].CanUpdate)
+                bool success = false;
+                string typeName = clients[n].GetType().Name;
+                WriteToLog($"[{typeName}] Stopping session component...", true);
+
+                Run(() =>
                 {
-                    bool success = false;
-                    string typeName = clients[n].GetType().Name;
-                    WriteToLog($"[{typeName}] Stopping session component...", true);
+                    clients[n].CanUpdate = false;
+                    clients[n].BeforeClose();
+                    success = true;
+                });
 
-                    Run(() =>
-                    {
-                        clients[n].BeforeClose();
-                        success = true;
-                    });
-
-                    if (success)
-                        WriteToLog($"[{typeName}] Session component stopped.", true);
-                    else
-                        WriteToLog($"[{typeName}] Failed to stop session component.");
-                }
+                if (success)
+                    WriteToLog($"[{typeName}] Session component stopped.", true);
+                else
+                    WriteToLog($"[{typeName}] Failed to stop session component.");
             }
 
-            PauseClients();
+            ClientsPaused = true;
 
             for (int n = 0; n < clients.Count; n++)
             {
@@ -524,7 +524,7 @@ namespace RichHudFramework.Internal
             HandleExceptions();
             instance = null;
 
-            WriteToLog("Exception Handler unloaded.");
+            WriteToLog("Exception Handler unloaded.", true);
         }
     }
 }
