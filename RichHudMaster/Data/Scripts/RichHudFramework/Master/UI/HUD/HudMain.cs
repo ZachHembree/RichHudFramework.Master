@@ -45,6 +45,7 @@ namespace RichHudFramework
         public sealed partial class HudMain : RichHudComponentBase
         {
             public const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
+            public const int treeRefreshRate = 10, layoutRefreshRate = 30;
 
             /// <summary>
             /// Root parent for all HUD elements.
@@ -216,6 +217,21 @@ namespace RichHudFramework
             private readonly HudCursor _cursor;
             private readonly HudRoot _root;
             private readonly List<Client> hudClients;
+            private readonly Client mainClient;
+
+            private RichText _clipBoard;
+            private float _resScale;
+            private float _uiBkOpacity;
+
+            private MatrixD _pixelToWorld;
+            private float _screenWidth;
+            private float _screenHeight;
+            private float _aspectRatio;
+            private float _fov;
+            private float _fovScale;
+
+            private Action<byte> LoseFocusCallback;
+            private byte unfocusedOffset;
 
             private readonly List<HudUpdateAccessors> updateAccessors;
             private readonly Dictionary<Func<Vector3D>, ushort> distMap;
@@ -227,27 +243,21 @@ namespace RichHudFramework
             private readonly List<Action<bool>> layoutActions;
             private readonly List<Action> drawActions;
 
-            private RichText _clipBoard;
-            private float _resScale;
-            private float _uiBkOpacity;
-
             private readonly Utils.Stopwatch cacheTimer;
-            private MatrixD _pixelToWorld;
-            private float _screenWidth;
-            private float _screenHeight;
-            private float _aspectRatio;
-            private float _fov;
-            private float _fovScale;
+            private bool refreshRequested;
             private int drawTick;
-
-            private Action<byte> LoseFocusCallback;
-            private byte unfocusedOffset;
 
             private HudMain() : base(false, true)
             {
+                if (_instance == null)
+                    _instance = this;
+                else
+                    throw new Exception("Only one instance of HudMain can exist at any given time.");
+
                 _root = new HudRoot();
                 _cursor = new HudCursor(_root);
                 hudClients = new List<Client>();
+                mainClient = new Client() { GetUpdateAccessors = _root.GetUpdateAccessors };
 
                 updateAccessors = new List<HudUpdateAccessors>(200);
                 distMap = new Dictionary<Func<Vector3D>, ushort>(50);
@@ -261,15 +271,14 @@ namespace RichHudFramework
 
                 cacheTimer = new Utils.Stopwatch();
                 cacheTimer.Start();
+
+                UpdateScreenScaling();
             }
 
             public static void Init()
             {
                 if (_instance == null)
-                {
-                    _instance = new HudMain();
-                    _instance.UpdateScreenScaling();
-                }
+                    new HudMain();
             }
 
             public override void Close()
@@ -282,33 +291,24 @@ namespace RichHudFramework
             /// </summary>
             public override void Draw()
             {
-                // Check for any clients requesting draw list refresh
-                for (int n = 0; n < hudClients.Count; n++)
-                {
-                    if (hudClients[n].RefreshDrawList)
-                        RefreshDrawList = true;
+                UpdateCache();
 
-                    hudClients[n].RefreshDrawList = false;
-                }
+                if (RefreshDrawList)
+                    mainClient.refreshDrawList = true;
 
                 _cursor.Visible = EnableCursor;
 
-                // Check for any clients requesting that the cursor be made visible
                 for (int n = 0; n < hudClients.Count; n++)
-                {
-                    if (hudClients[n].EnableCursor)
-                        _cursor.Visible = true;
-                }
+                    hudClients[n].Update(drawTick + n); // Spread out client tree updates
 
-                UpdateCache();
-
-                bool refreshLayout = (drawTick % 30) == 0,
-                    rebuildLists = RefreshDrawList && (drawTick % 10) == 0,
-                    resortLists = rebuildLists || (drawTick % 10) == 0;
+                bool refreshLayout = (drawTick % layoutRefreshRate) == 0,
+                    rebuildLists = refreshRequested && (drawTick % treeRefreshRate) == 0,
+                    resortLists = rebuildLists || (drawTick % treeRefreshRate) == 0;
 
                 if (rebuildLists)
                 {
                     RebuildUpdateLists();
+                    refreshRequested = false;
                     RefreshDrawList = false;
                 }
 
@@ -397,10 +397,10 @@ namespace RichHudFramework
 
                 // Add client UI elements
                 for (int n = 0; n < hudClients.Count; n++)
-                    hudClients[n].GetUpdateAccessors?.Invoke(updateAccessors, 0);
+                    updateAccessors.AddRange(hudClients[n].UpdateAccessors);
 
-                // Add master UI elements
-                _root.GetUpdateAccessors(updateAccessors, 0);
+                if (updateAccessors.Capacity > updateAccessors.Count * 2)
+                    updateAccessors.TrimExcess();
 
                 // Build distance func HashSet
                 for (int n = 0; n < updateAccessors.Count; n++)

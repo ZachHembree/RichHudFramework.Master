@@ -57,26 +57,51 @@ namespace RichHudFramework
             public class Client
             {
                 /// <summary>
+                /// Delegate used to retrieve UI update delegates from clients
+                /// </summary>
+                public Action<List<HudUpdateAccessors>, byte> GetUpdateAccessors;
+
+                public IReadOnlyList<HudUpdateAccessors> UpdateAccessors => updateAccessors;
+
+                /// <summary>
                 /// If true, then the client is requesting that the cursor be enabled
                 /// </summary>
-                public bool EnableCursor { get; private set; }
+                public bool enableCursor;
 
                 /// <summary>
                 /// If true, then the client is requesting that the draw list be rebuilt
                 /// </summary>
-                public bool RefreshDrawList { get; set; }
+                public bool refreshDrawList;
 
-                /// <summary>
-                /// Delegate used to retrieve UI update delegates from clients
-                /// </summary>
-                public Action<List<HudUpdateAccessors>, byte> GetUpdateAccessors { get; private set; }
-
-                private int index;
+                private bool refreshRequested;
+                private readonly List<HudUpdateAccessors> updateAccessors;
 
                 public Client()
                 {
-                    index = _instance.hudClients.Count;
+                    updateAccessors = new List<HudUpdateAccessors>();
                     _instance.hudClients.Add(this);
+                }
+
+                public void Update(int tick)
+                {
+                    if (refreshDrawList)
+                        refreshRequested = true;
+
+                    if (enableCursor)
+                        _instance._cursor.Visible = true;
+
+                    if (refreshRequested && (tick % treeRefreshRate) == 0)
+                    {
+                        updateAccessors.Clear();
+                        GetUpdateAccessors?.Invoke(updateAccessors, 0);
+
+                        if (updateAccessors.Capacity > updateAccessors.Count * 2)
+                            updateAccessors.TrimExcess();
+
+                        refreshRequested = false;
+                        refreshDrawList = false;
+                        _instance.refreshRequested = true;
+                    }
                 }
 
                 /// <summary>
@@ -84,8 +109,11 @@ namespace RichHudFramework
                 /// </summary>
                 public void Unregister()
                 {
-                    if (_instance?.hudClients != null && _instance.hudClients[index] == this)
-                        _instance.hudClients.RemoveAt(index);
+                    if (_instance?.hudClients != null)
+                    {
+                        if (_instance.hudClients.Remove(this))
+                            _instance.refreshRequested = true;
+                    }
                 }
 
                 /// <summary>
@@ -138,17 +166,17 @@ namespace RichHudFramework
                         case HudMainAccessors.EnableCursor:
                             {
                                 if (data == null)
-                                    return EnableCursor;
+                                    return enableCursor;
                                 else
-                                    EnableCursor = (bool)data;
+                                    enableCursor = (bool)data;
                                 break;
                             }
                         case HudMainAccessors.RefreshDrawList:
                             {
                                 if (data == null)
-                                    return RefreshDrawList;
+                                    return refreshDrawList;
                                 else
-                                    RefreshDrawList = (bool)data;
+                                    refreshDrawList = (bool)data;
                                 break;
                             }
                         case HudMainAccessors.GetUpdateAccessors:
@@ -156,7 +184,10 @@ namespace RichHudFramework
                                 if (data == null)
                                     return GetUpdateAccessors;
                                 else
+                                {
                                     GetUpdateAccessors = data as Action<List<HudUpdateAccessors>, byte>;
+                                    refreshDrawList = true;
+                                }
                                 break;
                             }
                         case HudMainAccessors.GetFocusOffset:
