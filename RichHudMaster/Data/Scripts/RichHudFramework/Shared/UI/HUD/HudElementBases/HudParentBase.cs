@@ -170,7 +170,8 @@ namespace RichHudFramework
             /// <summary>
             /// Registers a child node to the object.
             /// </summary>
-            public virtual bool RegisterChild(HudNodeBase child)
+            /// <param name="preregister">Adds the element to the update tree without registering.</param>
+            public virtual bool RegisterChild(HudNodeBase child, bool preregister = false)
             {
                 if (child.Parent == this && !child.Registered)
                 {
@@ -178,7 +179,7 @@ namespace RichHudFramework
                     return true;
                 }
                 else if (child.Parent == null)
-                    return child.Register(this);
+                    return child.Register(this, preregister);
                 else
                     return false;
             }

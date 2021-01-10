@@ -143,7 +143,8 @@ namespace RichHudFramework
             /// <summary>
             /// Registers the element to the given parent object.
             /// </summary>
-            public virtual bool Register(HudParentBase newParent)
+            /// <param name="preregister">Adds the element to the update tree without registering.</param>
+            public virtual bool Register(HudParentBase newParent, bool preregister = false)
             {
                 if (newParent == this)
                     throw new Exception("Types of HudNodeBase cannot be parented to themselves!");
@@ -176,15 +177,28 @@ namespace RichHudFramework
                         if (!wasFastUnregistered)
                             HudMain.RefreshDrawList = true;
 
-                        parentZOffset = _parent.ZOffset;
-                        parentScale = _parent.Scale;
-                        parentVisible = _parent.Visible;
+                        if (preregister)
+                        {
+                            reregParent = newParent;
+                            Parent = null;
+                            _registered = false;
+                            wasFastUnregistered = true;
+                        }
+                        else
+                        {
+                            parentZOffset = _parent.ZOffset;
+                            parentScale = _parent.Scale;
+                            parentVisible = _parent.Visible;
+                            wasFastUnregistered = false;
+                        }
+
+                        return true;
                     }
-
-                    wasFastUnregistered = false;
+                    else
+                        return false;
                 }
-
-                return _registered;
+                else
+                    return false;
             }
 
             /// <summary>
