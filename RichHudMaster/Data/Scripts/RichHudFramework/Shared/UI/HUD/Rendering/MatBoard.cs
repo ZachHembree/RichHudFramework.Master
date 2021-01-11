@@ -127,7 +127,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(ref MyQuadD quad)
                 {
-                    if (updateMatFit)
+                    if (updateMatFit && matFrame.material != Material.Default)
                     {
                         minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
@@ -142,7 +142,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector3D offset, ref MatrixD matrix)
                 {
-                    if (updateMatFit)
+                    if (updateMatFit && matFrame.material != Material.Default)
                     {
                         minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
@@ -157,7 +157,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, ref MatrixD matrix)
                 {
-                    if (updateMatFit)
+                    if (updateMatFit && matFrame.material != Material.Default)
                     {
                         minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
@@ -171,7 +171,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 origin)
                 {
-                    if (updateMatFit)
+                    if (updateMatFit && matFrame.material != Material.Default)
                     {
                         minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
