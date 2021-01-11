@@ -426,13 +426,7 @@ namespace RichHudFramework
 
                     if (lines.Count > 0)
                     {
-                        Line lastLine = lines[lines.Count - 1];
-                        int count = lines.Count;
-
-                        if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
-                            count--;
-
-                        for (int line = 0; line < count; line++)
+                        for (int line = 0; line < lines.Count; line++)
                         {
                             lines[line]._verticalOffset = -tSize.Y;
 
@@ -442,9 +436,14 @@ namespace RichHudFramework
                             tSize.Y += lines[line].UnscaledSize.Y;
                         }
 
+                        Line lastLine = lines[lines.Count - 1];
+
+                        if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
+                            tSize.Y -= lastLine.UnscaledSize.Y;
+
                         float vAlign = (VertCenterText || AutoResize) ? tSize.Y / 2f : _fixedSize.Y / 2f;
 
-                        for (int line = 0; line < count; line++)
+                        for (int line = 0; line < lines.Count; line++)
                             lines[line]._verticalOffset += vAlign;
                     }
 

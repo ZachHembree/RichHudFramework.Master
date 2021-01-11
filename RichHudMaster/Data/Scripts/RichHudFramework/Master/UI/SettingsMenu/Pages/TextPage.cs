@@ -1,7 +1,6 @@
 ﻿using RichHudFramework.UI.Rendering;
 using RichHudFramework.UI.Rendering.Server;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using VRage;
@@ -11,28 +10,10 @@ using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageM
 
 namespace RichHudFramework
 {
-    using ControlMembers = MyTuple<
-        ApiMemberAccessor, // GetOrSetMember
-        object // ID
-    >;
     using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
 
     namespace UI.Server
     {
-        using ControlContainerMembers = MyTuple<
-            ApiMemberAccessor, // GetOrSetMember,
-            MyTuple<object, Func<int>>, // Member List
-            object // ID
-        >;
-        using TextBuilderMembers = MyTuple<
-            MyTuple<Func<int, int, object>, Func<int>>, // GetLineMember, GetLineCount
-            Func<Vector2I, int, object>, // GetCharMember
-            Func<object, int, object>, // GetOrSetMember
-            Action<IList<RichStringMembers>, Vector2I>, // Insert
-            Action<IList<RichStringMembers>>, // SetText
-            Action // Clear
-        >;
-
         /// <summary>
         /// Scrollable vertically scrolling, wrapped text page used by the terminal.
         /// </summary>
@@ -181,8 +162,8 @@ namespace RichHudFramework
                         Width = 45f,
                     };
 
-                    scrollDivider = new TexturedBox(verticalScroll) 
-                    { 
+                    scrollDivider = new TexturedBox(verticalScroll)
+                    {
                         Color = new Color(53, 66, 75),
                         ParentAlignment = ParentAlignments.Left | ParentAlignments.InnerH,
                         DimAlignment = DimAlignments.Height,
