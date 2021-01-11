@@ -108,18 +108,17 @@ namespace RichHudFramework
                 private bool updateMatFit;
 
                 private QuadBoard minBoard;
-                private MaterialFrame matFrame;
+                private readonly MaterialFrame matFrame;
 
                 /// <summary>
                 /// Initializes a new matboard with a size of 0 and a blank, white material.
                 /// </summary>
                 public MatBoard()
                 {
-                    minBoard = new QuadBoard();
                     matFrame = new MaterialFrame();
+                    minBoard = QuadBoard.Default;
 
-                    Material = Material.Default;
-                    Color = Color.White;
+                    color = Color.White;
                     updateMatFit = true;
                 }
 
