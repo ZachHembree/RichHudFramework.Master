@@ -331,14 +331,24 @@ namespace RichHudFramework
                     }
 
                     QuadBoard underlineBoard = QuadBoard.Default;
+                    min += offset.X;
+                    max += offset.X;
 
                     // Draw underlines
                     for (int n = 0; n < underlines.Count; n++)
                     {
                         Vector2 bbPos = offset + underlines[n].offset * _scale;
                         Vector2 bbSize = underlines[n].size * _scale;
-                        underlineBoard.bbColor = underlines[n].color;
 
+                        // Calculate the position of the left and rightmost bounds of the box
+                        float leftBound = Math.Max(bbPos.X - bbSize.X / 2f, min),
+                            rightBound = Math.Min(bbPos.X + bbSize.X / 2f, max);
+
+                        // Adjust size and offset to simulate clipping
+                        bbSize.X = Math.Max(0, rightBound - leftBound);
+                        bbPos.X = (rightBound + leftBound) / 2f;
+
+                        underlineBoard.bbColor = underlines[n].color;
                         underlineBoard.Draw(bbSize, bbPos, ref matrix);
                     }
                 }
@@ -357,20 +367,11 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateOffsets()
                 {
-                    underlines.Clear();
-
                     Vector2I range = GetLineRange();
                     startLine = range.X;
                     endLine = range.Y;
 
-                    int visRange = endLine - startLine;
-                    underlines.EnsureCapacity(visRange);
-
                     UpdateVisibleRange();
-                    UpdateUnderlines();
-
-                    if (visRange > 9 && underlines.Capacity > 3 * underlines.Count)
-                        underlines.TrimExcess();
 
                     offsetsAreStale = false;
                     lineRangeIsStale = false;
@@ -414,6 +415,16 @@ namespace RichHudFramework
                             if (lines[line].Count > 0)
                                 UpdateLineOffsets(line, lines[line]._verticalOffset);
                         }
+
+                        int visRange = endLine - startLine;
+                        underlines.Clear();
+                        underlines.EnsureCapacity(visRange);
+
+                        UpdateUnderlines();
+
+                        if (visRange > 9 && underlines.Capacity > 3 * underlines.Count && underlines.Capacity > visRange)
+                            underlines.TrimExcess();
+
                     }
                 }
 
@@ -512,7 +523,8 @@ namespace RichHudFramework
                 private float GetLineAlignment(Line line)
                 {
                     float offset = 0f;
-                    TextAlignment alignment = line[0].Format.Alignment; // the first character determines alignment
+                    int ch = line.Count > 1 ? 1 : 0;
+                    TextAlignment alignment = line[ch].Format.Alignment;
 
                     if (alignment == TextAlignment.Left)
                         offset = -_size.X / 2f;
@@ -560,8 +572,14 @@ namespace RichHudFramework
                         // Quick fix for CJK characters in Space Engineers font data
                         cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && currentCh >= 0x4E00) ? (-4f * textSize) : 0f;
 
-                    if (left >= 0 && CanUseKernings(line.FormattedGlyphs[left].format, formattedGlyph.format))
-                        pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], currentCh) * formatScale;
+                    // Kerning adjustment
+                    if (left >= 0)
+                    {
+                        GlyphFormat leftFmt = line.FormattedGlyphs[left].format, rightFmt = formattedGlyph.format;
+
+                        if (leftFmt.StyleIndex == rightFmt.StyleIndex && leftFmt.TextSize == rightFmt.TextSize)
+                            pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], currentCh) * formatScale;
+                    }
 
                     GlyphLocData locData = line.LocData[right];
 
@@ -574,12 +592,6 @@ namespace RichHudFramework
                     pos.X += locData.chSize.X;
                     return pos.X;
                 }
-
-                /// <summary>
-                /// Determines whether the formatting of the characters given allows for the use of kerning pairs.
-                /// </summary>
-                private static bool CanUseKernings(GlyphFormat left, GlyphFormat right) =>
-                     left.StyleIndex == right.StyleIndex && left.TextSize == right.TextSize;
 
                 /// <summary>
                 /// Generates underlines for underlined text
@@ -616,7 +628,7 @@ namespace RichHudFramework
                                         Vector2 size = new Vector2
                                         (
                                             (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) / 2f,
-                                            1f * format.TextSize
+                                            (int)(1f * format.TextSize)
                                         );
 
                                         Vector4 color = QuadBoard.GetQuadBoardColor(format.Color) * .9f;
