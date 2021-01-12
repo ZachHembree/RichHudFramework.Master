@@ -1,5 +1,4 @@
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using VRage;
@@ -9,14 +8,9 @@ using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageM
 namespace RichHudFramework
 {
     using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
-    using Vec2Prop = MyTuple<Func<Vector2>, Action<Vector2>>;
-    using FloatProp = MyTuple<Func<float>, Action<float>>;
-    using BoolProp = MyTuple<Func<bool>, Action<bool>>;
 
     namespace UI
     {
-        using Client;
-        using Server;
         using TextBuilderMembers = MyTuple<
             MyTuple<Func<int, int, object>, Func<int>>, // GetLineMember, GetLineCount
             Func<Vector2I, int, object>, // GetCharMember
@@ -54,7 +48,7 @@ namespace RichHudFramework
                 /// this to apply.
                 /// </summary>
                 public float LineWrapWidth { get { return wrapWidth; } set { wrapWidth = value; SetWrapWidth(value); } }
-                
+
                 /// <summary>
                 /// Determines the formatting mode of the text.
                 /// </summary>
@@ -81,7 +75,7 @@ namespace RichHudFramework
                             {
                                 wrappedText = new WrappedText(lines);
                                 wrappedText.SetWrapWidth(wrapWidth);
-                                newFormatter = wrappedText;                             
+                                newFormatter = wrappedText;
                             }
 
                             if (formatter != null)
@@ -227,7 +221,14 @@ namespace RichHudFramework
                 {
                     for (int n = 0; n < text.Count; n++)
                     {
-                        if (text[n].Item2.Equals(GlyphFormat.Empty.data))
+                        GlyphFormatMembers format = text[n].Item2,
+                            empty = GlyphFormat.Empty.data;
+                        bool formatEmpty = format.Item1 == empty.Item1
+                            && format.Item2 == empty.Item2
+                            && format.Item3 == empty.Item3
+                            && format.Item4 == empty.Item4;
+
+                        if (formatEmpty)
                             text[n] = new RichStringMembers(text[n].Item1, Format.data);
                     }
 
@@ -241,7 +242,14 @@ namespace RichHudFramework
 
                 protected void AppendData(RichStringMembers text)
                 {
-                    if (text.Item2.Equals(GlyphFormat.Empty.data))
+                    GlyphFormatMembers format = text.Item2,
+                        empty = GlyphFormat.Empty.data;
+                    bool formatEmpty = format.Item1 == empty.Item1
+                        && format.Item2 == empty.Item2
+                        && format.Item3 == empty.Item3
+                        && format.Item4 == empty.Item4;
+
+                    if (formatEmpty)
                         text.Item2 = Format.data;
 
                     formatter.Append(text);
@@ -258,7 +266,14 @@ namespace RichHudFramework
                 {
                     for (int n = 0; n < text.Count; n++)
                     {
-                        if (text[n].Item2.Equals(GlyphFormat.Empty.data))
+                        GlyphFormatMembers format = text[n].Item2,
+                            empty = GlyphFormat.Empty.data;
+                        bool formatEmpty = format.Item1 == empty.Item1
+                            && format.Item2 == empty.Item2
+                            && format.Item3 == empty.Item3
+                            && format.Item4 == empty.Item4;
+
+                        if (formatEmpty)
                             text[n] = new RichStringMembers(text[n].Item1, Format.data);
                     }
 
@@ -276,7 +291,14 @@ namespace RichHudFramework
                 {
                     for (int n = 0; n < text.Count; n++)
                     {
-                        if (text[n].Item2.Equals(GlyphFormat.Empty.data))
+                        GlyphFormatMembers format = text[n].Item2,
+                            empty = GlyphFormat.Empty.data;
+                        bool formatEmpty = format.Item1 == empty.Item1
+                            && format.Item2 == empty.Item2
+                            && format.Item3 == empty.Item3
+                            && format.Item4 == empty.Item4;
+
+                        if (formatEmpty)
                             text[n] = new RichStringMembers(text[n].Item1, Format.data);
                     }
 
@@ -395,13 +417,18 @@ namespace RichHudFramework
                             GlyphFormatMembers newFormat = text[x].Item2;
 
                             for (int y = 0; y < newChars.Length; y++)
-                            {   
+                            {
                                 // Compare formatting
                                 GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
 
                                 if (lastFormat == null || lastFormat != currentFormat)
                                 {
-                                    if (currentFormat.data.Equals(newFormat))
+                                    bool formatEqual = currentFormat.data.Item1 == newFormat.Item1
+                                        && currentFormat.data.Item2 == newFormat.Item2
+                                        && currentFormat.data.Item3 == newFormat.Item3
+                                        && currentFormat.data.Item4 == newFormat.Item4;
+
+                                    if (formatEqual)
                                         lastFormat = currentFormat;
                                     else
                                         return false;

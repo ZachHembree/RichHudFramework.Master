@@ -146,12 +146,23 @@ namespace RichHudFramework.UI.Rendering.Server
             protected static void GetRichChars(RichStringMembers richString, Line charBuffer, GlyphFormat previous, Func<char, bool> FilterFunc)
             {
                 StringBuilder text = richString.Item1;
+                GlyphFormatMembers newFormat = richString.Item2;
                 GlyphFormat format;
 
-                if (previous == null || !previous.data.Equals(richString.Item2))
-                    format = new GlyphFormat(richString.Item2);
+                if (previous != null)
+                {
+                    bool formatEqual = previous.data.Item1 == newFormat.Item1
+                        && previous.data.Item2 == newFormat.Item2
+                        && previous.data.Item3 == newFormat.Item3
+                        && previous.data.Item4 == newFormat.Item4;
+
+                    if (formatEqual)
+                        format = previous;
+                    else
+                        format = new GlyphFormat(newFormat);
+                }
                 else
-                    format = previous;
+                    format = new GlyphFormat(newFormat);
 
                 charBuffer.EnsureCapacity(charBuffer.Count + text.Length);
 
