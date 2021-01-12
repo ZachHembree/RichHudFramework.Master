@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -395,7 +395,8 @@ namespace RichHudFramework
                             GlyphFormatMembers newFormat = text[x].Item2;
 
                             for (int y = 0; y < newChars.Length; y++)
-                            {
+                            {   
+                                // Compare formatting
                                 GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
 
                                 if (lastFormat == null || lastFormat != currentFormat)
@@ -406,10 +407,13 @@ namespace RichHudFramework
                                         return false;
                                 }
 
+                                // Compare text
                                 char ch = lines[i.X].Chars[i.Y];
 
-                                if (ch != newChars[y] || !lines.TryGetNextIndex(i, out i))
+                                if (ch != newChars[y])
                                     return false;
+
+                                lines.TryGetNextIndex(i, out i);
                             }
                         }
 
@@ -433,7 +437,7 @@ namespace RichHudFramework
                     for (int n = 0; n < lines.Count; n++)
                         currentLength += lines[n].Chars.Count;
 
-                    return newTextLength == currentLength && currentLength > 0;
+                    return newTextLength == currentLength;
                 }
 
                 public TextBuilderMembers GetApiData()
