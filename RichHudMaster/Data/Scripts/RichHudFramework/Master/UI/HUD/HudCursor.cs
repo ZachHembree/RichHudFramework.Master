@@ -166,6 +166,8 @@ namespace RichHudFramework
 
                 protected override void BeginLayout(bool refresh)
                 {
+                    LocalScale = HudMain.ResScale;
+
                     // Reverse scaling due to differences between rendering resolution and
                     // desktop resolution when running the game in windowed mode
                     Vector2 desktopSize = MyAPIGateway.Input.GetMouseAreaSize();

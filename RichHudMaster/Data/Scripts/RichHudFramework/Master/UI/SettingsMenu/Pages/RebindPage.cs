@@ -144,8 +144,6 @@ namespace RichHudFramework
                     }
                 }
 
-                public override float Height { get { return layout.Height; } set { scrollBox.Height = value - (layout.Height - scrollBox.Height); } }
-
                 public override bool Visible
                 {
                     set
@@ -188,7 +186,7 @@ namespace RichHudFramework
 
                     scrollBox = new ScrollBox<ScrollBoxEntry<BindBox>, BindBox>(true)
                     {
-                        SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainOffAxis | HudChainSizingModes.ClampChainAlignAxis,
                         Spacing = 8f,
                     };
 
@@ -215,13 +213,15 @@ namespace RichHudFramework
                         CollectionContainer = { name, divider1, scrollBox, divider2 },
                     };
 
-                    Height = 255f;
+                    Height = 338f;
                 }
 
                 protected override void Layout()
                 {
                     SliderBar slider = scrollBox.scrollBar.slide;
                     slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+
+                    scrollBox.Height = cachedSize.Y - (layout.Height - scrollBox.Height);
                 }
 
                 /// <summary>
@@ -262,8 +262,6 @@ namespace RichHudFramework
             /// </summary>
             private class BindBox : HudElementBase
             {
-                public override float Height { get { return layout.Height; } set { layout.Height = value; bindName.Height = value; } }
-
                 private readonly Label bindName;
                 private readonly BorderedButton con1, con2, con3;
                 private readonly HudChain layout;
@@ -280,6 +278,7 @@ namespace RichHudFramework
                         AutoResize = false,
                         Size = new Vector2(150f, 44f),
                         ParentAlignment = ParentAlignments.Left | ParentAlignments.InnerH,
+                        DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
                     };
 
                     con1 = new BorderedButton()
@@ -317,10 +316,11 @@ namespace RichHudFramework
 
                     layout = new HudChain(false, this)
                     {
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                         Spacing = 13f,
                         Padding = new Vector2(32f, 0f),
                         ParentAlignment = ParentAlignments.Right | ParentAlignments.InnerH,
+                        DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
                         CollectionContainer = { con1, con2, con3 }
                     };
 

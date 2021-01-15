@@ -149,31 +149,6 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<IControlTile> Tiles => scrollBox.Collection;
 
-                public override float Width
-                {
-                    get { return layout.Width + Padding.X; }
-                    set 
-                    {
-                        if (value > Padding.X)
-                            value -= Padding.X;
-
-                        layout.Width = value; 
-                    }
-                }
-
-                public override float Height
-                {
-                    get { return layout.Height + Padding.Y; }
-                    set 
-                    {
-                        if (value > Padding.Y)
-                            value -= Padding.Y;
-
-                        layout.Height = value;
-                        scrollBox.Height = value - header.Height - subheader.Height; 
-                    }
-                }
-
                 private readonly ScrollBox<ControlTile> scrollBox;
                 private readonly Label header, subheader;
                 private readonly HudChain layout;
@@ -210,6 +185,7 @@ namespace RichHudFramework
 
                     layout = new HudChain(true, this)
                     {
+                        DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                         SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                         CollectionContainer = { header, subheader, scrollBox }
                     };
@@ -228,6 +204,8 @@ namespace RichHudFramework
                 {
                     SliderBar slider = scrollBox.scrollBar.slide;
                     slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+
+                    scrollBox.Height = cachedSize.Y - header.Height - subheader.Height - cachedPadding.Y;
                 }
             }
         }

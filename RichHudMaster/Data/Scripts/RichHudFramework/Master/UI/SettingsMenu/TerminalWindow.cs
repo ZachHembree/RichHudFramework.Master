@@ -137,12 +137,12 @@ namespace RichHudFramework
                     MinimumSize = new Vector2(1024f, 500f);
 
                     Size = new Vector2(1024f, 850f);
-                    Vector2 screenSize = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight);
+                    Vector2 normScreenSize = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / HudMain.ResScale;
 
-                    if (screenSize.Y < 1080 || HudMain.AspectRatio < (16f/9f))
+                    if (normScreenSize.Y < 1080 || HudMain.AspectRatio < (16f/9f))
                         Height = MinimumSize.Y;
 
-                    Offset = (screenSize - Size) / 2f - new Vector2(40f);
+                    Offset = (normScreenSize - Size) / 2f - new Vector2(40f);
                 }
 
                 /// <summary>
@@ -204,6 +204,9 @@ namespace RichHudFramework
 
                     layout.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
                     modList.Width = 250f * Scale;
+
+                    Vector2 min = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / -2f, max = -min;
+                    Offset = Vector2.Clamp(Offset, min, max);
 
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
