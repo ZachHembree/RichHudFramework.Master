@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Internal;
+using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
@@ -66,7 +66,8 @@ namespace RichHudFramework
                 else if (_instance.Parent == null)
                     _instance.RegisterComponent(RichHudCore.Instance);
 
-                _instance.mainClient = new Client();
+                if (_instance.mainClient == null)
+                    _instance.mainClient = new Client();
             }
 
             public override void HandleInput()
@@ -79,7 +80,8 @@ namespace RichHudFramework
 
             public override void Close()
             {
-                _instance.bindClients.Clear();
+                bindClients.Clear();
+                mainClient = null;
 
                 if (ExceptionHandler.Unloading)
                     _instance = null;
