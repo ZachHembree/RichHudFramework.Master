@@ -152,6 +152,8 @@ namespace RichHudFramework
                             controls[index] = con;
                         }
                     }
+                    else
+                        controls[index] = Control.Default;
                 }
 
                 controls[256] = new Control("MousewheelUp", "MwUp", 256,

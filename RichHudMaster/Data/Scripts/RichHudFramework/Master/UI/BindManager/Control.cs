@@ -13,6 +13,8 @@ namespace RichHudFramework
             /// </summary>
             private class Control : IControl
             {
+                public static readonly Control Default = new Control("default", "default", 0, () => false);
+
                 /// <summary>
                 /// Name of the control
                 /// </summary>
