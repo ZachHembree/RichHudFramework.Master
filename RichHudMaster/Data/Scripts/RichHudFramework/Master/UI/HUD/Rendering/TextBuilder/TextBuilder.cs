@@ -204,7 +204,7 @@ namespace RichHudFramework
 
                 protected void SetWrapWidth(float width)
                 {
-                    if (BuilderMode == TextBuilderModes.Wrapped)
+                    if (BuilderMode == TextBuilderModes.Wrapped && (width < wrappedText.MaxLineWidth - 2f || width > wrappedText.MaxLineWidth + 4f))
                     {
                         wrappedText.SetWrapWidth(width);
                         AfterTextUpdate();

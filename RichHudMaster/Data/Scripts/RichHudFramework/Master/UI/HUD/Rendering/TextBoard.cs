@@ -45,28 +45,28 @@ namespace RichHudFramework
                 /// <summary>
                 /// Base text size. Compounds text scaling specified by <see cref="GlyphFormat"/>ting.
                 /// </summary>
-                public override float Scale { get { return _scale; } set { _scale = value; } }
+                public override float Scale { get; set; }
 
                 /// <summary>
                 /// Size of the text box as rendered. If AutoResize == true, Size == TextSize, otherwise
                 /// Size == FixedSize
                 /// </summary>
-                public Vector2 Size => (AutoResize ? _textSize : _fixedSize) * _scale;
+                public Vector2 Size => (AutoResize ? _textSize : _fixedSize) * Scale;
 
                 /// <summary>
                 /// Full text size including any text outside the visible range.
                 /// </summary>
-                public Vector2 TextSize => _textSize * _scale;
+                public Vector2 TextSize => _textSize * Scale;
 
                 /// <summary>
                 /// Size of the text box when AutoResize is set to false. Does nothing otherwise.
                 /// </summary>
                 public Vector2 FixedSize
                 {
-                    get { return _fixedSize * _scale; }
+                    get { return _fixedSize * Scale; }
                     set
                     {
-                        value /= _scale;
+                        value /= Scale;
 
                         if (Math.Abs(_fixedSize.X - value.X) + Math.Abs(_fixedSize.Y - value.Y) > .1f)
                         {
@@ -82,10 +82,10 @@ namespace RichHudFramework
                 /// </summary>
                 public Vector2 TextOffset
                 {
-                    get { return _textOffset * _scale; }
+                    get { return _textOffset * Scale; }
                     set
                     {
-                        value /= _scale;
+                        value /= Scale;
 
                         if (Math.Abs(_textOffset.X - value.X) + Math.Abs(_textOffset.Y - value.Y) > .1f)
                         {
@@ -110,7 +110,6 @@ namespace RichHudFramework
                 /// </summary>
                 public bool VertCenterText { get; set; }
 
-                protected float _scale;
                 private int startLine, endLine;
                 private bool updateEvent, offsetsAreStale, lineRangeIsStale;
                 private Vector2 _size, _textSize, _fixedSize, _textOffset;
@@ -120,7 +119,7 @@ namespace RichHudFramework
 
                 public TextBoard()
                 {
-                    _scale = 1f;
+                    Scale = 1f;
                     endLine = -1;
                     AutoResize = true;
                     VertCenterText = true;
@@ -214,7 +213,7 @@ namespace RichHudFramework
                 public Vector2I GetCharAtOffset(Vector2 charOffset)
                 {
                     int line = 0, ch = 0;
-                    charOffset /= _scale;
+                    charOffset /= Scale;
                     charOffset = Vector2.Clamp(charOffset, -_size / 2f + 4f, _size / 2f - 4f);
                     charOffset -= _textOffset;
 
@@ -290,7 +289,7 @@ namespace RichHudFramework
                 {
                     if (offsetsAreStale)
                         UpdateOffsets();
-                    else if (lineRangeIsStale)
+                    else if (lineRangeIsStale || (endLine == -1 && lines.Count > 0))
                         UpdateLineRange();
 
                     if (AutoResize)
@@ -303,7 +302,7 @@ namespace RichHudFramework
                         updateEvent = false;
                     }
 
-                    offset += _textOffset * _scale;
+                    offset += _textOffset * Scale;
 
                     float min = -_size.X / 2f - 2f, max = -min;
 
@@ -323,9 +322,9 @@ namespace RichHudFramework
 
                             if ((xPos - edge) >= min && (xPos + edge) <= max)
                             {
-                                Vector2 glyphPos = offset + locData.bbOffset * _scale;
+                                Vector2 glyphPos = offset + locData.bbOffset * Scale;
 
-                                glyphBoard.Draw((locData.bbSize * _scale), glyphPos, ref matrix);
+                                glyphBoard.Draw((locData.bbSize * Scale), glyphPos, ref matrix);
                             }
                         }
                     }
@@ -337,8 +336,8 @@ namespace RichHudFramework
                     // Draw underlines
                     for (int n = 0; n < underlines.Count; n++)
                     {
-                        Vector2 bbPos = offset + underlines[n].offset * _scale;
-                        Vector2 bbSize = underlines[n].size * _scale;
+                        Vector2 bbPos = offset + underlines[n].offset * Scale;
+                        Vector2 bbSize = underlines[n].size * Scale;
 
                         // Calculate the position of the left and rightmost bounds of the box
                         float leftBound = Math.Max(bbPos.X - bbSize.X / 2f, min),
@@ -628,7 +627,7 @@ namespace RichHudFramework
                                         Vector2 size = new Vector2
                                         (
                                             (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) / 2f,
-                                            (int)(1f * format.TextSize)
+                                            Math.Max((int)format.TextSize, 1)
                                         );
 
                                         Vector4 color = QuadBoard.GetQuadBoardColor(format.Color) * .9f;
