@@ -275,18 +275,19 @@ namespace RichHudFramework.UI
             if (canMoveSlider)
             {
                 float minOffset, maxOffset, pos;
+                Vector3 cursorPos = HudSpace.CursorPos;
 
                 if (Vertical)
                 {
                     minOffset = -(bar.Height - slider.Height) / 2f;
                     maxOffset = -minOffset;
-                    pos = MathHelper.Clamp(HudMain.Cursor.ScreenPos.Y - Origin.Y, minOffset, maxOffset);
+                    pos = MathHelper.Clamp(cursorPos.Y - Origin.Y, minOffset, maxOffset);
                 }
                 else
                 {
                     minOffset = -(bar.Width - slider.Width) / 2f;
                     maxOffset = -minOffset;
-                    pos = MathHelper.Clamp(HudMain.Cursor.ScreenPos.X - Origin.X, minOffset, maxOffset);
+                    pos = MathHelper.Clamp(cursorPos.X - Origin.X, minOffset, maxOffset);
                 }
 
                 if (Reverse)
