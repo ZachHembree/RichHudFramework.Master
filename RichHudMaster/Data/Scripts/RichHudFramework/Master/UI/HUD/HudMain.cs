@@ -245,6 +245,7 @@ namespace RichHudFramework
 
             private bool refreshRequested;
             private int drawTick;
+            private float lastResScale;
 
             private HudMain() : base(false, true)
             {
@@ -297,9 +298,11 @@ namespace RichHudFramework
                 for (int n = 0; n < hudClients.Count; n++)
                     hudClients[n].Update(drawTick + n); // Spread out client tree updates
 
-                bool refreshLayout = drawTick == 0,
-                    rebuildLists = refreshRequested && (drawTick % treeRefreshRate) == 0,
-                    resortLists = rebuildLists || (drawTick % treeRefreshRate) == 0;
+                bool rebuildLists = refreshRequested && (drawTick % treeRefreshRate) == 0,
+                    resortLists = rebuildLists || (drawTick % treeRefreshRate) == 0,
+                    refreshLayout = lastResScale != _resScale || rebuildLists;
+
+                lastResScale = _resScale;
 
                 if (rebuildLists)
                 {
