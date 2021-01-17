@@ -10,7 +10,6 @@ namespace RichHudFramework
     namespace UI
     {
         using Client;
-        using EmptyKeys.UserInterface.Generated.StoreBlockView_Bindings;
         using Server;
         using HudUpdateAccessors = MyTuple<
             ApiMemberAccessor,
@@ -39,11 +38,7 @@ namespace RichHudFramework
             /// <summary>
             /// Determines whether or not an element will be drawn or process input. Visible by default.
             /// </summary>
-            public override bool Visible
-            {
-                get { return _visible && parentVisible && _registered; }
-                set { _visible = value; }
-            }
+            public override bool Visible => _visible && parentVisible && _registered;
 
             /// <summary>
             /// Determines whether the UI element will be drawn in the Back, Mid or Foreground
@@ -72,7 +67,7 @@ namespace RichHudFramework
 
             protected HudParentBase _parent, reregParent;
             protected float parentScale;
-            protected bool _visible, parentVisible, wasFastUnregistered;
+            protected bool parentVisible, wasFastUnregistered;
             protected sbyte parentZOffset;
 
             public HudNodeBase(HudParentBase parent)
@@ -89,30 +84,22 @@ namespace RichHudFramework
             {
                 fullZOffset = GetFullZOffset(this, _parent);
 
-                if (Visible || refresh)
-                {
-                    parentScale = _parent == null ? 1f : _parent.Scale;
-                    Layout();
-                }
-            }
-
-            protected override void BeginDraw()
-            {
-                if (Visible)
-                    Draw();
-
                 if (_parent == null)
                 {
-                    parentVisible = true;
-                    parentZOffset = 0;
+                    parentVisible = false;
                 }
                 else
                 {
                     parentVisible = _parent.Visible;
+                    parentScale = _parent.Scale;
                     parentZOffset = _parent.ZOffset;
                 }
-            }
 
+                if (Visible || refresh)
+                {
+                    Layout();
+                }
+            }
 
             /// <summary>
             /// Adds update delegates for members in the order dictated by the UI tree
@@ -232,8 +219,7 @@ namespace RichHudFramework
                     }
 
                     parentZOffset = 0;
-                    parentScale = 1f;
-                    parentVisible = true;
+                    parentVisible = false;
                 }
 
                 return !_registered;

@@ -15,6 +15,8 @@ namespace RichHudFramework
         /// </summary>
         public abstract class HudElementBase : HudNodeBase, IReadOnlyHudElement
         {
+            protected const float minMouseBounds = 8f;
+
             /// <summary>
             /// Parent object of the node.
             /// </summary>
@@ -69,7 +71,11 @@ namespace RichHudFramework
             /// <summary>
             /// Border size. Included in total element size.
             /// </summary>
-            public virtual Vector2 Padding { get { return _absolutePadding * Scale; } set { _absolutePadding = value / Scale; } }
+            public virtual Vector2 Padding 
+            { 
+                get { return _absolutePadding * Scale; } 
+                set { _absolutePadding = value / Scale; } 
+            }
 
             /// <summary>
             /// Starting position of the hud element.
@@ -79,7 +85,11 @@ namespace RichHudFramework
             /// <summary>
             /// Position of the element relative to its origin.
             /// </summary>
-            public virtual Vector2 Offset { get { return _absoluteOffset * Scale; } set { _absoluteOffset = value / Scale; } }
+            public virtual Vector2 Offset 
+            {
+                get { return _absoluteOffset * Scale; } 
+                set { _absoluteOffset = value / Scale; } 
+            }
 
             /// <summary>
             /// Current position of the hud element. Origin + Offset.
@@ -111,15 +121,33 @@ namespace RichHudFramework
             /// </summary>
             public virtual bool IsMousedOver => _isMousedOver;
 
-            protected const float minMouseBounds = 8f;
-            protected bool _isMousedOver, mouseInBounds;
-            private Vector2 originAlignment;
-
+            /// <summary>
+            /// Unscaled element size;
+            /// </summary>
             protected float _absoluteWidth, _absoluteHeight;
-            protected Vector2 _absoluteOffset, _absolutePadding;
-            protected HudElementBase _parentFull;
 
+            /// <summary>
+            /// Unscaled element offset.
+            /// </summary>
+            protected Vector2 _absoluteOffset;
+
+            /// <summary>
+            /// Unscaled element padding.
+            /// </summary>
+            protected Vector2 _absolutePadding;
+
+            /// <summary>
+            /// Values used internaly for mouse bounds checking. Do not use.
+            /// </summary>
+            protected bool _isMousedOver, mouseInBounds;
+
+            /// <summary>
+            /// Values used internally to minimize property calls. Should be treated as read only.
+            /// </summary>
             protected Vector2 cachedOrigin, cachedPosition, cachedSize, cachedPadding;
+
+            protected HudElementBase _parentFull;
+            private Vector2 originAlignment;
 
             /// <summary>
             /// Initializes a new hud element with cursor sharing enabled and scaling set to 1f.
@@ -132,7 +160,7 @@ namespace RichHudFramework
 
             protected override void InputDepth()
             {
-                if (Visible && UseCursor && (HudSpace?.IsFacingCamera ?? false))
+                if (UseCursor && Visible && (HudSpace?.IsFacingCamera ?? false))
                 {
                     Vector3 cursorPos = HudSpace.CursorPos;
                     Vector2 offset = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) / 2f;
@@ -175,17 +203,34 @@ namespace RichHudFramework
             {
                 fullZOffset = GetFullZOffset(this, _parent);
 
+                if (_parent == null)
+                {
+                    parentVisible = false;
+                }
+                else
+                {
+                    parentVisible = _parent.Visible;
+                    parentScale = _parent.Scale;
+                    parentZOffset = _parent.ZOffset;
+                }
+
                 if (Visible || refresh)
                 {
                     UpdateCache();
                     Layout();
-                    UpdateCache();
+
+                    // Update cached values for use on draw and by child nodes
+                    cachedPadding = Padding;
+                    cachedSize = new Vector2(Width, Height);
+                    cachedPosition = cachedOrigin + Offset;
                 }
+
+                fullZOffset = GetFullZOffset(this, _parent);
+                parentZOffset = _parent?.ZOffset ?? 0;
             }
 
             protected void UpdateCache()
             {
-                parentScale = _parent == null ? 1f : _parent.Scale;
                 cachedPadding = Padding;
 
                 if (_parentFull != null)
@@ -293,9 +338,9 @@ namespace RichHudFramework
                     case HudElementAccessors.FullZOffset:
                         return fullZOffset;
                     case HudElementAccessors.Position:
-                        return cachedPosition;
+                        return Position;
                     case HudElementAccessors.Size:
-                        return cachedSize;
+                        return Size;
                     case HudElementAccessors.GetHudSpaceFunc:
                         return HudSpace?.GetHudSpaceFunc;
                     case HudElementAccessors.ModName:

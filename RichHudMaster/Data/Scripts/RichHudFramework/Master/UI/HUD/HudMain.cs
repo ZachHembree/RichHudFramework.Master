@@ -45,7 +45,7 @@ namespace RichHudFramework
         public sealed partial class HudMain : RichHudComponentBase
         {
             public const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
-            public const int treeRefreshRate = 10, layoutRefreshRate = 30;
+            public const int treeRefreshRate = 10;
 
             /// <summary>
             /// Root parent for all HUD elements.
@@ -243,7 +243,6 @@ namespace RichHudFramework
             private readonly List<Action<bool>> layoutActions;
             private readonly List<Action> drawActions;
 
-            private readonly Utils.Stopwatch cacheTimer;
             private bool refreshRequested;
             private int drawTick;
 
@@ -268,9 +267,6 @@ namespace RichHudFramework
                 inputActions = new List<Action>(200);
                 layoutActions = new List<Action<bool>>(200);
                 drawActions = new List<Action>(200);
-
-                cacheTimer = new Utils.Stopwatch();
-                cacheTimer.Start();
 
                 UpdateScreenScaling();
             }
@@ -301,7 +297,7 @@ namespace RichHudFramework
                 for (int n = 0; n < hudClients.Count; n++)
                     hudClients[n].Update(drawTick + n); // Spread out client tree updates
 
-                bool refreshLayout = (drawTick % layoutRefreshRate) == 0,
+                bool refreshLayout = drawTick == 0,
                     rebuildLists = refreshRequested && (drawTick % treeRefreshRate) == 0,
                     resortLists = rebuildLists || (drawTick % treeRefreshRate) == 0;
 
@@ -350,12 +346,10 @@ namespace RichHudFramework
             /// </summary>
             private void UpdateCache()
             {
-                if (cacheTimer.ElapsedMilliseconds > 2000)
+                if (drawTick == 0)
                 {
                     UpdateScreenScaling();
-
                     _uiBkOpacity = MyAPIGateway.Session.Config.UIBkOpacity;
-                    cacheTimer.Reset();
                 }
 
                 // Update screen to world matrix transform

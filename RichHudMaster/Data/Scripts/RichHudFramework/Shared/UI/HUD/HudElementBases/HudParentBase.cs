@@ -1,4 +1,4 @@
-﻿using RichHudFramework.Internal;
+using RichHudFramework.Internal;
 using System;
 using System.Collections.Generic;
 using VRage;
@@ -33,7 +33,7 @@ namespace RichHudFramework
             /// <summary>
             /// Determines whether or not an element will be drawn or process input. Visible by default.
             /// </summary>
-            public virtual bool Visible { get; set; }
+            public virtual bool Visible { get { return _visible; } set { _visible = value; } }
 
             /// <summary>
             /// Scales the size and offset of an element. Any offset or size set at a given
@@ -68,6 +68,7 @@ namespace RichHudFramework
             /// </summary>
             protected byte zOffsetInner;
             protected ushort fullZOffset;
+            protected bool _visible;
 
             public HudParentBase()
             {
@@ -254,7 +255,7 @@ namespace RichHudFramework
 
             private void SafeInputDepth()
             {
-                if (!ExceptionHandler.ClientsPaused && _registered)
+                if (!ExceptionHandler.ClientsPaused)
                 {
                     try
                     {
@@ -269,7 +270,7 @@ namespace RichHudFramework
 
             private void SafeBeginLayout(bool refresh)
             {
-                if (!ExceptionHandler.ClientsPaused && _registered)
+                if (!ExceptionHandler.ClientsPaused)
                 {
                     try
                     {
@@ -310,6 +311,11 @@ namespace RichHudFramework
                         ExceptionHandler.ReportException(e);
                     }
                 }
+            }
+
+            protected static bool IsSetVisible(HudParentBase node)
+            {
+                return node._visible && node._registered;
             }
         }
     }
