@@ -63,7 +63,7 @@ namespace RichHudFramework
             /// <summary>
             /// Indicates whether or not the element has been registered to a parent.
             /// </summary>
-            public bool Registered { get { return _registered; } private set { _registered = value; } }
+            public bool Registered => _registered;
 
             protected HudParentBase _parent, reregParent;
             protected float parentScale;
@@ -80,6 +80,10 @@ namespace RichHudFramework
                 Register(parent);
             }
 
+            /// <summary>
+            /// Updates layout for the element and its children. Overriding this method is rarely necessary. 
+            /// If you need to update layout, use Layout().
+            /// </summary>
             protected override void BeginLayout(bool refresh)
             {
                 fullZOffset = GetFullZOffset(this, _parent);

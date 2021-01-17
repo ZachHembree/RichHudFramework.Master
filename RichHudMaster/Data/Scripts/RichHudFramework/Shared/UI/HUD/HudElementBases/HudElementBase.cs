@@ -158,6 +158,10 @@ namespace RichHudFramework
                 ParentAlignment = ParentAlignments.Center;
             }
 
+            /// <summary>
+            /// Used to check whether the cursor is moused over the element and whether its being
+            /// obstructed by another element.
+            /// </summary>
             protected override void InputDepth()
             {
                 if (UseCursor && Visible && (HudSpace?.IsFacingCamera ?? false))
@@ -174,6 +178,10 @@ namespace RichHudFramework
                     mouseInBounds = false;
             }
 
+            /// <summary>
+            /// Updates input for the element and its children. Overriding this method is rarely necessary.
+            /// If you need to update input, use HandleInput().
+            /// </summary>
             protected override void BeginInput()
             {
                 if (Visible)
@@ -199,6 +207,10 @@ namespace RichHudFramework
                     _isMousedOver = false;
             }
 
+            /// <summary>
+            /// Updates layout for the element and its children. Overriding this method is rarely necessary. 
+            /// If you need to update layout, use Layout().
+            /// </summary>
             protected override void BeginLayout(bool refresh)
             {
                 fullZOffset = GetFullZOffset(this, _parent);
@@ -229,6 +241,9 @@ namespace RichHudFramework
                 parentZOffset = _parent?.ZOffset ?? 0;
             }
 
+            /// <summary>
+            /// Updates cached values as well as parent and dim alignment.
+            /// </summary>
             protected void UpdateCache()
             {
                 cachedPadding = Padding;
