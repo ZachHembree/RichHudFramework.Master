@@ -330,14 +330,15 @@ namespace RichHudFramework
                     }
 
                     QuadBoard underlineBoard = QuadBoard.Default;
+                    offset /= Scale;
                     min += offset.X;
                     max += offset.X;
 
                     // Draw underlines
                     for (int n = 0; n < underlines.Count; n++)
                     {
-                        Vector2 bbPos = offset + underlines[n].offset * Scale;
-                        Vector2 bbSize = underlines[n].size * Scale;
+                        Vector2 bbPos = offset + underlines[n].offset;
+                        Vector2 bbSize = underlines[n].size;
 
                         // Calculate the position of the left and rightmost bounds of the box
                         float leftBound = Math.Max(bbPos.X - bbSize.X / 2f, min),
@@ -348,7 +349,7 @@ namespace RichHudFramework
                         bbPos.X = (rightBound + leftBound) / 2f;
 
                         underlineBoard.bbColor = underlines[n].color;
-                        underlineBoard.Draw(bbSize, bbPos, ref matrix);
+                        underlineBoard.Draw(bbSize * Scale, bbPos * Scale, ref matrix);
                     }
                 }
 
