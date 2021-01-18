@@ -263,6 +263,14 @@ namespace RichHudFramework.UI
             {
                 canMoveSlider = false;
             }
+        }
+
+        protected override void Layout()
+        {
+            float scale = Scale;
+            bar.Size = _barSize * scale;
+            slider.Size = _sliderSize * scale;
+            slider.Visible = SliderVisible;
 
             if (IsMousedOver || canMoveSlider)
             {
@@ -276,14 +284,6 @@ namespace RichHudFramework.UI
                 slider.Color = SliderColor;
                 bar.Color = BarColor;
             }
-        }
-
-        protected override void Layout()
-        {
-            float scale = Scale;
-            bar.Size = _barSize * scale;
-            slider.Size = _sliderSize * scale;
-            slider.Visible = SliderVisible;
 
             if (canMoveSlider)
             {
