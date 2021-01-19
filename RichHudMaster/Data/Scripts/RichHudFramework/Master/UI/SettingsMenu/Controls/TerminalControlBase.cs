@@ -22,7 +22,7 @@ namespace RichHudFramework.UI.Server
         /// Invoked whenver a change occurs to a control that requires a response, like a change
         /// to a value.
         /// </summary>
-        public virtual event EventHandler OnControlChanged;
+        public virtual event EventHandler ControlChanged;
 
         /// <summary>
         /// The name of the control as it appears in the terminal.
@@ -40,7 +40,7 @@ namespace RichHudFramework.UI.Server
 
         public TerminalControlBase()
         {
-            OnControlChanged += InvokeApiCallback;
+            ControlChanged += InvokeApiCallback;
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace RichHudFramework.UI.Server
         /// Invoked whenver a change occurs to a control that requires a response, like a change
         /// to a value.
         /// </summary>
-        public override event EventHandler OnControlChanged;
+        public override event EventHandler ControlChanged;
 
         /// <summary>
         /// Value associated with the control.
@@ -142,7 +142,7 @@ namespace RichHudFramework.UI.Server
             {
                 controlUpdating = true;
                 lastValue = Value;
-                OnControlChanged?.Invoke(this, EventArgs.Empty);
+                ControlChanged?.Invoke(this, EventArgs.Empty);
                 controlUpdating = false;
             }
 

@@ -39,7 +39,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Invoked when an entry is selected.
         /// </summary>
-        public event EventHandler OnSelectionChanged;
+        public event EventHandler SelectionChanged;
 
         /// <summary>
         /// Used to allow the addition of list entries using collection-initializer syntax in
@@ -291,7 +291,7 @@ namespace RichHudFramework.UI
             {
                 Selection = scrollBox.Collection[index];
                 Selection.Enabled = true;
-                OnSelectionChanged?.Invoke(this, EventArgs.Empty);
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -306,7 +306,7 @@ namespace RichHudFramework.UI
             {
                 Selection = scrollBox.Collection[index];
                 Selection.Enabled = true;
-                OnSelectionChanged?.Invoke(this, EventArgs.Empty);
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -321,7 +321,7 @@ namespace RichHudFramework.UI
             {
                 Selection = scrollBox.Collection[index];
                 Selection.Enabled = true;
-                OnSelectionChanged?.Invoke(this, EventArgs.Empty);
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -373,7 +373,7 @@ namespace RichHudFramework.UI
                     if (SharedBinds.LeftButton.IsNewPressed)
                     {
                         Selection = entry;
-                        OnSelectionChanged?.Invoke(this, EventArgs.Empty);
+                        SelectionChanged?.Invoke(this, EventArgs.Empty);
                     }
                 }
             }

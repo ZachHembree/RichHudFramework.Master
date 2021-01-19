@@ -17,7 +17,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Invoked when a member of the list is selected.
         /// </summary>
-        public event EventHandler OnSelectionChanged { add { listBox.OnSelectionChanged += value; } remove { listBox.OnSelectionChanged -= value; } }
+        public event EventHandler SelectionChanged { add { listBox.SelectionChanged += value; } remove { listBox.SelectionChanged -= value; } }
 
         /// <summary>
         /// List of entries in the dropdown.
@@ -150,8 +150,8 @@ namespace RichHudFramework.UI
 
             Size = new Vector2(331f, 43f);
 
-            display.MouseInput.OnLeftClick += ToggleList;
-            OnSelectionChanged += UpdateDisplay;
+            display.MouseInput.LeftClicked += ToggleList;
+            SelectionChanged += UpdateDisplay;
         }
 
         public Dropdown() : this(null)

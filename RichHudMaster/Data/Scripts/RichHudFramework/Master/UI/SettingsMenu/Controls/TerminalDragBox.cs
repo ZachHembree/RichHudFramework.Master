@@ -69,7 +69,7 @@ namespace RichHudFramework.UI.Server
                 Visible = false
             };
 
-            openButton.MouseInput.OnLeftClick += Open;
+            openButton.MouseInput.LeftClicked += Open;
             window.OnConfirm += Close;
         }
 
@@ -169,7 +169,7 @@ namespace RichHudFramework.UI.Server
                     DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                 };
 
-                confirmButton.MouseInput.OnLeftClick += (sender, args) => OnConfirm?.Invoke();
+                confirmButton.MouseInput.LeftClicked += (sender, args) => OnConfirm?.Invoke();
             }
 
             protected override void Layout()

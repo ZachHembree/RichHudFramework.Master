@@ -182,7 +182,7 @@ namespace RichHudFramework
                         BorderThickness = 1f,
                     };
 
-                    resetButton.MouseInput.OnLeftClick += ResetBinds;
+                    resetButton.MouseInput.LeftClicked += ResetBinds;
 
                     scrollBox = new ScrollBox<ScrollBoxEntry<BindBox>, BindBox>(true)
                     {
@@ -289,8 +289,8 @@ namespace RichHudFramework
                         BorderThickness = 1f,
                     };
 
-                    con1.MouseInput.OnLeftClick += (sender, args) => GetNewControl(0);
-                    con1.MouseInput.OnRightClick += (sender, args) => RemoveControl(0);
+                    con1.MouseInput.LeftClicked += (sender, args) => GetNewControl(0);
+                    con1.MouseInput.RightClicked += (sender, args) => RemoveControl(0);
 
                     con2 = new BorderedButton()
                     {
@@ -300,8 +300,8 @@ namespace RichHudFramework
                         BorderThickness = 1f,
                     };
 
-                    con2.MouseInput.OnLeftClick += (sender, args) => GetNewControl(1);
-                    con2.MouseInput.OnRightClick += (sender, args) => RemoveControl(1);
+                    con2.MouseInput.LeftClicked += (sender, args) => GetNewControl(1);
+                    con2.MouseInput.RightClicked += (sender, args) => RemoveControl(1);
 
                     con3 = new BorderedButton()
                     {
@@ -311,8 +311,8 @@ namespace RichHudFramework
                         BorderThickness = 1f,
                     };
 
-                    con3.MouseInput.OnLeftClick += (sender, args) => GetNewControl(2);
-                    con3.MouseInput.OnRightClick += (sender, args) => RemoveControl(2);
+                    con3.MouseInput.LeftClicked += (sender, args) => GetNewControl(2);
+                    con3.MouseInput.RightClicked += (sender, args) => RemoveControl(2);
 
                     layout = new HudChain(false, this)
                     {

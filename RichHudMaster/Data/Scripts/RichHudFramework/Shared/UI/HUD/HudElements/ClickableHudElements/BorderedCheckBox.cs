@@ -46,7 +46,7 @@ namespace RichHudFramework.UI.Server
             highlightColor = new Color(50, 60, 70);
             highlightEnabled = false;
 
-            MouseInput.OnLeftClick += ToggleValue;
+            MouseInput.LeftClicked += ToggleValue;
         }
 
         public BorderedCheckBox() : this(null)

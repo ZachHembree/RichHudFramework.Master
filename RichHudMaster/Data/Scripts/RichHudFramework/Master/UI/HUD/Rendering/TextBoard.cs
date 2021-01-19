@@ -40,7 +40,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Raised when a change is made to the text.
                 /// </summary>
-                public event Action OnTextChanged;
+                public event Action TextChanged;
 
                 /// <summary>
                 /// Base text size. Compounds text scaling specified by <see cref="GlyphFormat"/>ting.
@@ -297,7 +297,7 @@ namespace RichHudFramework
 
                     if (updateEvent && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
                     {
-                        OnTextChanged?.Invoke();
+                        TextChanged?.Invoke();
                         eventTimer.Reset();
                         updateEvent = false;
                     }
@@ -683,9 +683,9 @@ namespace RichHudFramework
                                     var args = (MyTuple<bool, Action>)data;
 
                                     if (args.Item1)
-                                        OnTextChanged += args.Item2;
+                                        TextChanged += args.Item2;
                                     else
-                                        OnTextChanged -= args.Item2;
+                                        TextChanged -= args.Item2;
 
                                     break;
                                 }

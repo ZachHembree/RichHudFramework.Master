@@ -126,7 +126,7 @@ namespace RichHudFramework
                     };
 
                     modList.OnSelectionChanged += HandleSelectionChange;
-                    closeButton.MouseInput.OnLeftClick += (sender, args) => CloseMenu();
+                    closeButton.MouseInput.LeftClicked += (sender, args) => CloseMenu();
                     SharedBinds.Escape.OnNewPress += CloseMenu;
                     MasterBinds.ToggleTerminal.OnNewPress += ToggleMenu;
 
@@ -325,7 +325,7 @@ namespace RichHudFramework
                         ModControlRoot modSettings = new ModControlRoot() { Name = clientName };
 
                         scrollBox.Add(modSettings);
-                        modSettings.OnSelectionChanged += SelectionHandler;
+                        modSettings.SelectionChanged += SelectionHandler;
 
                         return modSettings;
                     }

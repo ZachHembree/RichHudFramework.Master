@@ -38,8 +38,8 @@ namespace RichHudFramework.UI
             HighlightColor = Color.Gray;
             HighlightEnabled = true;
 
-            _mouseInput.OnCursorEnter += CursorEntered;
-            _mouseInput.OnCursorExit += CursorExited;
+            _mouseInput.CursorEntered += CursorEntered;
+            _mouseInput.CursorExited += CursorExited;
         }
 
         public LabelBoxButton() : this(null)

@@ -37,8 +37,8 @@ namespace RichHudFramework.UI
             highlightColor = new Color(125, 125, 125, 255);
             highlightEnabled = true;
 
-            _mouseInput.OnCursorEnter += CursorEntered;
-            _mouseInput.OnCursorExit += CursorExited;
+            _mouseInput.CursorEntered += CursorEntered;
+            _mouseInput.CursorExited += CursorExited;
         }
 
         public Button() : this(null)

@@ -10,7 +10,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Invoked when the button is clicked.
         /// </summary>
-        public override event EventHandler OnControlChanged;
+        public override event EventHandler ControlChanged;
 
         /// <summary>
         /// The name of the control as it appears in the terminal.
@@ -36,7 +36,7 @@ namespace RichHudFramework.UI.Server
             button = new BorderedButton();
             Element = button;
 
-            MouseInput.OnLeftClick += (sender, args) => OnControlChanged?.Invoke(sender, args);          
+            MouseInput.LeftClicked += (sender, args) => ControlChanged?.Invoke(sender, args);          
         }
     }
 }

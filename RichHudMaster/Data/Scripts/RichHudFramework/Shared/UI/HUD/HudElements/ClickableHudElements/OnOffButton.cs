@@ -80,8 +80,8 @@ namespace RichHudFramework.UI.Server
                 CollectionContainer = { on, off }
             };
 
-            on.MouseInput.OnLeftClick += ToggleValue;
-            off.MouseInput.OnLeftClick += ToggleValue;
+            on.MouseInput.LeftClicked += ToggleValue;
+            off.MouseInput.LeftClicked += ToggleValue;
 
             selectionHighlight = new BorderBox(buttonChain)
             { 

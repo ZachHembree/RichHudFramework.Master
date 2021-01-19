@@ -32,7 +32,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Invoked when a new page is selected
                 /// </summary>
-                public event EventHandler OnSelectionChanged;
+                public event EventHandler SelectionChanged;
 
                 /// <summary>
                 /// Determines whether or not the element will appear in the list.
@@ -79,7 +79,7 @@ namespace RichHudFramework
                         () => Element.ListEntries.Count
                     );
 
-                    treeBox.OnSelectionChanged += InvokeCallback;
+                    treeBox.SelectionChanged += InvokeCallback;
                 }
 
                 public IEnumerator<ITerminalPage> GetEnumerator() =>
@@ -132,7 +132,7 @@ namespace RichHudFramework
 
                 private void InvokeCallback(object sender, EventArgs args)
                 {
-                    OnSelectionChanged?.Invoke(this, EventArgs.Empty);
+                    SelectionChanged?.Invoke(this, EventArgs.Empty);
                     ApiCallbackAction?.Invoke();
                 }
 
