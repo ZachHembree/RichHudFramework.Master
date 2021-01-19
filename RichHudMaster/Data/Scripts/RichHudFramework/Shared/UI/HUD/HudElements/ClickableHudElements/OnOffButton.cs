@@ -88,7 +88,7 @@ namespace RichHudFramework.UI.Server
                 Color = Color.White 
             };
 
-            Size = new Vector2(250f, 50f);
+            Size = new Vector2(200f, 50f);
         }
 
         public OnOffButton() : this(null)

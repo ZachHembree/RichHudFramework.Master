@@ -123,6 +123,7 @@ namespace RichHudFramework.UI.Server
             Size = new Vector2(319f, 40);
 
             textBox.TextBoard.OnTextChanged += TextChanged;
+            textBox.Text = "NewTextField";
         }
 
         public TextField() : this(null)

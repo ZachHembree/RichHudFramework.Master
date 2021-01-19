@@ -79,6 +79,7 @@ namespace RichHudFramework.UI.Server
                 CollectionContainer = { name, checkbox }
             };
 
+            AutoResize = true;
             Size = new Vector2(250f, 37f);
         }
 

@@ -34,7 +34,7 @@ namespace RichHudFramework.UI
         public Button(HudParentBase parent) : base(parent)
         {
             _mouseInput = new MouseInputElement(this);
-            highlightColor = new Color(255, 255, 255, 125);
+            highlightColor = new Color(125, 125, 125, 255);
             highlightEnabled = true;
 
             _mouseInput.OnCursorEnter += CursorEntered;
