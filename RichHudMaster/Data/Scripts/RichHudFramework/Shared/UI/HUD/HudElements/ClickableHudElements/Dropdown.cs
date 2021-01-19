@@ -25,6 +25,11 @@ namespace RichHudFramework.UI
         public IReadOnlyList<ListBoxEntry<T>> ListEntries => listBox.ListEntries;
 
         /// <summary>
+        /// Read-only collection of list entries.
+        /// </summary>
+        public IReadOnlyHudCollection<ListBoxEntry<T>, LabelButton> HudCollection => listBox.HudCollection;
+
+        /// <summary>
         /// Used to allow the addition of list entries using collection-initializer syntax in
         /// conjunction with normal initializers.
         /// </summary>
@@ -117,8 +122,7 @@ namespace RichHudFramework.UI
 
         public HudElementBase Display => display;
 
-        public readonly ListBox<T> listBox;
-
+        protected readonly ListBox<T> listBox;
         protected readonly DropdownDisplay display;
         protected readonly TexturedBox highlight;
 
@@ -236,6 +240,12 @@ namespace RichHudFramework.UI
         /// </summary>
         public void ClearEntries() =>
             listBox.ClearEntries();
+
+        /// <summary>
+        /// Sets the selection to the member associated with the given object.
+        /// </summary>
+        public void SetSelectionAt(int index) =>
+            listBox.SetSelectionAt(index);
 
         /// <summary>
         /// Sets the selection to the member associated with the given object.

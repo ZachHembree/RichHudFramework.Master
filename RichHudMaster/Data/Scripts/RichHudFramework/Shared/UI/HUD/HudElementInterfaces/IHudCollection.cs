@@ -8,7 +8,7 @@ namespace RichHudFramework
         /// <summary>
         /// Read-only interface for UI elements that support child elments using containers.
         /// </summary>
-        public interface IReadOnlyHudCollection<TElementContainer, TElement> : IReadOnlyList<TElementContainer>, ICollection<TElementContainer>
+        public interface IReadOnlyHudCollection<TElementContainer, TElement> : IReadOnlyList<TElementContainer>
             where TElementContainer : IHudElementContainer<TElement>, new()
             where TElement : HudElementBase
         {

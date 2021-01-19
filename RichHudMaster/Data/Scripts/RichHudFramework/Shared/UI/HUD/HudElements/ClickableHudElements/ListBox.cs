@@ -53,6 +53,11 @@ namespace RichHudFramework.UI
         public IReadOnlyList<ListBoxEntry<T>> ListEntries => scrollBox.Collection;
 
         /// <summary>
+        /// Read-only collection of list entries.
+        /// </summary>
+        public IReadOnlyHudCollection<ListBoxEntry<T>, LabelButton> HudCollection => scrollBox;
+
+        /// <summary>
         /// Background color
         /// </summary>
         public Color Color { get { return scrollBox.Color; } set { scrollBox.Color = value; } }
@@ -147,8 +152,7 @@ namespace RichHudFramework.UI
         /// </summary>
         public ListBoxEntry<T> Selection { get; private set; }
 
-        public readonly ScrollBox<ListBoxEntry<T>, LabelButton> scrollBox;
-
+        protected readonly ScrollBox<ListBoxEntry<T>, LabelButton> scrollBox;
         protected readonly HighlightBox selectionBox, highlight;
         protected readonly BorderBox border;
         protected Vector2 _memberPadding;
@@ -285,7 +289,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Sets the selection to the member associated with the given object.
         /// </summary>
-        public void SetSelection(int index)
+        public void SetSelectionAt(int index)
         {
             if (index > 0 && index < scrollBox.Collection.Count)
             {
