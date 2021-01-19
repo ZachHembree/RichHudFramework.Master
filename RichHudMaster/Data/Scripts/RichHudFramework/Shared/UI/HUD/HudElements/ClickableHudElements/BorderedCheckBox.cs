@@ -12,7 +12,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Indicates whether or not the box is checked.
         /// </summary>
-        public bool BoxChecked { get { return box.Visible; } set { box.Visible = value; } }
+        public bool IsBoxChecked { get { return box.Visible; } set { box.Visible = value; } }
 
         private readonly TexturedBox box, highlight;
 
@@ -54,7 +54,7 @@ namespace RichHudFramework.UI.Server
 
         private void ToggleValue(object sender, EventArgs args)
         {
-            BoxChecked = !BoxChecked;
+            IsBoxChecked = !IsBoxChecked;
         }
 
         protected override void HandleInput(Vector2 cursorPos)

@@ -56,7 +56,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Indicates whether or not the box is checked.
         /// </summary>
-        public bool BoxChecked { get { return checkbox.BoxChecked; } set { checkbox.BoxChecked = value; } }
+        public bool IsBoxChecked { get { return checkbox.IsBoxChecked; } set { checkbox.IsBoxChecked = value; } }
 
         private readonly Label name;
         private readonly BorderedCheckBox checkbox;
