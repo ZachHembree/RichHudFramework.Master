@@ -21,7 +21,7 @@ namespace RichHudFramework
         /// <summary>
         /// Base class for named pages attached to a mod control root.
         /// </summary>
-        public abstract class TerminalPageBase : ScrollBoxEntry, ITerminalPage
+        public abstract class TerminalPageBase : HudElementContainer, ITerminalPage
         {
             /// <summary>
             /// Name of the <see cref="ITerminalPage"/> as it appears in the dropdown of the <see cref="IModControlRoot"/>.
@@ -46,6 +46,8 @@ namespace RichHudFramework
             }
 
             public ITextBoard NameBuilder { get; set; }
+
+            public bool Enabled { get; set; }
 
             public object ID => this;
 

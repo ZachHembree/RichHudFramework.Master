@@ -46,7 +46,7 @@ namespace RichHudFramework
                 public IReadOnlyList<ModControlRoot> ModRoots => modList.ModRoots;
 
                 private readonly ModList modList;
-                private readonly HudChain layout;
+                private readonly HudChain bodyChain;
                 private readonly TexturedBox topDivider, middleDivider, bottomDivider;
                 private readonly Button closeButton;
                 private readonly LabelBox warningBox;
@@ -79,7 +79,7 @@ namespace RichHudFramework
                         Width = 26f,
                     };
 
-                    layout = new HudChain(false, topDivider)
+                    bodyChain = new HudChain(false, topDivider)
                     {
                         SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                         ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.InnerH,
@@ -199,28 +199,50 @@ namespace RichHudFramework
 
                     base.Layout();
 
+                    // Update sizing
                     if (CurrentPage != null)
-                        CurrentPage.Element.Width = Width - Padding.X - modList.Width - layout.Spacing;
+                        CurrentPage.Element.Width = Width - Padding.X - modList.Width - bodyChain.Spacing;
 
-                    layout.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
+                    bodyChain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
                     modList.Width = 250f * Scale;
 
+                    // Bound window offset to keep it from being moved off screen
                     Vector2 min = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / -2f, max = -min;
                     Offset = Vector2.Clamp(Offset, min, max);
 
+                    // Update color opacity
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
 
+                    // Display warning if cursor is disabled
                     warningBox.Visible = !HudMain.Cursor.Visible;
+
+                    // Update enabled/disabled pages
+                    IReadOnlyList<ModControlRoot> rootList = modList.ModRoots;
+
+                    for (int i = 0; i < rootList.Count; i++)
+                    {
+                        IReadOnlyList<ListBoxEntry<TerminalPageBase>> treePages = rootList[i].ListEntries;
+
+                        for (int j = 0; j < treePages.Count; j++)
+                        {
+                            var entry = treePages[j];
+                            var page = entry.AssocMember;
+                            entry.Enabled = page.Enabled;
+
+                            if (!page.Enabled && CurrentPage == page)
+                                modList.ClearSelection();
+                        }
+                    }
                 }
 
                 private void HandleSelectionChange()
                 {
                     if (lastPage != null)
-                        layout.Remove(lastPage, true);
+                        bodyChain.Remove(lastPage, true);
 
                     if (CurrentPage != null)
-                        layout.Add(CurrentPage);
+                        bodyChain.Add(CurrentPage);
 
                     lastPage = CurrentPage;
                 }
@@ -346,10 +368,16 @@ namespace RichHudFramework
                             }
 
                             CurrentPage = newPage;
-                            SelectedMod.SetSelection(newPage);
+                            SelectedMod?.SetSelection(newPage);
                             OnSelectionChanged?.Invoke();
                         }
                     }
+
+                    /// <summary>
+                    /// Clears the current page selection
+                    /// </summary>
+                    public void ClearSelection() =>
+                        SetSelection(null, null);
 
                     protected override void Layout()
                     {

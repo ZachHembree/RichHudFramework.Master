@@ -38,10 +38,10 @@ namespace RichHudFramework
                 /// Determines whether or not the element will appear in the list.
                 /// Disabled by default.
                 /// </summary>
-                public override bool Enabled 
-                { 
-                    get { return _enabled && Element.ListEntries.Count > 0; } 
-                    set { _enabled = value; } 
+                public override bool Enabled
+                {
+                    get { return _enabled && Element.ListEntries.Count > 0; }
+                    set { _enabled = value; }
                 }
 
                 /// <summary>
@@ -58,6 +58,8 @@ namespace RichHudFramework
                 /// Read only collection of <see cref="ITerminalPage"/>s assigned to this object.
                 /// </summary>
                 public IReadOnlyList<ITerminalPage> Pages { get; }
+
+                public IReadOnlyList<ListBoxEntry<TerminalPageBase>> ListEntries => treeBox.ListEntries;
 
                 /// <summary>
                 /// Used to allow the addition of child elements using collection-initializer syntax in
