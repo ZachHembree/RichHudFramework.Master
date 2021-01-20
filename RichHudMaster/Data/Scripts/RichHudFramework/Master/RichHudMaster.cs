@@ -99,7 +99,7 @@ namespace RichHudFramework.Server
             {
                 new MenuUtilities.MenuButton(
                     $"Open Rich Hud Terminal",
-                    () => RichHudTerminal.Open = true)
+                    () => RichHudTerminal.OpenMenu())
             };
         }
 

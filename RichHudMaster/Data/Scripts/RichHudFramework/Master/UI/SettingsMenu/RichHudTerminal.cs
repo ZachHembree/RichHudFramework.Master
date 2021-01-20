@@ -43,7 +43,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Determines whether or not the terminal is currently open.
                 /// </summary>
-                public static bool Open { get { return Instance.settingsMenu.Visible; } set { Instance.settingsMenu.Visible = value; } }
+                public static bool Open { get { return Instance.settingsMenu.Visible; } private set { Instance.settingsMenu.Visible = value; } }
 
                 /// <summary>
                 /// Mod control root used by Rich HUD Master.

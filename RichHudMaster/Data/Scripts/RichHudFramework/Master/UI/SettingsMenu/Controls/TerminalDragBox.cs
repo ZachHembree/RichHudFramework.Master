@@ -75,7 +75,7 @@ namespace RichHudFramework.UI.Server
 
         private void Open(object sender, EventArgs args)
         {
-            RichHudTerminal.Open = false;
+            RichHudTerminal.OpenMenu();
             window.Visible = true;
             window.GetFocus();
         }
@@ -83,7 +83,7 @@ namespace RichHudFramework.UI.Server
         private void Close()
         {
             window.Visible = false;
-            RichHudTerminal.Open = true;
+            RichHudTerminal.CloseMenu();
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

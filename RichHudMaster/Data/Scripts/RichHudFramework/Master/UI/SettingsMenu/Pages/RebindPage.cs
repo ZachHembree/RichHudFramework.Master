@@ -345,7 +345,7 @@ namespace RichHudFramework
                 /// </summary>
                 private void GetNewControl(int index)
                 {
-                    RichHudTerminal.Open = false;
+                    RichHudTerminal.CloseMenu();
                     RebindDialog.UpdateBind(bind, index, DialogClosed);
                 }
 
@@ -355,7 +355,7 @@ namespace RichHudFramework
                 private void DialogClosed()
                 {
                     UpdateBindText();
-                    RichHudTerminal.Open = true;
+                    RichHudTerminal.OpenMenu();
                 }
 
                 /// <summary>
