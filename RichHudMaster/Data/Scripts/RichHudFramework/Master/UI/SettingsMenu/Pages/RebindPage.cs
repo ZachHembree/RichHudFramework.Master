@@ -98,7 +98,6 @@ namespace RichHudFramework
                 public BindGroupList(HudParentBase parent = null) : base(true, parent)
                 {
                     Spacing = 30f;
-                    Padding = new Vector2(32f, 0f);
                     SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;
 
                     background.Visible = false;

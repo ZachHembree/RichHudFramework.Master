@@ -12,17 +12,26 @@ namespace RichHudFramework.Server
 {
     public sealed partial class RichHudMaster
     {
+        private DemoPage demoTerminalPage;
+
         private void InitSettingsMenu()
         {
             RichHudTerminal.Root.Enabled = true;
 
-            RichHudTerminal.Root.Add(new RebindPage()
+            demoTerminalPage = new DemoPage()
             {
-                Name = "Binds",
-                GroupContainer =
+                Name = "Demo",
+                Enabled = false
+            };
+
+            RichHudTerminal.Root.AddRange(new TerminalPageBase[] 
+            {
+                new RebindPage()
                 {
-                    { MasterBinds.BindGroup, BindsConfig.DefaultBinds },
-                }
+                    Name = "Binds",
+                    GroupContainer = { { MasterBinds.BindGroup, BindsConfig.DefaultBinds } }
+                },
+                demoTerminalPage,
             });
         }
     }
