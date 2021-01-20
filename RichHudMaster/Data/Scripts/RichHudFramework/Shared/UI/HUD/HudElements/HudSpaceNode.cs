@@ -128,7 +128,7 @@ namespace RichHudFramework
 
             public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
-                fullZOffset = GetFullZOffset(this, _parent);
+                fullZOffset = ParentUtils.GetFullZOffset(this, _parent);
                 HudSpace = _parent?.HudSpace ?? reregParent?.HudSpace;
 
                 UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
