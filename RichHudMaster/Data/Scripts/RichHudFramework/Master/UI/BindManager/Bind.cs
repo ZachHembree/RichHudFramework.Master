@@ -18,17 +18,17 @@ namespace RichHudFramework
                     /// <summary>
                     /// Invoked when the bind is first pressed.
                     /// </summary>
-                    public event Action OnNewPress;
+                    public event Action NewPressed;
 
                     /// <summary>
                     /// Invoked after the bind has been held and pressed for at least 500ms.
                     /// </summary>
-                    public event Action OnPressAndHold;
+                    public event Action PressedAndHeld;
 
                     /// <summary>
                     /// Invoked after the bind has been released.
                     /// </summary>
-                    public event Action OnRelease;
+                    public event Action Released;
 
                     /// <summary>
                     /// Name of the keybind
@@ -98,14 +98,14 @@ namespace RichHudFramework
 
                         if (IsNewPressed)
                         {
-                            OnNewPress?.Invoke();
+                            NewPressed?.Invoke();
                             stopwatch.Start();
                         }
 
                         if (IsPressed && stopwatch.ElapsedTicks > holdTime)
                         {
                             if (!IsPressedAndHeld)
-                                OnPressAndHold?.Invoke();
+                                PressedAndHeld?.Invoke();
 
                             IsPressedAndHeld = true;
                         }
@@ -113,7 +113,7 @@ namespace RichHudFramework
                             IsPressedAndHeld = false;
 
                         if (IsReleased)
-                            OnRelease?.Invoke();
+                            Released?.Invoke();
                     }
 
                     /// <summary>
@@ -197,9 +197,9 @@ namespace RichHudFramework
                     /// </summary>
                     public void ClearSubscribers()
                     {
-                        OnNewPress = null;
-                        OnPressAndHold = null;
-                        OnRelease = null;
+                        NewPressed = null;
+                        PressedAndHeld = null;
+                        Released = null;
                     }
                 }
             }

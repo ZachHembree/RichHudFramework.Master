@@ -65,7 +65,7 @@ namespace RichHudFramework.UI
             caret = new TextCaret(this) { Visible = false };
             selectionBox = new SelectionBox(caret, this) { Color = new Color(255, 255, 255, 140) };
 
-            caret.OnCaretMoved += CaretMoved;
+            caret.CaretMoved += CaretMoved;
 
             ShareCursor = true;
             EnableEditing = true;
@@ -266,7 +266,7 @@ namespace RichHudFramework.UI
             /// </summary>
             public bool ShowCaret { get; set; }
 
-            public event Action OnCaretMoved;
+            public event Action CaretMoved;
 
             private readonly TextBox textElement;
             private readonly ITextBoard text;
@@ -354,7 +354,7 @@ namespace RichHudFramework.UI
 
                 if (caretMoved)
                 {
-                    OnCaretMoved?.Invoke();
+                    CaretMoved?.Invoke();
                     caretMoved = false;
                 }
             }

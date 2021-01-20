@@ -70,7 +70,7 @@ namespace RichHudFramework.UI.Server
             };
 
             openButton.MouseInput.LeftClicked += Open;
-            window.OnConfirm += Close;
+            window.Confirmed += Close;
         }
 
         private void Open(object sender, EventArgs args)
@@ -126,7 +126,7 @@ namespace RichHudFramework.UI.Server
             /// <summary>
             /// Invoked when the window's confirm button is clicked
             /// </summary>
-            public event Action OnConfirm;
+            public event Action Confirmed;
 
             /// <summary>
             /// Returns the absolute position of the window in screen space on [-0.5, 0.5]
@@ -169,7 +169,7 @@ namespace RichHudFramework.UI.Server
                     DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                 };
 
-                confirmButton.MouseInput.LeftClicked += (sender, args) => OnConfirm?.Invoke();
+                confirmButton.MouseInput.LeftClicked += (sender, args) => Confirmed?.Invoke();
             }
 
             protected override void Layout()
@@ -206,7 +206,7 @@ namespace RichHudFramework.UI.Server
                 base.HandleInput(cursorPos);
 
                 if (SharedBinds.Escape.IsNewPressed)
-                    OnConfirm?.Invoke();
+                    Confirmed?.Invoke();
 
                 DragUpdateAction();
             }

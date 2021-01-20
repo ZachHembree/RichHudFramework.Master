@@ -229,9 +229,9 @@ namespace RichHudFramework
                                 var eventData = (MyTuple<bool, Action>)data;
 
                                 if (eventData.Item1)
-                                    bind.OnNewPress += eventData.Item2;
+                                    bind.NewPressed += eventData.Item2;
                                 else
-                                    bind.OnNewPress -= eventData.Item2;
+                                    bind.NewPressed -= eventData.Item2;
 
                                 break;
                             }
@@ -240,9 +240,9 @@ namespace RichHudFramework
                                 var eventData = (MyTuple<bool, Action>)data;
 
                                 if (eventData.Item1)
-                                    bind.OnPressAndHold += eventData.Item2;
+                                    bind.PressedAndHeld += eventData.Item2;
                                 else
-                                    bind.OnPressAndHold -= eventData.Item2;
+                                    bind.PressedAndHeld -= eventData.Item2;
 
                                 break;
                             }
@@ -251,9 +251,9 @@ namespace RichHudFramework
                                 var eventData = (MyTuple<bool, Action>)data;
 
                                 if (eventData.Item1)
-                                    bind.OnRelease += eventData.Item2;
+                                    bind.Released += eventData.Item2;
                                 else
-                                    bind.OnRelease -= eventData.Item2;
+                                    bind.Released -= eventData.Item2;
 
                                 break;
                             }

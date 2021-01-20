@@ -125,10 +125,10 @@ namespace RichHudFramework
                         Color = new Color(156, 65, 74)
                     };
 
-                    modList.OnSelectionChanged += HandleSelectionChange;
+                    modList.SelectionChanged += HandleSelectionChange;
                     closeButton.MouseInput.LeftClicked += (sender, args) => CloseMenu();
-                    SharedBinds.Escape.OnNewPress += CloseMenu;
-                    MasterBinds.ToggleTerminal.OnNewPress += ToggleMenu;
+                    SharedBinds.Escape.NewPressed += CloseMenu;
+                    MasterBinds.ToggleTerminal.NewPressed += ToggleMenu;
 
                     BodyColor = new Color(37, 46, 53);
                     BorderColor = new Color(84, 98, 107);
@@ -229,6 +229,7 @@ namespace RichHudFramework
                             var entry = treePages[j];
                             var page = entry.AssocMember;
                             entry.Enabled = page.Enabled;
+                            entry.Element.Visible = entry.Enabled;
 
                             if (!page.Enabled && CurrentPage == page)
                                 modList.ClearSelection();
@@ -255,7 +256,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Invoked whenever the page selection changes
                     /// </summary>
-                    public event Action OnSelectionChanged;
+                    public event Action SelectionChanged;
 
                     /// <summary>
                     /// Currently selected mod root
@@ -369,7 +370,7 @@ namespace RichHudFramework
 
                             CurrentPage = newPage;
                             SelectedMod?.SetSelection(newPage);
-                            OnSelectionChanged?.Invoke();
+                            SelectionChanged?.Invoke();
                         }
                     }
 

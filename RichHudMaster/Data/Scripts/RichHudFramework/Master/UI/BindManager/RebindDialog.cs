@@ -46,7 +46,7 @@ namespace RichHudFramework.UI.Server
                 BindManager.GetControl("escape").Index,
             };
 
-            SharedBinds.Escape.OnNewPress += Exit;
+            SharedBinds.Escape.NewPressed += Exit;
         }
 
         private static void Init()
