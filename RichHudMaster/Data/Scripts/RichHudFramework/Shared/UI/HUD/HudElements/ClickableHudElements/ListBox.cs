@@ -291,12 +291,9 @@ namespace RichHudFramework.UI
         /// </summary>
         public void SetSelectionAt(int index)
         {
-            if (index > 0 && index < scrollBox.Collection.Count)
-            {
-                Selection = scrollBox.Collection[index];
-                Selection.Enabled = true;
-                SelectionChanged?.Invoke(this, EventArgs.Empty);
-            }
+            Selection = scrollBox.Collection[index];
+            Selection.Enabled = true;
+            SelectionChanged?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
