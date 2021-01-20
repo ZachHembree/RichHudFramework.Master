@@ -28,6 +28,9 @@ namespace RichHudFramework
                     {
                         HudNodeBase node = nodes[n];
 
+                        if (node._registered)
+                            throw new Exception("HUD Element already registered!");
+
                         if (node.wasFastUnregistered && newParent != node.reregParent)
                         {
                             node.reregParent.RemoveChild(node);
@@ -70,6 +73,9 @@ namespace RichHudFramework
                     for (int n = 0; n < nodes.Count; n++)
                     {
                         HudNodeBase node = nodes[n].Element;
+
+                        if (node._registered)
+                            throw new Exception("HUD Element already registered!");
 
                         if (node.wasFastUnregistered && newParent != node.reregParent)
                         {

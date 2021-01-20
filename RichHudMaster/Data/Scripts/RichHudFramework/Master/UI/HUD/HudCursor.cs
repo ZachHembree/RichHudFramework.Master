@@ -199,7 +199,7 @@ namespace RichHudFramework
                     ScreenPos = screenPos;
                     cursorBox.Offset = screenPos;
 
-                    fullZOffset = GetFullZOffset(this, _parent);
+                    fullZOffset = ParentUtils.GetFullZOffset(this, _parent);
                     cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
 
                     base.BeginLayout(refresh);
