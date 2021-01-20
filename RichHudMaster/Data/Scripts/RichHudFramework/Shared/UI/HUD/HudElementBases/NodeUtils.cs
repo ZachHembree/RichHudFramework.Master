@@ -127,16 +127,19 @@ namespace RichHudFramework
                             while (start < children.Count && children[start] != nodes[i])
                                 start++;
 
-                            int j = start, end = start;
-
-                            while (j < children.Count && i <= conEnd && children[j] == nodes[i])
+                            if (children[start] == nodes[i])
                             {
-                                end = j;
-                                i++;
-                                j++;
-                            }
+                                int j = start, end = start;
 
-                            children.RemoveRange(start, end - start);
+                                while (j < children.Count && i <= conEnd && children[j] == nodes[i])
+                                {
+                                    end = j;
+                                    i++;
+                                    j++;
+                                }
+
+                                children.RemoveRange(start, end - start + 1);
+                            }
                         }
 
                         HudMain.RefreshDrawList = true;
@@ -184,16 +187,19 @@ namespace RichHudFramework
                             while (start < children.Count && children[start] != nodes[i].Element)
                                 start++;
 
-                            int j = start, end = start;
-
-                            while (j < children.Count && i <= conEnd && children[j] == nodes[i].Element)
+                            if (children[start] == nodes[i].Element)
                             {
-                                end = j;
-                                i++;
-                                j++;
-                            }
+                                int j = start, end = start;
 
-                            children.RemoveRange(start, end - start);
+                                while (j < children.Count && i <= conEnd && children[j] == nodes[i].Element)
+                                {
+                                    end = j;
+                                    i++;
+                                    j++;
+                                }
+
+                                children.RemoveRange(start, end - start + 1);
+                            }
                         }
 
                         HudMain.RefreshDrawList = true;
