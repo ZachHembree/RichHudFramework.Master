@@ -26,7 +26,7 @@ namespace RichHudFramework
             /// <summary>
             /// Draws cursor shared by elements in the framework
             /// </summary>
-            public sealed class HudCursor : HudSpaceNode, ICursor
+            public sealed class HudCursor : HudSpaceNodeBase, ICursor
             {
                 /// <summary>
                 /// The position of the cursor in pixels in screen space
