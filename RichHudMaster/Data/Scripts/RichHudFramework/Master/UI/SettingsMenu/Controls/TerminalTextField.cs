@@ -44,7 +44,7 @@ namespace RichHudFramework.UI.Server
         public TerminalTextField()
         {
             textElement = new NamedTextField();
-            Element = textElement;
+            SetElement(textElement);
         }
 
         public override void Update()

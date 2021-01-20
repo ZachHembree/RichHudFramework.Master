@@ -72,7 +72,7 @@ namespace RichHudFramework
                 public ModControlRoot()
                 {
                     treeBox = new ModControlRootTreeBox();
-                    Element = treeBox;
+                    SetElement(treeBox);
                     Pages = new ReadOnlyCollectionData<ITerminalPage>
                     (
                         x => Element.ListEntries[x].AssocMember,

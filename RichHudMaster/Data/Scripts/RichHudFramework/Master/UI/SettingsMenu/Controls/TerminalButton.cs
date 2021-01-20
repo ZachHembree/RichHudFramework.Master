@@ -34,7 +34,7 @@ namespace RichHudFramework.UI.Server
         public TerminalButton()
         {
             button = new BorderedButton();
-            Element = button;
+            SetElement(button);
 
             MouseInput.LeftClicked += (sender, args) => ControlChanged?.Invoke(sender, args);          
         }

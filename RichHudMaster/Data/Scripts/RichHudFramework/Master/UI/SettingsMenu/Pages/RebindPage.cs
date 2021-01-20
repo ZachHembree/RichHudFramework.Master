@@ -32,7 +32,7 @@ namespace RichHudFramework
             public RebindPage()
             {
                 bindGroups = new BindGroupList();
-                Element = bindGroups;
+                SetElement(bindGroups);
 
                 BindGroups = new ReadOnlyCollectionData<IBindGroup>
                 (

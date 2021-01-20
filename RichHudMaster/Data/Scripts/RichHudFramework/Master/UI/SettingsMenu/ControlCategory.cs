@@ -55,7 +55,7 @@ namespace RichHudFramework
             public ControlCategory()
             {
                 categoryElement = new CategoryElement();
-                Element = categoryElement;
+                SetElement(categoryElement);
             }
 
             /// <summary>

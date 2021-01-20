@@ -80,7 +80,7 @@ namespace RichHudFramework.UI.Server
         public TerminalSlider()
         {
             sliderBox = new NamedSliderBox();
-            Element = sliderBox;
+            SetElement(sliderBox);
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

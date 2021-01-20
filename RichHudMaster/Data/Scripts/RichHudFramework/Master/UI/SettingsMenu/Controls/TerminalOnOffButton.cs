@@ -51,7 +51,7 @@ namespace RichHudFramework.UI.Server
         public TerminalOnOffButton()
         {
             onOffButton = new NamedOnOffButton();
-            Element = onOffButton;
+            SetElement(onOffButton);
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

@@ -44,7 +44,7 @@ namespace RichHudFramework
             public TextPage()
             {
                 textBox = new ScrollableTextBox();
-                Element = textBox;
+                SetElement(textBox);
             }
 
             protected override object GetOrSetMember(object data, int memberEnum)

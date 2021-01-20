@@ -41,7 +41,7 @@ namespace RichHudFramework.UI.Server
         public TerminalDropdown()
         {
             dropdown = new NamedDropdown<TValue>();
-            Element = dropdown;
+            SetElement(dropdown);
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

@@ -43,7 +43,7 @@ namespace RichHudFramework.UI.Server
         public TerminalList()
         {
             listBox = new NamedListBox<TValue>();
-            Element = listBox;
+            SetElement(listBox);
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

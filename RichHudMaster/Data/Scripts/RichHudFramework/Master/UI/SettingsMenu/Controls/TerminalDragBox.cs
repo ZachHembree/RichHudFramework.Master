@@ -61,7 +61,7 @@ namespace RichHudFramework.UI.Server
                 DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
                 Size = new Vector2(253f, 50f)
             };
-            Element = openButton;
+            SetElement(openButton);
 
             window = new DragWindow(Update)
             {

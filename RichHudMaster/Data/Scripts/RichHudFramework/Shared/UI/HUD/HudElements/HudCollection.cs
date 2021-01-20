@@ -8,6 +8,8 @@ using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
+    using UI.Server;
+
     namespace UI
     {
         /// <summary>
@@ -16,7 +18,7 @@ namespace RichHudFramework
         /// </summary>
         public class HudCollection<TElementContainer, TElement> : HudElementBase, IHudCollection<TElementContainer, TElement>
             where TElementContainer : IHudElementContainer<TElement>, new()
-            where TElement : HudElementBase
+            where TElement : HudNodeBase
         {
             /// <summary>
             /// UI elements in the collection
@@ -57,7 +59,7 @@ namespace RichHudFramework
             /// <summary>
             /// Used internally by HUD collection for bulk entry removal
             /// </summary>
-            protected bool fastRemove;
+            protected bool skipCollectionRemove;
 
             public HudCollection(HudParentBase parent) : base(parent)
             {
@@ -76,8 +78,12 @@ namespace RichHudFramework
             /// <summary>
             /// Adds an element of type <see cref="TElement"/> to the chain.
             /// </summary>
-            public void Add(TElement element) =>
-                Add(new TElementContainer { Element = element });
+            public void Add(TElement element)
+            {
+                var newContainer = new TElementContainer();
+                newContainer.SetElement(element);
+                Add(newContainer);
+            }
 
             /// <summary>
             /// Adds an element of type <see cref="TElementContainer"/> to the chain.
@@ -98,16 +104,8 @@ namespace RichHudFramework
             /// </summary>
             public void AddRange(IReadOnlyList<TElementContainer> newContainers)
             {
-                children.EnsureCapacity(children.Count + newContainers.Count);
-                hudCollectionList.EnsureCapacity(hudCollectionList.Count + newContainers.Count);
-
-                for (int n = 0; n < newContainers.Count; n++)
-                {
-                    if (newContainers[n].Element.Register(this))
-                        hudCollectionList.Add(newContainers[n]);
-                    else
-                        throw new Exception("HUD Element registration failed.");
-                }
+                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, children, newContainers, false);
+                hudCollectionList.AddRange(newContainers);
             }
 
             /// <summary>
@@ -126,17 +124,7 @@ namespace RichHudFramework
             /// </summary>
             public void InsertRange(int index, IReadOnlyList<TElementContainer> newContainers)
             {
-                children.EnsureCapacity(children.Count + newContainers.Count);
-                hudCollectionList.EnsureCapacity(hudCollectionList.Count + newContainers.Count);
-
-                for (int n = 0; n < newContainers.Count; n++)
-                {
-                    if (newContainers[n].Element.Register(this))
-                        hudCollectionList.Add(newContainers[n]);
-                    else
-                        throw new Exception("HUD Element registration failed.");
-                }
-
+                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, children, newContainers, false);
                 hudCollectionList.InsertRange(index, newContainers);
             }
 
@@ -160,7 +148,12 @@ namespace RichHudFramework
                 if (entry.Element.Parent == this && hudCollectionList.Count > 0)
                 {
                     if (hudCollectionList.Remove(entry))
-                        return entry.Element.Unregister(fast);
+                    {
+                        skipCollectionRemove = true;
+                        bool success = entry.Element.Unregister(fast);
+
+                        return success;
+                    }
                 }
 
                 return false;
@@ -178,9 +171,16 @@ namespace RichHudFramework
                 {
                     int index = hudCollectionList.FindIndex(x => predicate(x));
                     TElement element = hudCollectionList[index].Element;
+                    bool success = false;
 
-                    if (index != -1 && hudCollectionList.Remove(hudCollectionList[index]))
-                        return element.Unregister(fast);
+                    if (index != -1 && index < hudCollectionList.Count)
+                    {
+                        skipCollectionRemove = true;
+                        hudCollectionList.RemoveAt(index);
+                        success = element.Unregister(fast);
+                    }
+
+                    return success;
                 }
 
                 return false;
@@ -198,10 +198,9 @@ namespace RichHudFramework
                 {
                     TElement element = hudCollectionList[index].Element;
                     hudCollectionList.RemoveAt(index);
-                    fastRemove = true;
 
+                    skipCollectionRemove = true;
                     bool success = element.Unregister(fast);
-                    fastRemove = false;
 
                     return success;
                 }
@@ -217,18 +216,8 @@ namespace RichHudFramework
             /// unregistered/reregistered to the same parent.</param>
             public void RemoveRange(int index, int count, bool fast = false)
             {
-                int end = index + count;
-
-                if (!(index >= 0 && count >= 0 && index < hudCollectionList.Count && end <= hudCollectionList.Count))
-                    throw new Exception("Specified indices are out of range.");
-
-                fastRemove = true;
-
-                for (int n = index; n < end; n++)
-                    hudCollectionList[n].Element.Unregister(fast);
-
+                NodeUtils.UnregisterNodes<TElementContainer, TElement>(children, hudCollectionList, index, count, fast);
                 hudCollectionList.RemoveRange(index, count);
-                fastRemove = false;
             }
 
             /// <summary>
@@ -245,13 +234,8 @@ namespace RichHudFramework
             /// unregistered/reregistered to the same parent.</param>
             public void Clear(bool fast)
             {
-                fastRemove = true;
-
-                for (int n = 0; n < hudCollectionList.Count; n++)
-                    hudCollectionList[n].Element.Unregister(fast);
-
+                NodeUtils.UnregisterNodes<TElementContainer, TElement>(children, hudCollectionList, 0, hudCollectionList.Count, fast);
                 hudCollectionList.Clear();
-                fastRemove = false;
             }
 
             /// <summary>
@@ -300,7 +284,7 @@ namespace RichHudFramework
                     return child.Unregister(fast);
                 else if (child.Parent == null && children.Remove(child))
                 {
-                    if (!fastRemove)
+                    if (!skipCollectionRemove)
                     {
                         for (int n = 0; n < hudCollectionList.Count; n++)
                         {
@@ -311,6 +295,8 @@ namespace RichHudFramework
                             }
                         }
                     }
+                    else
+                        skipCollectionRemove = false;
 
                     return true;
                 }
@@ -323,8 +309,8 @@ namespace RichHudFramework
         /// A collection of UI elements wrapped in container objects. UI elements in the containers are parented
         /// to the collection, like any other HUD element.
         /// </summary>
-        public class HudCollection<TElementContainer> : HudCollection<TElementContainer, HudElementBase>
-            where TElementContainer : IHudElementContainer<HudElementBase>, new()
+        public class HudCollection<TElementContainer> : HudCollection<TElementContainer, HudNodeBase>
+            where TElementContainer : IHudElementContainer<HudNodeBase>, new()
         {
             public HudCollection(HudParentBase parent = null) : base(parent)
             { }
@@ -334,7 +320,7 @@ namespace RichHudFramework
         /// A collection of UI elements wrapped in container objects. UI elements in the containers are parented
         /// to the collection, like any other HUD element.
         /// </summary>
-        public class HudCollection : HudCollection<HudElementContainer<HudElementBase>, HudElementBase>
+        public class HudCollection : HudCollection<HudElementContainer<HudNodeBase>, HudNodeBase>
         {
             public HudCollection(HudParentBase parent = null) : base(parent)
             { }

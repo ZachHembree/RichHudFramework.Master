@@ -12,7 +12,7 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public override string Name { get { return checkBox.TextBoard.ToString(); } set { checkBox.TextBoard.SetText(value); } }
 
-        public override bool Value { get { return checkBox.BoxChecked; } set { checkBox.BoxChecked = value; } }
+        public override bool Value { get { return checkBox.IsBoxChecked; } set { checkBox.IsBoxChecked = value; } }
 
         /// <summary>
         /// Used to periodically update the value associated with the control. Optional.
@@ -24,7 +24,7 @@ namespace RichHudFramework.UI.Server
         public TerminalCheckbox()
         {
             checkBox = new NamedCheckBox() { AutoResize = true };
-            Element = checkBox;
+            SetElement(checkBox);
         }
     }
 }

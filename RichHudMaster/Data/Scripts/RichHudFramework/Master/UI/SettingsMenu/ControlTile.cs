@@ -50,7 +50,7 @@ namespace RichHudFramework
             public ControlTile()
             {
                 tileElement = new TileElement();
-                Element = tileElement;
+                SetElement(tileElement);
             }
 
             /// <summary>

@@ -26,7 +26,7 @@ namespace RichHudFramework.UI.Server
         public TerminalColorPicker()
         {
             colorPicker = new ColorPickerRGB();
-            Element = colorPicker;
+            SetElement(colorPicker);
         }
     }
 }
