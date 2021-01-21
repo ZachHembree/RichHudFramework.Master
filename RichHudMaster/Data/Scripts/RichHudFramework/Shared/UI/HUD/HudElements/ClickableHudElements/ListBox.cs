@@ -397,7 +397,7 @@ namespace RichHudFramework.UI
                         if (data is MyTuple<IList<RichStringMembers>, T>)
                         {
                             var entryData = (MyTuple<IList<RichStringMembers>, T>)data;
-                            var stringList = new List<RichStringMembers>(entryData.Item1);
+                            var stringList = entryData.Item1 as List<RichStringMembers>;
                             return (ApiMemberAccessor)Add(new RichText(stringList), entryData.Item2).GetOrSetMember;
                         }
                         else

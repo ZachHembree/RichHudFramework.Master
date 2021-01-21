@@ -11,6 +11,8 @@ namespace RichHudFramework
         T GetNewObject();
 
         void ResetObject(T obj);
+
+        void ResetRange(IReadOnlyList<T> objects, int index, int count);
     }
 
     public class PooledObjectPolicy<T> : IPooledObjectPolicy<T>
@@ -36,8 +38,17 @@ namespace RichHudFramework
         {
             ResetObjectAction(obj);
         }
+
+        public void ResetRange(IReadOnlyList<T> objects, int index, int count)
+        {
+            for (int n = index; (n + count) < objects.Count; n++)
+                ResetObjectAction(objects[n]);
+        }
     }
 
+    /// <summary>
+    /// Maintains a pool of reusable objects
+    /// </summary>
     public class ObjectPool<T>
     {
         private readonly ConcurrentBag<T> pooledObjects;
@@ -68,7 +79,7 @@ namespace RichHudFramework
         public T Get()
         {
             T obj;
-
+            
             if (!pooledObjects.TryTake(out obj))
                 obj = objectPolicy.GetNewObject();
 
@@ -82,6 +93,17 @@ namespace RichHudFramework
         {
             objectPolicy.ResetObject(obj);
             pooledObjects.Add(obj);
+        }
+
+        /// <summary>
+        /// Returns the specified range of objects in the collection to the pool.
+        /// </summary>
+        public void ReturnRange(IReadOnlyList<T> objects, int index, int count)
+        {
+            objectPolicy.ResetRange(objects, index, count);
+
+            for (int n = index; (n + count) < objects.Count; n++)
+                pooledObjects.Add(objects[n]);
         }
     }
 }
