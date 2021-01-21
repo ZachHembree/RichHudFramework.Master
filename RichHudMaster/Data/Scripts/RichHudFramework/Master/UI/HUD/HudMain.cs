@@ -12,7 +12,6 @@ using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRa
 
 namespace RichHudFramework
 {
-    using Server;
     using TextBoardMembers = MyTuple<
         // TextBuilderMembers
         MyTuple<
@@ -54,10 +53,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._root;
+                    return mainInstance._root;
                 }
             }
 
@@ -68,10 +67,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._cursor;
+                    return mainInstance._cursor;
                 }
             }
 
@@ -80,8 +79,20 @@ namespace RichHudFramework
             /// </summary>
             public static RichText ClipBoard
             {
-                get { return Instance._clipBoard ?? new RichText(); }
-                set { Instance._clipBoard = value; }
+                get 
+                {
+                    if (mainInstance == null)
+                        Init();
+
+                    return mainInstance._clipBoard ?? new RichText(); 
+                }
+                set 
+                {
+                    if (mainInstance == null)
+                        Init();
+
+                    mainInstance._clipBoard = value;
+                }
             }
 
             /// <summary>
@@ -92,10 +103,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._resScale;
+                    return mainInstance._resScale;
                 }
             }
 
@@ -106,10 +117,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._pixelToWorld;
+                    return mainInstance._pixelToWorld;
                 }
             }
 
@@ -120,10 +131,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._screenWidth;
+                    return mainInstance._screenWidth;
                 }
             }
 
@@ -134,10 +145,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._screenHeight;
+                    return mainInstance._screenHeight;
                 }
             }
 
@@ -148,10 +159,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._fov;
+                    return mainInstance._fov;
                 }
             }
 
@@ -162,10 +173,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._aspectRatio;
+                    return mainInstance._aspectRatio;
                 }
             }
 
@@ -177,10 +188,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._fovScale;
+                    return mainInstance._fovScale;
                 }
             }
 
@@ -191,10 +202,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (_instance == null)
+                    if (mainInstance == null)
                         Init();
 
-                    return _instance._uiBkOpacity;
+                    return mainInstance._uiBkOpacity;
                 }
             }
 
@@ -208,16 +219,11 @@ namespace RichHudFramework
             /// </summary>
             public static bool EnableCursor;
 
-            private static HudMain Instance
-            {
-                get { Init(); return _instance; }
-            }
-            private static HudMain _instance;
+            private static HudMain mainInstance;
 
             private readonly HudCursor _cursor;
             private readonly HudRoot _root;
-            private readonly List<Client> hudClients;
-            private readonly Client mainClient;
+            private readonly TreeClient mainClient;
 
             private RichText _clipBoard;
             private float _resScale;
@@ -232,55 +238,33 @@ namespace RichHudFramework
 
             private Action<byte> LoseFocusCallback;
             private byte unfocusedOffset;
-
-            private readonly List<HudUpdateAccessors> updateAccessors;
-            private readonly Dictionary<Func<Vector3D>, ushort> distMap;
-            private readonly HashSet<Func<Vector3D>> uniqueOriginFuncs;
-            private readonly List<ulong> indexList;
-            
-            private readonly List<Action> depthTestActions;
-            private readonly List<Action> inputActions;
-            private readonly List<Action<bool>> layoutActions;
-            private readonly List<Action> drawActions;
-
-            private bool refreshRequested;
             private int drawTick;
-            private float lastResScale;
 
             private HudMain() : base(false, true)
             {
-                if (_instance == null)
-                    _instance = this;
+                if (mainInstance == null)
+                    mainInstance = this;
                 else
                     throw new Exception("Only one instance of HudMain can exist at any given time.");
 
                 _root = new HudRoot();
                 _cursor = new HudCursor(_root);
-                hudClients = new List<Client>();
-                mainClient = new Client() { GetUpdateAccessors = _root.GetUpdateAccessors };
-
-                updateAccessors = new List<HudUpdateAccessors>(200);
-                distMap = new Dictionary<Func<Vector3D>, ushort>(50);
-                uniqueOriginFuncs = new HashSet<Func<Vector3D>>();
-                indexList = new List<ulong>(200);
-
-                depthTestActions = new List<Action>(200);
-                inputActions = new List<Action>(200);
-                layoutActions = new List<Action<bool>>(200);
-                drawActions = new List<Action>(200);
+                mainClient = new TreeClient() { GetUpdateAccessors = _root.GetUpdateAccessors };
 
                 UpdateScreenScaling();
+                TreeManager.Init();
             }
 
             public static void Init()
             {
-                if (_instance == null)
+                if (mainInstance == null)
                     new HudMain();
             }
 
             public override void Close()
             {
-                _instance = null;
+                mainInstance = null;
+                TreeManager.Close();
             }
 
             /// <summary>
@@ -289,39 +273,8 @@ namespace RichHudFramework
             public override void Draw()
             {
                 UpdateCache();
-
-                if (RefreshDrawList)
-                    mainClient.refreshDrawList = true;
-
                 _cursor.Visible = EnableCursor;
-
-                for (int n = 0; n < hudClients.Count; n++)
-                    hudClients[n].Update(drawTick + n); // Spread out client tree updates
-
-                bool rebuildLists = refreshRequested && (drawTick % treeRefreshRate) == 0,
-                    resortLists = rebuildLists || (drawTick % treeRefreshRate) == 0,
-                    refreshLayout = lastResScale != _resScale || rebuildLists;
-
-                lastResScale = _resScale;
-
-                if (rebuildLists)
-                {
-                    RebuildUpdateLists();
-                    refreshRequested = false;
-                    RefreshDrawList = false;
-                }
-
-                for (int n = 0; n < layoutActions.Count; n++)
-                    layoutActions[n](refreshLayout);
-
-                // Draw UI elements
-                for (int n = 0; n < drawActions.Count; n++)
-                    drawActions[n]();
-
-                // Rebuild sorted lists at 1/10th speed, when draw list is
-                // rebuilt, or when a window tries to take focus
-                if (resortLists)
-                    SortUpdateAccessors();
+                TreeManager.Instance.Draw();
 
                 drawTick++;
 
@@ -329,19 +282,11 @@ namespace RichHudFramework
                     drawTick = 0;
             }
 
-            /// <summary>
-            /// Updates input for UI elements
-            /// </summary>
             public override void HandleInput()
             {
                 // Reset cursor
                 _cursor.Release();
-
-                for (int n = 0; n < depthTestActions.Count; n++)
-                    depthTestActions[n]();
-
-                for (int n = inputActions.Count - 1; n >= 0; n--)
-                    inputActions[n]();
+                TreeManager.Instance.HandleInput();
             }
 
             /// <summary>
@@ -383,114 +328,6 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Rebuilds update accessor list from UI tree
-            /// </summary>
-            private void RebuildUpdateLists()
-            {
-                // Clear update lists and rebuild accessor lists from HUD tree
-                updateAccessors.Clear();
-                layoutActions.Clear();
-                uniqueOriginFuncs.Clear();
-
-                // Add client UI elements
-                for (int n = 0; n < hudClients.Count; n++)
-                    updateAccessors.AddRange(hudClients[n].UpdateAccessors);
-
-                if (updateAccessors.Capacity > updateAccessors.Count * 2)
-                    updateAccessors.TrimExcess();
-
-                // Build distance func HashSet
-                for (int n = 0; n < updateAccessors.Count; n++)
-                    uniqueOriginFuncs.Add(updateAccessors[n].Item2.Item2);
-
-                layoutActions.EnsureCapacity(updateAccessors.Count);
-
-                // Build layout list (without sorting)
-                for (int n = 0; n < updateAccessors.Count; n++)
-                {
-                    HudUpdateAccessors accessors = updateAccessors[n];
-                    layoutActions.Add(accessors.Item5);
-                }
-            }
-
-            /// <summary>
-            /// Sorts draw and input accessors first by distance, then by zOffset, then by index
-            /// </summary>
-            private void SortUpdateAccessors()
-            {
-                indexList.Clear();
-                depthTestActions.Clear();
-                inputActions.Clear();
-                drawActions.Clear();
-                distMap.Clear();
-
-                indexList.EnsureCapacity(updateAccessors.Count);
-                depthTestActions.EnsureCapacity(updateAccessors.Count);
-                inputActions.EnsureCapacity(updateAccessors.Count);
-                drawActions.EnsureCapacity(updateAccessors.Count);
-
-                // Update distance for each unique position delegate
-                // Max distance: 655.35m; Precision: 1cm/unit
-                //
-                // This should help keep profiler overhead for this part to a minimum by reducing the
-                // number of delegate calls to a small handful. This also means the cost difference between
-                // using Distance() and DistanceSquared() will be negligible.
-                Vector3D camPos = MyAPIGateway.Session.Camera.WorldMatrix.Translation;
-
-                foreach (Func<Vector3D> OriginFunc in uniqueOriginFuncs)
-                {
-                    Vector3D nodeOrigin = OriginFunc();
-                    double dist = Math.Round(Vector3D.Distance(nodeOrigin, camPos), 2);
-                    var reverseDist = (ushort)(ushort.MaxValue - (ushort)Math.Min(dist * 100d, ushort.MaxValue));
-                    distMap.Add(OriginFunc, reverseDist);
-                }
-
-                // Lower 32 bits store the index, upper 32 store draw depth and distance
-                ulong indexMask = 0x00000000FFFFFFFF;
-
-                // Build index list and sort by zOffset
-                for (int n = 0; n < updateAccessors.Count; n++)
-                {
-                    var accessors = updateAccessors[n].Item2;
-                    ulong index = (ulong)n,
-                        zOffset = accessors.Item1(),
-                        distance = distMap[accessors.Item2];
-                    
-                    indexList.Add((distance << 48) | (zOffset << 32) | index);
-                }
-
-                // Sort in ascending order
-                indexList.Sort();
-
-                // Build sorted depth test list
-                for (int n = 0; n < indexList.Count; n++)
-                {
-                    int index = (int)(indexList[n] & indexMask);
-                    HudUpdateAccessors accessors = updateAccessors[index];
-
-                    depthTestActions.Add(accessors.Item3);
-                }
-
-                // Build sorted input list
-                for (int n = 0; n < indexList.Count; n++)
-                {
-                    int index = (int)(indexList[n] & indexMask);
-                    HudUpdateAccessors accessors = updateAccessors[index];
-
-                    inputActions.Add(accessors.Item4);
-                }
-
-                // Build sorted draw list
-                for (int n = 0; n < indexList.Count; n++)
-                {
-                    int index = (int)(indexList[n] & indexMask);
-                    HudUpdateAccessors accessors = updateAccessors[index];
-
-                    drawActions.Add(accessors.Item6);
-                }
-            }
-
-            /// <summary>
             /// Returns API accessors for a new TextBoard instance.
             /// </summary>
             public static TextBoardMembers GetTextBoardData() =>
@@ -500,8 +337,13 @@ namespace RichHudFramework
             /// Returns the ZOffset for focusing a window and registers a callback
             /// for when another object takes focus.
             /// </summary>
-            public static byte GetFocusOffset(Action<byte> LoseFocusCallback) =>
-                Instance.GetFocusOffsetInternal(LoseFocusCallback);
+            public static byte GetFocusOffset(Action<byte> LoseFocusCallback)
+            {
+                if (mainInstance == null)
+                    Init();
+
+                return mainInstance.GetFocusOffsetInternal(LoseFocusCallback);
+            }
 
             /// <summary>
             /// Returns the ZOffset for focusing a window and registers a callback
@@ -530,13 +372,13 @@ namespace RichHudFramework
             /// </summary>
             public static Vector2 GetPixelVector(Vector2 scaledVec)
             {
-                if (_instance == null)
+                if (mainInstance == null)
                     Init();
 
                 return new Vector2
                 (
-                    (int)(scaledVec.X * _instance._screenWidth),
-                    (int)(scaledVec.Y * _instance._screenHeight)
+                    (int)(scaledVec.X * mainInstance._screenWidth),
+                    (int)(scaledVec.Y * mainInstance._screenHeight)
                 );
             }
 
@@ -545,13 +387,13 @@ namespace RichHudFramework
             /// </summary>
             public static Vector2 GetAbsoluteVector(Vector2 pixelVec)
             {
-                if (_instance == null)
+                if (mainInstance == null)
                     Init();
 
                 return new Vector2
                 (
-                    pixelVec.X / _instance._screenWidth,
-                    pixelVec.Y / _instance._screenHeight
+                    pixelVec.X / mainInstance._screenWidth,
+                    pixelVec.Y / mainInstance._screenHeight
                 );
             }
 

@@ -54,14 +54,22 @@ namespace RichHudFramework
 
         public sealed partial class HudMain
         {
-            public class Client
+            public class TreeClient
             {
                 /// <summary>
                 /// Delegate used to retrieve UI update delegates from clients
                 /// </summary>
                 public Action<List<HudUpdateAccessors>, byte> GetUpdateAccessors;
 
+                /// <summary>
+                /// Read only list of accessor list for UI elements registered to this client
+                /// </summary>
                 public IReadOnlyList<HudUpdateAccessors> UpdateAccessors => updateAccessors;
+
+                /// <summary>
+                /// Returns true if the client has been registered to the TreeManager
+                /// </summary>
+                public bool Registered { get; private set; }
 
                 /// <summary>
                 /// If true, then the client is requesting that the cursor be enabled
@@ -76,10 +84,10 @@ namespace RichHudFramework
                 private bool refreshRequested;
                 private readonly List<HudUpdateAccessors> updateAccessors;
 
-                public Client()
+                public TreeClient()
                 {
                     updateAccessors = new List<HudUpdateAccessors>();
-                    _instance.hudClients.Add(this);
+                    Registered = TreeManager.RegisterClient(this);
                 }
 
                 public void Update(int tick)
@@ -88,7 +96,7 @@ namespace RichHudFramework
                         refreshRequested = true;
 
                     if (enableCursor)
-                        _instance._cursor.Visible = true;
+                        mainInstance._cursor.Visible = true;
 
                     if (refreshRequested && (tick % treeRefreshRate) == 0)
                     {
@@ -100,7 +108,7 @@ namespace RichHudFramework
 
                         refreshRequested = false;
                         refreshDrawList = false;
-                        _instance.refreshRequested = true;
+                        TreeManager.RefreshRequested = true;
                     }
                 }
 
@@ -109,11 +117,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Unregister()
                 {
-                    if (_instance?.hudClients != null)
-                    {
-                        if (_instance.hudClients.Remove(this))
-                            _instance.refreshRequested = true;
-                    }
+                    Registered = !TreeManager.UnregisterClient(this);
                 }
 
                 /// <summary>
@@ -125,7 +129,7 @@ namespace RichHudFramework
 
                     return new HudClientMembers()
                     {
-                        Item1 = _instance._cursor.GetApiData(),
+                        Item1 = mainInstance._cursor.GetApiData(),
                         Item2 = GetTextBoardData,
                         Item3 = GetOrSetMember,
                         Item4 = Unregister
@@ -193,9 +197,9 @@ namespace RichHudFramework
                         case HudMainAccessors.GetFocusOffset:
                             return GetFocusOffset(data as Action<byte>);
                         case HudMainAccessors.GetPixelSpaceFunc:
-                            return _instance._root.GetHudSpaceFunc;
+                            return mainInstance._root.GetHudSpaceFunc;
                         case HudMainAccessors.GetPixelSpaceOriginFunc:
-                            return _instance._root.GetNodeOriginFunc;
+                            return mainInstance._root.GetNodeOriginFunc;
                     }
 
                     return null;
