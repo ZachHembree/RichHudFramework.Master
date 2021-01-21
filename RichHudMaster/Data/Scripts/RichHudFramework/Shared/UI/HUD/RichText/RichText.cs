@@ -35,16 +35,6 @@ namespace RichHudFramework
             /// Initializes a <see cref="RichText"/> object using a collection of rich string data.
             /// Used in conjunction with the Framework API.
             /// </summary>
-            public RichText(IList<RichStringMembers> richStrings)
-            {
-                ApiData = new List<RichStringMembers>(richStrings);
-                defaultFormat = GlyphFormat.Empty;
-            }
-
-            /// <summary>
-            /// Initializes a <see cref="RichText"/> object using a collection of rich string data.
-            /// Used in conjunction with the Framework API.
-            /// </summary>
             public RichText(List<RichStringMembers> richStrings)
             {
                 ApiData = richStrings;

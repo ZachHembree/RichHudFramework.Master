@@ -84,7 +84,10 @@ namespace RichHudFramework
                     if (mainInstance == null)
                         Init();
 
-                    return mainInstance._clipBoard ?? new RichText(); 
+                    if (mainInstance._clipBoard == null)
+                        mainInstance._clipBoard = new RichText();
+
+                    return mainInstance._clipBoard;
                 }
                 set 
                 {

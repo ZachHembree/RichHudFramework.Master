@@ -55,7 +55,7 @@ namespace RichHudFramework.UI
                 case ListBoxEntryAccessors.Name:
                     {
                         if (data == null)
-                            Element.Text = new RichText(data as IList<RichStringMembers>);
+                            Element.Text = new RichText(data as List<RichStringMembers>);
                         else
                             return Element.Text.ApiData;
 
