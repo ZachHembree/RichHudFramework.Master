@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
+using RichHudFramework.Server;
 using BindDefinitionData = VRage.MyTuple<string, string[]>;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
@@ -32,14 +33,19 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<IControl> Controls => BindManager.Controls;
 
+                private readonly RichHudMaster.Client masterClient;
+                private readonly Action UpdateAction;
                 private readonly List<BindGroup> bindGroups;
                 private readonly int index;
 
-                public Client()
+                public Client(RichHudMaster.Client masterClient = null)
                 {
+                    this.masterClient = masterClient;
                     bindGroups = new List<BindGroup>();
                     index = _instance.bindClients.Count;
                     _instance.bindClients.Add(this);
+
+                    UpdateAction = UpdateInputInternal;
                 }
 
                 /// <summary>
@@ -47,8 +53,16 @@ namespace RichHudFramework
                 /// </summary>
                 public void HandleInput()
                 {
-                    foreach (BindGroup group in bindGroups)
-                        group.HandleInput();
+                    if (masterClient?.RunOnExceptionHandler != null)
+                        masterClient.RunOnExceptionHandler(UpdateAction);
+                    else
+                        UpdateInputInternal();
+                }
+
+                private void UpdateInputInternal()
+                {
+                    for(int n = 0; n < bindGroups.Count; n++)
+                        bindGroups[n].HandleInput();
                 }
 
                 /// <summary>

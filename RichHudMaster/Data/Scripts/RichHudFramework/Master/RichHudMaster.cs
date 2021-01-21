@@ -10,12 +10,15 @@ using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
+using ApiMemberAccessor = System.Func<object, int, object>;
+using ClientData = VRage.MyTuple<string, System.Action<int, object>, System.Action, int>;
+using ServerData = VRage.MyTuple<System.Action, System.Func<int, object>, int>;
 
 namespace RichHudFramework.Server
 {
     using UI.Rendering.Server;
     using UI.Server;
-    using ClientData = MyTuple<string, Action<int, object>, Action, int>;
+    using ExtendedClientData = MyTuple<ClientData, Action<Action>, ApiMemberAccessor>;
 
     /// <summary>
     /// Main class for Framework API server.
@@ -108,38 +111,52 @@ namespace RichHudFramework.Server
         /// </summary>
         private void ClientHandler(object message)
         {
-            if (message is ClientData)
+            if (message is ExtendedClientData)
+                RegisterClient((ExtendedClientData)message);
+            else if (message is ClientData)
+                RegisterClient((ClientData)message);
+        }
+
+        private Client RegisterClient(ExtendedClientData regMessage)
+        {
+            Client client = RegisterClient(regMessage.Item1);
+
+            if (client != null)
             {
-                var clientData = (ClientData)message;
-                Utils.Debug.AssertNotNull(clientData.Item1);
-                Utils.Debug.AssertNotNull(clientData.Item2);
-                Utils.Debug.AssertNotNull(clientData.Item3);
+                client.RegisterExtendedAccessors(regMessage.Item2, regMessage.Item3);
+            }
 
-                Client client = clients.Find(x => (x.name == clientData.Item1));
+            return client;
+        }
 
-                int clientVID = clientData.Item4;
-                bool supported = clientVID <= versionID && clientVID >= minSupportedVersion;
+        private Client RegisterClient(ClientData clientData)
+        {
+            int clientVID = clientData.Item4;
+            bool supported = clientVID <= versionID && clientVID >= minSupportedVersion;
+            Client client = clients.Find(x => (x.name == clientData.Item1));
 
-                if (client == null && supported)
+            if (client == null && supported)
+            {
+                client = new Client(clientData);
+                clients.Add(client);
+            }
+            else
+            {
+                Action<int, object> GetOrSendFunc = clientData.Item2;
+
+                if (!supported)
                 {
-                    clients.Add(new Client(clientData));
+                    string error = $"Error: Client version for {clientData.Item1} is not supported. " +
+                    $"API vID: Min: {minSupportedVersion}, Max: {versionID}; Client vID: {clientVID}";
+
+                    GetOrSendFunc((int)MsgTypes.RegistrationFailed, error);
+                    ExceptionHandler.WriteToLogAndConsole($" [RHF] {error}");
                 }
                 else
-                {
-                    Action<int, object> GetOrSendFunc = clientData.Item2;
-
-                    if (!supported)
-                    {
-                        string error = $"Error: Client version for {clientData.Item1} is not supported. " +
-                        $"API vID: Min: {minSupportedVersion}, Max: {versionID}; Client vID: {clientVID}";
-
-                        GetOrSendFunc((int)MsgTypes.RegistrationFailed, error);
-                        ExceptionHandler.WriteToLogAndConsole($" [RHF] {error}");
-                    }
-                    else
-                        GetOrSendFunc((int)MsgTypes.RegistrationFailed, "Client already registered.");
-                }
+                    GetOrSendFunc((int)MsgTypes.RegistrationFailed, "Client already registered.");
             }
+
+            return client;
         }
 
         public override void BeforeClose()

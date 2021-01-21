@@ -9,6 +9,7 @@ namespace RichHudFramework.Server
     using Internal;
     using ClientData = MyTuple<string, Action<int, object>, Action, int>;
     using ServerData = MyTuple<Action, Func<int, object>, int>;
+    using ApiMemberAccessor = System.Func<object, int, object>;
 
     public sealed partial class RichHudMaster
     {
@@ -29,6 +30,16 @@ namespace RichHudFramework.Server
             /// </summary>
             public bool Registered { get; private set; }
 
+            /// <summary>
+            /// Delegate used to invoke methods within the scope of the client's exception handler. 
+            /// </summary>
+            public Action<Action> RunOnExceptionHandler { get; private set; }
+
+            /// <summary>
+            /// Accessor delegate for general data access
+            /// </summary>
+            public ApiMemberAccessor GetOrSetMemberFunc { get; private set; }
+
             private readonly Action<int, object> SendMsgAction;
             private readonly Action ReloadAction;
 
@@ -44,7 +55,7 @@ namespace RichHudFramework.Server
                 versionID = data.Item4;
 
                 hudClient = new HudMain.Client();
-                bindClient = new BindManager.Client();
+                bindClient = new BindManager.Client(this);
                 menuData = RichHudTerminal.GetClientData(name);
 
                 Registered = true;
@@ -79,6 +90,15 @@ namespace RichHudFramework.Server
             public void SendData(MsgTypes msgType, object data) =>
                 SendMsgAction((int)msgType, data);
 
+            public void RegisterExtendedAccessors(Action<Action> RunWithExceptionHandler, ApiMemberAccessor GetOrSetMemberFunc)
+            {
+                if (this.RunOnExceptionHandler == null && this.GetOrSetMemberFunc == null)
+                {
+                    this.RunOnExceptionHandler = RunWithExceptionHandler;
+                    this.GetOrSetMemberFunc = GetOrSetMemberFunc;
+                }
+            }
+
             public void Unregister()
             {
                 if (Registered)
@@ -93,7 +113,7 @@ namespace RichHudFramework.Server
                     }
 
                     ReloadAction();
-                    ExceptionHandler.WriteToLogAndConsole($"[RHF] Unregistered {name} from API.");
+                    ExceptionHandler.WriteToLogAndConsole($"[RHF] Unregistered {name} from API.", true);
                 }
             }
         }
