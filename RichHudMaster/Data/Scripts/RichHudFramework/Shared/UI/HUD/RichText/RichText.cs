@@ -8,17 +8,18 @@ using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageM
 
 namespace RichHudFramework
 {
+    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
+
     namespace UI
     {
-        using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
-
         /// <summary>
-        /// A collection of rich strings. <see cref="RichString"/>s and <see cref="string"/>s can be implicitly
+        /// A collection of rich strings. RichStringMembers and <see cref="string"/>s can be implicitly
         /// cast to this type. Collection-initializer syntax can be used with this type.
         /// </summary>
-        public class RichText : IEnumerable<RichString>
+        public class RichText : IEnumerable<RichStringMembers>
         {
             public GlyphFormat defaultFormat;
+
             public List<RichStringMembers> ApiData { get; }
 
             /// <summary>
@@ -41,14 +42,24 @@ namespace RichHudFramework
             }
 
             /// <summary>
+            /// Initializes a <see cref="RichText"/> object using a collection of rich string data.
+            /// Used in conjunction with the Framework API.
+            /// </summary>
+            public RichText(List<RichStringMembers> richStrings)
+            {
+                ApiData = richStrings;
+                defaultFormat = GlyphFormat.Empty;
+            }
+
+            /// <summary>
             /// Initializes a <see cref="RichText"/> object with a <see cref="RichString"/> and sets the default format
             /// to that of the string.
             /// </summary>
-            public RichText(RichString text)
+            public RichText(RichStringMembers text)
             {
-                this.defaultFormat = text.Format;
-                this.ApiData = new List<RichStringMembers>();
-                Add(text);
+                defaultFormat = new GlyphFormat(text.Item2);
+                ApiData = new List<RichStringMembers>();
+                ApiData.Add(text);
             }
 
             /// <summary>
@@ -62,16 +73,14 @@ namespace RichHudFramework
                     this.defaultFormat = GlyphFormat.Empty;
 
                 ApiData = new List<RichStringMembers>();
-                Add(defaultFormat, text);
+                ApiData.Add(new RichStringMembers(new StringBuilder(text), defaultFormat.data));
             }
 
-            public IEnumerator<RichString> GetEnumerator()
-            {
-                throw new Exception("Enumerator not implemented for RichText.");
-            }
+            public IEnumerator<RichStringMembers> GetEnumerator() =>
+                ApiData.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() =>
-                GetEnumerator();
+                ApiData.GetEnumerator();
 
             /// <summary>
             /// Adds a <see cref="string"/> to the text using the default format.
@@ -88,8 +97,8 @@ namespace RichHudFramework
             /// <summary>
             /// Adds a <see cref="RichString"/> to the collection using the formatting specified in the <see cref="RichString"/>.
             /// </summary>
-            public void Add(RichString text) =>
-                ApiData.Add(text.ApiData);
+            public void Add(RichStringMembers text) =>
+                ApiData.Add(text);
 
             /// <summary>
             /// Adds a <see cref="string"/> using the given <see cref="GlyphFormat"/>.
@@ -126,7 +135,7 @@ namespace RichHudFramework
             /// </summary>
             public static RichText operator +(RichText left, string right)
             {
-                left.Add(right);
+                left.ApiData.Add(new RichStringMembers(new StringBuilder(right), left?.defaultFormat.data ?? GlyphFormat.Empty.data));
                 return left;
             }
 
@@ -134,9 +143,9 @@ namespace RichHudFramework
             /// Adds a <see cref="RichString"/> to the collection using the formatting specified in the <see cref="RichString"/>.
             /// </summary>
             /// <param name="text"></param>
-            public static RichText operator +(RichText left, RichString right)
+            public static RichText operator +(RichText left, RichStringMembers right)
             {
-                left.Add(right);
+                left.ApiData.Add(right);
                 return left;
             }
 
@@ -145,14 +154,17 @@ namespace RichHudFramework
             /// </summary>
             public static RichText operator +(RichText left, RichText right)
             {
-                left.Add(right);
+                left.ApiData.AddRange(right.ApiData);
                 return left;
             }
 
             public static implicit operator RichText(string text) =>
                 new RichText(text, GlyphFormat.Empty);
 
-            public static implicit operator RichText(RichString text) =>
+            public static implicit operator RichText(RichStringMembers text) =>
+                new RichText(text);
+
+            public static implicit operator RichText(List<RichStringMembers> text) =>
                 new RichText(text);
         }
     }
