@@ -18,7 +18,7 @@ namespace RichHudFramework
             private class DemoBox : HudElementBase
             {
                 // Spawn controls
-                private readonly ListBox<LibraryElements> typeList;
+                private readonly ListBox<DemoElements> typeList;
                 private readonly BorderedButton createButton;
                 private readonly HudChain typeColumn;
 
@@ -43,7 +43,7 @@ namespace RichHudFramework
                     // Spawn controls
                     //
                     // List of available control types
-                    typeList = new ListBox<LibraryElements>();
+                    typeList = new ListBox<DemoElements>();
                     createButton = new BorderedButton() { Text = "Create", Padding = Vector2.Zero };
 
                     typeColumn = new HudChain(true)
@@ -54,12 +54,12 @@ namespace RichHudFramework
                     };
 
                     // Add list of supported test elements to the type list
-                    var supportedTypes = Enum.GetValues(typeof(LibraryElements)) as LibraryElements[];
+                    var supportedTypes = Enum.GetValues(typeof(DemoElements)) as DemoElements[];
 
                     for (int n = 0; n < supportedTypes.Length; n++)
                         typeList.Add(supportedTypes[n].ToString(), supportedTypes[n]);
 
-                    createButton.MouseInput.LeftClicked += OnCreateElement;
+                    createButton.MouseInput.LeftClicked += InstantiateSelectedType;
 
                     // Instance list
                     instanceList = new ListBox<TestWindowNode>();
@@ -80,9 +80,9 @@ namespace RichHudFramework
                         Spacing = 8f
                     };
 
-                    removeButton.MouseInput.LeftClicked += OnRemoveElement;
-                    clearAllButton.MouseInput.LeftClicked += OnClearAllInstances;
-                    instanceList.SelectionChanged += OnInstanceSelectionChanged;
+                    removeButton.MouseInput.LeftClicked += RemoveSelectedInstance;
+                    clearAllButton.MouseInput.LeftClicked += ClearInstances;
+                    instanceList.SelectionChanged += UpdateSelection;
 
                     // Transform controls
                     //
@@ -224,7 +224,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Updates UI to match the configuration of the node just selected
                 /// </summary>
-                private void OnInstanceSelectionChanged(object sender, EventArgs args)
+                private void UpdateSelection(object sender, EventArgs args)
                 {
                     if (instanceList.Selection != null)
                     {
@@ -252,11 +252,11 @@ namespace RichHudFramework
                 /// Creates a new test window instance with the child element type specified by the
                 /// type list selection.
                 /// </summary>
-                private void OnCreateElement(object sender, EventArgs args)
+                private void InstantiateSelectedType(object sender, EventArgs args)
                 {
                     if (typeList.Selection != null)
                     {
-                        LibraryElements selection = typeList.Selection.AssocMember;
+                        DemoElements selection = typeList.Selection.AssocMember;
                         var testElement = new TestWindowNode(selection);
 
                         demoRoot.Add(testElement);
@@ -271,7 +271,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Removes the instance currently selected in the instance list when invoked.
                 /// </summary>
-                private void OnRemoveElement(object sender, EventArgs args)
+                private void RemoveSelectedInstance(object sender, EventArgs args)
                 {
                     if (instanceList.Selection != null)
                     {
@@ -295,7 +295,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Removes all test windows currently registered
                 /// </summary>
-                private void OnClearAllInstances(object sender, EventArgs args)
+                private void ClearInstances(object sender, EventArgs args)
                 {
                     instanceList.ClearEntries();
                     demoRoot.Clear();

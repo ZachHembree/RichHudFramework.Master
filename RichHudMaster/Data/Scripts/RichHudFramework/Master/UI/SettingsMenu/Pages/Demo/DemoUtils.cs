@@ -6,7 +6,10 @@ namespace RichHudFramework
     {
         public partial class DemoPage
         {
-            private enum LibraryElements : int
+            /// <summary>
+            /// Enum list of library elements that can be instantiated by the DemoPage
+            /// </summary>
+            private enum DemoElements : int
             {
                 BorderedButton = 0,
                 BorderedCheckBox = 1,
@@ -31,8 +34,14 @@ namespace RichHudFramework
                 TexturedBox = 22
             }
 
+            /// <summary>
+            /// Base class for windows used to contain the demo elements.
+            /// </summary>
             private abstract class TestWindow : WindowBase
             {
+                /// <summary>
+                /// Demo element instance
+                /// </summary>
                 public HudElementBase Element { get; protected set; }
 
                 public TestWindow(HudParentBase parent = null) : base(parent)
@@ -40,17 +49,19 @@ namespace RichHudFramework
                     Size = new Vector2(400f);
                     BodyColor = new Color(41, 54, 62, 150);
                     BorderColor = new Color(58, 68, 77);
-                }
-
-                protected override void Layout()
-                {
-                    MinimumSize = Element.Size + header.Size;
-                    base.Layout();
+                    AllowResizing = false;
                 }
             }
 
+            /// <summary>
+            /// Generic test window that instantiates and parents a new instance of the given
+            /// element type on construction.
+            /// </summary>
             private class TestWindow<TElement> : TestWindow where TElement : HudElementBase, new()
             {
+                /// <summary>
+                /// Demo element instance
+                /// </summary>
                 public TElement Subtype { get; protected set; }
 
                 public TestWindow(HudParentBase parent = null) : base(parent)
@@ -61,13 +72,27 @@ namespace RichHudFramework
                 }
             }
 
+            /// <summary>
+            /// Container node for test windows used by the demo page
+            /// </summary>
             private class TestWindowNode : HudNodeBase
             {
+                /// <summary>
+                /// Window containing the test element, parented to cameraNode
+                /// </summary>
                 public readonly TestWindow window;
-                public readonly LibraryElements elementEnum;
+
+                /// <summary>
+                /// Enum corresponding to the type of element parented to the test window
+                /// </summary>
+                public readonly DemoElements elementEnum;
+
+                /// <summary>
+                /// HudSpace node used by the test window
+                /// </summary>
                 public readonly CamSpaceNode cameraNode;
 
-                public TestWindowNode(LibraryElements elementEnum, HudParentBase parent = null) : base(parent)
+                public TestWindowNode(DemoElements elementEnum, HudParentBase parent = null) : base(parent)
                 {
                     this.elementEnum = elementEnum;
                     cameraNode = new CamSpaceNode(this);
@@ -76,51 +101,55 @@ namespace RichHudFramework
                     window.Register(cameraNode);
                 }
 
-                private static TestWindow GetTestWindow(LibraryElements subtypeEnum)
+                /// <summary>
+                /// Instantiates a new generic test window with the library element type
+                /// corresponding to the DemoElements enum
+                /// </summary>
+                private static TestWindow GetTestWindow(DemoElements subtypeEnum)
                 {
                     switch (subtypeEnum)
                     {
-                        case LibraryElements.BorderedButton:
+                        case DemoElements.BorderedButton:
                             return new TestWindow<BorderedButton>();
-                        case LibraryElements.BorderedCheckBox:
+                        case DemoElements.BorderedCheckBox:
                             return new TestWindow<BorderedCheckBox>();
-                        case LibraryElements.Button:
+                        case DemoElements.Button:
                             return new TestWindow<Button>();
-                        case LibraryElements.ColorPickerRGB:
+                        case DemoElements.ColorPickerRGB:
                             return new TestWindow<ColorPickerRGB>();
-                        case LibraryElements.Dropdown:
+                        case DemoElements.Dropdown:
                             return new TestWindow<Dropdown<int>>();
-                        case LibraryElements.LabelBoxButton:
+                        case DemoElements.LabelBoxButton:
                             return new TestWindow<LabelBoxButton>();
-                        case LibraryElements.ListBox:
+                        case DemoElements.ListBox:
                             return new TestWindow<ListBox<int>>();
-                        case LibraryElements.NamedCheckBox:
+                        case DemoElements.NamedCheckBox:
                             return new TestWindow<NamedCheckBox>();
-                        case LibraryElements.NamedOnOffButton:
+                        case DemoElements.NamedOnOffButton:
                             return new TestWindow<NamedOnOffButton>();
-                        case LibraryElements.NamedSliderBox:
+                        case DemoElements.NamedSliderBox:
                             return new TestWindow<NamedSliderBox>();
-                        case LibraryElements.OnOffButton:
+                        case DemoElements.OnOffButton:
                             return new TestWindow<OnOffButton>();
-                        case LibraryElements.ScrollBar:
+                        case DemoElements.ScrollBar:
                             return new TestWindow<ScrollBar>();
-                        case LibraryElements.TextBox:
+                        case DemoElements.TextBox:
                             return new TestWindow<TextBox>();
-                        case LibraryElements.TreeBox:
+                        case DemoElements.TreeBox:
                             return new TestWindow<TreeBox<int>>();
-                        case LibraryElements.DoubleLabelBox:
+                        case DemoElements.DoubleLabelBox:
                             return new TestWindow<DoubleLabelBox>();
-                        case LibraryElements.Label:
+                        case DemoElements.Label:
                             return new TestWindow<Label>();
-                        case LibraryElements.LabelBox:
+                        case DemoElements.LabelBox:
                             return new TestWindow<LabelBox>();
-                        case LibraryElements.TexturedBox:
+                        case DemoElements.TexturedBox:
                             return new TestWindow<TexturedBox>();
-                        case LibraryElements.SliderBar:
+                        case DemoElements.SliderBar:
                             return new TestWindow<SliderBar>();
-                        case LibraryElements.SliderBox:
+                        case DemoElements.SliderBox:
                             return new TestWindow<SliderBox>();
-                        case LibraryElements.TextField:
+                        case DemoElements.TextField:
                             return new TestWindow<TextField>();
                     }
 
