@@ -6,15 +6,36 @@ using System;
 
 namespace RichHudFramework
 {
+    /// <summary>
+    /// Interface used to define the instantiation/reset behavior of types, T, in 
+    /// ObjectPool(T)
+    /// </summary>
     public interface IPooledObjectPolicy<T>
     {
+        /// <summary>
+        /// Instantiates a new object instance of type T
+        /// </summary>
         T GetNewObject();
 
+        /// <summary>
+        /// Resets the object for later reuse before being added back to the pool
+        /// </summary>
         void ResetObject(T obj);
 
+        /// <summary>
+        /// Resets the range of objects in the given collection
+        /// </summary>
         void ResetRange(IReadOnlyList<T> objects, int index, int count);
+
+        /// <summary>
+        /// Resets the range of objects in the given collection
+        /// </summary>
+        void ResetRange<T2>(IReadOnlyList<MyTuple<T, T2>> objects, int index, int count);
     }
 
+    /// <summary>
+    /// Generic pooled object policy using delegates
+    /// </summary>
     public class PooledObjectPolicy<T> : IPooledObjectPolicy<T>
     {
         private readonly Func<T> GetNewObjectFunc;
@@ -29,46 +50,74 @@ namespace RichHudFramework
             this.ResetObjectAction = ResetObjectAction;
         }
 
+        /// <summary>
+        /// Instantiates a new object instance of type T
+        /// </summary>
         public T GetNewObject()
         {
             return GetNewObjectFunc();
         }
 
+        /// <summary>
+        /// Resets the object for later reuse before being added back to the pool
+        /// </summary>
         public void ResetObject(T obj)
         {
             ResetObjectAction(obj);
         }
 
+        /// <summary>
+        /// Resets the range of objects in the given collection
+        /// </summary>
         public void ResetRange(IReadOnlyList<T> objects, int index, int count)
         {
-            for (int n = index; (n + count) < objects.Count; n++)
-                ResetObjectAction(objects[n]);
+            for (int n = 0; (n < count && (index + n) < objects.Count); n++)
+                ResetObjectAction(objects[index + n]);
+        }
+
+        /// <summary>
+        /// Resets the range of objects in the given collection
+        /// </summary>
+        public void ResetRange<T2>(IReadOnlyList<MyTuple<T, T2>> objects, int index, int count)
+        {
+            for (int n = 0; (n < count && (index + n) < objects.Count); n++)
+                ResetObjectAction(objects[index + n].Item1);
         }
     }
 
     /// <summary>
-    /// Maintains a pool of reusable objects
+    /// Maintains a pool of reusable reference types. Based on List(T); not thread safe.
     /// </summary>
     public class ObjectPool<T>
     {
-        private readonly ConcurrentBag<T> pooledObjects;
-        private readonly IPooledObjectPolicy<T> objectPolicy;
+        public int Count => pooledObjects.Count;
 
+        public int Capacity { get; private set; }
+
+        protected readonly List<T> pooledObjects;
+        protected readonly IPooledObjectPolicy<T> objectPolicy;
+
+        /// <summary>
+        /// Creates a new ObjectPool with the given object policy
+        /// </summary>
         public ObjectPool(IPooledObjectPolicy<T> objectPolicy)
         {
             if (objectPolicy == null)
                 throw new Exception("Pooled object policy cannot be null.");
 
-            pooledObjects = new ConcurrentBag<T>();
+            pooledObjects = new List<T>();
             this.objectPolicy = objectPolicy;
         }
 
+        /// <summary>
+        /// Creates a new ObjectPool with an generic object policy defined by the given delegates
+        /// </summary>
         public ObjectPool(Func<T> GetNewObjectFunc, Action<T> ResetObjectAction)
         {
             if (GetNewObjectFunc == null || ResetObjectAction == null)
                 throw new Exception("Neither GetNewObjectFunc nor ResetObjectAction can be null.");
 
-            this.pooledObjects = new ConcurrentBag<T>();
+            this.pooledObjects = new List<T>();
             this.objectPolicy = new PooledObjectPolicy<T>(GetNewObjectFunc, ResetObjectAction);
         }
 
@@ -79,9 +128,18 @@ namespace RichHudFramework
         public T Get()
         {
             T obj;
-            
-            if (!pooledObjects.TryTake(out obj))
+
+            if (pooledObjects.Count > 0)
+            {
+                int last = pooledObjects.Count - 1;
+                obj = pooledObjects[last];
+                pooledObjects.RemoveAt(last);
+            }
+            else
+            {
                 obj = objectPolicy.GetNewObject();
+                Capacity++;
+            }
 
             return obj;
         }
@@ -91,7 +149,17 @@ namespace RichHudFramework
         /// </summary>
         public void Return(T obj)
         {
+            if (pooledObjects.Count + 1 > Capacity)
+            {
+                throw new Exception
+                (
+                    $"Cannot return more objects to the pool than were issued. " +
+                    $"Count: {pooledObjects.Count + 1} Capacity: {Capacity}"
+                );
+            }
+
             objectPolicy.ResetObject(obj);
+            pooledObjects.EnsureCapacity(Capacity);
             pooledObjects.Add(obj);
         }
 
@@ -100,10 +168,57 @@ namespace RichHudFramework
         /// </summary>
         public void ReturnRange(IReadOnlyList<T> objects, int index, int count)
         {
-            objectPolicy.ResetRange(objects, index, count);
+            if (pooledObjects.Count + count > Capacity)
+            {
+                throw new Exception
+                (
+                    $"Cannot return more objects to the pool than were issued. " +
+                    $"Count: {pooledObjects.Count + count} Capacity: {Capacity}"
+                );
+            }
 
-            for (int n = index; (n + count) < objects.Count; n++)
-                pooledObjects.Add(objects[n]);
+            objectPolicy.ResetRange(objects, index, count);
+            pooledObjects.EnsureCapacity(Capacity);
+
+            for (int n = 0; (n < count && (index + n) < objects.Count); n++)
+                pooledObjects.Add(objects[index + n]);
+        }
+
+        /// <summary>
+        /// Returns the specified range of objects in the collection to the pool.
+        /// </summary>
+        public void ReturnRange<T2>(IReadOnlyList<MyTuple<T, T2>> objects, int index, int count)
+        {
+            if (pooledObjects.Count + count > Capacity)
+            {
+                throw new Exception
+                (
+                    $"Cannot return more objects to the pool than were issued. " +
+                    $"Count: {pooledObjects.Count + count} Capacity: {Capacity}"
+                );
+            }
+
+            objectPolicy.ResetRange(objects, index, count);
+            pooledObjects.EnsureCapacity(Capacity);
+
+            for (int n = 0; (n < count && (index + n) < objects.Count); n++)
+                pooledObjects.Add(objects[index + n].Item1);
+        }
+
+        /// <summary>
+        /// Sets the capacity of the pool equal to the number of members
+        /// </summary>
+        public void TrimExcess()
+        {
+            pooledObjects.Capacity = Capacity;
+        }
+
+        /// <summary>
+        /// Clears all objects from the pool
+        /// </summary>
+        public void Clear()
+        {
+            pooledObjects.Clear();
         }
     }
 }
