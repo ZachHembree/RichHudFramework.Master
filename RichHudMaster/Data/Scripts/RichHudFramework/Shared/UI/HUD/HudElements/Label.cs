@@ -15,7 +15,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Text rendered by the label.
         /// </summary>
-        public RichText Text { get { return _textBoard.GetText(); } set { _textBoard.SetText(value); } }
+        public RichTextMin Text { get { return _textBoard.GetText(); } set { _textBoard.SetText(value); } }
 
         /// <summary>
         /// TextBoard backing the label element.

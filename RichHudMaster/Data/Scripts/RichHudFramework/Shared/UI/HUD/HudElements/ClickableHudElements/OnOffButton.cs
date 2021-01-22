@@ -30,12 +30,12 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// On button text
         /// </summary>
-        public RichText OnText { get { return on.Text; } set { on.Text = value; } }
+        public RichTextMin OnText { get { return on.Text; } set { on.Text = value; } }
 
         /// <summary>
         /// Off button text
         /// </summary>
-        public RichText OffText { get { return off.Text; } set { off.Text = value; } }
+        public RichTextMin OffText { get { return off.Text; } set { off.Text = value; } }
 
         /// <summary>
         /// Default glyph format used by the on and off buttons

@@ -77,9 +77,9 @@ namespace RichHudFramework
             /// <summary>
             /// Shared clipboard.
             /// </summary>
-            public static RichText ClipBoard
+            public static RichTextMin ClipBoard
             {
-                get 
+                get
                 {
                     if (mainInstance == null)
                         Init();
@@ -89,7 +89,7 @@ namespace RichHudFramework
 
                     return mainInstance._clipBoard;
                 }
-                set 
+                set
                 {
                     if (mainInstance == null)
                         Init();

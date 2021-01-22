@@ -22,17 +22,17 @@ namespace RichHudFramework
             /// <summary>
             /// Gets/sets header text
             /// </summary>
-            public RichText HeaderText { get { return textBox.HeaderText; } set { textBox.HeaderText = value; } }
+            public RichTextMin HeaderText { get { return textBox.HeaderText; } set { textBox.HeaderText = value; } }
 
             /// <summary>
             /// Gets/sets subheader text
             /// </summary>
-            public RichText SubHeaderText { get { return textBox.SubHeaderText; } set { textBox.SubHeaderText = value; } }
+            public RichTextMin SubHeaderText { get { return textBox.SubHeaderText; } set { textBox.SubHeaderText = value; } }
 
             /// <summary>
             /// Contents of the text box.
             /// </summary>
-            public RichText Text { get { return textBox.Text; } set { textBox.Text = value; } }
+            public RichTextMin Text { get { return textBox.Text; } set { textBox.Text = value; } }
 
             /// <summary>
             /// Text builder used to control the contents of the page
@@ -56,23 +56,23 @@ namespace RichHudFramework
                         case TextPageAccessors.GetOrSetHeader:
                             {
                                 if (data == null)
-                                    return textBox.HeaderText.ApiData;
+                                    return textBox.HeaderText.apiData;
                                 else
-                                    textBox.HeaderText = new RichText(data as List<RichStringMembers>); break;
+                                    textBox.HeaderText = new RichTextMin(data as List<RichStringMembers>); break;
                             }
                         case TextPageAccessors.GetOrSetSubheader:
                             {
                                 if (data == null)
-                                    return textBox.SubHeaderText.ApiData;
+                                    return textBox.SubHeaderText.apiData;
                                 else
-                                    textBox.SubHeaderText = new RichText(data as List<RichStringMembers>); break;
+                                    textBox.SubHeaderText = new RichTextMin(data as List<RichStringMembers>); break;
                             }
                         case TextPageAccessors.GetOrSetText:
                             {
                                 if (data == null)
-                                    return textBox.Text.ApiData;
+                                    return textBox.Text.apiData;
                                 else
-                                    textBox.Text = new RichText(data as List<RichStringMembers>); break;
+                                    textBox.Text = new RichTextMin(data as List<RichStringMembers>); break;
                             }
                         case TextPageAccessors.GetTextBuilder:
                             return (TextBuilder as TextBuilder).GetApiData();
@@ -89,17 +89,17 @@ namespace RichHudFramework
                 /// <summary>
                 /// Gets/sets header text
                 /// </summary>
-                public RichText HeaderText { get { return header.Text; } set { header.Text = value; } }
+                public RichTextMin HeaderText { get { return header.Text; } set { header.Text = value; } }
 
                 /// <summary>
                 /// Gets/sets subheader text
                 /// </summary>
-                public RichText SubHeaderText { get { return subheader.Text; } set { subheader.Text = value; } }
+                public RichTextMin SubHeaderText { get { return subheader.Text; } set { subheader.Text = value; } }
 
                 /// <summary>
                 /// Contents of the text box.
                 /// </summary>
-                public RichText Text { get { return textBox.Text; } set { textBox.Text = value; } }
+                public RichTextMin Text { get { return textBox.Text; } set { textBox.Text = value; } }
 
                 /// <summary>
                 /// Text builder used to control the contents of the page

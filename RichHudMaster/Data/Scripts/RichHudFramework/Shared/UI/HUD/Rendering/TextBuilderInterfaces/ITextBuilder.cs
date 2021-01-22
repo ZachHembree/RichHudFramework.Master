@@ -91,17 +91,17 @@ namespace RichHudFramework
                 /// <summary>
                 /// Clears current text and appends the text given.
                 /// </summary>
-                void SetText(RichText text);
+                void SetText(RichTextMin text);
 
                 /// <summary>
-                /// Appends the given text to the end of the text using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
+                /// Appends the given text to the end of the text using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichTextMin"/>.
                 /// </summary>
-                void Append(RichText text);
+                void Append(RichTextMin text);
 
                 /// <summary>
-                /// Inserts the given text to the end of the text at the specified starting index using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
+                /// Inserts the given text to the end of the text at the specified starting index using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichTextMin"/>.
                 /// </summary>
-                void Insert(RichText text, Vector2I start);
+                void Insert(RichTextMin text, Vector2I start);
 
                 /// <summary>
                 /// Changes the formatting for the whole text to the given format.
@@ -114,14 +114,14 @@ namespace RichHudFramework
                 void SetFormatting(Vector2I start, Vector2I end, GlyphFormat format);
 
                 /// <summary>
-                /// Returns the contents of the text as <see cref="RichText"/>.
+                /// Returns the contents of the text as <see cref="RichTextMin"/>.
                 /// </summary>
-                RichText GetText();
+                RichTextMin GetText();
 
                 /// <summary>
-                /// Returns the specified range of characters from the text as <see cref="RichText"/>.
+                /// Returns the specified range of characters from the text as <see cref="RichTextMin"/>.
                 /// </summary>
-                RichText GetTextRange(Vector2I start, Vector2I end);
+                RichTextMin GetTextRange(Vector2I start, Vector2I end);
 
                 /// <summary>
                 /// Removes the character at the specified index.

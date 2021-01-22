@@ -18,7 +18,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Text rendered by the text field.
         /// </summary>
-        public RichText Text { get { return textBox.TextBoard.GetText(); } set { textBox.TextBoard.SetText(value); } }
+        public RichTextMin Text { get { return textBox.TextBoard.GetText(); } set { textBox.TextBoard.SetText(value); } }
 
         /// <summary>
         /// TextBoard backing the text field.

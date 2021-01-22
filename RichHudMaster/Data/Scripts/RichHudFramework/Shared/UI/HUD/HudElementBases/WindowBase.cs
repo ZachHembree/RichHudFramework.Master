@@ -13,7 +13,7 @@ namespace RichHudFramework.UI
     /// </summary>
     public abstract class WindowBase : HudElementBase, IClickableElement
     {
-        public RichText HeaderText { get { return Header.GetText(); } set { Header.SetText(value); } }
+        public RichTextMin HeaderText { get { return Header.GetText(); } set { Header.SetText(value); } }
 
         public ITextBuilder Header => header.TextBoard;
 

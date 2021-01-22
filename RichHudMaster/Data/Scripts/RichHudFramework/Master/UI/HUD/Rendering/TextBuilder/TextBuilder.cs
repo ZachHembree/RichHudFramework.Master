@@ -214,8 +214,8 @@ namespace RichHudFramework
                 /// <summary>
                 /// Clears current text and appends the text given.
                 /// </summary>
-                public void SetText(RichText text) =>
-                    SetData(text.ApiData);
+                public void SetText(RichTextMin text) =>
+                    SetData(text.apiData);
 
                 protected void SetData(IList<RichStringMembers> text)
                 {
@@ -257,10 +257,10 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Appends the given text to the end of the text using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
+                /// Appends the given text to the end of the text using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichTextMin"/>.
                 /// </summary>
-                public void Append(RichText text) =>
-                    AppendData(text.ApiData);
+                public void Append(RichTextMin text) =>
+                    AppendData(text.apiData);
 
                 protected void AppendData(IList<RichStringMembers> text)
                 {
@@ -282,10 +282,10 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Inserts the given text to the end of the text at the specified starting index using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
+                /// Inserts the given text to the end of the text at the specified starting index using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichTextMin"/>.
                 /// </summary>
-                public void Insert(RichText text, Vector2I start) =>
-                    InsertData(text.ApiData, start);
+                public void Insert(RichTextMin text, Vector2I start) =>
+                    InsertData(text.apiData, start);
 
                 public void InsertData(IList<RichStringMembers> text, Vector2I start)
                 {
@@ -329,21 +329,21 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Returns the contents of the text as <see cref="RichText"/>.
+                /// Returns the contents of the text as <see cref="RichTextMin"/>.
                 /// </summary>
-                public RichText GetText()
+                public RichTextMin GetText()
                 {
                     if (lines.Count > 0 && lines[lines.Count - 1].Count > 0)
                         return GetTextRange(Vector2I.Zero, new Vector2I(lines.Count - 1, lines[lines.Count - 1].Count - 1));
                     else
-                        return new RichText();
+                        return new RichTextMin();
                 }
 
                 /// <summary>
-                /// Returns the specified range of characters from the text as <see cref="RichText"/>.
+                /// Returns the specified range of characters from the text as <see cref="RichTextMin"/>.
                 /// </summary>
-                public RichText GetTextRange(Vector2I start, Vector2I end) =>
-                    new RichText(GetTextRangeData(start, end));
+                public RichTextMin GetTextRange(Vector2I start, Vector2I end) =>
+                    new RichTextMin(GetTextRangeData(start, end));
 
                 public List<RichStringMembers> GetTextRangeData(Vector2I start, Vector2I end)
                 {

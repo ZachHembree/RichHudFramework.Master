@@ -135,19 +135,19 @@ namespace RichHudFramework.UI
 
                 if (SharedBinds.Cut.IsNewPressed && !selectionBox.Empty && EnableHighlighting)
                 {
-                    RichText text = TextBoard.GetTextRange(selectionBox.Start, selectionBox.End);
+                    RichTextMin text = TextBoard.GetTextRange(selectionBox.Start, selectionBox.End);
                     DeleteSelection();
-                    caret.Move(new Vector2I(0, -GetRichTextLength(text)));
+                    caret.Move(new Vector2I(0, -GetRichTextMinLength(text)));
                     HudMain.ClipBoard = text;
                 }
 
                 if (SharedBinds.Paste.IsNewPressed)
                 {
-                    if (!HudMain.ClipBoard.Equals(default(RichText)))
+                    if (!HudMain.ClipBoard.Equals(default(RichTextMin)))
                     {
                         DeleteSelection();
                         TextBoard.Insert(HudMain.ClipBoard, caret.Index + new Vector2I(0, 1));
-                        int length = GetRichTextLength(HudMain.ClipBoard);
+                        int length = GetRichTextMinLength(HudMain.ClipBoard);
 
                         if (caret.Index.Y == -1)
                             length++;
@@ -243,12 +243,12 @@ namespace RichHudFramework.UI
                 return Vector2I.Zero;
         }
 
-        private static int GetRichTextLength(RichText text)
+        private static int GetRichTextMinLength(RichTextMin text)
         {
             int length = 0;
 
-            for (int n = 0; n < text.ApiData.Count; n++)
-                length += text.ApiData[n].Item1.Length;
+            for (int n = 0; n < text.apiData.Count; n++)
+                length += text.apiData[n].Item1.Length;
 
             return length;
         }

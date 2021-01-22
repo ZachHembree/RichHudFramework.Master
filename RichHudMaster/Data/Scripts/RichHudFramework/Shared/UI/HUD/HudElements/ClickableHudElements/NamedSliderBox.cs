@@ -15,12 +15,12 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// The name of the control as rendred in the terminal.
         /// </summary>
-        public RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
+        public RichTextMin Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
 
         /// <summary>
         /// Text indicating the current value of the slider. Does not automatically reflect changes to the slider value.
         /// </summary>
-        public RichText ValueText { get { return current.TextBoard.GetText(); } set { current.TextBoard.SetText(value); } }
+        public RichTextMin ValueText { get { return current.TextBoard.GetText(); } set { current.TextBoard.SetText(value); } }
 
         /// <summary>
         /// Minimum configurable value for the slider.
