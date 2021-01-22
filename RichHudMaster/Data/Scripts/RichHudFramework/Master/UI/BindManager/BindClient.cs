@@ -31,14 +31,14 @@ namespace RichHudFramework
                 /// <summary>
                 /// Read-only collection of all available controls for use with key binds
                 /// </summary>
-                public IReadOnlyList<IControl> Controls => BindManager.Controls;
+                public IReadOnlyList<IControl> Controls => BindManager.Instance.controls;
 
-                private readonly RichHudMaster.Client masterClient;
+                private readonly RichHudMaster.ModClient masterClient;
                 private readonly Action UpdateAction;
                 private readonly List<BindGroup> bindGroups;
                 private readonly int index;
 
-                public Client(RichHudMaster.Client masterClient = null)
+                public Client(RichHudMaster.ModClient masterClient = null)
                 {
                     this.masterClient = masterClient;
                     bindGroups = new List<BindGroup>();

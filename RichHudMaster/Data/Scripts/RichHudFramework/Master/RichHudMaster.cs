@@ -32,11 +32,10 @@ namespace RichHudFramework.Server
         /// <summary>
         /// Read-only list of currently registered clients
         /// </summary>
-        public static IReadOnlyList<Client> Clients => Instance.clients;
+        public static IReadOnlyList<ModClient> Clients => Instance.clients;
 
         private static RichHudMaster Instance { get; set; }
-        private readonly List<Client> clients;
-        private ICommandGroup rhdCommands;
+        private readonly List<ModClient> clients;
 
         public RichHudMaster() : base(false, true)
         {
@@ -51,12 +50,12 @@ namespace RichHudFramework.Server
             ExceptionHandler.RecoveryLimit = 5;
             ExceptionHandler.ModName = "Rich HUD Master";
 
-            clients = new List<Client>();
+            clients = new List<ModClient>();
         }
 
         protected override void AfterLoadData()
         {
-            rhdCommands = CmdManager.GetOrCreateGroup("/rhd", GetChatCommands());
+            CmdManager.GetOrCreateGroup("/rhd", GetChatCommands());
 
             FontManager.Init();
             BindManager.Init();
@@ -66,6 +65,7 @@ namespace RichHudFramework.Server
         protected override void AfterInit()
         {
             HudMain.Init();
+            RichHudDebug.Init();
             InitSettingsMenu();
 
             RegisterClientHandler();
@@ -117,27 +117,25 @@ namespace RichHudFramework.Server
                 RegisterClient((ClientData)message);
         }
 
-        private Client RegisterClient(ExtendedClientData regMessage)
+        private ModClient RegisterClient(ExtendedClientData regMessage)
         {
-            Client client = RegisterClient(regMessage.Item1);
+            ModClient client = RegisterClient(regMessage.Item1);
 
             if (client != null)
-            {
                 client.RegisterExtendedAccessors(regMessage.Item2, regMessage.Item3);
-            }
 
             return client;
         }
 
-        private Client RegisterClient(ClientData clientData)
+        private ModClient RegisterClient(ClientData clientData)
         {
             int clientVID = clientData.Item4;
             bool supported = clientVID <= versionID && clientVID >= minSupportedVersion;
-            Client client = clients.Find(x => (x.name == clientData.Item1));
+            ModClient client = clients.Find(x => (x.name == clientData.Item1));
 
             if (client == null && supported)
             {
-                client = new Client(clientData);
+                client = new ModClient(clientData);
                 clients.Add(client);
             }
             else
@@ -165,7 +163,6 @@ namespace RichHudFramework.Server
 
             MasterConfig.Save();
             MasterConfig.ClearSubscribers();
-            rhdCommands = null;
 
             if (ExceptionHandler.Reloading)
             {

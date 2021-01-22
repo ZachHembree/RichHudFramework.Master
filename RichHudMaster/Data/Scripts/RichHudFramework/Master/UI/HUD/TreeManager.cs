@@ -1,14 +1,9 @@
-﻿using RichHudFramework.Internal;
-using Sandbox.ModAPI;
+﻿using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
-using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
-using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 
 namespace RichHudFramework
 {
@@ -27,22 +22,30 @@ namespace RichHudFramework
         {
             public sealed class TreeManager
             {
-                public static TreeManager Instance { get; private set; }
-
                 /// <summary>
                 /// Number of unique HUD spaces registered
                 /// </summary>
-                public static int HudSpacesRegistered => Instance.distMap.Count;
+                public static int HudSpacesRegistered => treeManager.distMap.Count;
 
                 /// <summary>
                 /// Number of UI elements registered from all clients
                 /// </summary>
-                public static int ElementRegistered => Instance.updateAccessors.Count;
+                public static int ElementRegistered => treeManager.updateAccessors.Count;
 
                 /// <summary>
                 /// Set to true if a client is requesting a tree rebuild
                 /// </summary>
                 public static bool RefreshRequested { get; set; }
+
+                /// <summary>
+                /// Read-only list of registered tree clients
+                /// </summary>
+                public static IReadOnlyList<TreeClient> Clients => treeManager.clients;
+
+                /// <summary>
+                /// Tree client used by RHM
+                /// </summary>
+                public static TreeClient MainClient => treeManager.mainClient;
 
                 private readonly List<HudUpdateAccessors> updateAccessors;
                 private readonly Dictionary<Func<Vector3D>, ushort> distMap;
@@ -56,11 +59,16 @@ namespace RichHudFramework
                 private float lastResScale;
 
                 private readonly List<TreeClient> clients;
+                private readonly TreeClient mainClient;
+
+                private readonly Utils.Stopwatch rebuildTimer, drawTimer;
 
                 private TreeManager()
                 {
-                    if (Instance == null)
-                        Instance = this;
+                    HudMain.Init();
+
+                    if (treeManager == null)
+                        treeManager = this;
                     else
                         throw new Exception($"Only one instance of {GetType().Name} can exist at any given time.");
 
@@ -73,29 +81,28 @@ namespace RichHudFramework
                     inputActions = new List<Action>(200);
                     layoutActions = new List<Action<bool>>(200);
                     drawActions = new List<Action>(200);
-                    clients = new List<TreeClient>();
 
+                    clients = new List<TreeClient>();
+                    mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
+
+                    rebuildTimer = new Utils.Stopwatch();
+                    drawTimer = new Utils.Stopwatch();
                     RefreshRequested = false;
                 }
 
                 public static void Init()
                 {
-                    if (Instance == null)
+                    if (treeManager == null)
                         new TreeManager();
-                }
-
-                public static void Close()
-                {
-                    Instance = null;
                 }
 
                 public static bool RegisterClient(TreeClient client)
                 {
                     Init();
 
-                    if (!Instance.clients.Contains(client))
+                    if (!treeManager.clients.Contains(client))
                     {
-                        Instance.clients.Add(client);
+                        treeManager.clients.Add(client);
                         return true;
                     }
                     else
@@ -104,9 +111,9 @@ namespace RichHudFramework
 
                 public static bool UnregisterClient(TreeClient client)
                 {
-                    if (Instance != null)
+                    if (treeManager != null)
                     {
-                        bool success = Instance.clients.Remove(client);
+                        bool success = treeManager.clients.Remove(client);
                         RefreshRequested = success;
                         return success;
                     }
@@ -119,9 +126,8 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw()
                 {
-                    TreeClient mainClient = mainInstance.mainClient;
-                    int drawTick = mainInstance.drawTick;
-                    float resScale = mainInstance._resScale;
+                    int drawTick = instance.drawTick;
+                    float resScale = instance._resScale;
 
                     if (RefreshDrawList)
                         mainClient.refreshDrawList = true;

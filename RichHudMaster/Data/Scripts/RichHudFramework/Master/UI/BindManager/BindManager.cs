@@ -14,7 +14,7 @@ namespace RichHudFramework
         public sealed partial class BindManager : RichHudComponentBase
         {
             /// <summary>
-            /// Read-only collection of bind groups registered
+            /// Read-only collection of bind groups registered to the main client
             /// </summary>
             public static IReadOnlyList<IBindGroup> Groups => Instance.mainClient.Groups;
 
@@ -22,6 +22,16 @@ namespace RichHudFramework
             /// Read-only collection of all available controls for use with key binds
             /// </summary>
             public static IReadOnlyList<IControl> Controls => Instance.controls;
+
+            /// <summary>
+            /// Read-only list of registered bind clients
+            /// </summary>
+            public static IReadOnlyList<Client> Clients => Instance.bindClients;
+
+            /// <summary>
+            /// Bind client used by RHM
+            /// </summary>
+            public static Client MainClient => Instance.mainClient;
 
             private static BindManager Instance
             {

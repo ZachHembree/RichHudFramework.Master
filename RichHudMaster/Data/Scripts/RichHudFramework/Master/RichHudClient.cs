@@ -13,7 +13,7 @@ namespace RichHudFramework.Server
 
     public sealed partial class RichHudMaster
     {
-        public class Client
+        public class ModClient
         {
             /// <summary>
             /// Name of the client mod as reported by the client
@@ -23,10 +23,20 @@ namespace RichHudFramework.Server
             /// <summary>
             /// VersionID of the client
             /// </summary>
-            public readonly int versionID;
+            public readonly int apiVersionID;
 
             /// <summary>
-            /// If true then the client is currently registered with master
+            /// Tree client for the registered mod
+            /// </summary>
+            public readonly HudMain.TreeClient hudClient;
+
+            /// <summary>
+            /// Bind client for the registered mod
+            /// </summary>
+            public readonly BindManager.Client bindClient;
+
+            /// <summary>
+            /// If true then the mod client is currently registered with master
             /// </summary>
             public bool Registered { get; private set; }
 
@@ -42,25 +52,22 @@ namespace RichHudFramework.Server
 
             private readonly Action<int, object> SendMsgAction;
             private readonly Action ReloadAction;
-
-            private readonly HudMain.Client hudClient;
-            private readonly BindManager.Client bindClient;
             private MyTuple<object, HudElementBase> menuData;
 
-            public Client(ClientData data)
+            public ModClient(ClientData data)
             {
                 name = data.Item1;
                 SendMsgAction = data.Item2;
                 ReloadAction = data.Item3;
-                versionID = data.Item4;
+                apiVersionID = data.Item4;
 
-                hudClient = new HudMain.Client();
+                hudClient = new HudMain.TreeClient();
                 bindClient = new BindManager.Client(this);
                 menuData = RichHudTerminal.GetClientData(name);
 
                 Registered = true;
 
-                SendData(MsgTypes.RegistrationSuccessful, new ServerData(Unregister, GetApiData, versionID));
+                SendData(MsgTypes.RegistrationSuccessful, new ServerData(Unregister, GetApiData, apiVersionID));
                 ExceptionHandler.WriteToLogAndConsole($"[RHF] Successfully registered {name} with the API.");
             }
 

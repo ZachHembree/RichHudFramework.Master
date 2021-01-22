@@ -31,7 +31,7 @@ namespace RichHudFramework.Server
 
         private void ToggleDebug()
         {
-            demoTerminalPage.Enabled = !demoTerminalPage.Enabled;
+            RichHudDebug.EnableDebug = !RichHudDebug.EnableDebug;
         }
 
         private static void ThrowException()

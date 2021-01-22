@@ -96,7 +96,7 @@ namespace RichHudFramework
                         refreshRequested = true;
 
                     if (enableCursor)
-                        mainInstance._cursor.Visible = true;
+                        instance._cursor.Visible = true;
 
                     if (refreshRequested && (tick % treeRefreshRate) == 0)
                     {
@@ -129,7 +129,7 @@ namespace RichHudFramework
 
                     return new HudClientMembers()
                     {
-                        Item1 = mainInstance._cursor.GetApiData(),
+                        Item1 = instance._cursor.GetApiData(),
                         Item2 = GetTextBoardData,
                         Item3 = GetOrSetMember,
                         Item4 = Unregister
@@ -162,9 +162,9 @@ namespace RichHudFramework
                         case HudMainAccessors.ClipBoard:
                             {
                                 if (data == null)
-                                    return ClipBoard?.ApiData;
+                                    return ClipBoard.apiData;
                                 else
-                                    ClipBoard = new RichText(data as IList<RichStringMembers>);
+                                    ClipBoard = new RichTextMin(data as List<RichStringMembers>);
                                 break;
                             }
                         case HudMainAccessors.EnableCursor:
@@ -197,9 +197,9 @@ namespace RichHudFramework
                         case HudMainAccessors.GetFocusOffset:
                             return GetFocusOffset(data as Action<byte>);
                         case HudMainAccessors.GetPixelSpaceFunc:
-                            return mainInstance._root.GetHudSpaceFunc;
+                            return instance._root.GetHudSpaceFunc;
                         case HudMainAccessors.GetPixelSpaceOriginFunc:
-                            return mainInstance._root.GetNodeOriginFunc;
+                            return instance._root.GetNodeOriginFunc;
                     }
 
                     return null;

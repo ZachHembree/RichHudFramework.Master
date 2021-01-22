@@ -32,14 +32,6 @@ namespace RichHudFramework
     namespace UI.Server
     {
         using Rendering.Server;
-        using HudUpdateAccessors = MyTuple<
-            ApiMemberAccessor,
-            MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
-            Action, // DepthTest
-            Action, // HandleInput
-            Action<bool>, // BeforeLayout
-            Action // BeforeDraw
-        >;
 
         public sealed partial class HudMain : RichHudComponentBase
         {
@@ -53,10 +45,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._root;
+                    return instance._root;
                 }
             }
 
@@ -67,10 +59,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._cursor;
+                    return instance._cursor;
                 }
             }
 
@@ -81,20 +73,17 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    if (mainInstance._clipBoard == null)
-                        mainInstance._clipBoard = new RichText();
-
-                    return mainInstance._clipBoard;
+                    return instance._clipBoard;
                 }
                 set
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    mainInstance._clipBoard = value;
+                    instance._clipBoard = value;
                 }
             }
 
@@ -106,10 +95,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._resScale;
+                    return instance._resScale;
                 }
             }
 
@@ -120,10 +109,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._pixelToWorld;
+                    return instance._pixelToWorld;
                 }
             }
 
@@ -134,10 +123,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._screenWidth;
+                    return instance._screenWidth;
                 }
             }
 
@@ -148,10 +137,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._screenHeight;
+                    return instance._screenHeight;
                 }
             }
 
@@ -162,10 +151,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._fov;
+                    return instance._fov;
                 }
             }
 
@@ -176,10 +165,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._aspectRatio;
+                    return instance._aspectRatio;
                 }
             }
 
@@ -191,10 +180,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._fovScale;
+                    return instance._fovScale;
                 }
             }
 
@@ -205,10 +194,10 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (mainInstance == null)
+                    if (instance == null)
                         Init();
 
-                    return mainInstance._uiBkOpacity;
+                    return instance._uiBkOpacity;
                 }
             }
 
@@ -222,13 +211,13 @@ namespace RichHudFramework
             /// </summary>
             public static bool EnableCursor;
 
-            private static HudMain mainInstance;
+            private static HudMain instance;
+            private static TreeManager treeManager;
 
             private readonly HudCursor _cursor;
             private readonly HudRoot _root;
-            private readonly TreeClient mainClient;
 
-            private RichText _clipBoard;
+            private RichTextMin _clipBoard;
             private float _resScale;
             private float _uiBkOpacity;
 
@@ -245,14 +234,13 @@ namespace RichHudFramework
 
             private HudMain() : base(false, true)
             {
-                if (mainInstance == null)
-                    mainInstance = this;
+                if (instance == null)
+                    instance = this;
                 else
                     throw new Exception("Only one instance of HudMain can exist at any given time.");
 
                 _root = new HudRoot();
                 _cursor = new HudCursor(_root);
-                mainClient = new TreeClient() { GetUpdateAccessors = _root.GetUpdateAccessors };
 
                 UpdateScreenScaling();
                 TreeManager.Init();
@@ -260,14 +248,14 @@ namespace RichHudFramework
 
             public static void Init()
             {
-                if (mainInstance == null)
+                if (instance == null)
                     new HudMain();
             }
 
             public override void Close()
             {
-                mainInstance = null;
-                TreeManager.Close();
+                instance = null;
+                treeManager = null;
             }
 
             /// <summary>
@@ -277,7 +265,7 @@ namespace RichHudFramework
             {
                 UpdateCache();
                 _cursor.Visible = EnableCursor;
-                TreeManager.Instance.Draw();
+                treeManager.Draw();
 
                 drawTick++;
 
@@ -289,7 +277,7 @@ namespace RichHudFramework
             {
                 // Reset cursor
                 _cursor.Release();
-                TreeManager.Instance.HandleInput();
+                treeManager.HandleInput();
             }
 
             /// <summary>
@@ -306,8 +294,8 @@ namespace RichHudFramework
                 // Update screen to world matrix transform
                 _pixelToWorld = new MatrixD
                 {
-                    M11 = (FovScale / ScreenHeight),
-                    M22 = (FovScale / ScreenHeight),
+                    M11 = (_fovScale / _screenHeight),
+                    M22 = (_fovScale / _screenHeight),
                     M33 = 1d,
                     M43 = -MyAPIGateway.Session.Camera.NearPlaneDistance,
                     M44 = 1d
@@ -342,10 +330,10 @@ namespace RichHudFramework
             /// </summary>
             public static byte GetFocusOffset(Action<byte> LoseFocusCallback)
             {
-                if (mainInstance == null)
+                if (instance == null)
                     Init();
 
-                return mainInstance.GetFocusOffsetInternal(LoseFocusCallback);
+                return instance.GetFocusOffsetInternal(LoseFocusCallback);
             }
 
             /// <summary>
@@ -375,13 +363,13 @@ namespace RichHudFramework
             /// </summary>
             public static Vector2 GetPixelVector(Vector2 scaledVec)
             {
-                if (mainInstance == null)
+                if (instance == null)
                     Init();
 
                 return new Vector2
                 (
-                    (int)(scaledVec.X * mainInstance._screenWidth),
-                    (int)(scaledVec.Y * mainInstance._screenHeight)
+                    (int)(scaledVec.X * instance._screenWidth),
+                    (int)(scaledVec.Y * instance._screenHeight)
                 );
             }
 
@@ -390,13 +378,13 @@ namespace RichHudFramework
             /// </summary>
             public static Vector2 GetAbsoluteVector(Vector2 pixelVec)
             {
-                if (mainInstance == null)
+                if (instance == null)
                     Init();
 
                 return new Vector2
                 (
-                    pixelVec.X / mainInstance._screenWidth,
-                    pixelVec.Y / mainInstance._screenHeight
+                    pixelVec.X / instance._screenWidth,
+                    pixelVec.Y / instance._screenHeight
                 );
             }
 
