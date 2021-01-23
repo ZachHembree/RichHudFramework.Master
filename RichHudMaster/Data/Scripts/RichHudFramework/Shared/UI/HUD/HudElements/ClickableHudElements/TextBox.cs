@@ -135,7 +135,7 @@ namespace RichHudFramework.UI
 
                 if (SharedBinds.Cut.IsNewPressed && !selectionBox.Empty && EnableHighlighting)
                 {
-                    RichTextMin text = TextBoard.GetTextRange(selectionBox.Start, selectionBox.End);
+                    RichText text = TextBoard.GetTextRange(selectionBox.Start, selectionBox.End);
                     DeleteSelection();
                     caret.Move(new Vector2I(0, -GetRichTextMinLength(text)));
                     HudMain.ClipBoard = text;
@@ -143,7 +143,7 @@ namespace RichHudFramework.UI
 
                 if (SharedBinds.Paste.IsNewPressed)
                 {
-                    if (!HudMain.ClipBoard.Equals(default(RichTextMin)))
+                    if (!HudMain.ClipBoard.Equals(default(RichText)))
                     {
                         DeleteSelection();
                         TextBoard.Insert(HudMain.ClipBoard, caret.Index + new Vector2I(0, 1));
@@ -243,7 +243,7 @@ namespace RichHudFramework.UI
                 return Vector2I.Zero;
         }
 
-        private static int GetRichTextMinLength(RichTextMin text)
+        private static int GetRichTextMinLength(RichText text)
         {
             int length = 0;
 

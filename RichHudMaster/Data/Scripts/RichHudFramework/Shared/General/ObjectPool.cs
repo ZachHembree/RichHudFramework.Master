@@ -92,7 +92,7 @@ namespace RichHudFramework
     {
         public int Count => pooledObjects.Count;
 
-        public int Capacity { get; private set; }
+        public int Capacity => pooledObjects.Capacity;
 
         protected readonly List<T> pooledObjects;
         protected readonly IPooledObjectPolicy<T> objectPolicy;
@@ -138,7 +138,6 @@ namespace RichHudFramework
             else
             {
                 obj = objectPolicy.GetNewObject();
-                Capacity++;
             }
 
             return obj;
@@ -149,15 +148,6 @@ namespace RichHudFramework
         /// </summary>
         public void Return(T obj)
         {
-            if (pooledObjects.Count + 1 > Capacity)
-            {
-                throw new Exception
-                (
-                    $"Cannot return more objects to the pool than were issued. " +
-                    $"Count: {pooledObjects.Count + 1} Capacity: {Capacity}"
-                );
-            }
-
             objectPolicy.ResetObject(obj);
             pooledObjects.EnsureCapacity(Capacity);
             pooledObjects.Add(obj);
@@ -168,15 +158,6 @@ namespace RichHudFramework
         /// </summary>
         public void ReturnRange(IReadOnlyList<T> objects, int index, int count)
         {
-            if (pooledObjects.Count + count > Capacity)
-            {
-                throw new Exception
-                (
-                    $"Cannot return more objects to the pool than were issued. " +
-                    $"Count: {pooledObjects.Count + count} Capacity: {Capacity}"
-                );
-            }
-
             objectPolicy.ResetRange(objects, index, count);
             pooledObjects.EnsureCapacity(Capacity);
 
@@ -189,15 +170,6 @@ namespace RichHudFramework
         /// </summary>
         public void ReturnRange<T2>(IReadOnlyList<MyTuple<T, T2>> objects, int index, int count)
         {
-            if (pooledObjects.Count + count > Capacity)
-            {
-                throw new Exception
-                (
-                    $"Cannot return more objects to the pool than were issued. " +
-                    $"Count: {pooledObjects.Count + count} Capacity: {Capacity}"
-                );
-            }
-
             objectPolicy.ResetRange(objects, index, count);
             pooledObjects.EnsureCapacity(Capacity);
 
@@ -210,7 +182,7 @@ namespace RichHudFramework
         /// </summary>
         public void TrimExcess()
         {
-            pooledObjects.Capacity = Capacity;
+            pooledObjects.TrimExcess();
         }
 
         /// <summary>

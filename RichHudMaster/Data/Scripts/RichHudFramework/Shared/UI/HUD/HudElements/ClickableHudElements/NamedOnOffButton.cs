@@ -15,7 +15,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// The name of the control as it appears in the terminal.
         /// </summary>
-        public RichTextMin Name { get { return name.Text; } set { name.Text = value; } }
+        public RichText Name { get { return name.Text; } set { name.Text = value; } }
 
         /// <summary>
         /// Distance between the on and off buttons
@@ -40,12 +40,12 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// On button text
         /// </summary>
-        public RichTextMin OnText { get { return onOffButton.OnText; } set { onOffButton.OnText = value; } }
+        public RichText OnText { get { return onOffButton.OnText; } set { onOffButton.OnText = value; } }
 
         /// <summary>
         /// Off button text
         /// </summary>
-        public RichTextMin OffText { get { return onOffButton.OnText; } set { onOffButton.OnText = value; } }
+        public RichText OffText { get { return onOffButton.OnText; } set { onOffButton.OnText = value; } }
 
         /// <summary>
         /// Default glyph format used by the on and off buttons

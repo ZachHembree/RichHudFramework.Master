@@ -164,7 +164,7 @@ namespace RichHudFramework
                                 if (data == null)
                                     return ClipBoard.apiData;
                                 else
-                                    ClipBoard = new RichTextMin(data as List<RichStringMembers>);
+                                    ClipBoard = new RichText(data as List<RichStringMembers>);
                                 break;
                             }
                         case HudMainAccessors.EnableCursor:

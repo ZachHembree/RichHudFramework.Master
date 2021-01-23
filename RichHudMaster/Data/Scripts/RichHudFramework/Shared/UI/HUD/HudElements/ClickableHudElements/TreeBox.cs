@@ -62,7 +62,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Name of the element as rendered on the display
         /// </summary>
-        public RichTextMin Name { get { return display.Name; } set { display.Name = value; } }
+        public RichText Name { get { return display.Name; } set { display.Name = value; } }
 
         /// <summary>
         /// Default format for member text;
@@ -191,7 +191,7 @@ namespace RichHudFramework.UI
         /// Adds a new member to the tree box with the given name and associated
         /// object.
         /// </summary>
-        public ListBoxEntry<T> Add(RichTextMin name, T assocMember, bool enabled = true)
+        public ListBoxEntry<T> Add(RichText name, T assocMember, bool enabled = true)
         {
             ListBoxEntry<T> entry = entryPool.Get();
 
@@ -206,7 +206,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Adds the given range of entries to the tree box.
         /// </summary>
-        public void AddRange(IReadOnlyList<MyTuple<RichTextMin, T, bool>> entries)
+        public void AddRange(IReadOnlyList<MyTuple<RichText, T, bool>> entries)
         {
             for (int n = 0; n < entries.Count; n++)
             {
@@ -222,7 +222,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Inserts an entry at the given index.
         /// </summary>
-        public void Insert(int index, RichTextMin name, T assocMember, bool enabled = true)
+        public void Insert(int index, RichText name, T assocMember, bool enabled = true)
         {
             ListBoxEntry<T> entry = entryPool.Get();
 
@@ -391,7 +391,7 @@ namespace RichHudFramework.UI
         /// </summary>
         protected class TreeBoxDisplay : HudElementBase
         {
-            public RichTextMin Name { get { return name.Text; } set { name.Text = value; } }
+            public RichText Name { get { return name.Text; } set { name.Text = value; } }
 
             public GlyphFormat Format { get { return name.Format; } set { name.Format = value; } }
 

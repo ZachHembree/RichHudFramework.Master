@@ -141,7 +141,7 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormattingAt(int index, GlyphFormat format)
                     {
-                        if (!formattedGlyphs[index].format.data.Equals(format.data))
+                        if (!formattedGlyphs[index].format.Equals(format.data))
                         {
                             IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
                             Vector2 glyphSize;
@@ -176,22 +176,30 @@ namespace RichHudFramework
                     /// Retrieves range of characters in the line specified and adds them to the list
                     /// given.
                     /// </summary>
-                    public void GetRangeString(IList<RichStringMembers> text, int start, int end)
+                    public void GetRangeString(List<RichStringMembers> text, int start, int end)
                     {
+                        StringBuilder sb;
+                        RichStringMembers? lastString = null;
+
+                        if (text.Count > 0)
+                            lastString = text[text.Count - 1];
+
                         for (int ch = start; ch <= end; ch++)
                         {
-                            StringBuilder richString = new StringBuilder();
                             GlyphFormat format = formattedGlyphs[ch].format;
-                            ch--;
+                            GlyphFormatMembers lastFormat = lastString.Value.Item2;
+                            bool formatEqual = lastString != null
+                                && lastFormat.Item1 == format.data.Item1
+                                && lastFormat.Item2 == format.data.Item2
+                                && lastFormat.Item3 == format.data.Item3
+                                && lastFormat.Item4 == format.data.Item4;
 
-                            do
-                            {
-                                ch++;
-                                richString.Append(chars[ch]);
-                            }
-                            while (ch + 1 <= end && format.Equals(formattedGlyphs[ch + 1].format));
+                            sb = formatEqual ? lastString.Value.Item1 : builder.sbPool.Get();
+                            sb.Append(chars[ch]);
+                            var nextString = new RichStringMembers(sb, format.data);
 
-                            text.Add(new RichStringMembers(richString, format.data));
+                            if (lastString == null || lastString.Value.Item1 != nextString.Item1)
+                                text.Add(nextString);
                         }
                     }
 

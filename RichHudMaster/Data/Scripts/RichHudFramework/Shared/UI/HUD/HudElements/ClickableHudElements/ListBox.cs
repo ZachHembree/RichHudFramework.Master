@@ -199,7 +199,7 @@ namespace RichHudFramework.UI
         /// Adds a new member to the list box with the given name and associated
         /// object.
         /// </summary>
-        public ListBoxEntry<T> Add(RichTextMin name, T assocMember, bool enabled = true)
+        public ListBoxEntry<T> Add(RichText name, T assocMember, bool enabled = true)
         {
             ListBoxEntry<T> entry = entryPool.Get();
 
@@ -214,7 +214,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Adds the given range of entries to the list box.
         /// </summary>
-        public void AddRange(IReadOnlyList<MyTuple<RichTextMin, T, bool>> entries)
+        public void AddRange(IReadOnlyList<MyTuple<RichText, T, bool>> entries)
         {
             for (int n = 0; n < entries.Count; n++)
             {
@@ -230,7 +230,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Inserts an entry at the given index.
         /// </summary>
-        public void Insert(int index, RichTextMin name, T assocMember, bool enabled = true)
+        public void Insert(int index, RichText name, T assocMember, bool enabled = true)
         {
             ListBoxEntry<T> entry = entryPool.Get();
 
@@ -398,12 +398,12 @@ namespace RichHudFramework.UI
                         {
                             var entryData = (MyTuple<IList<RichStringMembers>, T>)data;
                             var stringList = entryData.Item1 as List<RichStringMembers>;
-                            return (ApiMemberAccessor)Add(new RichTextMin(stringList), entryData.Item2).GetOrSetMember;
+                            return (ApiMemberAccessor)Add(new RichText(stringList), entryData.Item2).GetOrSetMember;
                         }
                         else
                         {
                             var entryData = (MyTuple<List<RichStringMembers>, T>)data;
-                            return (ApiMemberAccessor)Add(new RichTextMin(entryData.Item1), entryData.Item2).GetOrSetMember;
+                            return (ApiMemberAccessor)Add(new RichText(entryData.Item1), entryData.Item2).GetOrSetMember;
                         }
                     }
                 case ListBoxAccessors.Selection:

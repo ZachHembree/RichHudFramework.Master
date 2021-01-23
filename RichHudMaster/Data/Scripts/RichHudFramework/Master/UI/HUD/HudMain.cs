@@ -69,7 +69,7 @@ namespace RichHudFramework
             /// <summary>
             /// Shared clipboard.
             /// </summary>
-            public static RichTextMin ClipBoard
+            public static RichText ClipBoard
             {
                 get
                 {
@@ -217,7 +217,7 @@ namespace RichHudFramework
             private readonly HudCursor _cursor;
             private readonly HudRoot _root;
 
-            private RichTextMin _clipBoard;
+            private RichText _clipBoard;
             private float _resScale;
             private float _uiBkOpacity;
 

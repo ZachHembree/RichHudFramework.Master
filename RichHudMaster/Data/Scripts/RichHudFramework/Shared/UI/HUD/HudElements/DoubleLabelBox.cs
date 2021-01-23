@@ -43,12 +43,12 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Text rendered by the left label.
         /// </summary>
-        public RichTextMin LeftText { get { return left.TextBoard.GetText(); } set { left.TextBoard.SetText(value); } }
+        public RichText LeftText { get { return left.TextBoard.GetText(); } set { left.TextBoard.SetText(value); } }
 
         /// <summary>
         /// Text rendered by the right label.
         /// </summary>
-        public RichTextMin RightText { get { return right.TextBoard.GetText(); } set { right.TextBoard.SetText(value); } }
+        public RichText RightText { get { return right.TextBoard.GetText(); } set { right.TextBoard.SetText(value); } }
 
         public ITextBuilder LeftTextBoard => left.TextBoard;
 

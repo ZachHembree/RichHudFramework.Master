@@ -43,17 +43,17 @@ namespace RichHudFramework
             /// <summary>
             /// Gets/sets header text
             /// </summary>
-            RichTextMin HeaderText { get; set; }
+            RichText HeaderText { get; set; }
 
             /// <summary>
             /// Gets/sets subheader text
             /// </summary>
-            RichTextMin SubHeaderText { get; set; }
+            RichText SubHeaderText { get; set; }
 
             /// <summary>
             /// Contents of the text box.
             /// </summary>
-            RichTextMin Text { get; set; }
+            RichText Text { get; set; }
 
             /// <summary>
             /// Text builder used to control the contents of the page

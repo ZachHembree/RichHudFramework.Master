@@ -202,19 +202,19 @@ namespace RichHudFramework.UI
         /// Adds a new member to the dropdown with the given name and associated
         /// object.
         /// </summary>
-        public ListBoxEntry<T> Add(RichTextMin name, T assocMember, bool enabled = true) =>
+        public ListBoxEntry<T> Add(RichText name, T assocMember, bool enabled = true) =>
             listBox.Add(name, assocMember, enabled);
 
         /// <summary>
         /// Adds the given range of entries to the dropdown.
         /// </summary>
-        public void AddRange(IReadOnlyList<MyTuple<RichTextMin, T, bool>> entries) =>
+        public void AddRange(IReadOnlyList<MyTuple<RichText, T, bool>> entries) =>
             listBox.AddRange(entries);
 
         /// <summary>
         /// Inserts an entry at the given index.
         /// </summary>
-        public void Insert(int index, RichTextMin name, T assocMember, bool enabled = true) =>
+        public void Insert(int index, RichText name, T assocMember, bool enabled = true) =>
             listBox.Insert(index, name, assocMember, enabled);
 
         /// <summary>
@@ -272,7 +272,7 @@ namespace RichHudFramework.UI
         {
             private static readonly Material arrowMat = new Material("RichHudDownArrow", new Vector2(64f, 64f));
 
-            public RichTextMin Text { get { return name.Text; } set { name.Text = value; } }
+            public RichText Text { get { return name.Text; } set { name.Text = value; } }
 
             public GlyphFormat Format { get { return name.Format; } set { name.Format = value; } }
 

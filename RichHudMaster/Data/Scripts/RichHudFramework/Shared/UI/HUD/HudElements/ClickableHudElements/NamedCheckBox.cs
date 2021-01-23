@@ -11,7 +11,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Text rendered by the label.
         /// </summary>
-        public RichTextMin Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
+        public RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
 
         /// <summary>
         /// Default formatting used by the label.

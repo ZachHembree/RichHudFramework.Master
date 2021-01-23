@@ -23,8 +23,8 @@ namespace RichHudFramework
             /// </summary>
             public GlyphFormat defaultFormat;
 
-            private readonly RichTextMin minText;
-            private readonly ObjectPool<StringBuilder> sbPool;
+            public readonly List<RichStringMembers> apiData;
+            private ObjectPool<StringBuilder> sbPool;
 
             /// <summary>
             /// Initializes an empty RichText object with the given formatting.
@@ -32,19 +32,16 @@ namespace RichHudFramework
             public RichText(GlyphFormat defaultFormat = null)
             {
                 this.defaultFormat = defaultFormat ?? GlyphFormat.Empty;
-                minText.apiData = new List<RichStringMembers>();
-                sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
+                apiData = new List<RichStringMembers>();
             }
 
             /// <summary>
-            /// Initializes a new RichText instance backed by the given RichTextMin object.
+            /// Initializes a new RichText instance backed by the given List.
             /// </summary>
-            public RichText(RichTextMin minText)
+            public RichText(List<RichStringMembers> apiData)
             {
-                this.minText = minText;
-                this.minText.apiData = new List<RichStringMembers>();
+                this.apiData = apiData;
                 defaultFormat = GlyphFormat.Empty;
-                sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
             }
 
             /// <summary>
@@ -53,21 +50,15 @@ namespace RichHudFramework
             public RichText(string text, GlyphFormat defaultFormat = null)
             {
                 this.defaultFormat = defaultFormat ?? GlyphFormat.Empty;
-                minText.apiData = new List<RichStringMembers>();
-                sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
-
-                GlyphFormatMembers format = defaultFormat.data;
-                StringBuilder sb = sbPool.Get();
-                sb.Append(text);
-
-                minText.apiData.Add(new RichStringMembers(sb, format));
+                apiData = new List<RichStringMembers>();
+                apiData.Add(new RichStringMembers(new StringBuilder(text), this.defaultFormat.data));
             }
 
             public IEnumerator<RichStringMembers> GetEnumerator() =>
-                minText.apiData.GetEnumerator();
+                apiData.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() =>
-                minText.apiData.GetEnumerator();
+                apiData.GetEnumerator();
 
             /// <summary>
             /// Appends a string to the end of the text. If the formatting given is equivalent to 
@@ -81,8 +72,11 @@ namespace RichHudFramework
             /// </summary>
             public void Add(RichText text)
             {
-                List<RichStringMembers> currentStrings = minText.apiData,
-                    newStrings = text.minText.apiData;
+                if (sbPool == null)
+                    sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
+
+                List<RichStringMembers> currentStrings = apiData,
+                    newStrings = text.apiData;
 
                 if (newStrings.Count > 0)
                 {
@@ -134,7 +128,10 @@ namespace RichHudFramework
             /// </summary>
             public void Add(GlyphFormat newFormat, string text)
             {
-                List<RichStringMembers> richStrings = minText.apiData;
+                if (sbPool == null)
+                    sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
+
+                List<RichStringMembers> richStrings = apiData;
                 GlyphFormatMembers format = newFormat?.data ?? GlyphFormat.Empty.data;
                 int last = richStrings.Count - 1;
                 bool formatEqual = false;
@@ -177,7 +174,10 @@ namespace RichHudFramework
             /// </summary>
             public void TrimExcess()
             {
-                List<RichStringMembers> text = minText.apiData;
+                if (sbPool == null)
+                    sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
+
+                List<RichStringMembers> text = apiData;
 
                 for (int n = 0; n < text.Count; n++)
                     text[n].Item1.Capacity = text[n].Item1.Length;
@@ -191,7 +191,10 @@ namespace RichHudFramework
             /// </summary>
             public void Clear()
             {
-                List<RichStringMembers> text = minText.apiData;
+                if (sbPool == null)
+                    sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
+
+                List<RichStringMembers> text = apiData;
                 sbPool.ReturnRange(text, 0, text.Count);
                 text.Clear();
             }
@@ -203,7 +206,7 @@ namespace RichHudFramework
             public override string ToString()
             {
                 StringBuilder rawText = new StringBuilder();
-                List<RichStringMembers> richText = minText.apiData;
+                List<RichStringMembers> richText = apiData;
 
                 for (int a = 0; a < richText.Count; a++)
                 {
@@ -223,7 +226,7 @@ namespace RichHudFramework
             /// </summary>>
             public static RichText operator +(RichText left, string right)
             {
-                left.Add(right);
+                left.Add(null, right);
                 return left;
             }
 
@@ -236,40 +239,11 @@ namespace RichHudFramework
                 return left;
             }
 
-            public static explicit operator RichText(RichTextMin textData) =>
-                new RichText(textData);
+            public static implicit operator RichText(string text) =>
+                new RichText(text);
 
-            public static implicit operator RichTextMin(RichText textData) =>
-                textData.minText;
-
-            protected class StringBuilderPoolPolicy : IPooledObjectPolicy<StringBuilder>
-            {
-                public StringBuilder GetNewObject()
-                {
-                    return new StringBuilder();
-                }
-
-                public void ResetObject(StringBuilder obj)
-                {
-                    obj.Clear();
-                }
-
-                public void ResetRange(IReadOnlyList<StringBuilder> objects, int index, int count)
-                {
-                    for (int n = 0; (n < count && (index + n) < objects.Count); n++)
-                    {
-                        objects[index + n].Clear();
-                    }
-                }
-
-                public void ResetRange<T2>(IReadOnlyList<MyTuple<StringBuilder, T2>> objects, int index, int count)
-                {
-                    for (int n = 0; (n < count && (index + n) < objects.Count); n++)
-                    {
-                        objects[index + n].Item1.Clear();
-                    }
-                }
-            }
+            public static implicit operator RichText(List<RichStringMembers> text) =>
+                new RichText(text);
         }
     }
 }
