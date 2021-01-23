@@ -302,12 +302,34 @@ namespace RichHudFramework
                         {
                             for (int n = 0; n < locData.Count; n++)
                             {
-                                if (locData[n].chSize.Y > _size.Y)
+                                GlyphLocData sizeData = locData[n];
+
+                                if (sizeData.chSize.Y > _size.Y)
+                                    _size.Y = sizeData.chSize.Y;
+
+                                float chWidth = sizeData.chSize.X;
+
+                                if (chars[n] == '\t')
                                 {
-                                    _size.Y = locData[n].chSize.Y;
+                                    FormattedGlyph formattedGlyph = formattedGlyphs[n];
+                                    IFontStyle fontStyle = FontManager.GetFontStyle(formattedGlyph.format.StyleIndex);
+                                    float scale = formattedGlyph.format.TextSize * fontStyle.FontScale;
+
+                                    chWidth = formattedGlyphs[n].glyph.advanceWidth * scale;
+                                    float rem = _size.X % chWidth;
+
+                                    if (rem < chWidth * .9f)
+                                        chWidth -= rem;
+                                    else // if it's really close, just skip to the next stop
+                                        chWidth += (chWidth - rem);
+
+                                    sizeData.chSize.X = chWidth;
+                                    sizeData.bbSize.X = chWidth;
+
+                                    locData[n] = sizeData;
                                 }
 
-                                _size.X += locData[n].chSize.X;
+                                _size.X += chWidth;
                             }
                         }
                     }

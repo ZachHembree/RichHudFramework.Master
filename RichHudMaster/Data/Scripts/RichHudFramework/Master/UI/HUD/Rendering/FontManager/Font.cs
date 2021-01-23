@@ -160,7 +160,7 @@ namespace RichHudFramework
                                 GlyphMembers v = spaceData.Value;
                                 Vector2 size = new Vector2(0f, v.Item2.Y);
                                 glyphs.Add('\n', new Glyph(atlases[v.Item1], size, v.Item3, 0f, v.Item5));
-                                glyphs.Add('\t', new Glyph(atlases[v.Item1], size, v.Item3, 4f * v.Item4, v.Item5));
+                                glyphs.Add('\t', new Glyph(atlases[v.Item1], size, v.Item3, 6f * v.Item4, v.Item5));
                             }
 
                             for (int n = 0; n < kernData.Length; n++)

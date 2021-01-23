@@ -582,23 +582,14 @@ namespace RichHudFramework
                     }
 
                     GlyphLocData locData = line.LocData[right];
-                    float bbWidth = locData.bbSize.X,
-                        chWidth = locData.chSize.X;
-
-                    // Calculate variable width for tab stops
-                    if (ch == '\t')
-                    {
-                        chWidth -= (pos.X % chWidth);
-                        bbWidth = chWidth;
-                    }
 
                     line.SetOffsetAt(right, new Vector2()
                     {
-                        X = pos.X + bbWidth / 2f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
+                        X = pos.X + locData.bbSize.X / 2f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
                         Y = pos.Y - (locData.bbSize.Y / 2f) + (fontStyle.BaseLine * formatScale) + cjkOffset
                     });
 
-                    return pos.X + chWidth;
+                    return pos.X + locData.chSize.X;
                 }
 
                 /// <summary>
