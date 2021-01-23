@@ -76,14 +76,14 @@ namespace RichHudFramework
                     if (instance == null)
                         Init();
 
-                    return instance._clipBoard;
+                    return instance._clipBoard?.GetCopy();
                 }
                 set
                 {
                     if (instance == null)
                         Init();
 
-                    instance._clipBoard = value;
+                    instance._clipBoard = new RichText(value);
                 }
             }
 

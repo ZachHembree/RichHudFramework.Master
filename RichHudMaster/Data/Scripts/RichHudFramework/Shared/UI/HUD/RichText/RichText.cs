@@ -38,10 +38,20 @@ namespace RichHudFramework
             /// <summary>
             /// Initializes a new RichText instance backed by the given List.
             /// </summary>
-            public RichText(List<RichStringMembers> apiData)
+            public RichText(List<RichStringMembers> apiData, bool copy = false)
             {
-                this.apiData = apiData;
+                this.apiData = copy ? GetDataCopy(apiData) : apiData;
                 defaultFormat = GlyphFormat.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new RichText object and copies the contents of the one given
+            /// </summary>
+            public RichText(RichText original)
+            {
+                apiData = new List<RichStringMembers>();
+                defaultFormat = original.defaultFormat;
+                Add(original);
             }
 
             /// <summary>
@@ -215,8 +225,35 @@ namespace RichHudFramework
                     for (int b = 0; b < richText[a].Item1.Length; b++)
                         rawText.Append(richText[a].Item1[b]);
                 }
-
+                
                 return rawText.ToString();
+            }
+
+            /// <summary>
+            /// Returns a copy of the rich text object
+            /// </summary>
+            public RichText GetCopy() =>
+                new RichText(GetDataCopy(apiData));
+
+            /// <summary>
+            /// Returns a copy of the api data backing the rich text object
+            /// <returns></returns>
+            public static List<RichStringMembers> GetDataCopy(List<RichStringMembers> original)
+            {
+                var newData = new List<RichStringMembers>(original.Count);
+
+                for (int i = 0; i < original.Count; i++)
+                {
+                    StringBuilder oldSb = original[i].Item1, 
+                        sb = new StringBuilder(oldSb.Length);
+
+                    for (int j = 0; j < oldSb.Length; j++)
+                        sb.Append(oldSb[j]);
+
+                    newData.Add(new RichStringMembers(sb, original[i].Item2));
+                }
+
+                return newData;
             }
 
             /// <summary>
