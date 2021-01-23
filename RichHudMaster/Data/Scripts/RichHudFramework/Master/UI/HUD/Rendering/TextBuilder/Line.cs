@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ParallelTasks;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -119,10 +120,7 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormatting(GlyphFormat format)
                     {
-                        for (int n = 0; n < Count; n++)
-                        {
-                            SetFormattingAt(n, format);
-                        }
+                        SetFormatting(0, chars.Count, format);
                     }
 
                     /// <summary>
@@ -132,7 +130,17 @@ namespace RichHudFramework
                     {
                         for (int n = start; n <= end; n++)
                         {
-                            SetFormattingAt(n, format);
+                            if (!formattedGlyphs[n].format.Equals(format.data))
+                            {
+                                IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
+                                float scale = format.TextSize * fontStyle.FontScale;
+                                Glyph glyph = fontStyle[chars[n]];
+                                Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * scale;
+
+                                formattedGlyphs[n] = new FormattedGlyph(glyph, format);
+                                locData[n] = new GlyphLocData(glyph.MatFrame.Material.size * scale, glyphSize);
+                                glyphBoards[n] = glyph.GetQuadBoard(scale, format);
+                            }
                         }
                     }
 
@@ -141,29 +149,7 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormattingAt(int index, GlyphFormat format)
                     {
-                        if (!formattedGlyphs[index].format.Equals(format.data))
-                        {
-                            IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
-                            Vector2 glyphSize;
-                            Glyph glyph;
-
-                            float scale = format.TextSize * fontStyle.FontScale;
-
-                            if (chars[index] == '\n')
-                            {
-                                glyph = fontStyle[' '];
-                                glyphSize = new Vector2(0f, fontStyle.Height) * scale;
-                            }
-                            else
-                            {
-                                glyph = fontStyle[chars[index]];
-                                glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * scale;
-                            }
-
-                            formattedGlyphs[index] = new FormattedGlyph(glyph, format);
-                            locData[index] = new GlyphLocData(glyph.material.size * scale, glyphSize);
-                            glyphBoards[index] = glyph.GetQuadBoard(scale, format);
-                        }
+                        SetFormatting(index, index, format);
                     }
 
                     public void SetOffsetAt(int index, Vector2 offset)
@@ -179,7 +165,7 @@ namespace RichHudFramework
                     public void GetRangeString(List<RichStringMembers> text, int start, int end)
                     {
                         StringBuilder sb;
-                        RichStringMembers? lastString = null;
+                        RichStringMembers lastString = default(RichStringMembers);
 
                         if (text.Count > 0)
                             lastString = text[text.Count - 1];
@@ -187,19 +173,21 @@ namespace RichHudFramework
                         for (int ch = start; ch <= end; ch++)
                         {
                             GlyphFormat format = formattedGlyphs[ch].format;
-                            GlyphFormatMembers lastFormat = lastString.Value.Item2;
-                            bool formatEqual = lastString != null
+                            GlyphFormatMembers lastFormat = lastString.Item2;
+                            bool formatEqual = lastString.Item1 != null
                                 && lastFormat.Item1 == format.data.Item1
                                 && lastFormat.Item2 == format.data.Item2
                                 && lastFormat.Item3 == format.data.Item3
                                 && lastFormat.Item4 == format.data.Item4;
 
-                            sb = formatEqual ? lastString.Value.Item1 : builder.sbPool.Get();
+                            sb = formatEqual ? lastString.Item1 : builder.sbPool.Get();
                             sb.Append(chars[ch]);
                             var nextString = new RichStringMembers(sb, format.data);
 
-                            if (lastString == null || lastString.Value.Item1 != nextString.Item1)
+                            if (lastString.Item1 != nextString.Item1)
                                 text.Add(nextString);
+
+                            lastString = nextString;
                         }
                     }
 
@@ -234,25 +222,13 @@ namespace RichHudFramework
                     public void InsertNew(int index, char ch, GlyphFormat format)
                     {
                         IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
-                        Vector2 glyphSize;
-                        Glyph glyph;
-
                         float scale = format.TextSize * fontStyle.FontScale;
-
-                        if (ch == '\n')
-                        {
-                            glyph = fontStyle[' '];
-                            glyphSize = new Vector2(0f, fontStyle.Height) * scale;
-                        }
-                        else
-                        {
-                            glyph = fontStyle[ch];
-                            glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * scale;
-                        }
+                        Glyph glyph = fontStyle[ch];
+                        Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * scale;
 
                         chars.Insert(index, ch);
                         formattedGlyphs.Insert(index, new FormattedGlyph(glyph, format));
-                        locData.Insert(index, new GlyphLocData(glyph.material.size * scale, glyphSize));
+                        locData.Insert(index, new GlyphLocData(glyph.MatFrame.Material.size * scale, glyphSize));
                         glyphBoards.Insert(index, glyph.GetQuadBoard(scale, format));
 
                         TrimExcess();
@@ -322,14 +298,17 @@ namespace RichHudFramework
                     {
                         _size = Vector2.Zero;
 
-                        for (int n = 0; n < locData.Count; n++)
+                        if (chars.Count > 0)
                         {
-                            if (locData[n].chSize.Y > _size.Y)
+                            for (int n = 0; n < locData.Count; n++)
                             {
-                                _size.Y = locData[n].chSize.Y;
-                            }
+                                if (locData[n].chSize.Y > _size.Y)
+                                {
+                                    _size.Y = locData[n].chSize.Y;
+                                }
 
-                            _size.X += locData[n].chSize.X;
+                                _size.X += locData[n].chSize.X;
+                            }
                         }
                     }
 

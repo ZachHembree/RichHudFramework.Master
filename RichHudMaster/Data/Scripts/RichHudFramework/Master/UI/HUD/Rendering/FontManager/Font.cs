@@ -137,14 +137,30 @@ namespace RichHudFramework
                             Material[] atlases = new Material[atlasData.Length];
                             Dictionary<char, Glyph> glyphs = new Dictionary<char, Glyph>(glyphData.Length);
                             Dictionary<uint, float> kerningPairs = new Dictionary<uint, float>(kernData.Length);
+                            GlyphMembers? spaceData = null;
 
                             for (int n = 0; n < atlasData.Length; n++)
                                 atlases[n] = new Material(atlasData[n].Item1, atlasData[n].Item2);
 
                             for (int n = 0; n < glyphData.Length; n++)
                             {
-                                GlyphMembers v = glyphData[n].Value;
-                                glyphs.Add(glyphData[n].Key, new Glyph(atlases[v.Item1], v.Item2, v.Item3, v.Item4, v.Item5));
+                                if (glyphData[n].Key >= ' ')
+                                {
+                                    if (glyphData[n].Key == ' ')
+                                        spaceData = glyphData[n].Value;
+
+                                    GlyphMembers v = glyphData[n].Value;
+                                    glyphs.Add(glyphData[n].Key, new Glyph(atlases[v.Item1], v.Item2, v.Item3, v.Item4, v.Item5));
+                                }
+                            }
+
+                            // Add special characters
+                            if (spaceData != null)
+                            {
+                                GlyphMembers v = spaceData.Value;
+                                Vector2 size = new Vector2(0f, v.Item2.Y);
+                                glyphs.Add('\n', new Glyph(atlases[v.Item1], size, v.Item3, 0f, v.Item5));
+                                glyphs.Add('\t', new Glyph(atlases[v.Item1], size, v.Item3, 4f * v.Item4, v.Item5));
                             }
 
                             for (int n = 0; n < kernData.Length; n++)

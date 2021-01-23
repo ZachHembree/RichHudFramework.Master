@@ -563,14 +563,14 @@ namespace RichHudFramework
                 /// </summary>
                 private float UpdateCharOffset(Line line, int right, int left, Vector2 pos, float xAlign)
                 {
-                    char currentCh = line.Chars[right];
+                    char ch = line.Chars[right];
                     FormattedGlyph formattedGlyph = line.FormattedGlyphs[right];
                     IFontStyle fontStyle = FontManager.GetFontStyle(formattedGlyph.format.StyleIndex);
 
                     float textSize = formattedGlyph.format.TextSize,
-                    formatScale = textSize * fontStyle.FontScale,
+                        formatScale = textSize * fontStyle.FontScale,
                         // Quick fix for CJK characters in Space Engineers font data
-                        cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && currentCh >= 0x4E00) ? (-4f * textSize) : 0f;
+                        cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && ch >= 0x4E00) ? (-4f * textSize) : 0f;
 
                     // Kerning adjustment
                     if (left >= 0)
@@ -578,19 +578,27 @@ namespace RichHudFramework
                         GlyphFormat leftFmt = line.FormattedGlyphs[left].format, rightFmt = formattedGlyph.format;
 
                         if (leftFmt.StyleIndex == rightFmt.StyleIndex && leftFmt.TextSize == rightFmt.TextSize)
-                            pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], currentCh) * formatScale;
+                            pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], ch) * formatScale;
                     }
 
                     GlyphLocData locData = line.LocData[right];
+                    float bbWidth = locData.bbSize.X,
+                        chWidth = locData.chSize.X;
+
+                    // Calculate variable width for tab stops
+                    if (ch == '\t')
+                    {
+                        chWidth -= (pos.X % chWidth);
+                        bbWidth = chWidth;
+                    }
 
                     line.SetOffsetAt(right, new Vector2()
                     {
-                        X = pos.X + locData.bbSize.X / 2f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
+                        X = pos.X + bbWidth / 2f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
                         Y = pos.Y - (locData.bbSize.Y / 2f) + (fontStyle.BaseLine * formatScale) + cjkOffset
                     });
 
-                    pos.X += locData.chSize.X;
-                    return pos.X;
+                    return pos.X + chWidth;
                 }
 
                 /// <summary>

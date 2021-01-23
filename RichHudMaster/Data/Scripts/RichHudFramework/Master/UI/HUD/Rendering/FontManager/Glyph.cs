@@ -2,20 +2,12 @@
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
+using ApiMemberAccessor = System.Func<object, int, object>;
 using AtlasMembers = VRage.MyTuple<string, VRageMath.Vector2>;
 using GlyphMembers = VRage.MyTuple<int, VRageMath.Vector2, VRageMath.Vector2, float, float>;
-using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
-    using FontMembers = MyTuple<
-        string, // Name
-        int, // Index
-        float, // PtSize
-        float, // BaseScale
-        Func<int, bool>, // IsStyleDefined
-        ApiMemberAccessor
-    >;
     using FontStyleDefinition = MyTuple<
         int, // styleID
         float, // height
@@ -27,12 +19,6 @@ namespace RichHudFramework
 
     namespace UI
     {
-        using FontDefinition = MyTuple<
-            string, // Name
-            float, // PtSize
-            FontStyleDefinition[] // styles
-        >;
-
         namespace Rendering.Server
         {
             /// <summary>
@@ -40,7 +26,8 @@ namespace RichHudFramework
             /// </summary>
             public class Glyph
             {
-                public readonly Material material;
+                public IReadOnlyMaterialFrame MatFrame { get; }
+
                 public readonly float advanceWidth, leftSideBearing;
 
                 private readonly MaterialFrame matFrame;
@@ -49,22 +36,31 @@ namespace RichHudFramework
                 {
                     advanceWidth = aw;
                     leftSideBearing = lsb;
-                    material = new Material(atlas.TextureID, atlas.size, origin, size);
 
                     matFrame = new MaterialFrame()
                     {
-                        material = material,
-                        alignment = MaterialAlignment.FitHorizontal,
+                        Material = new Material(atlas.TextureID, atlas.size, origin, size),
+                        Alignment = MaterialAlignment.FitHorizontal,
                     };
+
+                    MatFrame = matFrame;
+                }
+
+                public Glyph(MaterialFrame matFrame, float aw, float lsb)
+                {
+                    this.matFrame = matFrame;
+                    advanceWidth = aw;
+                    leftSideBearing = lsb;
+                    MatFrame = matFrame;
                 }
 
                 public QuadBoard GetQuadBoard(float scale, GlyphFormat format)
                 {
                     return new QuadBoard
                     (
-                        material.TextureID, 
-                        GetMaterialAlignment(material.size * scale), 
-                        format.Color, 
+                        matFrame.Material.TextureID,
+                        GetMaterialAlignment(matFrame.Material.size * scale),
+                        format.Color,
                         (format.FontStyle & FontStyles.Italic) > 0 ? .4f : 0f
                     );
                 }

@@ -114,7 +114,7 @@ namespace RichHudFramework.UI
         private bool TextInputFilter(char ch)
         {
             if (CharFilterFunc == null)
-                return ch >= ' ' || ch == '\n';
+                return ch >= ' ' || ch == '\n' || ch == '\t';
             else
                 return CharFilterFunc(ch) && (ch >= ' ' || ch == '\n');
         }
