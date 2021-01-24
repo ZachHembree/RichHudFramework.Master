@@ -2,6 +2,7 @@
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using VRageMath;
 
@@ -270,7 +271,7 @@ namespace RichHudFramework.UI
 
             private readonly TextBox textElement;
             private readonly ITextBoard text;
-            private readonly Utils.Stopwatch blinkTimer;
+            private readonly Stopwatch blinkTimer;
             private bool blink, caretMoved;
             private int caretOffset;
             private Vector2 lastCursorPos;
@@ -282,7 +283,7 @@ namespace RichHudFramework.UI
                 Size = new Vector2(1f, 16f);
                 Color = new Color(240, 240, 230);
 
-                blinkTimer = new Utils.Stopwatch();
+                blinkTimer = new Stopwatch();
                 blinkTimer.Start();
             }
 
