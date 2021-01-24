@@ -49,14 +49,16 @@ namespace RichHudFramework
                 public static TreeClient MainClient => treeManager.mainClient;
 
                 /// <summary>
-                /// Average ticks elapsed during draw
+                /// Read-only list of the last 120 (tickResetInterval) draw update times. Updated as a circular array.
+                /// Order not preserved.
                 /// </summary>
-                public static long AvgDrawElapsedTicks { get; private set; }
+                public static IReadOnlyList<long> DrawElapsedTicks => treeManager.drawTimes;
 
                 /// <summary>
-                /// Average ticks elapsed during input update
+                /// Read-only list of the last 120 (tickResetInterval) input update times. Updated as a circular array.
+                /// Order not preserved.
                 /// </summary>
-                public static long AvgInputElapsedTicks { get; private set; }
+                public static IReadOnlyList<long> InputElapsedTicks => treeManager.inputTimes;
 
                 /// <summary>
                 /// Ticks elapsed during last rebuild
@@ -82,7 +84,7 @@ namespace RichHudFramework
                 private readonly List<TreeClient> clients;
                 private readonly TreeClient mainClient;
 
-                private readonly Stopwatch rebuildTimer, drawTimer, inputTime, lastRebuildTime;
+                private readonly Stopwatch rebuildTimer, drawTimer, inputTimer, lastRebuildTime;
                 private readonly long[] drawTimes, inputTimes;
 
                 private TreeManager()
@@ -110,7 +112,7 @@ namespace RichHudFramework
                     drawTimer = new Stopwatch();
                     drawTimes = new long[tickResetInterval];
 
-                    inputTime = new Stopwatch();
+                    inputTimer = new Stopwatch();
                     inputTimes = new long[tickResetInterval];
 
                     rebuildTimer = new Stopwatch();
@@ -191,14 +193,7 @@ namespace RichHudFramework
                         SortUpdateAccessors();
 
                     drawTimer.Stop();
-
-                    // Generate average with a circular array
                     drawTimes[drawTick] = drawTimer.ElapsedTicks;
-
-                    for (int n = 0; n < tickResetInterval; n++)
-                        AvgDrawElapsedTicks += drawTimes[n];
-
-                    AvgDrawElapsedTicks /= tickResetInterval;
                 }
 
                 /// <summary>
@@ -206,7 +201,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void HandleInput()
                 {
-                    inputTime.Restart();
+                    inputTimer.Restart();
 
                     for (int n = 0; n < depthTestActions.Count; n++)
                         depthTestActions[n]();
@@ -214,15 +209,8 @@ namespace RichHudFramework
                     for (int n = inputActions.Count - 1; n >= 0; n--)
                         inputActions[n]();
 
-                    inputTime.Stop();
-
-                    // Generate average with a circular array
-                    inputTimes[instance.drawTick] = inputTime.ElapsedTicks;
-
-                    for (int n = 0; n < tickResetInterval; n++)
-                        AvgInputElapsedTicks += inputTimes[n];
-
-                    AvgInputElapsedTicks /= tickResetInterval;
+                    inputTimer.Stop();
+                    inputTimes[instance.drawTick] = inputTimer.ElapsedTicks;
                 }
 
                 /// <summary>

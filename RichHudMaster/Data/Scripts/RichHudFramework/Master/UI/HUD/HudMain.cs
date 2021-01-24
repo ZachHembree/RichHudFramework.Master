@@ -35,9 +35,9 @@ namespace RichHudFramework
 
         public sealed partial class HudMain : RichHudComponentBase
         {
+            public const int tickResetInterval = 120;
             private const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
             private const int treeRefreshRate = 10;
-            private const int tickResetInterval = 120;
 
             /// <summary>
             /// Root parent for all HUD elements.
@@ -286,7 +286,7 @@ namespace RichHudFramework
             /// </summary>
             private void UpdateCache()
             {
-                if (drawTick == 0)
+                if (drawTick % 60 == 0)
                 {
                     UpdateScreenScaling();
                     _uiBkOpacity = MyAPIGateway.Session.Config.UIBkOpacity;

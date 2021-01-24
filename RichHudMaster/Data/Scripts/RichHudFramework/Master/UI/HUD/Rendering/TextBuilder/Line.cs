@@ -318,7 +318,7 @@ namespace RichHudFramework
                                     chWidth = formattedGlyphs[n].glyph.advanceWidth * scale;
                                     float rem = _size.X % chWidth;
 
-                                    if (rem < chWidth * .9f)
+                                    if (rem < chWidth * .8f)
                                         chWidth -= rem;
                                     else // if it's really close, just skip to the next stop
                                         chWidth += (chWidth - rem);
