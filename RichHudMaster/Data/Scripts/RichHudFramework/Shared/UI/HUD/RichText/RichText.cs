@@ -64,6 +64,16 @@ namespace RichHudFramework
                 apiData.Add(new RichStringMembers(new StringBuilder(text), this.defaultFormat.data));
             }
 
+            /// <summary>
+            /// Initializes a new RichText object with the given text and formatting.
+            /// </summary>
+            public RichText(StringBuilder text, GlyphFormat defaultFormat = null)
+            {
+                this.defaultFormat = defaultFormat ?? GlyphFormat.Empty;
+                apiData = new List<RichStringMembers>();
+                Add(text);
+            }
+
             public IEnumerator<RichStringMembers> GetEnumerator() =>
                 apiData.GetEnumerator();
 
@@ -317,6 +327,9 @@ namespace RichHudFramework
             }
 
             public static implicit operator RichText(string text) =>
+                new RichText(text);
+
+            public static implicit operator RichText(StringBuilder text) =>
                 new RichText(text);
 
             public static implicit operator RichText(List<RichStringMembers> text) =>
