@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
 using VRage;
@@ -114,7 +115,7 @@ namespace RichHudFramework
                 private bool updateEvent, offsetsAreStale, lineRangeIsStale;
                 private Vector2 _size, _textSize, _fixedSize, _textOffset;
 
-                private readonly Utils.Stopwatch eventTimer;
+                private readonly Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
 
                 public TextBoard()
@@ -128,7 +129,7 @@ namespace RichHudFramework
                     _fixedSize = new Vector2(100f);
 
                     underlines = new List<UnderlineBoard>();
-                    eventTimer = new Utils.Stopwatch();
+                    eventTimer = new Stopwatch();
                     eventTimer.Start();
                 }
 

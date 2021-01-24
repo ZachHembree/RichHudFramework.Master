@@ -35,8 +35,9 @@ namespace RichHudFramework
 
         public sealed partial class HudMain : RichHudComponentBase
         {
-            public const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
-            public const int treeRefreshRate = 10;
+            private const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
+            private const int treeRefreshRate = 10;
+            private const int tickResetInterval = 120;
 
             /// <summary>
             /// Root parent for all HUD elements.
@@ -269,7 +270,7 @@ namespace RichHudFramework
 
                 drawTick++;
 
-                if (drawTick == 60)
+                if (drawTick == tickResetInterval)
                     drawTick = 0;
             }
 

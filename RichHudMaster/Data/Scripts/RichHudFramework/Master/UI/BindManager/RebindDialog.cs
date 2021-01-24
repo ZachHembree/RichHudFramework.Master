@@ -1,5 +1,6 @@
 ﻿using RichHudFramework.Internal;
 using System.Collections.Generic;
+using System.Diagnostics;
 using VRageMath;
 using System;
 
@@ -27,7 +28,7 @@ namespace RichHudFramework.UI.Server
 
         private readonly List<int> blacklist;
         private readonly RebindHud menu;
-        private readonly Utils.Stopwatch stopwatch;
+        private readonly Stopwatch stopwatch;
 
         private IBind bind;
         private List<IControl> combo;
@@ -38,7 +39,7 @@ namespace RichHudFramework.UI.Server
 
         private RebindDialog() : base(false, true)
         {
-            stopwatch = new Utils.Stopwatch();
+            stopwatch = new Stopwatch();
             menu = new RebindHud(HudMain.Root);
 
             blacklist = new List<int>
@@ -85,7 +86,7 @@ namespace RichHudFramework.UI.Server
 
         public override void HandleInput()
         {
-            if (stopwatch.Enabled && stopwatch.ElapsedMilliseconds > inputWaitTime)
+            if (stopwatch.IsRunning && stopwatch.ElapsedMilliseconds > inputWaitTime)
                 stopwatch.Stop();
 
             if ((stopwatch.ElapsedMilliseconds > inputWaitTime) && bind != null)

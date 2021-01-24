@@ -1,5 +1,6 @@
 ﻿using Sandbox.ModAPI;
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
@@ -47,6 +48,26 @@ namespace RichHudFramework
                 /// </summary>
                 public static TreeClient MainClient => treeManager.mainClient;
 
+                /// <summary>
+                /// Average ticks elapsed during draw
+                /// </summary>
+                public static long AvgDrawElapsedTicks { get; private set; }
+
+                /// <summary>
+                /// Average ticks elapsed during input update
+                /// </summary>
+                public static long AvgInputElapsedTicks { get; private set; }
+
+                /// <summary>
+                /// Ticks elapsed during last rebuild
+                /// </summary>
+                public static long RebuildElapsedTicks => treeManager.rebuildTimer.ElapsedTicks;
+
+                /// <summary>
+                /// Ticks elapsed during last rebuild
+                /// </summary>
+                public static long TicksSinceLastRebuild => treeManager.lastRebuildTime.ElapsedTicks;
+
                 private readonly List<HudUpdateAccessors> updateAccessors;
                 private readonly Dictionary<Func<Vector3D>, ushort> distMap;
                 private readonly HashSet<Func<Vector3D>> uniqueOriginFuncs;
@@ -61,7 +82,8 @@ namespace RichHudFramework
                 private readonly List<TreeClient> clients;
                 private readonly TreeClient mainClient;
 
-                private readonly Utils.Stopwatch rebuildTimer, drawTimer;
+                private readonly Stopwatch rebuildTimer, drawTimer, inputTime, lastRebuildTime;
+                private readonly long[] drawTimes, inputTimes;
 
                 private TreeManager()
                 {
@@ -85,8 +107,15 @@ namespace RichHudFramework
                     clients = new List<TreeClient>();
                     mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
 
-                    rebuildTimer = new Utils.Stopwatch();
-                    drawTimer = new Utils.Stopwatch();
+                    drawTimer = new Stopwatch();
+                    drawTimes = new long[tickResetInterval];
+
+                    inputTime = new Stopwatch();
+                    inputTimes = new long[tickResetInterval];
+
+                    rebuildTimer = new Stopwatch();
+                    lastRebuildTime = new Stopwatch();
+
                     RefreshRequested = false;
                 }
 
@@ -126,6 +155,8 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw()
                 {
+                    drawTimer.Restart();    
+
                     int drawTick = instance.drawTick;
                     float resScale = instance._resScale;
 
@@ -159,6 +190,15 @@ namespace RichHudFramework
                     if (resortLists)
                         SortUpdateAccessors();
 
+                    drawTimer.Stop();
+
+                    // Generate average with a circular array
+                    drawTimes[drawTick] = drawTimer.ElapsedTicks;
+
+                    for (int n = 0; n < tickResetInterval; n++)
+                        AvgDrawElapsedTicks += drawTimes[n];
+
+                    AvgDrawElapsedTicks /= tickResetInterval;
                 }
 
                 /// <summary>
@@ -166,11 +206,23 @@ namespace RichHudFramework
                 /// </summary>
                 public void HandleInput()
                 {
+                    inputTime.Restart();
+
                     for (int n = 0; n < depthTestActions.Count; n++)
                         depthTestActions[n]();
 
                     for (int n = inputActions.Count - 1; n >= 0; n--)
                         inputActions[n]();
+
+                    inputTime.Stop();
+
+                    // Generate average with a circular array
+                    inputTimes[instance.drawTick] = inputTime.ElapsedTicks;
+
+                    for (int n = 0; n < tickResetInterval; n++)
+                        AvgInputElapsedTicks += inputTimes[n];
+
+                    AvgInputElapsedTicks /= tickResetInterval;
                 }
 
                 /// <summary>
@@ -178,6 +230,8 @@ namespace RichHudFramework
                 /// </summary>
                 private void RebuildUpdateLists()
                 {
+                    rebuildTimer.Restart();
+
                     // Clear update lists and rebuild accessor lists from HUD tree
                     updateAccessors.Clear();
                     layoutActions.Clear();
@@ -202,6 +256,9 @@ namespace RichHudFramework
                         HudUpdateAccessors accessors = updateAccessors[n];
                         layoutActions.Add(accessors.Item5);
                     }
+
+                    rebuildTimer.Stop();
+                    lastRebuildTime.Restart();
                 }
 
                 /// <summary>
