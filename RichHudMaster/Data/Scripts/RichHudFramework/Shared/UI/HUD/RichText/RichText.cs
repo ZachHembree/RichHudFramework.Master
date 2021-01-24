@@ -71,13 +71,6 @@ namespace RichHudFramework
                 apiData.GetEnumerator();
 
             /// <summary>
-            /// Appends a string to the end of the text. If the formatting given is equivalent to 
-            /// that of the last string appended, then it will use the same StringBuilder.
-            /// </summary>
-            public void Add(string text) =>
-                Add(defaultFormat, text);
-
-            /// <summary>
             /// Copies and appends the contents of the given RichText object.
             /// </summary>
             public void Add(RichText text)
@@ -95,19 +88,15 @@ namespace RichHudFramework
                     // Attempt to use last StringBuilder if the formatting matches
                     if (currentStrings.Count > 0)
                     {
-                        int currentEnd = currentStrings.Count - 1;
-                        GlyphFormatMembers newFormat = newStrings[0].Item2,
-                            endFormat = currentStrings[currentEnd].Item2;
-                        bool formatEqual = newFormat.Item1 == endFormat.Item1
-                            && newFormat.Item2 == endFormat.Item2
-                            && newFormat.Item3 == endFormat.Item3
-                            && newFormat.Item4 == endFormat.Item4;
+                        GlyphFormatMembers newFormat = newStrings[0].Item2;
+                        StringBuilder sb;
+                        bool formatEqual;
+
+                        GetNextStringBuilder(newFormat, out sb, out formatEqual);
 
                         if (formatEqual)
                         {
-                            StringBuilder sb = currentStrings[currentEnd].Item1,
-                                newSb = newStrings[0].Item1;
-
+                            StringBuilder newSb = newStrings[0].Item1;
                             sb.EnsureCapacity(sb.Length + newSb.Length);
 
                             for (int i = 0; i < newSb.Length; i++)
@@ -133,37 +122,58 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Appends a string to the end of the text. If the formatting given is equivalent to 
-            /// that of the last string appended, then it will use the same StringBuilder.
+            /// Appends a copy of the given <see cref="StringBuilder"/> to the RichText instance.
             /// </summary>
-            public void Add(GlyphFormat newFormat, string text)
+            public void Add(StringBuilder text, GlyphFormat newFormat = null)
             {
                 if (sbPool == null)
                     sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
 
                 List<RichStringMembers> richStrings = apiData;
                 GlyphFormatMembers format = newFormat?.data ?? GlyphFormat.Empty.data;
-                int last = richStrings.Count - 1;
-                bool formatEqual = false;
-
-                // Test formatting
-                if (richStrings.Count > 0)
-                {
-                    GlyphFormatMembers lastFormat = richStrings[last].Item2;
-                    formatEqual = format.Item1 == lastFormat.Item1
-                        && format.Item2 == lastFormat.Item2
-                        && format.Item3 == lastFormat.Item3
-                        && format.Item4 == lastFormat.Item4;
-                }
-
                 StringBuilder sb;
+                bool formatEqual;
+
+                GetNextStringBuilder(newFormat?.data ?? GlyphFormat.Empty.data, out sb, out formatEqual);
 
                 // If format is equal, reuse last StringBuilder
-                if (formatEqual)
-                    sb = richStrings[last].Item1;
-                else
+                if (!formatEqual)
                 {
-                    sb = sbPool.Get();
+                    var richString = new RichStringMembers(sb, format);
+                    richStrings.Add(richString);
+                }
+
+                sb.EnsureCapacity(sb.Length + text.Length);
+
+                for (int i = 0; i < text.Length; i++)
+                    sb.Append(text[i]);
+            }
+
+            /// <summary>
+            /// Appends a copy of the given <see cref="StringBuilder"/> to the RichText instance.
+            /// </summary>
+            public void Add(GlyphFormat newFormat, StringBuilder text) =>
+                Add(text, newFormat);
+
+            /// <summary>
+            /// Appends a string to the end of the text. If the formatting given is equivalent to 
+            /// that of the last string appended, then it will use the same StringBuilder.
+            /// </summary>
+            public void Add(string text, GlyphFormat newFormat = null)
+            {
+                if (sbPool == null)
+                    sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
+
+                List<RichStringMembers> richStrings = apiData;
+                GlyphFormatMembers format = newFormat?.data ?? GlyphFormat.Empty.data;
+                StringBuilder sb;
+                bool formatEqual;
+
+                GetNextStringBuilder(newFormat?.data ?? GlyphFormat.Empty.data, out sb, out formatEqual);
+
+                // If format is equal, reuse last StringBuilder
+                if (!formatEqual)
+                { 
                     var richString = new RichStringMembers(sb, format);
                     richStrings.Add(richString);
                 }
@@ -171,12 +181,31 @@ namespace RichHudFramework
                 sb.Append(text);
             }
 
+            private void GetNextStringBuilder(GlyphFormatMembers newFormat, out StringBuilder sb, out bool formatEqual)
+            {
+                List<RichStringMembers> richStrings = apiData;
+                int last = richStrings.Count - 1;
+                formatEqual = false;
+
+                // Test formatting
+                if (richStrings.Count > 0)
+                {
+                    GlyphFormatMembers lastFormat = richStrings[last].Item2;
+                    formatEqual = newFormat.Item1 == lastFormat.Item1
+                        && newFormat.Item2 == lastFormat.Item2
+                        && newFormat.Item3 == lastFormat.Item3
+                        && newFormat.Item4 == lastFormat.Item4;
+                }
+
+                sb = formatEqual ? richStrings[last].Item1 : sbPool.Get();
+            }
+
             /// <summary>
             /// Appends a string to the end of the text. If the formatting given is equivalent to 
             /// that of the last string appended, then it will use the same StringBuilder.
             /// </summary>
-            public void Add(string text, GlyphFormat newFormat) =>
-                Add(newFormat, text);
+            public void Add(GlyphFormat newFormat, string text) =>
+                Add(text, newFormat);
 
             /// <summary>
             /// Sets the capacity of the StringBuilders and object pool to match their current
@@ -257,13 +286,24 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Appends a string to the end of the left RichText object. If the formatting given 
+            /// Appends a <see cref="string"/> to the end of the left RichText object. If the formatting given 
             /// is equivalent to that of the last string appended, then it will use the same 
             /// StringBuilder.
             /// </summary>>
             public static RichText operator +(RichText left, string right)
             {
-                left.Add(null, right);
+                left.Add(right);
+                return left;
+            }
+
+            /// <summary>
+            /// Appends a <see cref="StringBuilder"/> to the end of the left RichText object. If the formatting given 
+            /// is equivalent to that of the last string appended, then it will use the same 
+            /// StringBuilder.
+            /// </summary>>
+            public static RichText operator +(RichText left, StringBuilder right)
+            {
+                left.Add(right);
                 return left;
             }
 
