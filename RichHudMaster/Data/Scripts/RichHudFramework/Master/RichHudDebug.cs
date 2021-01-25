@@ -88,8 +88,12 @@ namespace RichHudFramework.Server
                 statsBuilder.Clear();
                 statsBuilder += $"Summary:\n";
                 statsBuilder += $"\tCursor Visible: {HudMain.Cursor.Visible}\n";
-                statsBuilder += $"\tMod Clients Registered: {modClients.Count}\n";
-                statsBuilder += $"\tHudMain:\n";
+                statsBuilder += $"\tClient Mods: {modClients.Count}\n";
+
+                for (int n = 0; n < modClients.Count; n++)
+                    statsBuilder += $"\t\t{modClients[n].name}\n";
+
+                statsBuilder += $"\n\tHudMain:\n";
                 statsBuilder += $"\t\tHUD Spaces Registered: {HudMain.TreeManager.HudSpacesRegistered}\n";
                 statsBuilder += $"\t\tElements Registered: {HudMain.TreeManager.ElementRegistered}\n";
                 statsBuilder += $"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n";

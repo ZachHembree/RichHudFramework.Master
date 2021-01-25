@@ -226,8 +226,8 @@ namespace RichHudFramework
 
                         for (int j = 0; j < treePages.Count; j++)
                         {
-                            var entry = treePages[j];
-                            var page = entry.AssocMember;
+                            ListBoxEntry<TerminalPageBase> entry = treePages[j];
+                            TerminalPageBase page = entry.AssocMember;
                             entry.Enabled = page.Enabled;
                             entry.Element.Visible = entry.Enabled;
 

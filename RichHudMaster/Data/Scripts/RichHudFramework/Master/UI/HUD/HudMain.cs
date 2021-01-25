@@ -35,7 +35,7 @@ namespace RichHudFramework
 
         public sealed partial class HudMain : RichHudComponentBase
         {
-            public const int tickResetInterval = 120;
+            public const int tickResetInterval = 240;
             private const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
             private const int treeRefreshRate = 10;
 
