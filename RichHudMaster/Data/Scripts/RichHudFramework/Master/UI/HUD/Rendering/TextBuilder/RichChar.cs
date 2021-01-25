@@ -61,11 +61,7 @@ namespace RichHudFramework
                         /// <summary>
                         /// The position of the character's center relative to its TextBoard.
                         /// </summary>
-                        public Vector2 Offset 
-                        { 
-                            get { return line.locData[index].bbOffset * builder.Scale; } 
-                            set { line.locData[index] = line.locData[index].SetOffset(value / builder.Scale); }
-                        }
+                        public Vector2 Offset => line.locData[index].bbOffset * builder.Scale;
 
                         public readonly int index;
                         public readonly Line line;
@@ -77,9 +73,6 @@ namespace RichHudFramework
                             this.line = line;
                             this.index = index;
                         }
-
-                        public bool IsWordBreak(RichChar right) =>
-                            (IsSeparator && !right.IsSeparator);
                     }
                 }
             }

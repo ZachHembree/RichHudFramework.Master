@@ -139,7 +139,7 @@ namespace RichHudFramework
 
                                 formattedGlyphs[n] = new FormattedGlyph(glyph, format);
                                 locData[n] = new GlyphLocData(glyph.MatFrame.Material.size * scale, glyphSize);
-                                glyphBoards[n] = glyph.GetQuadBoard(scale, format);
+                                glyphBoards[n] = glyph.GetQuadBoard(format);
                             }
                         }
                     }
@@ -154,8 +154,9 @@ namespace RichHudFramework
 
                     public void SetOffsetAt(int index, Vector2 offset)
                     {
-                        var oldData = locData[index];
-                        locData[index] = new GlyphLocData(oldData.bbSize, oldData.chSize, offset);
+                        var current = locData[index];
+                        current.bbOffset = offset;
+                        locData[index] = current;
                     }
 
                     /// <summary>
@@ -229,7 +230,7 @@ namespace RichHudFramework
                         chars.Insert(index, ch);
                         formattedGlyphs.Insert(index, new FormattedGlyph(glyph, format));
                         locData.Insert(index, new GlyphLocData(glyph.MatFrame.Material.size * scale, glyphSize));
-                        glyphBoards.Insert(index, glyph.GetQuadBoard(scale, format));
+                        glyphBoards.Insert(index, glyph.GetQuadBoard(format));
 
                         TrimExcess();
                     }
