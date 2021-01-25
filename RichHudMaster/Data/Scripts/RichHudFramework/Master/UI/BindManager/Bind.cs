@@ -1,6 +1,7 @@
 ﻿using RichHudFramework.Internal;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace RichHudFramework
 {
@@ -69,14 +70,14 @@ namespace RichHudFramework
                     public int length, bindHits;
 
                     private bool wasPressed;
-                    private readonly Utils.Stopwatch stopwatch;
+                    private readonly Stopwatch stopwatch;
                     private readonly BindGroup group;
 
                     public Bind(string name, int index, BindGroup group)
                     {
                         Name = name;
                         Index = index;
-                        stopwatch = new Utils.Stopwatch();
+                        stopwatch = new Stopwatch();
                         this.group = group;
 
                         IsPressedAndHeld = false;

@@ -20,17 +20,17 @@ namespace RichHudFramework
                     /// <summary>
                     /// Size of the billboard rendering the character.
                     /// </summary>
-                    public readonly Vector2 bbSize;
+                    public Vector2 bbSize;
 
                     /// <summary>
                     /// Size of the character as it appears.
                     /// </summary>
-                    public readonly Vector2 chSize;
+                    public Vector2 chSize;
 
                     /// <summary>
                     /// Position of the character starting from the center of its TextBoard.
                     /// </summary>
-                    public readonly Vector2 bbOffset;
+                    public Vector2 bbOffset;
 
                     public GlyphLocData(Vector2 bbSize, Vector2 chSize, Vector2 bbOffset = default(Vector2))
                     {

@@ -57,7 +57,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Read-only collection of all registered fonts.
                 /// </summary>
-                public static ReadOnlyCollection<IFont> Fonts => Instance.extFonts;
+                public static IReadOnlyList<IFont> Fonts => Instance.extFonts;
 
                 private static FontManager Instance
                 {
@@ -66,13 +66,13 @@ namespace RichHudFramework
                 }
                 private static FontManager _instance;
 
-                private readonly ReadOnlyCollection<IFont> extFonts;
+                private readonly IReadOnlyList<IFont> extFonts;
                 private readonly List<IFont> fonts;
 
                 private FontManager() : base(false, true)
                 {
                     fonts = new List<IFont>();
-                    extFonts = new ReadOnlyCollection<IFont>(fonts);
+                    extFonts = fonts;
                 }
 
                 public static void Init()

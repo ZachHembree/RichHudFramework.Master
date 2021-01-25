@@ -164,7 +164,7 @@ namespace RichHudFramework
                     GetHudSpaceFunc = null;
                 }
 
-                protected override void BeginLayout(bool refresh)
+                protected override void Layout()
                 {
                     LocalScale = HudMain.ResScale;
 
@@ -202,7 +202,7 @@ namespace RichHudFramework
                     fullZOffset = ParentUtils.GetFullZOffset(this, _parent);
                     cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
 
-                    base.BeginLayout(refresh);
+                    base.Layout();
                 }
 
                 private object GetOrSetMember(object data, int memberEnum)

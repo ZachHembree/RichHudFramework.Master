@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
 using VRage;
@@ -114,7 +115,7 @@ namespace RichHudFramework
                 private bool updateEvent, offsetsAreStale, lineRangeIsStale;
                 private Vector2 _size, _textSize, _fixedSize, _textOffset;
 
-                private readonly Utils.Stopwatch eventTimer;
+                private readonly Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
 
                 public TextBoard()
@@ -128,7 +129,7 @@ namespace RichHudFramework
                     _fixedSize = new Vector2(100f);
 
                     underlines = new List<UnderlineBoard>();
-                    eventTimer = new Utils.Stopwatch();
+                    eventTimer = new Stopwatch();
                     eventTimer.Start();
                 }
 
@@ -563,14 +564,14 @@ namespace RichHudFramework
                 /// </summary>
                 private float UpdateCharOffset(Line line, int right, int left, Vector2 pos, float xAlign)
                 {
-                    char currentCh = line.Chars[right];
+                    char ch = line.Chars[right];
                     FormattedGlyph formattedGlyph = line.FormattedGlyphs[right];
                     IFontStyle fontStyle = FontManager.GetFontStyle(formattedGlyph.format.StyleIndex);
 
                     float textSize = formattedGlyph.format.TextSize,
-                    formatScale = textSize * fontStyle.FontScale,
+                        formatScale = textSize * fontStyle.FontScale,
                         // Quick fix for CJK characters in Space Engineers font data
-                        cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && currentCh >= 0x4E00) ? (-4f * textSize) : 0f;
+                        cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && ch >= 0x4E00) ? (-4f * textSize) : 0f;
 
                     // Kerning adjustment
                     if (left >= 0)
@@ -578,7 +579,7 @@ namespace RichHudFramework
                         GlyphFormat leftFmt = line.FormattedGlyphs[left].format, rightFmt = formattedGlyph.format;
 
                         if (leftFmt.StyleIndex == rightFmt.StyleIndex && leftFmt.TextSize == rightFmt.TextSize)
-                            pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], currentCh) * formatScale;
+                            pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], ch) * formatScale;
                     }
 
                     GlyphLocData locData = line.LocData[right];
@@ -589,8 +590,7 @@ namespace RichHudFramework
                         Y = pos.Y - (locData.bbSize.Y / 2f) + (fontStyle.BaseLine * formatScale) + cjkOffset
                     });
 
-                    pos.X += locData.chSize.X;
-                    return pos.X;
+                    return pos.X + locData.chSize.X;
                 }
 
                 /// <summary>

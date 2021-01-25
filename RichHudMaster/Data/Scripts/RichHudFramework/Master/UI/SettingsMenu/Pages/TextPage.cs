@@ -56,23 +56,23 @@ namespace RichHudFramework
                         case TextPageAccessors.GetOrSetHeader:
                             {
                                 if (data == null)
-                                    return textBox.HeaderText.ApiData;
+                                    return textBox.HeaderText.apiData;
                                 else
-                                    textBox.HeaderText = new RichText(data as IList<RichStringMembers>); break;
+                                    textBox.HeaderText = new RichText(data as List<RichStringMembers>); break;
                             }
                         case TextPageAccessors.GetOrSetSubheader:
                             {
                                 if (data == null)
-                                    return textBox.SubHeaderText.ApiData;
+                                    return textBox.SubHeaderText.apiData;
                                 else
-                                    textBox.SubHeaderText = new RichText(data as IList<RichStringMembers>); break;
+                                    textBox.SubHeaderText = new RichText(data as List<RichStringMembers>); break;
                             }
                         case TextPageAccessors.GetOrSetText:
                             {
                                 if (data == null)
-                                    return textBox.Text.ApiData;
+                                    return textBox.Text.apiData;
                                 else
-                                    textBox.Text = new RichText(data as IList<RichStringMembers>); break;
+                                    textBox.Text = new RichText(data as List<RichStringMembers>); break;
                             }
                         case TextPageAccessors.GetTextBuilder:
                             return (TextBuilder as TextBuilder).GetApiData();
@@ -140,7 +140,7 @@ namespace RichHudFramework
                         AutoResize = false,
                         Format = GlyphFormat.White,
                         VertCenterText = false,
-                        EnableEditing = false,
+                        //EnableEditing = false,
                         EnableHighlighting = true,
                     };
 

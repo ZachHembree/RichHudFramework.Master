@@ -25,13 +25,8 @@ namespace RichHudFramework.Server
                 { "toggleCursor", x => HudMain.EnableCursor = !HudMain.EnableCursor },
                 { "crash", x => ThrowException()},
                 { "refreshDrawList", x => HudMain.RefreshDrawList = true },
-                { "toggleDebug", x => ToggleDebug() }
+                { "toggleDebug", x => RichHudDebug.EnableDebug = !RichHudDebug.EnableDebug }
             };
-        }
-
-        private void ToggleDebug()
-        {
-            demoTerminalPage.Enabled = !demoTerminalPage.Enabled;
         }
 
         private static void ThrowException()

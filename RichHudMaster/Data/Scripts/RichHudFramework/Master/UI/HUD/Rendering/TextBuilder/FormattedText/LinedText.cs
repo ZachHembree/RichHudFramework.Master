@@ -26,7 +26,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 charBuffer.Clear();
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, previous, x => (x >= ' ' || x == '\n'));
+                    GetRichChars(text[n], charBuffer, previous, true);
 
                 InsertChars(start);
             }
