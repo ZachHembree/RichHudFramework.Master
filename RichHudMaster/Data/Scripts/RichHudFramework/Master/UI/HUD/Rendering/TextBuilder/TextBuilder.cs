@@ -171,8 +171,11 @@ namespace RichHudFramework
                 /// <summary>
                 /// Appends the given text to the end of the text using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
                 /// </summary>
-                public void Append(RichText text) =>
+                public void Append(RichText text)
+                {
                     AppendData(text.apiData);
+                    lastText = text;
+                }
 
                 protected void AppendData(IList<RichStringMembers> text)
                 {
@@ -196,10 +199,13 @@ namespace RichHudFramework
                 /// <summary>
                 /// Inserts the given text to the end of the text at the specified starting index using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
                 /// </summary>
-                public void Insert(RichText text, Vector2I start) =>
+                public void Insert(RichText text, Vector2I start)
+                {
                     InsertData(text.apiData, start);
+                    lastText = text;
+                }
 
-                public void InsertData(IList<RichStringMembers> text, Vector2I start)
+                protected void InsertData(IList<RichStringMembers> text, Vector2I start)
                 {
                     for (int n = 0; n < text.Count; n++)
                     {
