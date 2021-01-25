@@ -130,7 +130,7 @@ namespace RichHudFramework
                     {
                         for (int n = start; n <= end; n++)
                         {
-                            if (!formattedGlyphs[n].format.Equals(format.data))
+                            if (!formattedGlyphs[n].format.Equals(format))
                             {
                                 IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
                                 float scale = format.TextSize * fontStyle.FontScale;
