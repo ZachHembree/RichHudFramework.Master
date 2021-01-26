@@ -100,7 +100,7 @@ namespace RichHudFramework
                         if (IsNewPressed)
                         {
                             NewPressed?.Invoke();
-                            stopwatch.Start();
+                            stopwatch.Restart();
                         }
 
                         if (IsPressed && stopwatch.ElapsedTicks > holdTime)

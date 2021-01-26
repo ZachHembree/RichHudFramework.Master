@@ -299,7 +299,7 @@ namespace RichHudFramework
                     if (updateEvent && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
                     {
                         TextChanged?.Invoke();
-                        eventTimer.Reset();
+                        eventTimer.Restart();
                         updateEvent = false;
                     }
 

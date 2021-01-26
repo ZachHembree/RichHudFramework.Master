@@ -73,7 +73,7 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         private void UpdateBindInternal(IBind bind, int bindPos, Action CallbackFunc = null)
         {
-            stopwatch.Start();
+            stopwatch.Restart();
             Open = true;
             newControl = null;
 
