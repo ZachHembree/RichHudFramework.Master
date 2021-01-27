@@ -22,10 +22,10 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public override string Name
         {
-            get { return window.Header.ToString(); }
+            get { return window.HeaderBuilder.ToString(); }
             set
             {
-                window.Header.SetText(value);
+                window.HeaderBuilder.SetText(value);
                 openButton.Text = value;
             }
         }
@@ -160,7 +160,7 @@ namespace RichHudFramework.UI.Server
                 BodyColor = new Color(41, 54, 62, 150);
                 BorderColor = new Color(58, 68, 77);
 
-                Header.Format = TerminalFormatting.ControlFormat.WithAlignment(TextAlignment.Center);
+                HeaderBuilder.Format = TerminalFormatting.ControlFormat.WithAlignment(TextAlignment.Center);
                 header.Height = 40f;
 
                 confirmButton = new BorderedButton(this)

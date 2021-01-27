@@ -45,7 +45,7 @@ namespace RichHudFramework
                 }
             }
 
-            public ITextBoard NameBuilder { get; set; }
+            public ITextBuilder NameBuilder { get; set; }
 
             public bool Enabled { get; set; }
 

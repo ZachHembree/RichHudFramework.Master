@@ -12,7 +12,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// The name of the color picker as it appears in the menu.
         /// </summary>
-        public override string Name { get { return colorPicker.TextBoard.ToString(); } set { colorPicker.TextBoard.SetText(value); } }
+        public override string Name { get { return colorPicker.NameBuilder.ToString(); } set { colorPicker.NameBuilder.SetText(value); } }
 
         public override Color Value { get { return colorPicker.Color; } set { colorPicker.Color = value; } }
 

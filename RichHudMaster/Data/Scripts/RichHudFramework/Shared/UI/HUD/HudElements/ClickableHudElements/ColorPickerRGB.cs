@@ -14,14 +14,14 @@ namespace RichHudFramework.UI.Server
     public class ColorPickerRGB : HudElementBase
     {
         /// <summary>
-        /// Text rendered by the label.
+        /// Text rendered by the label
         /// </summary>
         public RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
 
         /// <summary>
-        /// TextBoard backing the label element.
+        /// Text builder backing the label
         /// </summary>
-        public ITextBoard TextBoard => name.TextBoard;
+        public ITextBuilder NameBuilder => name.TextBoard;
 
         public override float Width
         {

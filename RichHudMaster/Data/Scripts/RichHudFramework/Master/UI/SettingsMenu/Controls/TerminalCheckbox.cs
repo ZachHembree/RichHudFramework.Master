@@ -10,7 +10,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Name of the checkbox as it appears on its label.
         /// </summary>
-        public override string Name { get { return checkBox.TextBoard.ToString(); } set { checkBox.TextBoard.SetText(value); } }
+        public override string Name { get { return checkBox.NameBuilder.ToString(); } set { checkBox.NameBuilder.SetText(value); } }
 
         public override bool Value { get { return checkBox.IsBoxChecked; } set { checkBox.IsBoxChecked = value; } }
 

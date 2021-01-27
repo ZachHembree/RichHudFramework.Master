@@ -55,8 +55,8 @@ namespace RichHudFramework
 
                 public TerminalWindow(HudParentBase parent = null) : base(parent)
                 {
-                    Header.Format = TerminalFormatting.HeaderFormat;
-                    Header.SetText("Rich HUD Terminal");
+                    HeaderBuilder.Format = TerminalFormatting.HeaderFormat;
+                    HeaderBuilder.SetText("Rich HUD Terminal");
 
                     header.Height = 60f;
 
