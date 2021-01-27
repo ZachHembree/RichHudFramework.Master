@@ -140,7 +140,7 @@ namespace RichHudFramework
                         AutoResize = false,
                         Format = GlyphFormat.White,
                         VertCenterText = false,
-                        //EnableEditing = false,
+                        EnableEditing = false,
                         EnableHighlighting = true,
                     };
 
