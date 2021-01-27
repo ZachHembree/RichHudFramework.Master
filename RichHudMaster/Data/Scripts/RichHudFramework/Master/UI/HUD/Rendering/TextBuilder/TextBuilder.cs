@@ -119,12 +119,38 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Clears current text and appends the text given.
+                /// Replaces the current text with the <see cref="RichText"/> given
                 /// </summary>
                 public void SetText(RichText text)
                 {
                     SetData(text.apiData);
                     lastText = text;
+                }
+
+                /// <summary>
+                /// Clears current text and appends a copy of the <see cref="StringBuilder"/> given.
+                /// </summary>
+                public void SetText(StringBuilder text)
+                {
+                    if (lastText == null)
+                        lastText = new RichText();
+
+                    lastText.Clear();
+                    lastText.Add(text);
+                    SetData(lastText.apiData);
+                }
+
+                /// <summary>
+                /// Clears current text and appends a copy of the <see cref="string"/> given.
+                /// </summary>
+                public void SetText(string text)
+                {
+                    if (lastText == null)
+                        lastText = new RichText();
+
+                    lastText.Clear();
+                    lastText.Add(text);
+                    SetData(lastText.apiData);
                 }
 
                 protected void SetData(IList<RichStringMembers> text)
@@ -152,29 +178,51 @@ namespace RichHudFramework
                     }
                 }
 
-                protected void AppendData(RichStringMembers text)
-                {
-                    GlyphFormatMembers format = text.Item2,
-                        empty = GlyphFormat.Empty.data;
-                    bool formatEmpty = format.Item1 == empty.Item1
-                        && format.Item2 == empty.Item2
-                        && format.Item3 == empty.Item3
-                        && format.Item4 == empty.Item4;
-
-                    if (formatEmpty)
-                        text.Item2 = Format.data;
-
-                    formatter.Append(text);
-                    AfterTextUpdate();
-                }
-
                 /// <summary>
-                /// Appends the given text to the end of the text using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
+                /// Appends the given <see cref="RichText"/>
                 /// </summary>
                 public void Append(RichText text)
                 {
                     AppendData(text.apiData);
-                    lastText = text;
+                }
+
+                /// <summary>
+                /// Appends a copy of the text in the <see cref="StringBuilder"/>
+                /// </summary>
+                public void Append(StringBuilder text)
+                {
+                    if (lastText == null)
+                        lastText = new RichText();
+
+                    lastText.Clear();
+                    lastText.Add(text);
+                    AppendData(lastText.apiData);
+                }
+
+                /// <summary>
+                /// Appends a copy of the <see cref="string"/>
+                /// </summary>
+                public void Append(string text)
+                {
+                    if (lastText == null)
+                        lastText = new RichText();
+
+                    lastText.Clear();
+                    lastText.Add(text);
+                    AppendData(lastText.apiData);
+                }
+
+                /// <summary>
+                /// Appends the given <see cref="char"/>
+                /// </summary>
+                public void Append(char ch)
+                {
+                    if (lastText == null)
+                        lastText = new RichText();
+
+                    lastText.Clear();
+                    lastText.Add(ch);
+                    AppendData(lastText.apiData);
                 }
 
                 protected void AppendData(IList<RichStringMembers> text)
@@ -197,12 +245,50 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Inserts the given text to the end of the text at the specified starting index using the <see cref="GlyphFormat"/>ting specified in the <see cref="RichText"/>.
+                /// Inserts the given <see cref="RichText"/> starting at the specified starting index
                 /// </summary>
                 public void Insert(RichText text, Vector2I start)
                 {
                     InsertData(text.apiData, start);
-                    lastText = text;
+                }
+
+                /// <summary>
+                /// Inserts a copy of the given <see cref="StringBuilder"/> starting at the specified starting index
+                /// </summary>
+                public void Insert(StringBuilder text, Vector2I start)
+                {
+                    if (lastText == null)
+                        lastText = new RichText();
+
+                    lastText.Clear();
+                    lastText.Add(text);
+                    InsertData(lastText.apiData, start);
+                }
+
+                /// <summary>
+                /// Inserts a copy of the given <see cref="string"/> starting at the specified starting index
+                /// </summary>
+                public void Insert(string text, Vector2I start)
+                {
+                    if (lastText == null)
+                        lastText = new RichText();
+
+                    lastText.Clear();
+                    lastText.Add(text);
+                    InsertData(lastText.apiData, start);
+                }
+
+                /// <summary>
+                /// Inserts the given <see cref="char"/> starting at the specified starting index
+                /// </summary>
+                public void Insert(char ch, Vector2I start)
+                {
+                    if (lastText == null)
+                        lastText = new RichText();
+
+                    lastText.Clear();
+                    lastText.Add(ch);
+                    InsertData(lastText.apiData, start);
                 }
 
                 protected void InsertData(IList<RichStringMembers> text, Vector2I start)
@@ -263,10 +349,10 @@ namespace RichHudFramework
                         else
                             nextTextData = lastTextData;
 
-                        if (nextTextData == lastText.apiData)
-                            return lastText;
-                        else
-                            return new RichText(lastText.apiData);
+                        if (nextTextData != lastText.apiData)
+                            lastText = new RichText(lastText.apiData);
+
+                        return lastText;
                     }
                     else
                         return null;
