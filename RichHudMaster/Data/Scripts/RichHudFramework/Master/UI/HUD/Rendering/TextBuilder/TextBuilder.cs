@@ -130,26 +130,26 @@ namespace RichHudFramework
                 /// <summary>
                 /// Clears current text and appends a copy of the <see cref="StringBuilder"/> given.
                 /// </summary>
-                public void SetText(StringBuilder text)
+                public void SetText(StringBuilder text, GlyphFormat format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
 
                     lastText.Clear();
-                    lastText.Add(text);
+                    lastText.Add(text, format ?? Format);
                     SetData(lastText.apiData);
                 }
 
                 /// <summary>
                 /// Clears current text and appends a copy of the <see cref="string"/> given.
                 /// </summary>
-                public void SetText(string text)
+                public void SetText(string text, GlyphFormat format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
 
                     lastText.Clear();
-                    lastText.Add(text);
+                    lastText.Add(text, format ?? Format);
                     SetData(lastText.apiData);
                 }
 
@@ -189,39 +189,39 @@ namespace RichHudFramework
                 /// <summary>
                 /// Appends a copy of the text in the <see cref="StringBuilder"/>
                 /// </summary>
-                public void Append(StringBuilder text)
+                public void Append(StringBuilder text, GlyphFormat format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
 
                     lastText.Clear();
-                    lastText.Add(text);
+                    lastText.Add(text, format ?? Format);
                     AppendData(lastText.apiData);
                 }
 
                 /// <summary>
                 /// Appends a copy of the <see cref="string"/>
                 /// </summary>
-                public void Append(string text)
+                public void Append(string text, GlyphFormat format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
 
                     lastText.Clear();
-                    lastText.Add(text);
+                    lastText.Add(text, format ?? Format);
                     AppendData(lastText.apiData);
                 }
 
                 /// <summary>
                 /// Appends the given <see cref="char"/>
                 /// </summary>
-                public void Append(char ch)
+                public void Append(char ch, GlyphFormat format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
 
                     lastText.Clear();
-                    lastText.Add(ch);
+                    lastText.Add(ch, format ?? Format);
                     AppendData(lastText.apiData);
                 }
 
@@ -255,39 +255,39 @@ namespace RichHudFramework
                 /// <summary>
                 /// Inserts a copy of the given <see cref="StringBuilder"/> starting at the specified starting index
                 /// </summary>
-                public void Insert(StringBuilder text, Vector2I start)
+                public void Insert(StringBuilder text, Vector2I start, GlyphFormat format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
 
                     lastText.Clear();
-                    lastText.Add(text);
+                    lastText.Add(text, format ?? Format);
                     InsertData(lastText.apiData, start);
                 }
 
                 /// <summary>
                 /// Inserts a copy of the given <see cref="string"/> starting at the specified starting index
                 /// </summary>
-                public void Insert(string text, Vector2I start)
+                public void Insert(string text, Vector2I start, GlyphFormat format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
 
                     lastText.Clear();
-                    lastText.Add(text);
+                    lastText.Add(text, format ?? Format);
                     InsertData(lastText.apiData, start);
                 }
 
                 /// <summary>
                 /// Inserts the given <see cref="char"/> starting at the specified starting index
                 /// </summary>
-                public void Insert(char ch, Vector2I start)
+                public void Insert(char ch, Vector2I start, GlyphFormat format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
 
                     lastText.Clear();
-                    lastText.Add(ch);
+                    lastText.Add(ch, format ?? Format);
                     InsertData(lastText.apiData, start);
                 }
 
