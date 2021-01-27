@@ -349,7 +349,7 @@ namespace RichHudFramework
                         else
                             nextTextData = lastTextData;
 
-                        if (nextTextData != lastText.apiData)
+                        if (lastText == null || nextTextData != lastText.apiData)
                             lastText = new RichText(lastText.apiData);
 
                         return lastText;
