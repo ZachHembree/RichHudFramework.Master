@@ -201,18 +201,6 @@ namespace RichHudFramework
                         Count = 0;
                     }
 
-                    public override string ToString()
-                    {
-                        StringBuilder sb = new StringBuilder();
-
-                        for (int n = 0; n < Count; n++)
-                        {
-                            lines[n].GetText(sb);
-                        }
-
-                        return sb.ToString();
-                    }
-
                     /// <summary>
                     /// Retrieves the index of the character immediately preceeding the index given. Returns
                     /// true if successful. Otherwise, the beginning of the collection has been reached.

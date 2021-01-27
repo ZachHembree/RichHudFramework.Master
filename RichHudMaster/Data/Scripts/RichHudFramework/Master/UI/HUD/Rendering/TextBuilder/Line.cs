@@ -334,28 +334,6 @@ namespace RichHudFramework
                             }
                         }
                     }
-
-                    public void GetText(StringBuilder stringBuilder)
-                    {
-                        stringBuilder.EnsureCapacity(stringBuilder.Length + chars.Count);
-
-                        for (int n = 0; n < chars.Count; n++)
-                            stringBuilder.Append(chars[n]);
-                    }
-
-                    /// <summary>
-                    /// Returns the contents of the line as an unformatted string.
-                    /// </summary>
-                    public override string ToString()
-                    {
-                        StringBuilder sb = new StringBuilder();
-                        sb.EnsureCapacity(chars.Count);
-
-                        for (int n = 0; n < chars.Count; n++)
-                            sb.Append(chars[n]);
-
-                        return sb.ToString();
-                    }
                 }
             }
         }

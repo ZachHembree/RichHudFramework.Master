@@ -593,8 +593,24 @@ namespace RichHudFramework
                 /// <summary>
                 /// Returns the contents of the <see cref="ITextBuilder"/> as an unformatted string.
                 /// </summary>
-                public override string ToString() =>
-                    lines.ToString();
+                public override string ToString()
+                {
+                    int charCount = 0;
+
+                    for (int i = 0; i < lines.Count; i++)
+                        charCount += lines[i].Chars.Count;
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.EnsureCapacity(charCount);
+
+                    for (int i = 0; i < lines.Count; i++)
+                    {
+                        for (int j = 0; j < lines[i].Chars.Count; j++)
+                            sb.Append(lines[i].Chars[j]);
+                    }
+
+                    return sb.ToString();
+                }
             }
         }
     }
