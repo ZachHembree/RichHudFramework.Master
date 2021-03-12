@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
+using VRage.Game.ModAPI;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
@@ -195,6 +196,9 @@ namespace RichHudFramework
 
                 protected override void Layout()
                 {
+                    if (MyAPIGateway.Gui.IsCursorVisible)
+                        CloseMenu();
+
                     LocalScale = HudMain.ResScale;
 
                     base.Layout();
