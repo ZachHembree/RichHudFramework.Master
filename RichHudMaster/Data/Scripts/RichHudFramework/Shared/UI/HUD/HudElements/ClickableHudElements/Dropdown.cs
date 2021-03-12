@@ -127,7 +127,7 @@ namespace RichHudFramework.UI
 
         public HudElementBase Display => display;
 
-        protected readonly ListBox<T> listBox;
+        public readonly ListBox<T> listBox;
         protected readonly DropdownDisplay display;
         protected readonly TexturedBox highlight;
 
@@ -287,8 +287,8 @@ namespace RichHudFramework.UI
 
             public IMouseInput MouseInput => mouseInput;
 
-            private readonly Label name;
-            private readonly TexturedBox arrow, divider, background;
+            public readonly Label name;
+            public readonly TexturedBox arrow, divider, background;
             private readonly MouseInputElement mouseInput;
             private readonly HudChain layout;
 
