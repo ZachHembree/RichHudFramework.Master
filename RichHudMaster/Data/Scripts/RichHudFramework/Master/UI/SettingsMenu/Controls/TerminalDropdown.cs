@@ -19,12 +19,12 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// The name of the control as it appears in the terminal.
         /// </summary>
-        public override string Name { get { return dropdown.Name.ToString(); } set { dropdown.Name = value; } }
+        public override string Name { get { return subtype.Name.ToString(); } set { subtype.Name = value; } }
 
         /// <summary>
         /// Currently selected list member.
         /// </summary>
-        public override ListBoxEntry<TValue> Value { get { return dropdown.Selection; } set { dropdown.SetSelection(value); } }
+        public override ListBoxEntry<TValue> Value { get { return subtype.Selection; } set { subtype.SetSelection(value); } }
 
         /// <summary>
         /// Used to periodically update the value associated with the control. Optional.
@@ -34,14 +34,14 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// List of entries in the dropdown.
         /// </summary>
-        public IReadOnlyList<ListBoxEntry<TValue>> List => dropdown.ListEntries;
+        public Dropdown<TValue> List => subtype.dropdown;
 
-        private readonly NamedDropdown<TValue> dropdown;
+        private readonly NamedDropdown<TValue> subtype;
 
         public TerminalDropdown()
         {
-            dropdown = new NamedDropdown<TValue>();
-            SetElement(dropdown);
+            subtype = new NamedDropdown<TValue>();
+            SetElement(subtype);
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)
@@ -55,7 +55,7 @@ namespace RichHudFramework.UI.Server
                 var member = (ListControlAccessors)memberEnum;
 
                 if (member == ListControlAccessors.ListAccessors)
-                    return (ApiMemberAccessor)dropdown.GetOrSetMember;
+                    return (ApiMemberAccessor)subtype.GetOrSetMember;
 
                 return null;
             }
@@ -100,8 +100,9 @@ namespace RichHudFramework.UI.Server
                 set { hudChain.Padding = value; }
             }
 
+            public readonly Dropdown<T> dropdown;
+
             private readonly Label name;
-            private readonly Dropdown<T> dropdown;
             private readonly HudChain hudChain;
 
             public NamedDropdown(HudParentBase parent = null) : base(parent)

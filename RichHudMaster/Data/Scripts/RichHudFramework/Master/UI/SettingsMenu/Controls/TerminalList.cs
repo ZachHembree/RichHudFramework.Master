@@ -21,12 +21,12 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// The name of the control as it appears in the terminal.
         /// </summary>
-        public override string Name { get { return listBox.Name.ToString(); } set { listBox.Name = value; } }
+        public override string Name { get { return subtype.Name.ToString(); } set { subtype.Name = value; } }
 
         /// <summary>
         /// Currently selected list member.
         /// </summary>
-        public override ListBoxEntry<TValue> Value { get { return listBox.Selection; } set { listBox.SetSelection(value); } }
+        public override ListBoxEntry<TValue> Value { get { return subtype.Selection; } set { subtype.SetSelection(value); } }
 
         /// <summary>
         /// Used to periodically update the value associated with the control. Optional.
@@ -36,14 +36,14 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// List of entries in the dropdown.
         /// </summary>
-        public IReadOnlyList<ListBoxEntry<TValue>> List => listBox.ListEntries;
+        public ListBox<TValue> List => subtype.listBox;
 
-        private readonly NamedListBox<TValue> listBox;
+        private readonly NamedListBox<TValue> subtype;
 
         public TerminalList()
         {
-            listBox = new NamedListBox<TValue>();
-            SetElement(listBox);
+            subtype = new NamedListBox<TValue>();
+            SetElement(subtype);
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)
@@ -57,7 +57,7 @@ namespace RichHudFramework.UI.Server
                 var member = (ListControlAccessors)memberEnum;
 
                 if (member == ListControlAccessors.ListAccessors)
-                    return (ApiMemberAccessor)listBox.GetOrSetMember;
+                    return (ApiMemberAccessor)subtype.GetOrSetMember;
 
                 return null;
             }
@@ -102,8 +102,9 @@ namespace RichHudFramework.UI.Server
                 set { hudChain.Padding = value; }
             }
 
+            public readonly ListBox<T> listBox;
+
             private readonly Label name;
-            private readonly ListBox<T> listBox;
             private readonly HudChain hudChain;
 
             public NamedListBox(HudParentBase parent = null) : base(parent)
