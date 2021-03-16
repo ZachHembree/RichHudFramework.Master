@@ -85,7 +85,7 @@ namespace RichHudFramework
                 private readonly bool continuousRefresh;
                 private readonly List<HudUpdateAccessors> updateAccessors;
 
-                public TreeClient(bool continuousRefresh)
+                public TreeClient(bool continuousRefresh = true)
                 {
                     this.continuousRefresh = continuousRefresh;
 

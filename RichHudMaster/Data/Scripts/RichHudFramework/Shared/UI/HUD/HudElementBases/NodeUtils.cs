@@ -29,17 +29,17 @@ namespace RichHudFramework
                     {
                         HudNodeBase node = nodes[n];
 
-                        if (node._registered)
+                        if ((node.State & HudElementStates.IsRegistered) > 0)
                             throw new Exception("HUD Element already registered!");
 
-                        if (node.wasFastUnregistered && newParent != node.reregParent)
+                        if ((node.State & HudElementStates.WasFastUnregistered) > 0 && newParent != node.reregParent)
                         {
                             node.reregParent.RemoveChild(node);
-                            node.wasFastUnregistered = false;
+                            node.State &= ~HudElementStates.WasFastUnregistered;
                             node.reregParent = null;
                         }
 
-                        if (node.wasFastUnregistered)
+                        if ((node.State & HudElementStates.WasFastUnregistered) > 0)
                             wereFastUnregistered = true;
                     }
 
@@ -54,21 +54,24 @@ namespace RichHudFramework
                         {
                             node.reregParent = newParent;
                             node.Parent = null;
-                            node._registered = false;
+                            node.State &= ~HudElementStates.IsRegistered;
                         }
                         else
                         {
                             node.parentZOffset = newParent.ZOffset;
                             node.parentScale = newParent.Scale;
-                            node.parentVisible = newParent.Visible;
+                            node.ParentVisible = newParent.Visible;
                         }
 
-                        if (!node.wasFastUnregistered)
+                        if (!((node.State & HudElementStates.WasFastUnregistered) > 0))
                         {
                             children.Add(node);
                         }
 
-                        node.wasFastUnregistered = preregister;
+                        if (preregister)
+                            node.State |= HudElementStates.WasFastUnregistered;
+                        else
+                            node.State &= ~HudElementStates.WasFastUnregistered;
                     }
                 }
 
@@ -85,17 +88,17 @@ namespace RichHudFramework
                     {
                         HudNodeBase node = nodes[n].Element;
 
-                        if (node._registered)
+                        if ((node.State & HudElementStates.IsRegistered) > 0)
                             throw new Exception("HUD Element already registered!");
 
-                        if (node.wasFastUnregistered && newParent != node.reregParent)
+                        if ((node.State & HudElementStates.WasFastUnregistered) > 0 && newParent != node.reregParent)
                         {
                             node.reregParent.RemoveChild(node);
-                            node.wasFastUnregistered = false;
+                            node.State &= ~HudElementStates.WasFastUnregistered;
                             node.reregParent = null;
                         }
 
-                        if (node.wasFastUnregistered)
+                        if ((node.State & HudElementStates.WasFastUnregistered) > 0)
                             wereFastUnregistered = true;
                     }
 
@@ -110,21 +113,24 @@ namespace RichHudFramework
                         {
                             node.reregParent = newParent;
                             node.Parent = null;
-                            node._registered = false;
+                            node.State &= ~HudElementStates.IsRegistered;
                         }
                         else
                         {
                             node.parentZOffset = newParent.ZOffset;
                             node.parentScale = newParent.Scale;
-                            node.parentVisible = newParent.Visible;
+                            node.ParentVisible = newParent.Visible;
                         }
 
-                        if (!node.wasFastUnregistered)
+                        if (!((node.State & HudElementStates.WasFastUnregistered) > 0))
                         {
                             children.Add(node);
                         }
 
-                        node.wasFastUnregistered = preregister;
+                        if (preregister)
+                            node.State |= HudElementStates.WasFastUnregistered;
+                        else
+                            node.State &= ~HudElementStates.WasFastUnregistered;
                     }
                 }
 
@@ -180,18 +186,18 @@ namespace RichHudFramework
                             if (fast)
                             {
                                 node.reregParent = node._parent;
-                                node.wasFastUnregistered = true;
+                                node.State |= HudElementStates.WasFastUnregistered;
                             }
                             else
                             {
                                 node.reregParent = null;
-                                node.wasFastUnregistered = false;
+                                node.State &= ~HudElementStates.WasFastUnregistered;
                             }
 
                             node.Parent = null;
-                            node._registered = false;
+                            node.State &= ~HudElementStates.IsRegistered;
                             node.parentZOffset = 0;
-                            node.parentVisible = false;
+                            node.ParentVisible = false;
                         }
                     }
                 }
@@ -250,18 +256,17 @@ namespace RichHudFramework
                             if (fast)
                             {
                                 node.reregParent = node._parent;
-                                node.wasFastUnregistered = true;
+                                node.State |= HudElementStates.WasFastUnregistered;
                             }
                             else
                             {
                                 node.reregParent = null;
-                                node.wasFastUnregistered = false;
+                                node.State &= ~HudElementStates.WasFastUnregistered;
                             }
 
                             node.Parent = null;
-                            node._registered = false;
+                            node.State &= ~HudElementStates.IsRegistered;
                             node.parentZOffset = 0;
-                            node.parentVisible = false;
                         }
                     }
                 }

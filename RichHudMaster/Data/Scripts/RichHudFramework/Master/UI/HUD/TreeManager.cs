@@ -102,7 +102,7 @@ namespace RichHudFramework
                     drawActions = new List<Action>(200);
 
                     clients = new List<TreeClient>();
-                    mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
+                    mainClient = new TreeClient() { GetUpdateAccessors = (x, y) => instance._root.GetUpdateAccessors(x, y) };
 
                     drawTimer = new Stopwatch();
                     drawTimes = new long[tickResetInterval];

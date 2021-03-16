@@ -283,7 +283,7 @@ namespace RichHudFramework
                     // Apply changes
                     element.Offset = newOffset;
 
-                    if (ParentUtils.IsSetVisible(element))
+                    if ((element.State & (HudElementStates.IsVisible | HudElementStates.IsRegistered)) > 0)
                     {
                         // Move offset down for the next element
                         elementSize[alignAxis] += Spacing;
@@ -332,7 +332,7 @@ namespace RichHudFramework
                 {
                     TElement element = hudCollectionList[n].Element;
                     
-                    if (ParentUtils.IsSetVisible(element))
+                    if ((element.State & (HudElementStates.IsVisible | HudElementStates.IsRegistered)) > 0)
                     {
                         Vector2 elementSize = element.Size;
 

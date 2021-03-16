@@ -33,7 +33,11 @@ namespace RichHudFramework
             /// <summary>
             /// Determines whether or not an element will be drawn or process input. Visible by default.
             /// </summary>
-            public virtual bool Visible { get { return _visible; } set { _visible = value; } }
+            public virtual bool Visible
+            {
+                get { return (State & HudElementStates.IsVisible) > 0; }
+                set { State &= ~HudElementStates.IsVisible; }
+            }
 
             /// <summary>
             /// Scales the size and offset of an element. Any offset or size set at a given
@@ -46,36 +50,28 @@ namespace RichHudFramework
             /// </summary>
             public virtual sbyte ZOffset
             {
-                get { return _zOffset; }
-                set { _zOffset = value; }
+                get { return layerData.zOffset; }
+                set { layerData.zOffset = value; }
             }
 
-            protected sbyte _zOffset;
-            protected bool _registered;
+            public HudElementStates State { get; protected set; }
 
-            /// <summary>
-            /// Additional zOffset range used internally; primarily for determining window draw order.
-            /// Don't use this unless you have a good reason for it.
-            /// </summary>
-            protected byte zOffsetInner;
-            protected ushort fullZOffset;
-            protected bool _visible;
-
+            protected HudLayerData layerData;
             protected readonly List<HudNodeBase> children;
-
             protected HudUpdateAccessors accessorDelegates;
 
             public HudParentBase()
             {
+                State |= HudElementStates.IsRegistered;
+
                 Visible = true;
                 Scale = 1f;
-                _registered = true;
                 children = new List<HudNodeBase>();
 
                 accessorDelegates = new HudUpdateAccessors()
                 {
                     Item1 = GetOrSetApiMember,
-                    Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(() => fullZOffset, null),
+                    Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(() => layerData.fullZOffset, null),
                     Item3 = BeginInputDepth,
                     Item4 = BeginInput,
                     Item5 = BeginLayout,
@@ -139,7 +135,7 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        fullZOffset = ParentUtils.GetFullZOffset(this);
+                        layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData);
 
                         if (Visible || refresh)
                             Layout();
@@ -201,7 +197,7 @@ namespace RichHudFramework
             {
                 if (Visible)
                 {
-                    fullZOffset = ParentUtils.GetFullZOffset(this);
+                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData);
 
                     UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
                     accessorDelegates.Item2.Item2 = HudSpace.GetNodeOriginFunc;
@@ -256,7 +252,7 @@ namespace RichHudFramework
                     case HudElementAccessors.ZOffset:
                         return ZOffset;
                     case HudElementAccessors.FullZOffset:
-                        return fullZOffset;
+                        return layerData.fullZOffset;
                     case HudElementAccessors.Position:
                         return Vector2.Zero;
                     case HudElementAccessors.Size:

@@ -18,7 +18,7 @@ namespace RichHudFramework
         >;
 
         [Flags]
-        public enum HudElementStates : byte
+        public enum HudElementStates : ushort
         {
             None = 0x0,
             IsVisible = 0x1,
@@ -28,7 +28,8 @@ namespace RichHudFramework
             CanUseCursor = 0x10,
             CanShareCursor = 0x20,
             IsMousedOver = 0x40,
-            IsMouseInBounds = 0x80
+            IsMouseInBounds = 0x80,
+            CanPreload = 0x100
         }
 
         public struct HudLayerData

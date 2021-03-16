@@ -39,15 +39,28 @@ namespace RichHudFramework
             /// <summary>
             /// Determines whether or not an element will be drawn or process input. Visible by default.
             /// </summary>
-            public override bool Visible => _visible && parentVisible && _registered;
+            public override bool Visible
+            {
+                get 
+                {
+                    return (
+                        State & 
+                        (
+                            HudElementStates.IsVisible |
+                            HudElementStates.WasParentVisible |
+                            HudElementStates.IsRegistered
+                        )
+                    ) > 0;
+                }
+            }
 
             /// <summary>
             /// Determines whether the UI element will be drawn in the Back, Mid or Foreground
             /// </summary>
             public sealed override sbyte ZOffset
             {
-                get { return (sbyte)(_zOffset + parentZOffset); }
-                set { _zOffset = (sbyte)(value - parentZOffset); }
+                get { return (sbyte)(layerData.zOffset + layerData.parentZOffset); }
+                set { layerData.zOffset = (sbyte)(value - layerData.parentZOffset); }
             }
 
             /// <summary>
@@ -64,19 +77,25 @@ namespace RichHudFramework
             /// <summary>
             /// Indicates whether or not the element has been registered to a parent.
             /// </summary>
-            public bool Registered => _registered;
+            public bool Registered => (State & HudElementStates.IsRegistered) > 0;
+
+            protected bool ParentVisible
+            {
+                get { return (State & HudElementStates.WasParentVisible) > 0; }
+                set { State &= ~HudElementStates.WasParentVisible; }
+            }
 
             protected HudParentBase _parent, reregParent;
             protected float parentScale;
-            protected bool parentVisible, wasFastUnregistered;
             protected sbyte parentZOffset;
 
             public HudNodeBase(HudParentBase parent)
             {
+                State &= ~HudElementStates.IsRegistered;
+
                 parentScale = 1f;
                 LocalScale = 1f;
-                parentVisible = true;
-                _registered = false;
+                ParentVisible = true;
 
                 Register(parent);
             }
@@ -91,15 +110,15 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        fullZOffset = ParentUtils.GetFullZOffset(this, _parent);
+                        layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
 
                         if (_parent == null)
                         {
-                            parentVisible = false;
+                            ParentVisible = false;
                         }
                         else
                         {
-                            parentVisible = _parent.Visible;
+                            ParentVisible = _parent.Visible;
                             parentScale = _parent.Scale;
                             parentZOffset = _parent.ZOffset;
                         }
@@ -119,12 +138,12 @@ namespace RichHudFramework
             /// </summary>
             public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
-                parentVisible = _parent?.Visible ?? false;
+                ParentVisible = _parent?.Visible ?? false;
 
                 if (Visible)
                 {
                     HudSpace = _parent?.HudSpace ?? reregParent?.HudSpace;
-                    fullZOffset = ParentUtils.GetFullZOffset(this, _parent);
+                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
 
                     UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
                     accessorDelegates.Item2.Item2 = HudSpace.GetNodeOriginFunc;
@@ -147,43 +166,47 @@ namespace RichHudFramework
                     throw new Exception("Types of HudNodeBase cannot be parented to themselves!");
 
                 // Complete unregistration from previous parent if being registered to a different node
-                if (wasFastUnregistered && newParent != reregParent)
+                if ((State & HudElementStates.WasFastUnregistered) > 0 && newParent != reregParent)
                 {
                     reregParent.RemoveChild(this);
-                    wasFastUnregistered = false;
+                    State &= ~HudElementStates.WasFastUnregistered;
                     reregParent = null;
                 }
 
-                if (newParent != null && (reregParent == null || wasFastUnregistered))
+                if (newParent != null && (reregParent == null || (State & HudElementStates.WasFastUnregistered) > 0))
                 {
                     reregParent = null;
 
-                    if (wasFastUnregistered)
+                    if ((State & HudElementStates.WasFastUnregistered) > 0)
                     {
                         Parent = newParent;
-                        _registered = true;
+                        State |= HudElementStates.IsRegistered;
                     }
                     else
                     {
                         Parent = newParent;
-                        _registered = _parent.RegisterChild(this);
+
+                        if (_parent.RegisterChild(this))
+                            State |= HudElementStates.IsRegistered;
+                        else
+                            State &= ~HudElementStates.IsRegistered;
                     }
 
-                    if (_registered)
+                    if ((State & HudElementStates.IsRegistered) > 0)
                     {
                         if (preregister)
                         {
                             reregParent = newParent;
                             Parent = null;
-                            _registered = false;
-                            wasFastUnregistered = true;
+                            State &= ~HudElementStates.IsRegistered;
+                            State |= HudElementStates.WasFastUnregistered;
                         }
                         else
                         {
                             parentZOffset = _parent.ZOffset;
                             parentScale = _parent.Scale;
-                            parentVisible = _parent.Visible;
-                            wasFastUnregistered = false;
+                            ParentVisible = _parent.Visible;
+                            State &= ~HudElementStates.WasFastUnregistered;
                         }
 
                         return true;
@@ -203,31 +226,34 @@ namespace RichHudFramework
             /// unregistered/reregistered to the same parent.</param>
             public virtual bool Unregister(bool fast = false)
             {
-                if (Parent != null || (wasFastUnregistered && !fast))
+                if (Parent != null || ((State & HudElementStates.WasFastUnregistered) > 0 && !fast))
                 {
                     reregParent = _parent;
                     Parent = null;
 
                     if (!fast)
                     {
-                        _registered = !reregParent.RemoveChild(this, false);
+                        if (!reregParent.RemoveChild(this, false))
+                            State |= HudElementStates.IsRegistered;
+                        else
+                            State &= ~HudElementStates.IsRegistered;
 
-                        if (_registered)
+                        if ((State & HudElementStates.IsRegistered) > 0)
                             Parent = reregParent;
 
                         reregParent = null;
                     }
                     else
                     {
-                        _registered = false;
-                        wasFastUnregistered = true;
+                        State &= ~HudElementStates.IsRegistered;
+                        State |= HudElementStates.WasFastUnregistered;
                     }
 
                     parentZOffset = 0;
-                    parentVisible = false;
+                    State &= ~HudElementStates.WasParentVisible;
                 }
 
-                return !_registered;
+                return !((State & HudElementStates.IsRegistered) > 0);
             }
         }
     }

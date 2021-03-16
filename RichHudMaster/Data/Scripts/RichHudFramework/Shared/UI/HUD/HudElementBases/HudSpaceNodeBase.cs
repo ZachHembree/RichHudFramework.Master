@@ -36,7 +36,19 @@ namespace RichHudFramework
             /// <summary>
             /// Returns true if the space node is visible and rendering.
             /// </summary>
-            public override bool Visible => _visible && parentVisible && IsInFront;
+            public override bool Visible
+            {
+                get
+                {
+                    return (
+                        State &
+                        (
+                            HudElementStates.IsVisible |
+                            HudElementStates.WasParentVisible
+                        )
+                    ) > 0 && IsInFront;
+                }
+            }
 
             /// <summary>
             /// Returns the current draw matrix
@@ -111,11 +123,11 @@ namespace RichHudFramework
 
                 IsInFront = Vector3D.Dot((nodeOrigin - camOrigin), camForward) > 0;
                 IsFacingCamera = IsInFront && Vector3D.Dot(nodeForward, camForward) > 0;
-                parentVisible = _parent?.Visible ?? false;
+                ParentVisible = _parent?.Visible ?? false;
 
                 if (Visible)
                 {
-                    fullZOffset = ParentUtils.GetFullZOffset(this, _parent);
+                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
                     accessorDelegates.Item2.Item2 = GetNodeOriginFunc;
 
