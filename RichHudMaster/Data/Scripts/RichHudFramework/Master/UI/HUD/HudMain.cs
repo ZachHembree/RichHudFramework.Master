@@ -206,11 +206,6 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Used to indicate when the draw list should be refreshed. Resets every frame.
-            /// </summary>
-            public static bool RefreshDrawList;
-
-            /// <summary>
             /// If true then the cursor will be visible while chat is open
             /// </summary>
             public static bool EnableCursor;

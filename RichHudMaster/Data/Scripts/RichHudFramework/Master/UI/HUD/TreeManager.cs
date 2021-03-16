@@ -34,11 +34,6 @@ namespace RichHudFramework
                 public static int ElementRegistered => treeManager.updateAccessors.Count;
 
                 /// <summary>
-                /// Set to true if a client is requesting a tree rebuild
-                /// </summary>
-                public static bool RefreshRequested { get; set; }
-
-                /// <summary>
                 /// Read-only list of registered tree clients
                 /// </summary>
                 public static IReadOnlyList<TreeClient> Clients => treeManager.clients;
@@ -117,8 +112,6 @@ namespace RichHudFramework
 
                     rebuildTimer = new Stopwatch();
                     lastRebuildTime = new Stopwatch();
-
-                    RefreshRequested = false;
                 }
 
                 public static void Init()
@@ -145,7 +138,6 @@ namespace RichHudFramework
                     if (treeManager != null)
                     {
                         bool success = treeManager.clients.Remove(client);
-                        RefreshRequested = success;
                         return success;
                     }
                     else
@@ -162,38 +154,23 @@ namespace RichHudFramework
                     int drawTick = instance.drawTick;
                     float resScale = instance._resScale;
 
-                    if (RefreshDrawList)
-                        mainClient.refreshDrawList = true;
-
                     for (int n = 0; n < clients.Count; n++)
                         clients[n].Update(drawTick + n); // Spread out client tree updates
 
-                    bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
-                        refreshLayout = lastResScale != resScale || rebuildLists,
-                        resortLists = rebuildLists || (drawTick % treeRefreshRate) == 0;
-
-                    lastResScale = resScale;
-
-                    if (rebuildLists)
-                    {
-                        RebuildUpdateLists();
-                        RefreshRequested = false;
-                        RefreshDrawList = false;
-                    }
+                    RebuildUpdateLists();
+                    SortUpdateAccessors(); // Apply depth and zoffset sorting
 
                     for (int n = 0; n < layoutActions.Count; n++)
-                        layoutActions[n](refreshLayout);
+                        layoutActions[n](lastResScale != resScale);
 
                     // Draw UI elements
                     for (int n = 0; n < drawActions.Count; n++)
                         drawActions[n]();
 
-                    // Apply depth and zoffset sorting
-                    if (resortLists)
-                        SortUpdateAccessors();
-
                     drawTimer.Stop();
                     drawTimes[drawTick] = drawTimer.ElapsedTicks;
+
+                    lastResScale = resScale;
                 }
 
                 /// <summary>
