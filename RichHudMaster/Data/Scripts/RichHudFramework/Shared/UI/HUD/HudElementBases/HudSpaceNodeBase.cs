@@ -114,6 +114,12 @@ namespace RichHudFramework
 
             public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
+                bool wasSetVisible = (State & HudElementStates.IsVisible) > 0;
+                State |= HudElementStates.WasParentVisible;
+
+                if ((State & HudElementStates.CanPreload) > 0)
+                    State |= HudElementStates.IsVisible;
+
                 // Determine whether the node is in front of the camera and pointed toward it
                 MatrixD camMatrix = MyAPIGateway.Session.Camera.WorldMatrix;
                 Vector3D camOrigin = camMatrix.Translation,
@@ -123,7 +129,6 @@ namespace RichHudFramework
 
                 IsInFront = Vector3D.Dot((nodeOrigin - camOrigin), camForward) > 0;
                 IsFacingCamera = IsInFront && Vector3D.Dot(nodeForward, camForward) > 0;
-                ParentVisible = _parent?.Visible ?? false;
 
                 if (Visible)
                 {
@@ -137,6 +142,9 @@ namespace RichHudFramework
                     for (int n = 0; n < children.Count; n++)
                         children[n].GetUpdateAccessors(UpdateActions, treeDepth);
                 }
+
+                if (!wasSetVisible)
+                    State &= ~HudElementStates.IsVisible;
             }
         }
     }

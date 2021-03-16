@@ -21,7 +21,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Used internally quickly register a list of child nodes to a parent.
                 /// </summary>
-                public static void RegisterNodes(HudParentBase newParent, List<HudNodeBase> children, IReadOnlyList<HudNodeBase> nodes, bool preregister)
+                public static void RegisterNodes(HudParentBase newParent, List<HudNodeBase> children, IReadOnlyList<HudNodeBase> nodes, bool preregister, bool canPreload)
                 {
                     bool wereFastUnregistered = false;
 
@@ -58,6 +58,8 @@ namespace RichHudFramework
                         }
                         else
                         {
+                            node.Parent = newParent;
+                            node.State |= HudElementStates.IsRegistered;
                             node.parentZOffset = newParent.ZOffset;
                             node.parentScale = newParent.Scale;
                             node.ParentVisible = newParent.Visible;
@@ -67,6 +69,11 @@ namespace RichHudFramework
                         {
                             children.Add(node);
                         }
+
+                        if (canPreload)
+                            node.State |= HudElementStates.CanPreload;
+                        else
+                            node.State &= ~HudElementStates.CanPreload;
 
                         if (preregister)
                             node.State |= HudElementStates.WasFastUnregistered;
@@ -78,7 +85,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Used internally quickly register a list of child nodes to a parent.
                 /// </summary>
-                public static void RegisterNodes<TCon, TNode>(HudParentBase newParent, List<HudNodeBase> children, IReadOnlyList<TCon> nodes, bool preregister)
+                public static void RegisterNodes<TCon, TNode>(HudParentBase newParent, List<HudNodeBase> children, IReadOnlyList<TCon> nodes, bool preregister, bool canPreload)
                     where TCon : IHudElementContainer<TNode>, new()
                     where TNode : HudNodeBase
                 {
@@ -117,6 +124,8 @@ namespace RichHudFramework
                         }
                         else
                         {
+                            node.Parent = newParent;
+                            node.State |= HudElementStates.IsRegistered;
                             node.parentZOffset = newParent.ZOffset;
                             node.parentScale = newParent.Scale;
                             node.ParentVisible = newParent.Visible;
@@ -126,6 +135,11 @@ namespace RichHudFramework
                         {
                             children.Add(node);
                         }
+
+                        if (canPreload)
+                            node.State |= HudElementStates.CanPreload;
+                        else
+                            node.State &= ~HudElementStates.CanPreload;
 
                         if (preregister)
                             node.State |= HudElementStates.WasFastUnregistered;

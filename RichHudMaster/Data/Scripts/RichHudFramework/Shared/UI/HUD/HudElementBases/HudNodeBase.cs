@@ -138,7 +138,11 @@ namespace RichHudFramework
             /// </summary>
             public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
-                ParentVisible = _parent?.Visible ?? false;
+                bool wasSetVisible = (State & HudElementStates.IsVisible) > 0;
+                State |= HudElementStates.WasParentVisible;
+
+                if ((State & HudElementStates.CanPreload) > 0)
+                    State |= HudElementStates.IsVisible;
 
                 if (Visible)
                 {
@@ -154,13 +158,18 @@ namespace RichHudFramework
                     for (int n = 0; n < children.Count; n++)
                         children[n].GetUpdateAccessors(UpdateActions, treeDepth);
                 }
+
+                if (!wasSetVisible)
+                    State &= ~HudElementStates.IsVisible;
             }
 
             /// <summary>
             /// Registers the element to the given parent object.
             /// </summary>
             /// <param name="preregister">Adds the element to the update tree without registering.</param>
-            public virtual bool Register(HudParentBase newParent, bool preregister = false)
+            /// <param name="canPreload">Indicates whether or not the element's accessors can be loaded into the update tree
+            /// before the element is visible. Useful for preventing flicker in scrolling lists.</param>
+            public virtual bool Register(HudParentBase newParent, bool preregister = false, bool canPreload = false)
             {
                 if (newParent == this)
                     throw new Exception("Types of HudNodeBase cannot be parented to themselves!");
@@ -208,6 +217,11 @@ namespace RichHudFramework
                             ParentVisible = _parent.Visible;
                             State &= ~HudElementStates.WasFastUnregistered;
                         }
+
+                        if (canPreload)
+                            State |= HudElementStates.CanPreload;
+                        else
+                            State &= ~HudElementStates.CanPreload;
 
                         return true;
                     }

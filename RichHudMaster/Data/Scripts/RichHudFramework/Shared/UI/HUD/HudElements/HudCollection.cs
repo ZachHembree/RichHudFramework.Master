@@ -93,7 +93,7 @@ namespace RichHudFramework
                 if (container.Element.Registered)
                     throw new Exception("HUD Element already registered!");
 
-                if (container.Element.Register(this))
+                if (container.Element.Register(this, false, true))
                     hudCollectionList.Add(container);
                 else
                     throw new Exception("HUD Element registration failed.");
@@ -104,7 +104,7 @@ namespace RichHudFramework
             /// </summary>
             public void AddRange(IReadOnlyList<TElementContainer> newContainers)
             {
-                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, children, newContainers, false);
+                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, children, newContainers, false, true);
                 hudCollectionList.AddRange(newContainers);
             }
 
@@ -113,7 +113,7 @@ namespace RichHudFramework
             /// </summary>
             public void Insert(int index, TElementContainer container)
             {
-                if (container.Element.Register(this))
+                if (container.Element.Register(this, false, true))
                     hudCollectionList.Insert(index, container);
                 else
                     throw new Exception("HUD Element registration failed.");
@@ -124,7 +124,7 @@ namespace RichHudFramework
             /// </summary>
             public void InsertRange(int index, IReadOnlyList<TElementContainer> newContainers)
             {
-                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, children, newContainers, false);
+                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, children, newContainers, false, true);
                 hudCollectionList.InsertRange(index, newContainers);
             }
 
