@@ -26,6 +26,8 @@ namespace RichHudFramework
         /// </summary>
         public abstract partial class HudNodeBase : HudParentBase, IReadOnlyHudNode
         {
+            protected const HudElementStates nodeVisible = HudElementStates.IsVisible | HudElementStates.WasParentVisible | HudElementStates.IsRegistered;
+
             /// <summary>
             /// Read-only parent object of the node.
             /// </summary>
@@ -39,20 +41,7 @@ namespace RichHudFramework
             /// <summary>
             /// Determines whether or not an element will be drawn or process input. Visible by default.
             /// </summary>
-            public override bool Visible
-            {
-                get 
-                {
-                    return (
-                        State & 
-                        (
-                            HudElementStates.IsVisible |
-                            HudElementStates.WasParentVisible |
-                            HudElementStates.IsRegistered
-                        )
-                    ) > 0;
-                }
-            }
+            public override bool Visible => (State & nodeVisible) == nodeVisible;
 
             /// <summary>
             /// Determines whether the UI element will be drawn in the Back, Mid or Foreground
@@ -82,7 +71,13 @@ namespace RichHudFramework
             protected bool ParentVisible
             {
                 get { return (State & HudElementStates.WasParentVisible) > 0; }
-                set { State &= ~HudElementStates.WasParentVisible; }
+                set 
+                { 
+                    if (value)
+                        State |= HudElementStates.WasParentVisible; 
+                    else
+                        State &= ~HudElementStates.WasParentVisible;
+                }
             }
 
             protected HudParentBase _parent, reregParent;

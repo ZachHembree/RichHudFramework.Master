@@ -36,7 +36,13 @@ namespace RichHudFramework
             public virtual bool Visible
             {
                 get { return (State & HudElementStates.IsVisible) > 0; }
-                set { State &= ~HudElementStates.IsVisible; }
+                set
+                {
+                    if (value)
+                        State |= HudElementStates.IsVisible;
+                    else
+                        State &= ~HudElementStates.IsVisible;
+                }
             }
 
             /// <summary>

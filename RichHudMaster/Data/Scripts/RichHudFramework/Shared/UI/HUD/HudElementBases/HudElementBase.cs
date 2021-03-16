@@ -113,7 +113,13 @@ namespace RichHudFramework
             public bool UseCursor
             {
                 get { return (State & HudElementStates.CanUseCursor) > 0; }
-                set { State &= ~HudElementStates.CanUseCursor; }
+                set
+                {
+                    if (value)
+                        State |= HudElementStates.CanUseCursor;
+                    else
+                        State &= ~HudElementStates.CanUseCursor;
+                }
             }
 
             /// <summary>
@@ -122,7 +128,13 @@ namespace RichHudFramework
             public bool ShareCursor
             {
                 get { return (State & HudElementStates.CanShareCursor) > 0; }
-                set { State &= ~HudElementStates.CanShareCursor; }
+                set
+                {
+                    if (value)
+                        State |= HudElementStates.CanShareCursor;
+                    else
+                        State &= ~HudElementStates.CanShareCursor;
+                }
             }
 
             /// <summary>
@@ -168,7 +180,7 @@ namespace RichHudFramework
             /// </summary>
             protected override void InputDepth()
             {
-                State &= ~HudElementStates.IsMousedOver;
+                State &= ~HudElementStates.IsMouseInBounds;
 
                 if (UseCursor && (HudSpace?.IsFacingCamera ?? false))
                 {

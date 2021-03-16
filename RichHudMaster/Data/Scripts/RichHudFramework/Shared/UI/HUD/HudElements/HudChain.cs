@@ -104,6 +104,8 @@ namespace RichHudFramework
             where TElementContainer : IHudElementContainer<TElement>, new()
             where TElement : HudElementBase
         {
+            protected const HudElementStates nodeSetVisible = HudElementStates.IsVisible | HudElementStates.IsRegistered;
+
             /// <summary>
             /// Width of the chain
             /// </summary>
@@ -283,7 +285,7 @@ namespace RichHudFramework
                     // Apply changes
                     element.Offset = newOffset;
 
-                    if ((element.State & (HudElementStates.IsVisible | HudElementStates.IsRegistered)) > 0)
+                    if ((element.State & (nodeSetVisible)) == nodeSetVisible)
                     {
                         // Move offset down for the next element
                         elementSize[alignAxis] += Spacing;
@@ -332,7 +334,7 @@ namespace RichHudFramework
                 {
                     TElement element = hudCollectionList[n].Element;
                     
-                    if ((element.State & (HudElementStates.IsVisible | HudElementStates.IsRegistered)) > 0)
+                    if ((element.State & (nodeSetVisible)) == nodeSetVisible)
                     {
                         Vector2 elementSize = element.Size;
 

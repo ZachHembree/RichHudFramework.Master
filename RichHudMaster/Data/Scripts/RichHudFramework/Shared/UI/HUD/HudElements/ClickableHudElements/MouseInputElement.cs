@@ -99,7 +99,7 @@ namespace RichHudFramework.UI
 
         protected override void InputDepth()
         {
-            State &= ~HudElementStates.IsMousedOver;
+            State &= ~HudElementStates.IsMouseInBounds;
 
             if (UseCursor && Visible && (HudSpace?.IsFacingCamera ?? false))
             {
