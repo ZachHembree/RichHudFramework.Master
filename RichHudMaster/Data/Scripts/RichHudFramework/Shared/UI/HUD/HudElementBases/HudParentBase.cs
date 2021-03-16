@@ -50,15 +50,6 @@ namespace RichHudFramework
                 set { _zOffset = value; }
             }
 
-            protected readonly List<HudNodeBase> children;
-
-            protected readonly ApiMemberAccessor GetOrSetMemberFunc;
-            protected readonly Func<ushort> GetZOffsetFunc;
-            protected readonly Action DepthTestAction;
-            protected readonly Action InputAction;
-            protected readonly Action<bool> LayoutAction;
-            protected readonly Action DrawAction;
-
             protected sbyte _zOffset;
             protected bool _registered;
 
@@ -70,6 +61,10 @@ namespace RichHudFramework
             protected ushort fullZOffset;
             protected bool _visible;
 
+            protected readonly List<HudNodeBase> children;
+
+            protected HudUpdateAccessors accessorDelegates;
+
             public HudParentBase()
             {
                 Visible = true;
@@ -77,12 +72,15 @@ namespace RichHudFramework
                 _registered = true;
                 children = new List<HudNodeBase>();
 
-                GetOrSetMemberFunc = GetOrSetApiMember;
-                GetZOffsetFunc = () => fullZOffset;
-                DepthTestAction = BeginInputDepth;
-                LayoutAction = BeginLayout;
-                DrawAction = BeginDraw;
-                InputAction = BeginInput;
+                accessorDelegates = new HudUpdateAccessors()
+                {
+                    Item1 = GetOrSetApiMember,
+                    Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(() => fullZOffset, null),
+                    Item3 = BeginInputDepth,
+                    Item4 = BeginInput,
+                    Item5 = BeginLayout,
+                    Item6 = BeginDraw
+                };
             }
 
             /// <summary>
@@ -201,24 +199,19 @@ namespace RichHudFramework
             /// </summary>
             public virtual void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
-                fullZOffset = ParentUtils.GetFullZOffset(this);
-
-                UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                var accessors = new HudUpdateAccessors()
+                if (Visible)
                 {
-                    Item1 = GetOrSetMemberFunc,
-                    Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(GetZOffsetFunc, HudSpace.GetNodeOriginFunc),
-                    Item3 = DepthTestAction,
-                    Item4 = InputAction,
-                    Item5 = LayoutAction,
-                    Item6 = DrawAction
-                };
+                    fullZOffset = ParentUtils.GetFullZOffset(this);
 
-                UpdateActions.Add(accessors);
-                treeDepth++;
+                    UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
+                    accessorDelegates.Item2.Item2 = HudSpace.GetNodeOriginFunc;
 
-                for (int n = 0; n < children.Count; n++)
-                    children[n].GetUpdateAccessors(UpdateActions, treeDepth);
+                    UpdateActions.Add(accessorDelegates);
+                    treeDepth++;
+
+                    for (int n = 0; n < children.Count; n++)
+                        children[n].GetUpdateAccessors(UpdateActions, treeDepth);
+                }
             }
 
             /// <summary>

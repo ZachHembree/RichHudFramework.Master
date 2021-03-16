@@ -65,7 +65,6 @@ namespace RichHudFramework
 
                         if (!node.wasFastUnregistered)
                         {
-                            HudMain.RefreshDrawList = true;
                             children.Add(node);
                         }
 
@@ -122,7 +121,6 @@ namespace RichHudFramework
 
                         if (!node.wasFastUnregistered)
                         {
-                            HudMain.RefreshDrawList = true;
                             children.Add(node);
                         }
 
@@ -169,8 +167,6 @@ namespace RichHudFramework
                                     children.RemoveRange(start, end - start + 1);
                                 }
                             }
-
-                            HudMain.RefreshDrawList = true;
                         }
 
                         for (int n = index; n < count; n++)
@@ -241,8 +237,6 @@ namespace RichHudFramework
                                     children.RemoveRange(start, end - start + 1);
                                 }
                             }
-
-                            HudMain.RefreshDrawList = true;
                         }
 
                         for (int n = index; n < count; n++)

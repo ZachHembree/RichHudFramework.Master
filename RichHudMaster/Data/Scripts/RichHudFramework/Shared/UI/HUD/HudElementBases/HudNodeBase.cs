@@ -119,25 +119,22 @@ namespace RichHudFramework
             /// </summary>
             public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
-                HudSpace = _parent?.HudSpace ?? reregParent?.HudSpace;
-                fullZOffset = ParentUtils.GetFullZOffset(this, _parent);
+                parentVisible = _parent?.Visible ?? false;
 
-                UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                var accessors = new HudUpdateAccessors()
+                if (Visible)
                 {
-                    Item1 = GetOrSetMemberFunc,
-                    Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(GetZOffsetFunc, HudSpace.GetNodeOriginFunc),
-                    Item3 = DepthTestAction,
-                    Item4 = InputAction,
-                    Item5 = LayoutAction,
-                    Item6 = DrawAction
-                };
+                    HudSpace = _parent?.HudSpace ?? reregParent?.HudSpace;
+                    fullZOffset = ParentUtils.GetFullZOffset(this, _parent);
 
-                UpdateActions.Add(accessors);
-                treeDepth++;
+                    UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
+                    accessorDelegates.Item2.Item2 = HudSpace.GetNodeOriginFunc;
 
-                for (int n = 0; n < children.Count; n++)
-                    children[n].GetUpdateAccessors(UpdateActions, treeDepth);
+                    UpdateActions.Add(accessorDelegates); ;
+                    treeDepth++;
+
+                    for (int n = 0; n < children.Count; n++)
+                        children[n].GetUpdateAccessors(UpdateActions, treeDepth);
+                }
             }
 
             /// <summary>
@@ -174,9 +171,6 @@ namespace RichHudFramework
 
                     if (_registered)
                     {
-                        if (!wasFastUnregistered)
-                            HudMain.RefreshDrawList = true;
-
                         if (preregister)
                         {
                             reregParent = newParent;
@@ -220,8 +214,6 @@ namespace RichHudFramework
 
                         if (_registered)
                             Parent = reregParent;
-                        else
-                            HudMain.RefreshDrawList = true;
 
                         reregParent = null;
                     }

@@ -200,7 +200,7 @@ namespace RichHudFramework
                                 HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
 
                                 if (!ShareCursor)
-                                    HudMain.Cursor.Capture(GetOrSetMemberFunc);
+                                    HudMain.Cursor.Capture(accessorDelegates.Item1);
                             }
                             else
                             {
