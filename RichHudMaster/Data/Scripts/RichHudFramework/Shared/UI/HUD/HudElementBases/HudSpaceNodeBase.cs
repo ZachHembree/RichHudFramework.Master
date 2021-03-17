@@ -38,7 +38,7 @@ namespace RichHudFramework
             /// <summary>
             /// Returns true if the space node is visible and rendering.
             /// </summary>
-            public override bool Visible => (State & spaceNodeVisible) == spaceNodeVisible && IsInFront;
+            public override bool Visible => (State & spaceNodeVisible) == spaceNodeVisible;
 
             /// <summary>
             /// Returns the current draw matrix
@@ -121,8 +121,11 @@ namespace RichHudFramework
                 UpdateActions.Add(accessorDelegates);
                 treeDepth++;
 
-                for (int n = 0; n < children.Count; n++)
-                    children[n].GetUpdateAccessors(UpdateActions, treeDepth);
+                if (Visible && IsInFront)
+                {
+                    for (int n = 0; n < children.Count; n++)
+                        children[n].GetUpdateAccessors(UpdateActions, treeDepth);
+                }
             }
         }
     }
