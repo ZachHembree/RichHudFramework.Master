@@ -85,6 +85,16 @@ namespace RichHudFramework
 
             protected override void Layout()
             {
+                // Determine whether the node is in front of the camera and pointed toward it
+                MatrixD camMatrix = MyAPIGateway.Session.Camera.WorldMatrix;
+                Vector3D camOrigin = camMatrix.Translation,
+                    camForward = camMatrix.Forward,
+                    nodeOrigin = PlaneToWorld.Translation,
+                    nodeForward = PlaneToWorld.Forward;
+
+                IsInFront = Vector3D.Dot((nodeOrigin - camOrigin), camForward) > 0;
+                IsFacingCamera = IsInFront && Vector3D.Dot(nodeForward, camForward) > 0;
+
                 MatrixD worldToPlane = MatrixD.Invert(PlaneToWorld);
                 LineD cursorLine = HudMain.Cursor.WorldLine;
 
@@ -104,37 +114,15 @@ namespace RichHudFramework
 
             public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
             {
-                bool wasSetVisible = (State & HudElementStates.IsVisible) > 0;
-                State |= HudElementStates.WasParentVisible;
+                layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+                UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
+                accessorDelegates.Item2.Item2 = GetNodeOriginFunc;
 
-                if ((State & HudElementStates.CanPreload) > 0)
-                    State |= HudElementStates.IsVisible;
+                UpdateActions.Add(accessorDelegates);
+                treeDepth++;
 
-                // Determine whether the node is in front of the camera and pointed toward it
-                MatrixD camMatrix = MyAPIGateway.Session.Camera.WorldMatrix;
-                Vector3D camOrigin = camMatrix.Translation,
-                    camForward = camMatrix.Forward,
-                    nodeOrigin = PlaneToWorld.Translation,
-                    nodeForward = PlaneToWorld.Forward;
-
-                IsInFront = Vector3D.Dot((nodeOrigin - camOrigin), camForward) > 0;
-                IsFacingCamera = IsInFront && Vector3D.Dot(nodeForward, camForward) > 0;
-
-                if (Visible)
-                {
-                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
-                    UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                    accessorDelegates.Item2.Item2 = GetNodeOriginFunc;
-
-                    UpdateActions.Add(accessorDelegates);
-                    treeDepth++;
-
-                    for (int n = 0; n < children.Count; n++)
-                        children[n].GetUpdateAccessors(UpdateActions, treeDepth);
-                }
-
-                if (!wasSetVisible)
-                    State &= ~HudElementStates.IsVisible;
+                for (int n = 0; n < children.Count; n++)
+                    children[n].GetUpdateAccessors(UpdateActions, treeDepth);
             }
         }
     }
