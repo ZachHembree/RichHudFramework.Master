@@ -111,6 +111,9 @@ namespace RichHudFramework
 
                         refreshRequested = false;
                         refreshDrawList = false;
+
+                        if (!continuousRefresh)
+                            TreeManager.RefreshRequested = true;
                     }
                 }
 

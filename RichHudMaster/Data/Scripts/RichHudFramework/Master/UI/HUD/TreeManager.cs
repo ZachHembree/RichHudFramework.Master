@@ -65,6 +65,8 @@ namespace RichHudFramework
                 /// </summary>
                 public static long TicksSinceLastRebuild => treeManager.lastRebuildTime.ElapsedTicks;
 
+                public static bool RefreshRequested;
+
                 private readonly List<HudUpdateAccessors> updateAccessors;
                 private readonly Dictionary<Func<Vector3D>, ushort> distMap;
                 private readonly HashSet<Func<Vector3D>> uniqueOriginFuncs;
@@ -102,7 +104,7 @@ namespace RichHudFramework
                     drawActions = new List<Action>(200);
 
                     clients = new List<TreeClient>();
-                    mainClient = new TreeClient() { GetUpdateAccessors = (x, y) => instance._root.GetUpdateAccessors(x, y) };
+                    mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
 
                     drawTimer = new Stopwatch();
                     drawTimes = new long[tickResetInterval];
@@ -160,8 +162,13 @@ namespace RichHudFramework
                     RebuildUpdateLists();
                     SortUpdateAccessors(); // Apply depth and zoffset sorting
 
+                    // Older clients (1.0.3-) require layout to be refreshed whenever the tree is updated.
+                    // Not sure why. Seems like a bug.
+                    bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
+                        refreshLayout = lastResScale != resScale || rebuildLists;
+
                     for (int n = 0; n < layoutActions.Count; n++)
-                        layoutActions[n](lastResScale != resScale);
+                        layoutActions[n](refreshLayout);
 
                     // Draw UI elements
                     for (int n = 0; n < drawActions.Count; n++)
@@ -169,6 +176,9 @@ namespace RichHudFramework
 
                     drawTimer.Stop();
                     drawTimes[drawTick] = drawTimer.ElapsedTicks;
+
+                    if (rebuildLists)
+                        RefreshRequested = false;
 
                     lastResScale = resScale;
                 }
