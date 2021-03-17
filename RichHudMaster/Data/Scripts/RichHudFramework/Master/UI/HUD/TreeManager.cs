@@ -58,12 +58,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Ticks elapsed during last rebuild
                 /// </summary>
-                public static long RebuildElapsedTicks => treeManager.rebuildTimer.ElapsedTicks;
-
-                /// <summary>
-                /// Ticks elapsed during last rebuild
-                /// </summary>
-                public static long TicksSinceLastRebuild => treeManager.lastRebuildTime.ElapsedTicks;
+                public static IReadOnlyList<long> TreeElapsedTicks => treeManager.treeTimes;
 
                 public static bool RefreshRequested;
 
@@ -81,8 +76,8 @@ namespace RichHudFramework
                 private readonly List<TreeClient> clients;
                 private readonly TreeClient mainClient;
 
-                private readonly Stopwatch rebuildTimer, drawTimer, inputTimer, lastRebuildTime;
-                private readonly long[] drawTimes, inputTimes;
+                private readonly Stopwatch treeTimer, drawTimer, inputTimer;
+                private readonly long[] drawTimes, inputTimes, treeTimes;
 
                 private TreeManager()
                 {
@@ -112,8 +107,8 @@ namespace RichHudFramework
                     inputTimer = new Stopwatch();
                     inputTimes = new long[tickResetInterval];
 
-                    rebuildTimer = new Stopwatch();
-                    lastRebuildTime = new Stopwatch();
+                    treeTimer = new Stopwatch();
+                    treeTimes = new long[tickResetInterval];
                 }
 
                 public static void Init()
@@ -151,16 +146,21 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw()
                 {
-                    drawTimer.Restart();    
-
                     int drawTick = instance.drawTick;
                     float resScale = instance._resScale;
+
+                    treeTimer.Restart();
 
                     for (int n = 0; n < clients.Count; n++)
                         clients[n].Update(drawTick + n); // Spread out client tree updates
 
                     RebuildUpdateLists();
                     SortUpdateAccessors(); // Apply depth and zoffset sorting
+
+                    treeTimer.Stop();
+                    treeTimes[drawTick] = treeTimer.ElapsedTicks;
+
+                    drawTimer.Restart();
 
                     // Older clients (1.0.3-) require layout to be refreshed whenever the tree is updated.
                     // Not sure why. Seems like a bug.
@@ -205,8 +205,6 @@ namespace RichHudFramework
                 /// </summary>
                 private void RebuildUpdateLists()
                 {
-                    rebuildTimer.Restart();
-
                     // Clear update lists and rebuild accessor lists from HUD tree
                     updateAccessors.Clear();
                     layoutActions.Clear();
@@ -231,9 +229,6 @@ namespace RichHudFramework
                         HudUpdateAccessors accessors = updateAccessors[n];
                         layoutActions.Add(accessors.Item5);
                     }
-
-                    rebuildTimer.Stop();
-                    lastRebuildTime.Restart();
                 }
 
                 /// <summary>
