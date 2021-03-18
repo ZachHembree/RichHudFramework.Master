@@ -21,34 +21,55 @@ namespace RichHudFramework
         >;
 
         /// <summary>
-        /// Vertically scrolling collection of control categories.
+        /// Interactable collection of horizontally scrolling control categories
         /// </summary>
-        public class ControlPage : TerminalPageBase, IControlPage
+        public class ControlPage : ControlPage<ControlCategory, ControlTile>, IControlPage
+        {
+            public ControlPage() : base(true)
+            { }
+        }
+
+        /// <summary>
+        /// Interactable collection of vertically scrolling control categories
+        /// </summary>
+        public class VertControlPage : ControlPage<VertControlCategory, TerminalControlBase>, IVertControlPage
+        {
+            public VertControlPage() : base(false)
+            { }
+        }
+
+        public abstract class ControlPage<TCategory, TMember> : TerminalPageBase, IControlPage<TCategory, TMember>
+            where TMember : IScrollBoxEntry<HudElementBase>, new()
+            where TCategory : class, IControlCategory<TMember>, IScrollBoxEntry<HudElementBase>, new()
         {
             /// <summary>
             /// List of control categories registered to the page.
             /// </summary>
-            public IReadOnlyList<IControlCategory> Categories => catBox.Collection;
+            public IReadOnlyList<TCategory> Categories => catBox.Collection;
 
-            public IControlPage CategoryContainer => this;
+            /// <summary>
+            /// Used to allow the addition of category elements using collection-initializer syntax in
+            /// conjunction with normal initializers.
+            /// </summary>
+            public IControlPage<TCategory, TMember> CategoryContainer => this;
 
-            private readonly CategoryScrollBox catBox;
+            protected readonly CategoryScrollBox catBox;
 
-            public ControlPage()
+            public ControlPage(bool alignVertical)
             {
-                catBox = new CategoryScrollBox();
+                catBox = new CategoryScrollBox(alignVertical);
                 SetElement(catBox);
             }
 
             /// <summary>
             /// Adds the given control category to the page.
             /// </summary>
-            public void Add(ControlCategory category)
+            public void Add(TCategory category)
             {
                 catBox.Add(category);
             }
 
-            IEnumerator<IControlCategory> IEnumerable<IControlCategory>.GetEnumerator() =>
+            IEnumerator<TCategory> IEnumerable<TCategory>.GetEnumerator() =>
                 Categories.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() =>
@@ -62,7 +83,7 @@ namespace RichHudFramework
                     {
                         case ControlPageAccessors.AddCategory:
                             {
-                                Add(data as ControlCategory);
+                                Add(data as TCategory);
                                 break;
                             }
                         case ControlPageAccessors.CategoryData:
@@ -79,9 +100,9 @@ namespace RichHudFramework
                     return base.GetOrSetMember(data, memberEnum);
             }
 
-            private class CategoryScrollBox : ScrollBox<ControlCategory>
+            protected class CategoryScrollBox : ScrollBox<TCategory>
             { 
-                public CategoryScrollBox(HudParentBase parent = null) : base(true, parent)
+                public CategoryScrollBox(bool alignVertical = true, HudParentBase parent = null) : base(alignVertical, parent)
                 {
                     Spacing = 30f;
                     SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;

@@ -13,16 +13,95 @@ namespace RichHudFramework
 
     namespace UI.Server
     {
+        using ControlMembers = MyTuple<
+            ApiMemberAccessor, // GetOrSetMember
+            object // ID
+        >;
         using ControlContainerMembers = MyTuple<
             ApiMemberAccessor, // GetOrSetMember,
             MyTuple<object, Func<int>>, // Member List
             object // ID
         >;
 
+        public class VertControlCategory : ControlCategory<TerminalControlBase>, IVertControlCategory
+        {
+            /// <summary>
+            /// Read only collection of <see cref="TerminalControlBase"/>s assigned to this category
+            /// </summary>
+            public IReadOnlyList<TerminalControlBase> Controls => categoryElement.Members;
+
+            /// <summary>
+            /// Used to allow the addition of controls to vertical categories using collection-initializer syntax in
+            /// conjunction with normal initializers.
+            /// </summary>
+            public IVertControlCategory ControlContainer => this;
+
+            public VertControlCategory() : base(true)
+            { }
+
+            /// <summary>
+            /// Retrieves information used by the Framework API
+            /// </summary>
+            public override ControlContainerMembers GetApiData()
+            {
+                return new ControlContainerMembers()
+                {
+                    Item1 = GetOrSetMember,
+                    Item2 = new MyTuple<object, Func<int>>
+                    {
+                        Item1 = (Func<int, ControlMembers>)(x => categoryElement.Members[x].GetApiData()),
+                        Item2 = () => categoryElement.Members.Count
+                    },
+                    Item3 = this
+                };
+            }
+        }
+
+        public class ControlCategory : ControlCategory<ControlTile>, IControlCategory
+        {
+            /// <summary>
+            /// Read only collection of <see cref="IControlTile"/>s assigned to this category
+            /// </summary>
+            public IReadOnlyList<ControlTile> Tiles => categoryElement.Members;
+
+            /// <summary>
+            /// Used to allow the addition of control tiles to categories using collection-initializer syntax in
+            /// conjunction with normal initializers.
+            /// </summary>
+            public IControlCategory TileContainer => this;
+
+            public ControlCategory() : base(false)
+            { }
+
+            IEnumerator<ControlTile> IEnumerable<ControlTile>.GetEnumerator() =>
+                Tiles.GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator() =>
+                Tiles.GetEnumerator();
+
+            /// <summary>
+            /// Retrieves information used by the Framework API
+            /// </summary>
+            public override ControlContainerMembers GetApiData()
+            {
+                return new ControlContainerMembers()
+                {
+                    Item1 = GetOrSetMember,
+                    Item2 = new MyTuple<object, Func<int>>()
+                    {
+                        Item1 = (Func<int, ControlContainerMembers>)(x => categoryElement.Members[x].GetApiData()),
+                        Item2 = () => categoryElement.Members.Count
+                    },
+                    Item3 = this
+                };
+            }
+        }
+
         /// <summary>
         /// Horizontally scrolling list of control tiles.
         /// </summary>
-        public class ControlCategory : ScrollBoxEntry, IControlCategory
+        public abstract class ControlCategory<TMember> : ScrollBoxEntry, IControlCategory<TMember>
+            where TMember : class, IScrollBoxEntry<HudElementBase>, new()
         {
             /// <summary>
             /// Category name
@@ -35,61 +114,35 @@ namespace RichHudFramework
             public string SubheaderText { get { return categoryElement.SubheaderText; } set { categoryElement.SubheaderText = value; } }
 
             /// <summary>
-            /// Read only collection of <see cref="IControlTile"/>s assigned to this category
-            /// </summary>
-            public IReadOnlyList<IControlTile> Tiles => categoryElement.Tiles;
-
-            /// <summary>
-            /// Used to allow the addition of control tiles to categories using collection-initializer syntax in
-            /// conjunction with normal initializers.
-            /// </summary>
-            public IControlCategory TileContainer => this;
-
-            /// <summary>
             /// Unique identifier.
             /// </summary>
             public object ID => this;
 
-            private readonly CategoryElement categoryElement;
+            protected readonly CategoryElement categoryElement;
 
-            public ControlCategory()
+            public ControlCategory(bool alignVertical)
             {
-                categoryElement = new CategoryElement();
+                categoryElement = new CategoryElement(alignVertical);
                 SetElement(categoryElement);
             }
 
             /// <summary>
-            /// Adds a <see cref="IControlTile"/> to the category
+            /// Adds a <see cref="TInterface"/> to the category
             /// </summary>
-            public void Add(ControlTile tile)
+            public void Add(TMember tile)
             {
                 categoryElement.Add(tile);
             }
 
-            IEnumerator<IControlTile> IEnumerable<IControlTile>.GetEnumerator() =>
-                Tiles.GetEnumerator();
+            public abstract ControlContainerMembers GetApiData();
+
+            IEnumerator<TMember> IEnumerable<TMember>.GetEnumerator() =>
+                categoryElement.Members.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() =>
-                Tiles.GetEnumerator();
+                categoryElement.Members.GetEnumerator();
 
-            /// <summary>
-            /// Retrieves information used by the Framework API
-            /// </summary>
-            public ControlContainerMembers GetApiData()
-            {
-                return new ControlContainerMembers()
-                {
-                    Item1 = GetOrSetMember,
-                    Item2 = new MyTuple<object, Func<int>>()
-                    {
-                        Item1 = (Func<int, ControlContainerMembers>)(x => categoryElement.Tiles[x].GetApiData()),
-                        Item2 = () => categoryElement.Tiles.Count
-                    },
-                    Item3 = this
-                };
-            }
-
-            private object GetOrSetMember(object data, int memberEnum)
+            protected virtual object GetOrSetMember(object data, int memberEnum)
             {
                 var member = (ControlCatAccessors)memberEnum;
 
@@ -122,9 +175,9 @@ namespace RichHudFramework
 
                             break;
                         }
-                    case ControlCatAccessors.AddTile:
+                    case ControlCatAccessors.AddMember:
                         {
-                            Add(data as ControlTile);
+                            Add(data as TMember);
                             break;
                         }
                 }
@@ -132,7 +185,7 @@ namespace RichHudFramework
                 return null;
             }
 
-            private class CategoryElement : HudElementBase
+            protected class CategoryElement : HudElementBase
             {
                 /// <summary>
                 /// Category name
@@ -145,15 +198,15 @@ namespace RichHudFramework
                 public string SubheaderText { get { return subheader.TextBoard.ToString(); } set { subheader.TextBoard.SetText(value); } }
 
                 /// <summary>
-                /// Read only collection of <see cref="IControlTile"/>s assigned to this category
+                /// Read only collection of <see cref="TMember"/>s assigned to this category
                 /// </summary>
-                public IReadOnlyList<IControlTile> Tiles => scrollBox.Collection;
+                public IReadOnlyList<TMember> Members => scrollBox.Collection;
 
-                private readonly ScrollBox<ControlTile> scrollBox;
+                private readonly ScrollBox<TMember> scrollBox;
                 private readonly Label header, subheader;
                 private readonly HudChain layout;
 
-                public CategoryElement(HudParentBase parent = null) : base(parent)
+                public CategoryElement(bool alignVertical, HudParentBase parent = null) : base(parent)
                 {
                     header = new Label()
                     {
@@ -172,7 +225,7 @@ namespace RichHudFramework
                         BuilderMode = TextBuilderModes.Wrapped,
                     };
 
-                    scrollBox = new ScrollBox<ControlTile>(false)
+                    scrollBox = new ScrollBox<TMember>(alignVertical)
                     {
                         SizingMode = HudChainSizingModes.FitChainOffAxis | HudChainSizingModes.ClampChainAlignAxis,
                         MinVisibleCount = 1,
@@ -192,10 +245,14 @@ namespace RichHudFramework
 
                     HeaderText = "NewSettingsCategory";
                     SubheaderText = "Subheading\nLine 1\nLine 2\nLine 3\nLine 4";
-                    Height = 334f;
+
+                    if (alignVertical)
+                        Width = 334f;
+                    else
+                        Height = 334f;
                 }
 
-                public void Add(ControlTile tile)
+                public void Add(TMember tile)
                 {
                     scrollBox.Add(tile);
                 }

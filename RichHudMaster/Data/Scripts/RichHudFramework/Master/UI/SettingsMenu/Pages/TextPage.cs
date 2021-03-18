@@ -183,7 +183,9 @@ namespace RichHudFramework
                 {
                     ITextBoard textBoard = textBox.TextBoard;
 
-                    verticalScroll.slide.SliderHeight = (textBoard.Size.Y / textBoard.TextSize.Y) * verticalScroll.Height;
+                    SliderBar slider = verticalScroll.slide;
+                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    slider.SliderHeight = (textBoard.Size.Y / textBoard.TextSize.Y) * verticalScroll.Height;
 
                     textBox.Height = Height - header.Height - subheader.Height - Padding.Y;
                     textBox.Width = Width - verticalScroll.Width - Padding.X;
