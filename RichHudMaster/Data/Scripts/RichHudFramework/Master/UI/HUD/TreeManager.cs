@@ -34,11 +34,6 @@ namespace RichHudFramework
                 public static int ElementRegistered => treeManager.updateAccessors.Count;
 
                 /// <summary>
-                /// Set to true if a client is requesting a tree rebuild
-                /// </summary>
-                public static bool RefreshRequested { get; set; }
-
-                /// <summary>
                 /// Read-only list of registered tree clients
                 /// </summary>
                 public static IReadOnlyList<TreeClient> Clients => treeManager.clients;
@@ -63,12 +58,9 @@ namespace RichHudFramework
                 /// <summary>
                 /// Ticks elapsed during last rebuild
                 /// </summary>
-                public static long RebuildElapsedTicks => treeManager.rebuildTimer.ElapsedTicks;
+                public static IReadOnlyList<long> TreeElapsedTicks => treeManager.treeTimes;
 
-                /// <summary>
-                /// Ticks elapsed during last rebuild
-                /// </summary>
-                public static long TicksSinceLastRebuild => treeManager.lastRebuildTime.ElapsedTicks;
+                public static bool RefreshRequested;
 
                 private readonly List<HudUpdateAccessors> updateAccessors;
                 private readonly Dictionary<Func<Vector3D>, ushort> distMap;
@@ -78,14 +70,14 @@ namespace RichHudFramework
                 private readonly List<Action> depthTestActions;
                 private readonly List<Action> inputActions;
                 private readonly List<Action<bool>> layoutActions;
-                private readonly List<Action> drawActions;
+                private List<Action> drawActions, drawActionBuffer;
                 private float lastResScale;
 
                 private readonly List<TreeClient> clients;
                 private readonly TreeClient mainClient;
 
-                private readonly Stopwatch rebuildTimer, drawTimer, inputTimer, lastRebuildTime;
-                private readonly long[] drawTimes, inputTimes;
+                private readonly Stopwatch treeTimer, drawTimer, inputTimer;
+                private readonly long[] drawTimes, inputTimes, treeTimes;
 
                 private TreeManager()
                 {
@@ -104,7 +96,9 @@ namespace RichHudFramework
                     depthTestActions = new List<Action>(200);
                     inputActions = new List<Action>(200);
                     layoutActions = new List<Action<bool>>(200);
+
                     drawActions = new List<Action>(200);
+                    drawActionBuffer = new List<Action>(200);
 
                     clients = new List<TreeClient>();
                     mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
@@ -115,10 +109,8 @@ namespace RichHudFramework
                     inputTimer = new Stopwatch();
                     inputTimes = new long[tickResetInterval];
 
-                    rebuildTimer = new Stopwatch();
-                    lastRebuildTime = new Stopwatch();
-
-                    RefreshRequested = false;
+                    treeTimer = new Stopwatch();
+                    treeTimes = new long[tickResetInterval];
                 }
 
                 public static void Init()
@@ -145,7 +137,6 @@ namespace RichHudFramework
                     if (treeManager != null)
                     {
                         bool success = treeManager.clients.Remove(client);
-                        RefreshRequested = success;
                         return success;
                     }
                     else
@@ -157,29 +148,28 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw()
                 {
-                    drawTimer.Restart();    
-
                     int drawTick = instance.drawTick;
                     float resScale = instance._resScale;
 
-                    if (RefreshDrawList)
-                        mainClient.refreshDrawList = true;
+                    treeTimer.Restart();
 
-                    for (int n = 0; n < clients.Count; n++)
-                        clients[n].Update(drawTick + n); // Spread out client tree updates
-
-                    bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
-                        refreshLayout = lastResScale != resScale || rebuildLists,
-                        resortLists = rebuildLists || (drawTick % treeRefreshRate) == 0;
-
-                    lastResScale = resScale;
-
-                    if (rebuildLists)
+                    if ((drawTick % treeRefreshRate) == 0)
                     {
                         RebuildUpdateLists();
-                        RefreshRequested = false;
-                        RefreshDrawList = false;
+                        SortUpdateAccessors(); // Apply depth and zoffset sorting
                     }
+
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].Update(drawTick + (n % treeRefreshRate)); // Spread out client tree updates
+
+                    treeTimer.Stop();
+                    treeTimes[drawTick] = treeTimer.ElapsedTicks;
+
+                    drawTimer.Restart();
+
+                    // Older clients (1.0.3-) node spaces require layout refreshes to function
+                    bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
+                        refreshLayout = lastResScale != resScale || rebuildLists;
 
                     for (int n = 0; n < layoutActions.Count; n++)
                         layoutActions[n](refreshLayout);
@@ -188,12 +178,22 @@ namespace RichHudFramework
                     for (int n = 0; n < drawActions.Count; n++)
                         drawActions[n]();
 
-                    // Apply depth and zoffset sorting
-                    if (resortLists)
-                        SortUpdateAccessors();
+                    // Delay updates to draw action list for a frame
+                    if ((drawTick % treeRefreshRate) == 0)
+                    {
+                        var c = drawActions;
+                        drawActions = drawActionBuffer;
+                        drawActionBuffer = c;
+                        drawActionBuffer.Clear();
+                    }
 
                     drawTimer.Stop();
                     drawTimes[drawTick] = drawTimer.ElapsedTicks;
+
+                    if (rebuildLists)
+                        RefreshRequested = false;
+
+                    lastResScale = resScale;
                 }
 
                 /// <summary>
@@ -218,8 +218,6 @@ namespace RichHudFramework
                 /// </summary>
                 private void RebuildUpdateLists()
                 {
-                    rebuildTimer.Restart();
-
                     // Clear update lists and rebuild accessor lists from HUD tree
                     updateAccessors.Clear();
                     layoutActions.Clear();
@@ -244,9 +242,6 @@ namespace RichHudFramework
                         HudUpdateAccessors accessors = updateAccessors[n];
                         layoutActions.Add(accessors.Item5);
                     }
-
-                    rebuildTimer.Stop();
-                    lastRebuildTime.Restart();
                 }
 
                 /// <summary>
@@ -257,13 +252,13 @@ namespace RichHudFramework
                     indexList.Clear();
                     depthTestActions.Clear();
                     inputActions.Clear();
-                    drawActions.Clear();
+                    drawActionBuffer.Clear();
                     distMap.Clear();
 
                     indexList.EnsureCapacity(updateAccessors.Count);
                     depthTestActions.EnsureCapacity(updateAccessors.Count);
                     inputActions.EnsureCapacity(updateAccessors.Count);
-                    drawActions.EnsureCapacity(updateAccessors.Count);
+                    drawActionBuffer.EnsureCapacity(updateAccessors.Count);
 
                     // Update distance for each unique position delegate
                     // Max distance: 655.35m; Precision: 1cm/unit
@@ -322,7 +317,7 @@ namespace RichHudFramework
                         int index = (int)(indexList[n] & indexMask);
                         HudUpdateAccessors accessors = updateAccessors[index];
 
-                        drawActions.Add(accessors.Item6);
+                        drawActionBuffer.Add(accessors.Item6);
                     }
                 }
 

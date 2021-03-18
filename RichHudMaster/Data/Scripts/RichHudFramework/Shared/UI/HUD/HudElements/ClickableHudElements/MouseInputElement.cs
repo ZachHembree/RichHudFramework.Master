@@ -46,6 +46,16 @@ namespace RichHudFramework.UI
         public event EventHandler RightReleased;
 
         /// <summary>
+        /// Invoked when taking focus
+        /// </summary>
+        public event EventHandler GainedFocus;
+
+        /// <summary>
+        /// Invoked when focus is lost
+        /// </summary>
+        public event EventHandler LostFocus;
+
+        /// <summary>
         /// Indicates whether or not the cursor is currently over this element.
         /// </summary>
         public bool HasFocus { get { return hasFocus && Visible; } private set { hasFocus = value; } }
@@ -99,19 +109,22 @@ namespace RichHudFramework.UI
 
         protected override void InputDepth()
         {
+            State &= ~HudElementStates.IsMouseInBounds;
+
             if (UseCursor && Visible && (HudSpace?.IsFacingCamera ?? false))
             {
                 Vector3 cursorPos = HudSpace.CursorPos;
                 Vector2 offset = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) / 2f;
                 BoundingBox2 box = new BoundingBox2(cachedPosition - offset, cachedPosition + offset);
-                mouseInBounds = box.Contains(new Vector2(cursorPos.X, cursorPos.Y)) == ContainmentType.Contains
+                bool mouseInBounds = box.Contains(new Vector2(cursorPos.X, cursorPos.Y)) == ContainmentType.Contains
                         || (IsLeftClicked || IsRightClicked);
 
                 if (mouseInBounds)
+                {
+                    State |= HudElementStates.IsMouseInBounds;
                     HudMain.Cursor.TryCaptureHudSpace(cursorPos.Z, HudSpace.GetHudSpaceFunc);
+                }
             }
-            else
-                mouseInBounds = false;
         }
 
         protected override void HandleInput(Vector2 cursorPos)
@@ -127,7 +140,6 @@ namespace RichHudFramework.UI
                 if (SharedBinds.LeftButton.IsNewPressed)
                 {
                     LeftClicked?.Invoke(_parent, EventArgs.Empty);
-                    HasFocus = true;
                     IsLeftClicked = true;
                     IsNewLeftClicked = true;
                 }
@@ -137,12 +149,17 @@ namespace RichHudFramework.UI
                 if (SharedBinds.RightButton.IsNewPressed)
                 {
                     RightClicked?.Invoke(_parent, EventArgs.Empty);
-                    HasFocus = true;
                     IsRightClicked = true;
                     IsNewRightClicked = true;
                 }
                 else
                     IsNewRightClicked = false;
+
+                if (!HasFocus && IsNewRightClicked || IsNewLeftClicked)
+                {
+                    HasFocus = true;
+                    GainedFocus?.Invoke(_parent, EventArgs.Empty);
+                }
             }
             else
             {
@@ -153,7 +170,10 @@ namespace RichHudFramework.UI
                 }
 
                 if (HasFocus && (SharedBinds.LeftButton.IsNewPressed || SharedBinds.RightButton.IsNewPressed))
+                {
                     HasFocus = false;
+                    LostFocus?.Invoke(_parent, EventArgs.Empty);
+                }
 
                 IsNewLeftClicked = false;
                 IsNewRightClicked = false;

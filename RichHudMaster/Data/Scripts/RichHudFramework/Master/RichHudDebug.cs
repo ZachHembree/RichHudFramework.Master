@@ -99,18 +99,16 @@ namespace RichHudFramework.Server
                 statsBuilder += $"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n";
 
                 statsBuilder += $"\t\tUpdate Timers  (IsHighResolution: {Stopwatch.IsHighResolution}):\n";
-                AddGrid(statsBuilder, new string[4, 4]
+                AddGrid(statsBuilder, new string[,]
                 {
                     { "Name",   "Avg",                          "50th",                     "99th" },
+                    { "Tree",   $"{stats.AvgTreeTime:F2}ms",    $"{stats.Tree50th:F2}ms",   $"{stats.Tree99th:F2}ms" },
                     { "Draw",   $"{stats.AvgDrawTime:F2}ms",    $"{stats.Draw50th:F2}ms",   $"{stats.Draw99th:F2}ms" },
                     { "Input",  $"{stats.AvgInputTime:F2}ms",   $"{stats.Input50th:F2}ms",  $"{stats.Input99th:F2}ms" },
                     { "Total",  $"{stats.AvgTotalTime:F2}ms",   $"{stats.Total50th:F2}ms",  $"{stats.Total99th:F2}ms" },
                 }, 3, 4);
 
-                statsBuilder += $"\n\t\t\tLast Rebuild: {stats.LastRebuildTime:F2}ms\t\t\n";
-                statsBuilder += $"\t\t\tSince Rebuild: {stats.TimeSinceRebuild:F1}s\t\t\n\n";
-
-                statsBuilder += $"\tBindManager:\n";
+                statsBuilder += $"\n\tBindManager:\n";
                 statsBuilder += $"\t\tControls Registered: {BindManager.Controls.Count}\n";
                 statsBuilder += $"\t\tClients Registered: {BindManager.Clients.Count}\n\n";
 
@@ -201,76 +199,76 @@ namespace RichHudFramework.Server
         /// </summary>
         private class UpdateStats
         {
-            public double AvgDrawTime { get; private set; }
+            public double AvgTreeTime => treeStats.AvgTime;
 
-            public double Draw50th { get; private set; }
+            public double Tree50th => treeStats.Pct50th;
 
-            public double Draw99th { get; private set; }
+            public double Tree99th => treeStats.Pct99th;
 
-            public double AvgInputTime { get; private set; }
 
-            public double Input50th { get; private set; }
+            public double AvgDrawTime => drawStats.AvgTime;
 
-            public double Input99th { get; private set; }
+            public double Draw50th => drawStats.Pct50th;
 
-            public double AvgTotalTime { get; private set; }
+            public double Draw99th => drawStats.Pct99th;
 
-            public double Total50th { get; private set; }
 
-            public double Total99th { get; private set; }
+            public double AvgInputTime => inputStats.AvgTime;
 
-            public double LastRebuildTime { get; private set; }
+            public double Input50th => inputStats.Pct50th;
 
-            public double TimeSinceRebuild { get; private set; }
+            public double Input99th => inputStats.Pct99th;
 
-            private readonly List<long> sortedDrawTicks, sortedInputTicks;
+
+            public double AvgTotalTime => treeStats.AvgTime + drawStats.AvgTime + inputStats.AvgTime;
+
+            public double Total50th => treeStats.Pct50th + drawStats.Pct50th + inputStats.Pct50th;
+
+            public double Total99th => treeStats.Pct99th + drawStats.Pct99th + inputStats.Pct99th;
+
+            private readonly TickStats drawStats, inputStats, treeStats;
+            private readonly List<long> tickBuffer;
 
             public UpdateStats()
             {
-                sortedDrawTicks = new List<long>();
-                sortedInputTicks = new List<long>();
+                tickBuffer = new List<long>();
+                drawStats = new TickStats();
+                inputStats = new TickStats();
+                treeStats = new TickStats();
             }
 
             public void Update()
             {
-                double tpms = TimeSpan.TicksPerMillisecond,
-                    tps = TimeSpan.TicksPerSecond;
+                treeStats.Update(HudMain.TreeManager.TreeElapsedTicks, tickBuffer);
+                drawStats.Update(HudMain.TreeManager.DrawElapsedTicks, tickBuffer);
+                inputStats.Update(HudMain.TreeManager.InputElapsedTicks, tickBuffer);
+            }
 
-                LastRebuildTime = HudMain.TreeManager.RebuildElapsedTicks / tpms;
-                TimeSinceRebuild = HudMain.TreeManager.TicksSinceLastRebuild / tps;
+            public class TickStats
+            {
+                public double AvgTime { get; private set; }
 
-                sortedDrawTicks.Clear();
-                sortedInputTicks.Clear();
+                public double Pct50th { get; private set; }
 
-                sortedDrawTicks.AddRange(HudMain.TreeManager.DrawElapsedTicks);
-                sortedInputTicks.AddRange(HudMain.TreeManager.InputElapsedTicks);
+                public double Pct99th { get; private set; }
 
-                sortedDrawTicks.Sort();
-                sortedInputTicks.Sort();
+                public void Update(IReadOnlyList<long> ticks, List<long> tickBuffer)
+                {
+                    double tpms = TimeSpan.TicksPerMillisecond;
 
-                // Update draw times
-                long totalTicks = 0;
+                    tickBuffer.Clear();
+                    tickBuffer.AddRange(ticks);
+                    tickBuffer.Sort();
 
-                for (int n = 0; n < sortedDrawTicks.Count; n++)
-                    totalTicks += sortedDrawTicks[n];
+                    long totalTicks = 0;
 
-                AvgDrawTime = (totalTicks / (double)sortedDrawTicks.Count) / tpms;
-                Draw50th = sortedDrawTicks[(int)(sortedDrawTicks.Count * 0.5d)] / tpms;
-                Draw99th = sortedDrawTicks[(int)(sortedDrawTicks.Count * 0.99d)] / tpms;
+                    for (int n = 0; n < tickBuffer.Count; n++)
+                        totalTicks += tickBuffer[n];
 
-                // Update input times
-                totalTicks = 0;
-
-                for (int n = 0; n < sortedInputTicks.Count; n++)
-                    totalTicks += sortedInputTicks[n];
-
-                AvgInputTime = (totalTicks / (double)sortedInputTicks.Count) / tpms;
-                Input50th = sortedInputTicks[(int)(sortedInputTicks.Count * 0.5d)] / tpms;
-                Input99th = sortedInputTicks[(int)(sortedInputTicks.Count * 0.99d)] / tpms;
-
-                AvgTotalTime = AvgDrawTime + AvgInputTime;
-                Total50th = Draw50th + Input50th;
-                Total99th = Draw99th + Input99th;
+                    AvgTime = (totalTicks / (double)tickBuffer.Count) / tpms;
+                    Pct50th = tickBuffer[(int)(tickBuffer.Count * 0.5d)] / tpms;
+                    Pct99th = tickBuffer[(int)(tickBuffer.Count * 0.99d)] / tpms;
+                }
             }
         }
     }

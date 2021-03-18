@@ -43,6 +43,16 @@ namespace RichHudFramework
             event EventHandler RightReleased;
 
             /// <summary>
+            /// Invoked when taking focus
+            /// </summary>
+            event EventHandler GainedFocus;
+
+            /// <summary>
+            /// Invoked when focus is lost
+            /// </summary>
+            event EventHandler LostFocus;
+
+            /// <summary>
             /// True if the element is being clicked with the left mouse button
             /// </summary>
             bool IsLeftClicked { get; }

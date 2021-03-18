@@ -142,6 +142,7 @@ namespace RichHudFramework
                         VertCenterText = false,
                         EnableEditing = false,
                         EnableHighlighting = true,
+                        ClearSelectionOnLoseFocus = true
                     };
 
                     headerDivider = new TexturedBox(textBox)

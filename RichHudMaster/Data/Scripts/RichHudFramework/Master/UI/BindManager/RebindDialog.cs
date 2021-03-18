@@ -198,7 +198,7 @@ namespace RichHudFramework.UI.Server
                 Size = new Vector2(1210f, 288f);
 
                 ZOffset = sbyte.MaxValue - 1;
-                zOffsetInner = byte.MaxValue - 1;
+                layerData.zOffsetInner = byte.MaxValue - 1;
             }
 
             protected override void Layout()

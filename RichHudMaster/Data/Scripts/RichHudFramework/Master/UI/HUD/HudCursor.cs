@@ -65,7 +65,7 @@ namespace RichHudFramework
                 public HudCursor(HudParentBase parent = null) : base(parent)
                 {
                     ZOffset = sbyte.MaxValue;
-                    zOffsetInner = byte.MaxValue;
+                    layerData.zOffsetInner = byte.MaxValue;
 
                     cursorBox = new TexturedBox(this)
                     {
@@ -199,7 +199,7 @@ namespace RichHudFramework
                     ScreenPos = screenPos;
                     cursorBox.Offset = screenPos;
 
-                    fullZOffset = ParentUtils.GetFullZOffset(this, _parent);
+                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
 
                     base.Layout();

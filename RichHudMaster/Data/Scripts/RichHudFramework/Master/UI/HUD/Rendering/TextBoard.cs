@@ -215,7 +215,7 @@ namespace RichHudFramework
                 {
                     int line = 0, ch = 0;
                     charOffset /= Scale;
-                    charOffset = Vector2.Clamp(charOffset, -_size / 2f + 4f, _size / 2f - 4f);
+                    charOffset = Vector2.Clamp(charOffset, -_size / 2f, _size / 2f);
                     charOffset -= _textOffset;
 
                     if (lines.Count > 0)
@@ -234,13 +234,14 @@ namespace RichHudFramework
                 {
                     for (int line = startLine; line <= endLine; line++)
                     {
-                        float height = lines[line]._verticalOffset;
+                        float top = lines[line]._verticalOffset, 
+                            bottom = (top - lines[line].UnscaledSize.Y);
 
-                        if (offset <= height && offset > (height - lines[line].UnscaledSize.Y))
+                        if (offset >= bottom)
                             return line;
                     }
 
-                    return startLine;
+                    return endLine;
                 }
 
                 /// <summary>

@@ -111,6 +111,8 @@ namespace RichHudFramework.UI.Server
                 AutoResize = false,
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
                 Padding = new Vector2(24f, 0f),
+                MoveToEndOnGainFocus = true,
+                ClearSelectionOnLoseFocus = true
             };
 
             highlight = new TexturedBox(background)

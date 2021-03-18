@@ -24,7 +24,6 @@ namespace RichHudFramework.Server
                 { "close", x => RichHudTerminal.CloseMenu() },
                 { "toggleCursor", x => HudMain.EnableCursor = !HudMain.EnableCursor },
                 { "crash", x => ThrowException()},
-                { "refreshDrawList", x => HudMain.RefreshDrawList = true },
                 { "toggleDebug", x => RichHudDebug.EnableDebug = !RichHudDebug.EnableDebug }
             };
         }

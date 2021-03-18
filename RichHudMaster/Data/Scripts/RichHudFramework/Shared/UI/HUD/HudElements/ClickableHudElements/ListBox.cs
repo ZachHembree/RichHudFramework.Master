@@ -165,10 +165,10 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Height of entries in the list.
         /// </summary>
-        public float LineHeight 
-        { 
-            get { return scrollBox.MemberMaxSize.Y; } 
-            set { scrollBox.MemberMaxSize = new Vector2(scrollBox.MemberMaxSize.X, value); } 
+        public float LineHeight
+        {
+            get { return scrollBox.MemberMaxSize.Y; }
+            set { scrollBox.MemberMaxSize = new Vector2(scrollBox.MemberMaxSize.X, value); }
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Current selection. Null if empty.
         /// </summary>
-        public TElementContainer Selection => SelectionIndex != -1 ? scrollBox.Collection[SelectionIndex] : default(TElementContainer);
+        public TElementContainer Selection => (SelectionIndex != -1 && scrollBox.Collection.Count > 0) ? scrollBox.Collection[SelectionIndex] : default(TElementContainer);
 
         /// <summary>
         /// Index of the current selection. -1 if empty.
