@@ -37,7 +37,7 @@ namespace RichHudFramework
         {
             public const int tickResetInterval = 240;
             private const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
-            private const int treeRefreshRate = 10;
+            private const int treeRefreshRate = 5;
 
             /// <summary>
             /// Root parent for all HUD elements.

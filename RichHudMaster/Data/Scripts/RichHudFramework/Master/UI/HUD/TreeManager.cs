@@ -70,7 +70,7 @@ namespace RichHudFramework
                 private readonly List<Action> depthTestActions;
                 private readonly List<Action> inputActions;
                 private readonly List<Action<bool>> layoutActions;
-                private readonly List<Action> drawActions;
+                private List<Action> drawActions, drawActionBuffer;
                 private float lastResScale;
 
                 private readonly List<TreeClient> clients;
@@ -96,7 +96,9 @@ namespace RichHudFramework
                     depthTestActions = new List<Action>(200);
                     inputActions = new List<Action>(200);
                     layoutActions = new List<Action<bool>>(200);
+
                     drawActions = new List<Action>(200);
+                    drawActionBuffer = new List<Action>(200);
 
                     clients = new List<TreeClient>();
                     mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
@@ -151,19 +153,21 @@ namespace RichHudFramework
 
                     treeTimer.Restart();
 
-                    for (int n = 0; n < clients.Count; n++)
-                        clients[n].Update(drawTick + n); // Spread out client tree updates
+                    if ((drawTick % treeRefreshRate) == 0)
+                    {
+                        RebuildUpdateLists();
+                        SortUpdateAccessors(); // Apply depth and zoffset sorting
+                    }
 
-                    RebuildUpdateLists();
-                    SortUpdateAccessors(); // Apply depth and zoffset sorting
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].Update(drawTick + (n % treeRefreshRate)); // Spread out client tree updates
 
                     treeTimer.Stop();
                     treeTimes[drawTick] = treeTimer.ElapsedTicks;
 
                     drawTimer.Restart();
 
-                    // Older clients (1.0.3-) require layout to be refreshed whenever the tree is updated.
-                    // Not sure why. Seems like a bug.
+                    // Older clients (1.0.3-) node spaces require layout refreshes to function
                     bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
                         refreshLayout = lastResScale != resScale || rebuildLists;
 
@@ -173,6 +177,15 @@ namespace RichHudFramework
                     // Draw UI elements
                     for (int n = 0; n < drawActions.Count; n++)
                         drawActions[n]();
+
+                    // Delay updates to draw action list for a frame
+                    if ((drawTick % treeRefreshRate) == 0)
+                    {
+                        var c = drawActions;
+                        drawActions = drawActionBuffer;
+                        drawActionBuffer = c;
+                        drawActionBuffer.Clear();
+                    }
 
                     drawTimer.Stop();
                     drawTimes[drawTick] = drawTimer.ElapsedTicks;
@@ -239,13 +252,13 @@ namespace RichHudFramework
                     indexList.Clear();
                     depthTestActions.Clear();
                     inputActions.Clear();
-                    drawActions.Clear();
+                    drawActionBuffer.Clear();
                     distMap.Clear();
 
                     indexList.EnsureCapacity(updateAccessors.Count);
                     depthTestActions.EnsureCapacity(updateAccessors.Count);
                     inputActions.EnsureCapacity(updateAccessors.Count);
-                    drawActions.EnsureCapacity(updateAccessors.Count);
+                    drawActionBuffer.EnsureCapacity(updateAccessors.Count);
 
                     // Update distance for each unique position delegate
                     // Max distance: 655.35m; Precision: 1cm/unit
@@ -304,7 +317,7 @@ namespace RichHudFramework
                         int index = (int)(indexList[n] & indexMask);
                         HudUpdateAccessors accessors = updateAccessors[index];
 
-                        drawActions.Add(accessors.Item6);
+                        drawActionBuffer.Add(accessors.Item6);
                     }
                 }
 
