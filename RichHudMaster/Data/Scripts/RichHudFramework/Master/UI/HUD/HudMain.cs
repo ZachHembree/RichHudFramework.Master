@@ -228,6 +228,7 @@ namespace RichHudFramework
             private float _fovScale;
 
             private Action<byte> LoseFocusCallback;
+            private Action LoseInputFocusCallback;
             private byte unfocusedOffset;
             private int drawTick;
 
@@ -333,6 +334,30 @@ namespace RichHudFramework
                     Init();
 
                 return instance.GetFocusOffsetInternal(LoseFocusCallback);
+            }
+
+            /// <summary>
+            /// Registers a callback for UI elements taking input focus. Callback
+            /// invoked when another element takes focus.
+            /// </summary>
+            public static void GetInputFocus(Action LoseFocusCallback)
+            {
+                if (LoseFocusCallback != null)
+                {
+                    instance.LoseInputFocusCallback?.Invoke();
+                    instance.LoseInputFocusCallback = LoseFocusCallback;
+                }
+            }
+
+            /// <summary>
+            /// Clears input focus callback if it matches the one last registered.
+            /// </summary>
+            public static void LoseInputFocus(Action LoseFocusCallback)
+            {
+                if (LoseFocusCallback == instance.LoseInputFocusCallback)
+                {
+                    instance.LoseInputFocusCallback = null;
+                }
             }
 
             /// <summary>

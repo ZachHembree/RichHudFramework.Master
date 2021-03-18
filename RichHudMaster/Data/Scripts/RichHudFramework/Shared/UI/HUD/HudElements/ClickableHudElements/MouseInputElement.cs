@@ -82,6 +82,7 @@ namespace RichHudFramework.UI
 
         private bool mouseCursorEntered;
         private bool hasFocus;
+        protected readonly Action LoseFocusCallback;
 
         public MouseInputElement(HudParentBase parent) : base(parent)
         {
@@ -89,6 +90,8 @@ namespace RichHudFramework.UI
             ShareCursor = true;
             HasFocus = false;
             DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding;
+
+            LoseFocusCallback = LoseFocus;
         }
 
         public MouseInputElement() : this(null)
@@ -158,6 +161,7 @@ namespace RichHudFramework.UI
                 if (!HasFocus && IsNewRightClicked || IsNewLeftClicked)
                 {
                     HasFocus = true;
+                    HudMain.GetInputFocus(LoseFocusCallback);
                     GainedFocus?.Invoke(_parent, EventArgs.Empty);
                 }
             }
@@ -170,10 +174,7 @@ namespace RichHudFramework.UI
                 }
 
                 if (HasFocus && (SharedBinds.LeftButton.IsNewPressed || SharedBinds.RightButton.IsNewPressed))
-                {
-                    HasFocus = false;
-                    LostFocus?.Invoke(_parent, EventArgs.Empty);
-                }
+                    LoseFocus();
 
                 IsNewLeftClicked = false;
                 IsNewRightClicked = false;
@@ -190,6 +191,13 @@ namespace RichHudFramework.UI
                 RightReleased?.Invoke(_parent, EventArgs.Empty);
                 IsRightClicked = false;
             }
+        }
+
+        protected virtual void LoseFocus()
+        {
+            HasFocus = false;
+            LostFocus?.Invoke(_parent, EventArgs.Empty);
+            HudMain.LoseInputFocus(LoseFocusCallback);
         }
     }
 }
