@@ -23,9 +23,14 @@ namespace RichHudFramework.UI.Server
         public Color BorderColor { get { return on.BorderColor; } set { on.BorderColor = value; off.BorderColor = value; } }
 
         /// <summary>
-        /// Color of the highlight border used to indicate the current selection
+        /// Color used for the background for the unselected button
         /// </summary>
-        public Color HighlightBorderColor { get { return selectionHighlight.Color; } set { selectionHighlight.Color = value; } }
+        public Color BackgroundColor { get; set; }
+
+        /// <summary>
+        /// Background color used to indicate the current selection
+        /// </summary>
+        public Color SelectionColor { get; set; }
 
         /// <summary>
         /// On button text
@@ -49,7 +54,6 @@ namespace RichHudFramework.UI.Server
 
         protected readonly BorderedButton on, off;
         protected readonly HudChain buttonChain;
-        protected readonly BorderBox selectionHighlight;
 
         public OnOffButton(HudParentBase parent) : base(parent)
         {
@@ -59,6 +63,7 @@ namespace RichHudFramework.UI.Server
                 Padding = Vector2.Zero,
                 Size = new Vector2(71f, 49f),
                 HighlightEnabled = true,
+                UseFocusFormatting = false
             };
 
             on.BorderThickness = 2f;
@@ -69,6 +74,7 @@ namespace RichHudFramework.UI.Server
                 Padding = Vector2.Zero,
                 Size = new Vector2(71f, 49f),
                 HighlightEnabled = true,
+                UseFocusFormatting = false
             };
 
             off.BorderThickness = 2f;
@@ -83,12 +89,10 @@ namespace RichHudFramework.UI.Server
             on.MouseInput.LeftClicked += ToggleValue;
             off.MouseInput.LeftClicked += ToggleValue;
 
-            selectionHighlight = new BorderBox(buttonChain)
-            { 
-                Color = Color.White 
-            };
-
             Size = new Vector2(200f, 50f);
+
+            BackgroundColor = TerminalFormatting.OuterSpace;
+            SelectionColor = TerminalFormatting.DullMint;
         }
 
         public OnOffButton() : this(null)
@@ -107,13 +111,13 @@ namespace RichHudFramework.UI.Server
 
             if (Value)
             {
-                selectionHighlight.Size = buttonSize;
-                selectionHighlight.Offset = on.Offset;
+                on.Color = SelectionColor;
+                off.Color = BackgroundColor;
             }
             else
             {
-                selectionHighlight.Size = buttonSize;
-                selectionHighlight.Offset = off.Offset;
+                off.Color = SelectionColor;
+                on.Color = BackgroundColor;
             }
         }
     }

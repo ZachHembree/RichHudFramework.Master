@@ -33,11 +33,6 @@ namespace RichHudFramework.UI.Server
         public Color BorderColor { get { return onOffButton.BorderColor; } set { onOffButton.BorderColor = value; } }
 
         /// <summary>
-        /// Color of the highlight border used to indicate the current selection
-        /// </summary>
-        public Color HighlightBorderColor { get { return onOffButton.HighlightBorderColor; } set { onOffButton.HighlightBorderColor = value; } }
-
-        /// <summary>
         /// On button text
         /// </summary>
         public RichText OnText { get { return onOffButton.OnText; } set { onOffButton.OnText = value; } }

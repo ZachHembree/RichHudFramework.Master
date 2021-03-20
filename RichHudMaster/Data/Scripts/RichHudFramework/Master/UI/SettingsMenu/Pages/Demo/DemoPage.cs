@@ -275,7 +275,7 @@ namespace RichHudFramework
                 {
                     if (instanceList.Selection != null)
                     {
-                        ListBoxEntry<TestWindowNode> selection = instanceList.Selection;
+                        ListBoxLabel<TestWindowNode> selection = instanceList.Selection;
                         TestWindowNode testNode = selection.AssocMember;
                         var instanceCollection = instanceList.HudCollection;
 

@@ -78,6 +78,11 @@ namespace RichHudFramework
             bool HasFocus { get; }
 
             /// <summary>
+            /// Returns true if the element is moused over
+            /// </summary>
+            bool IsMousedOver { get; }
+
+            /// <summary>
             /// Clears all subscribers to mouse input events.
             /// </summary>
             void ClearSubscribers();

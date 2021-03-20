@@ -101,7 +101,7 @@ namespace RichHudFramework
                     closeButton = new Button(header)
                     {
                         Material = closeButtonMat,
-                        highlightColor = Color.White,
+                        HighlightColor = Color.White,
                         ParentAlignment = ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.Inner,
                         Size = new Vector2(30f),
                         Offset = new Vector2(-18f, -14f),
@@ -303,7 +303,7 @@ namespace RichHudFramework
                         {
                             SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
-                            Color = TerminalFormatting.ListBgColor,
+                            Color = TerminalFormatting.OuterSpace,
                         };
 
                         header = new LabelBox(scrollBox)
@@ -386,11 +386,11 @@ namespace RichHudFramework
 
                     protected override void Layout()
                     {
-                        header.Color = TerminalFormatting.ListHeaderColor.SetAlphaPct(HudMain.UiBkOpacity);
-                        scrollBox.Color = TerminalFormatting.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        header.Color = TerminalFormatting.Dark.SetAlphaPct(HudMain.UiBkOpacity);
+                        scrollBox.Color = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
 
-                        SliderBar slider = scrollBox.scrollBar.slide;
-                        slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                        SliderBar slider = scrollBox.ScrollBar.slide;
+                        slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                     }
                 }
             }

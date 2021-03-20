@@ -16,7 +16,7 @@ namespace RichHudFramework.UI
     public class Dropdown<TElementContainer, TElement, TValue>
         : HudElementBase, IClickableElement, IEntryBox<TValue, TElementContainer, TElement>
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, IClickableElement, ILabelElement
+        where TElement : HudElementBase, ILabelElement
     {
         /// <summary>
         /// Invoked when a member of the list is selected.
@@ -133,22 +133,13 @@ namespace RichHudFramework.UI
 
         public readonly ListBox<TElementContainer, TElement, TValue> listBox;
         protected readonly DropdownDisplay display;
-        protected readonly TexturedBox highlight;
 
         public Dropdown(HudParentBase parent) : base(parent)
         {
             display = new DropdownDisplay(this)
             {
-                Padding = new Vector2(10f, 0f),
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
                 Text = "None"
-            };
-
-            highlight = new TexturedBox(display)
-            {
-                Color = TerminalFormatting.HighlightOverlayColor,
-                DimAlignment = DimAlignments.Both,
-                Visible = false,
             };
 
             listBox = new ListBox<TElementContainer, TElement, TValue>(display)
@@ -176,15 +167,13 @@ namespace RichHudFramework.UI
             {
                 CloseList();
             }
-
-            highlight.Visible = IsMousedOver || Open;
         }
 
         private void UpdateDisplay(object sender, EventArgs args)
         {
             if (Selection != null)
             {
-                display.Text = Selection.Element.Text;
+                display.name.TextBoard.SetText(Selection.Element.TextBoard.ToString());
                 CloseList();
             }
         }
@@ -277,42 +266,62 @@ namespace RichHudFramework.UI
         IEnumerator IEnumerable.GetEnumerator() =>
             GetEnumerator();
 
-        protected class DropdownDisplay : HudElementBase
+        protected class DropdownDisplay : Button
         {
             private static readonly Material arrowMat = new Material("RichHudDownArrow", new Vector2(64f, 64f));
 
             public RichText Text { get { return name.Text; } set { name.Text = value; } }
 
-            public GlyphFormat Format { get { return name.Format; } set { name.Format = value; } }
+            public GlyphFormat Format 
+            { 
+                get { return name.Format; } 
+                set { name.Format = value; } 
+            }
 
-            public Color Color { get { return background.Color; } set { background.Color = value; } }
+            /// <summary>
+            /// Color of the border surrounding the button
+            /// </summary>
+            public Color BorderColor { get { return border.Color; } set { border.Color = value; } }
 
-            public override bool IsMousedOver => mouseInput.IsMousedOver;
+            /// <summary>
+            /// Thickness of the border surrounding the button
+            /// </summary>
+            public float BorderThickness { get { return border.Thickness; } set { border.Thickness = value; } }
 
-            public IMouseInput MouseInput => mouseInput;
+            /// <summary>
+            /// Text formatting used when the control gains focus.
+            /// </summary>
+            public GlyphFormat FocusFormat { get; set; }
+
+            /// <summary>
+            /// Background color used when the control gains focus.
+            /// </summary>
+            public Color FocusColor { get; set; }
+
+            /// <summary>
+            /// If true, then the button will change formatting when it takes focus.
+            /// </summary>
+            public bool UseFocusFormatting { get; set; }
 
             public readonly Label name;
-            public readonly TexturedBox arrow, divider, background;
-            private readonly MouseInputElement mouseInput;
+            public readonly TexturedBox arrow, divider;
+
             private readonly HudChain layout;
+            private readonly BorderBox border;
+            private GlyphFormat lastFormat;
 
             public DropdownDisplay(HudParentBase parent = null) : base(parent)
             {
-                background = new TexturedBox(this)
+                border = new BorderBox(this)
                 {
-                    DimAlignment = DimAlignments.Both,
-                };
-
-                var border = new BorderBox(this)
-                {
-                    Color = TerminalFormatting.BorderColor,
                     Thickness = 1f,
-                    DimAlignment = DimAlignments.Both,
+                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
                 };
 
                 name = new Label()
                 {
                     AutoResize = false,   
+                    Padding = new Vector2(10f, 0f)
                 };
 
                 divider = new TexturedBox()
@@ -325,7 +334,6 @@ namespace RichHudFramework.UI
                 arrow = new TexturedBox()
                 {
                     Width = 38f,
-                    Color = new Color(227, 230, 233),
                     MatAlignment = MaterialAlignment.FitVertical,
                     Material = arrowMat,
                 };
@@ -337,18 +345,90 @@ namespace RichHudFramework.UI
                     CollectionContainer = { name, divider, arrow }
                 };
 
-                mouseInput = new MouseInputElement(this) 
-                { 
-                    DimAlignment = DimAlignments.Both
-                };
+                Format = TerminalFormatting.ControlFormat;
+                FocusFormat = TerminalFormatting.InvControlFormat;
 
-                Color = new Color(41, 54, 62);
-                Format = GlyphFormat.White;
+                Color = TerminalFormatting.OuterSpace;
+                HighlightColor = TerminalFormatting.Atomic;
+                FocusColor = TerminalFormatting.Mint;
+                BorderColor = TerminalFormatting.LimedSpruce;
+
+                HighlightEnabled = true;
+                UseFocusFormatting = true;
+
+                _mouseInput.GainedFocus += GainFocus;
+                _mouseInput.LostFocus += LoseFocus;
             }
 
             protected override void Layout()
             {
+                base.Layout();
                 name.Width = (Width - Padding.X) - divider.Width - arrow.Width;
+            }
+
+            protected override void CursorEnter(object sender, EventArgs args)
+            {
+                if (HighlightEnabled)
+                {
+                    if (!(UseFocusFormatting && MouseInput.HasFocus))
+                    {
+                        lastBackgroundColor = Color;
+                        lastFormat = Format;
+                    }
+
+                    Color = HighlightColor;
+                    name.TextBoard.SetFormatting(lastFormat);
+
+                    divider.Color = lastFormat.Color.SetAlphaPct(0.8f);
+                    arrow.Color = lastFormat.Color;
+                }
+            }
+
+            protected override void CursorExit(object sender, EventArgs args)
+            {
+                if (HighlightEnabled)
+                {
+                    if (UseFocusFormatting && MouseInput.HasFocus)
+                    {
+                        Color = FocusColor;
+                        name.TextBoard.SetFormatting(FocusFormat);
+
+                        divider.Color = FocusFormat.Color.SetAlphaPct(0.8f);
+                        arrow.Color = FocusFormat.Color;
+                    }
+                    else
+                    {
+                        Color = lastBackgroundColor;
+                        name.TextBoard.SetFormatting(lastFormat);
+
+                        divider.Color = lastFormat.Color.SetAlphaPct(0.8f);
+                        arrow.Color = lastFormat.Color;
+                    }
+                }
+            }
+
+            private void GainFocus(object sender, EventArgs args)
+            {
+                if (UseFocusFormatting)
+                {
+                    Color = FocusColor;
+                    name.TextBoard.SetFormatting(FocusFormat);
+
+                    divider.Color = FocusFormat.Color.SetAlphaPct(0.8f);
+                    arrow.Color = FocusFormat.Color;
+                }
+            }
+
+            private void LoseFocus(object sender, EventArgs args)
+            {
+                if (UseFocusFormatting)
+                {
+                    Color = lastBackgroundColor;
+                    name.TextBoard.SetFormatting(lastFormat);
+
+                    divider.Color = lastFormat.Color.SetAlphaPct(0.8f);
+                    arrow.Color = lastFormat.Color;
+                }
             }
         }
     }
@@ -356,7 +436,7 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Collapsable list box. Designed to mimic the appearance of the dropdown in the SE terminal.
     /// </summary>
-    public class Dropdown<TValue> : Dropdown<ListBoxEntry<TValue>, LabelButton, TValue>
+    public class Dropdown<TValue> : Dropdown<ListBoxLabel<TValue>, Label, TValue>
     {
         public Dropdown(HudParentBase parent) : base(parent)
         { }

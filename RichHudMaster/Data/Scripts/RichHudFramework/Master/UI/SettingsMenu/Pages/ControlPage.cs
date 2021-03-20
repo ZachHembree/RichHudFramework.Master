@@ -106,15 +106,15 @@ namespace RichHudFramework
                 {
                     Spacing = 30f;
                     SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;
-                    background.Visible = false;
+                    Background.Visible = false;
                 }
 
                 protected override void Layout()
                 {
                     base.Layout();
 
-                    SliderBar slider = scrollBar.slide;
-                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    SliderBar slider = ScrollBar.slide;
+                    slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                 }
             }
         }

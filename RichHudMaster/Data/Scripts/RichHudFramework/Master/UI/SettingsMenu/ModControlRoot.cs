@@ -209,7 +209,7 @@ namespace RichHudFramework
             {
                 public ModControlRootTreeBox(HudParentBase parent = null) : base(parent)
                 {
-                    HeaderColor = TerminalFormatting.TileColor;
+                    HeaderColor = TerminalFormatting.Gunmetal;
                 }
 
                 protected override void Layout()
@@ -220,7 +220,7 @@ namespace RichHudFramework
 
                 public override bool Unregister(bool fast = false)
                 {
-                    entryChain.Clear(fast);
+                    selectionBox.hudChain.Clear(fast);
                     return base.Unregister(fast);
                 }
             }

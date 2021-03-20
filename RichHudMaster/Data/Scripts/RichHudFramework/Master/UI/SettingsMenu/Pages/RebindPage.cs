@@ -100,15 +100,15 @@ namespace RichHudFramework
                     Spacing = 30f;
                     SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;
 
-                    background.Visible = false;
+                    Background.Visible = false;
                 }
 
                 protected override void Layout()
                 {
                     base.Layout();
 
-                    SliderBar slider = scrollBar.slide;
-                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    SliderBar slider = ScrollBar.slide;
+                    slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                 }
             }
 
@@ -189,7 +189,7 @@ namespace RichHudFramework
                         Spacing = 8f,
                     };
 
-                    scrollBox.background.Visible = false;
+                    scrollBox.Background.Visible = false;
 
                     var divider1 = new TexturedBox()
                     {
@@ -217,8 +217,8 @@ namespace RichHudFramework
 
                 protected override void Layout()
                 {
-                    SliderBar slider = scrollBox.scrollBar.slide;
-                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    SliderBar slider = scrollBox.ScrollBar.slide;
+                    slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
 
                     scrollBox.Height = cachedSize.Y - (layout.Height - scrollBox.Height);
                 }

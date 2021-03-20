@@ -56,7 +56,7 @@ namespace RichHudFramework.UI
         public event EventHandler LostFocus;
 
         /// <summary>
-        /// Indicates whether or not the cursor is currently over this element.
+        /// Indicates whether or not the element has input focus.
         /// </summary>
         public bool HasFocus { get { return hasFocus && Visible; } private set { hasFocus = value; } }
 

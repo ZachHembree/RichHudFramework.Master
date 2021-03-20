@@ -121,7 +121,7 @@ namespace RichHudFramework
                     background = new TexturedBox(this)
                     {
                         DimAlignment = DimAlignments.Both,
-                        Color = TerminalFormatting.TileColor,
+                        Color = TerminalFormatting.Gunmetal,
                     };
 
                     var border = new BorderBox(this)

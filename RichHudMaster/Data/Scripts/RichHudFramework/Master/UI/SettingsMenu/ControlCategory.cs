@@ -234,7 +234,7 @@ namespace RichHudFramework
                         Color = Color.Red,
                     };
 
-                    scrollBox.background.Visible = false;
+                    scrollBox.Background.Visible = false;
 
                     layout = new HudChain(true, this)
                     {
@@ -259,8 +259,8 @@ namespace RichHudFramework
 
                 protected override void Layout()
                 {
-                    SliderBar slider = scrollBox.scrollBar.slide;
-                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    SliderBar slider = scrollBox.ScrollBar.slide;
+                    slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
 
                     scrollBox.Height = cachedSize.Y - header.Height - subheader.Height - cachedPadding.Y;
                 }
