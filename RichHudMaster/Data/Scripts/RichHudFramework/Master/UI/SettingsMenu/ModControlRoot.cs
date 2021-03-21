@@ -209,13 +209,7 @@ namespace RichHudFramework
             {
                 public ModControlRootTreeBox(HudParentBase parent = null) : base(parent)
                 {
-                    HeaderColor = TerminalFormatting.Gunmetal;
-                }
-
-                protected override void Layout()
-                {
-                    display.Color = display.Color.SetAlphaPct(HudMain.UiBkOpacity);
-                    base.Layout();
+                    HeaderColor = new Color(40, 48, 55);
                 }
 
                 public override bool Unregister(bool fast = false)

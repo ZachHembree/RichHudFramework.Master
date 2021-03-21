@@ -159,8 +159,6 @@ namespace RichHudFramework
                         ParentAlignment = ParentAlignments.Right,
                         DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
                         Vertical = true,
-                        Padding = new Vector2(30f, 8f),
-                        Width = 45f,
                     };
 
                     scrollDivider = new TexturedBox(verticalScroll)

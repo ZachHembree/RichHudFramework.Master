@@ -209,6 +209,8 @@ namespace RichHudFramework
                     {
                         SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                         DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                        Padding = new Vector2(30f, 0f),
+                        Offset = new Vector2(-15f, 0f),
                         CollectionContainer = { name, divider1, scrollBox, divider2 },
                     };
 

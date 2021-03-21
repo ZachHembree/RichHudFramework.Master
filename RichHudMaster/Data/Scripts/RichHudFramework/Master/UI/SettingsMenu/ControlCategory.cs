@@ -37,7 +37,16 @@ namespace RichHudFramework
             public IVertControlCategory ControlContainer => this;
 
             public VertControlCategory() : base(true)
-            { }
+            {
+                var scrollBox = categoryElement.scrollBox;
+
+                scrollBox.Padding = new Vector2(16f);
+                scrollBox.Spacing = 30f;
+                scrollBox.SizingMode =
+                    HudChainSizingModes.FitChainOffAxis |
+                    HudChainSizingModes.ClampChainAlignAxis | 
+                    HudChainSizingModes.ClampMembersOffAxis;
+            }
 
             /// <summary>
             /// Retrieves information used by the Framework API
@@ -202,7 +211,7 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<TMember> Members => scrollBox.Collection;
 
-                private readonly ScrollBox<TMember> scrollBox;
+                public readonly ScrollBox<TMember> scrollBox;
                 private readonly Label header, subheader;
                 private readonly HudChain layout;
 

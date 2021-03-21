@@ -35,7 +35,9 @@ namespace RichHudFramework
         public class VertControlPage : ControlPage<VertControlCategory, TerminalControlBase>, IVertControlPage
         {
             public VertControlPage() : base(false)
-            { }
+            {
+                catBox.Spacing = 0f;
+            }
         }
 
         public abstract class ControlPage<TCategory, TMember> : TerminalPageBase, IControlPage<TCategory, TMember>

@@ -71,7 +71,7 @@ namespace RichHudFramework
 
                     modList = new ModList() 
                     {
-                        Width = 250f
+                        Width = 270f
                     };
 
                     middleDivider = new TexturedBox()
@@ -135,9 +135,9 @@ namespace RichHudFramework
                     BorderColor = new Color(84, 98, 107);
 
                     Padding = new Vector2(80f, 40f);
-                    MinimumSize = new Vector2(1024f, 500f);
+                    MinimumSize = new Vector2(1044f, 500f);
 
-                    Size = new Vector2(1024f, 850f);
+                    Size = new Vector2(1044f, 850f);
                     Vector2 normScreenSize = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / HudMain.ResScale;
 
                     if (normScreenSize.Y < 1080 || HudMain.AspectRatio < (16f/9f))
@@ -208,7 +208,7 @@ namespace RichHudFramework
                         CurrentPage.Element.Width = Width - Padding.X - modList.Width - bodyChain.Spacing;
 
                     bodyChain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
-                    modList.Width = 250f * Scale;
+                    modList.Width = 270f * Scale;
 
                     // Bound window offset to keep it from being moved off screen
                     Vector2 min = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / -2f, max = -min;
@@ -303,7 +303,8 @@ namespace RichHudFramework
                         {
                             SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
-                            Color = TerminalFormatting.OuterSpace,
+                            Color = TerminalFormatting.DarkSlateGrey,
+                            Padding = new Vector2(6f)
                         };
 
                         header = new LabelBox(scrollBox)
@@ -387,7 +388,7 @@ namespace RichHudFramework
                     protected override void Layout()
                     {
                         header.Color = TerminalFormatting.Dark.SetAlphaPct(HudMain.UiBkOpacity);
-                        scrollBox.Color = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
+                        scrollBox.Color = TerminalFormatting.DarkSlateGrey.SetAlphaPct(HudMain.UiBkOpacity);
 
                         SliderBar slider = scrollBox.ScrollBar.slide;
                         slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
