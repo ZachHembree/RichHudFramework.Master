@@ -45,12 +45,12 @@ namespace RichHudFramework
             /// <summary>
             /// Invoked when taking focus
             /// </summary>
-            event EventHandler GainedFocus;
+            event EventHandler GainedInputFocus;
 
             /// <summary>
             /// Invoked when focus is lost
             /// </summary>
-            event EventHandler LostFocus;
+            event EventHandler LostInputFocus;
 
             /// <summary>
             /// True if the element is being clicked with the left mouse button

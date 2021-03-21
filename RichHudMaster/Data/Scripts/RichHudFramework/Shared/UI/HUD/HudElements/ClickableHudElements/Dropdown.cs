@@ -133,6 +133,7 @@ namespace RichHudFramework.UI
 
         public readonly ListBox<TElementContainer, TElement, TValue> listBox;
         protected readonly DropdownDisplay display;
+        protected bool getDispFocus;
 
         public Dropdown(HudParentBase parent) : base(parent)
         {
@@ -154,7 +155,8 @@ namespace RichHudFramework.UI
             
             Size = new Vector2(331f, 43f);
 
-            display.MouseInput.LeftClicked += ToggleList;
+            listBox.MouseInput.LostInputFocus += LoseListFocus;
+            display.MouseInput.LeftClicked += ClickDisplay;
             SelectionChanged += UpdateDisplay;
         }
 
@@ -163,13 +165,14 @@ namespace RichHudFramework.UI
 
         protected override void HandleInput(Vector2 cursorPos)
         {
-            if (SharedBinds.LeftButton.IsNewPressed && !IsMousedOver)
+            if (getDispFocus)
             {
-                CloseList();
+                display.MouseInput.GetInputFocus();
+                getDispFocus = false;
             }
         }
 
-        private void UpdateDisplay(object sender, EventArgs args)
+        protected virtual void UpdateDisplay(object sender, EventArgs args)
         {
             if (Selection != null)
             {
@@ -178,22 +181,39 @@ namespace RichHudFramework.UI
             }
         }
 
-        private void ToggleList(object sender, EventArgs args)
+        protected virtual void LoseListFocus(object sender, EventArgs args)
+        {
+            CloseList();
+        }
+
+        protected virtual void ClickDisplay(object sender, EventArgs args)
         {
             if (!listBox.Visible)
+            {
                 OpenList();
+            }
             else
+            {
                 CloseList();
+            }
         }
 
         public void OpenList()
         {
-            listBox.Visible = true;
+            if (!listBox.Visible)
+            {
+                listBox.Visible = true;
+                listBox.MouseInput.GetInputFocus();
+            }
         }
 
         public void CloseList()
         {
-            listBox.Visible = false;
+            if (listBox.Visible)
+            {
+                listBox.Visible = false;
+                getDispFocus = true;
+            }
         }
 
         /// <summary>
@@ -356,14 +376,25 @@ namespace RichHudFramework.UI
                 HighlightEnabled = true;
                 UseFocusFormatting = true;
 
-                _mouseInput.GainedFocus += GainFocus;
-                _mouseInput.LostFocus += LoseFocus;
+                _mouseInput.GainedInputFocus += GainFocus;
+                _mouseInput.LostInputFocus += LoseFocus;
             }
 
             protected override void Layout()
             {
                 base.Layout();
                 name.Width = (Width - Padding.X) - divider.Width - arrow.Width;
+            }
+
+            protected override void HandleInput(Vector2 cursorPos)
+            {
+                if (MouseInput.HasFocus)
+                {
+                    if (SharedBinds.Space.IsNewPressed)
+                    {
+                        _mouseInput.OnLeftClick();
+                    }
+                }
             }
 
             protected override void CursorEnter(object sender, EventArgs args)
@@ -411,6 +442,12 @@ namespace RichHudFramework.UI
             {
                 if (UseFocusFormatting)
                 {
+                    if (!MouseInput.IsMousedOver)
+                    {
+                        lastBackgroundColor = Color;
+                        lastFormat = Format;
+                    }
+
                     Color = FocusColor;
                     name.TextBoard.SetFormatting(FocusFormat);
 

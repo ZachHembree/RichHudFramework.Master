@@ -158,7 +158,7 @@ namespace RichHudFramework.UI.Server
             textBox.TextBoard.TextChanged += OnTextChanged;
             MouseInput.CursorEntered += CursorEnter;
             MouseInput.CursorExited += CursorExit;
-            MouseInput.LostFocus += LoseFocus;
+            MouseInput.LostInputFocus += LoseFocus;
         }
 
         public TextField() : this(null)

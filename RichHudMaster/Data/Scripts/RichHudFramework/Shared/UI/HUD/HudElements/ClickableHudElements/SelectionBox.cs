@@ -378,7 +378,7 @@ namespace RichHudFramework.UI
 
             if ((SelectionIndex == listInput.FocusIndex) && SelectionIndex != -1)
             {
-                if (listInput.KeyboardScroll ^ (SelectionIndex != listInput.HighlightIndex))
+                if (listInput.KeyboardScroll ^ (SelectionIndex != listInput.HighlightIndex || !MouseInput.IsMousedOver))
                 {
                     selectionBox.Color = FocusColor;
                     hudChain[SelectionIndex].Element.TextBoard.SetFormatting(FocusFormat);

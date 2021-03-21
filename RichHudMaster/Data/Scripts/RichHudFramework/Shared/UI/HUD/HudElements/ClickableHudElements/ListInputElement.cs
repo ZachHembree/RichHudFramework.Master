@@ -175,6 +175,8 @@ namespace RichHudFramework.UI
                 lastCursorPos = new Vector2(float.MinValue);
             }
 
+            bool listMousedOver = false;
+
             // Mouse input
             if (IsMousedOver)
             {
@@ -187,7 +189,6 @@ namespace RichHudFramework.UI
                 {
                     Vector2 cursorOffset = cursorPos - ListPos;
                     BoundingBox2 listBounds = new BoundingBox2(-ListSize / 2f, ListSize / 2f);
-                    bool listMousedOver = false;
 
                     // If the list is moused over, then calculate highlight index based on cursor position.
                     if (listBounds.Contains(cursorOffset) == ContainmentType.Contains)
@@ -212,14 +213,14 @@ namespace RichHudFramework.UI
                             listMousedOver = true;
                         }
                     }
-
-                    if (listMousedOver && SharedBinds.LeftButton.IsNewPressed)
-                    {
-                        SelectionIndex = HighlightIndex;
-                        SelectionChanged?.Invoke(this, EventArgs.Empty);
-                        KeyboardScroll = false;
-                    }
                 }
+            }
+
+            if ((listMousedOver && SharedBinds.LeftButton.IsNewPressed) || (HasFocus && SharedBinds.Space.IsNewPressed))
+            {
+                SelectionIndex = HighlightIndex;
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
+                KeyboardScroll = false;
             }
 
             HighlightIndex = MathHelper.Clamp(HighlightIndex, 0, Entries.Count - 1);

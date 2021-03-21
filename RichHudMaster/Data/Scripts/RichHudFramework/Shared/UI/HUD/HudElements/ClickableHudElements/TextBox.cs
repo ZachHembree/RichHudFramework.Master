@@ -78,8 +78,8 @@ namespace RichHudFramework.UI
             selectionBox = new SelectionBox(caret, this) { Color = new Color(255, 255, 255, 140) };
 
             caret.CaretMoved += CaretMoved;
-            MouseInput.GainedFocus += GainFocus;
-            MouseInput.LostFocus += LoseFocus;
+            MouseInput.GainedInputFocus += GainFocus;
+            MouseInput.LostInputFocus += LoseFocus;
 
             ShareCursor = true;
             EnableEditing = true;

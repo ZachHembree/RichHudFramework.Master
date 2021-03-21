@@ -258,7 +258,7 @@ namespace RichHudFramework.UI
         public SliderBar() : this(null)
         { }
 
-        private void BarClicked(object sender, EventArgs args)
+        protected virtual void BarClicked(object sender, EventArgs args)
         {
             canMoveSlider = true;
         }

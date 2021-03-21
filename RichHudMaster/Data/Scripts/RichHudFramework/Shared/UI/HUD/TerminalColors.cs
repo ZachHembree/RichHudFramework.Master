@@ -20,6 +20,11 @@ namespace RichHudFramework.UI
         /// </summary>
         public static readonly Color OuterSpace = new Color(42, 55, 62);
 
+        /// <summary>
+        /// Dark slate grey used for list backgrounds
+        /// </summary>
+        public static readonly Color DarkSlateGrey = new Color(41, 54, 62);
+
         public static readonly Color Gunmetal = new Color(39, 50, 57);
 
         public static readonly Color Dark = new Color(32, 39, 45);
@@ -65,10 +70,6 @@ namespace RichHudFramework.UI
         /// A slightly-different very dark blue-grey used for sliders and check boxes that have input focus
         /// </summary>
         public static readonly Color Cinder = new Color(33, 41, 45);
-
-        public static readonly Color HighlightOverlayColor = new Color(255, 255, 255, 40);
-        public static readonly Color HighlightColor = new Color(214, 213, 218);
-        public static readonly Color AccentHighlightColor = new Color(181, 185, 190);
 
         /// <summary>
         /// Dark slightly-blue color used for buttons that have focus (were last clicked). Used in combination in SE with a 

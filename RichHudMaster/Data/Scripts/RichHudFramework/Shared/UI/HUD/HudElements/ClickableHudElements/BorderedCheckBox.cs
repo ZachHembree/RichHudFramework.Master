@@ -66,11 +66,12 @@ namespace RichHudFramework.UI.Server
                 DimAlignment = DimAlignments.Both,
             };
 
-            tickBox = new TexturedBox(this)
+            tickBox = new TexturedBox()
             {
                 DimAlignment = DimAlignments.Both,
                 Padding = new Vector2(17f),
             };
+            tickBox.Register(this, false, true);
 
             Size = new Vector2(37f);
 
@@ -86,11 +87,23 @@ namespace RichHudFramework.UI.Server
             UseFocusFormatting = true;
 
             MouseInput.LeftClicked += ToggleValue;
-            MouseInput.LostFocus += LoseFocus;
+            MouseInput.GainedInputFocus += GainFocus;
+            MouseInput.LostInputFocus += LoseFocus;
         }
 
         public BorderedCheckBox() : this(null)
         { }
+
+        protected override void HandleInput(Vector2 cursorPos)
+        {
+            if (MouseInput.HasFocus)
+            {
+                if (SharedBinds.Space.IsNewPressed)
+                {
+                    _mouseInput.OnLeftClick();
+                }
+            }
+        }
 
         private void ToggleValue(object sender, EventArgs args)
         {
@@ -125,6 +138,18 @@ namespace RichHudFramework.UI.Server
                 {
                     Color = lastBackgroundColor;
                     TickBoxColor = lastTickColor;
+                }
+            }
+        }
+
+        protected virtual void GainFocus(object sender, EventArgs args)
+        {
+            if (HighlightEnabled)
+            {
+                if (UseFocusFormatting && !MouseInput.IsMousedOver)
+                {
+                    Color = FocusColor;
+                    TickBoxColor = TickBoxFocusColor;
                 }
             }
         }

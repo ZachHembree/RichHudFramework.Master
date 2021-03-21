@@ -66,12 +66,23 @@ namespace RichHudFramework.UI.Server
             FocusColor = TerminalFormatting.Mint;
             UseFocusFormatting = true;
 
-            _mouseInput.GainedFocus += GainFocus;
-            _mouseInput.LostFocus += LoseFocus;
+            _mouseInput.GainedInputFocus += GainFocus;
+            _mouseInput.LostInputFocus += LoseFocus;
         }
 
         public BorderedButton() : this(null)
         { }
+
+        protected override void HandleInput(Vector2 cursorPos)
+        {
+            if (MouseInput.HasFocus)
+            {
+                if (SharedBinds.Space.IsNewPressed)
+                {
+                    _mouseInput.OnLeftClick();
+                }
+            }
+        }
 
         protected override void CursorEnter(object sender, EventArgs args)
         {
@@ -109,6 +120,12 @@ namespace RichHudFramework.UI.Server
         {
             if (UseFocusFormatting)
             {
+                if (!MouseInput.IsMousedOver)
+                {
+                    lastColor = Color;
+                    lastFormat = Format;
+                }
+
                 Color = FocusColor;
                 TextBoard.SetFormatting(FocusFormat);
             }

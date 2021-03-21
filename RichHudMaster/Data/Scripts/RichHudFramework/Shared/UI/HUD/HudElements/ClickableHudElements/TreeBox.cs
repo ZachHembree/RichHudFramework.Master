@@ -306,7 +306,7 @@ namespace RichHudFramework.UI
             {
                 background = new TexturedBox(this)
                 {
-                    Color = new Color(41, 54, 62),
+                    Color = TerminalFormatting.EbonyClay,
                     DimAlignment = DimAlignments.Both,
                 };
 

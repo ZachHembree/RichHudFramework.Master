@@ -48,12 +48,12 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Invoked when taking focus
         /// </summary>
-        public event EventHandler GainedFocus;
+        public event EventHandler GainedInputFocus;
 
         /// <summary>
         /// Invoked when focus is lost
         /// </summary>
-        public event EventHandler LostFocus;
+        public event EventHandler LostInputFocus;
 
         /// <summary>
         /// Indicates whether or not the element has input focus.
@@ -142,26 +142,19 @@ namespace RichHudFramework.UI
 
                 if (SharedBinds.LeftButton.IsNewPressed)
                 {
-                    LeftClicked?.Invoke(_parent, EventArgs.Empty);
-                    IsLeftClicked = true;
-                    IsNewLeftClicked = true;
+                    GetInputFocus();
+                    OnLeftClick();
                 }
                 else
                     IsNewLeftClicked = false;
 
                 if (SharedBinds.RightButton.IsNewPressed)
                 {
-                    RightClicked?.Invoke(_parent, EventArgs.Empty);
-                    IsRightClicked = true;
-                    IsNewRightClicked = true;
+                    GetInputFocus();
+                    OnRightClick();
                 }
                 else
                     IsNewRightClicked = false;
-
-                if (!HasFocus && IsNewRightClicked || IsNewLeftClicked)
-                {
-                    GetInputFocus();
-                }
             }
             else
             {
@@ -191,17 +184,47 @@ namespace RichHudFramework.UI
             }
         }
 
+        /// <summary>
+        /// Invokes left click event
+        /// </summary>
+        public virtual void OnLeftClick()
+        {
+            LeftClicked?.Invoke(_parent, EventArgs.Empty);
+            IsLeftClicked = true;
+            IsNewLeftClicked = true;
+        }
+
+        /// <summary>
+        /// Invokes right click event
+        /// </summary>
+        public virtual void OnRightClick()
+        {
+            RightClicked?.Invoke(_parent, EventArgs.Empty);
+            IsRightClicked = true;
+            IsNewRightClicked = true;
+        }
+
+        /// <summary>
+        /// Gets input focus for keyboard controls. Input focus normally taken when an
+        /// element with mouse input is clicked.
+        /// </summary>
         public virtual void GetInputFocus()
         {
-            HasFocus = true;
-            HudMain.GetInputFocus(LoseFocusCallback);
-            GainedFocus?.Invoke(_parent, EventArgs.Empty);
+            if (!hasFocus)
+            {
+                hasFocus = true;
+                HudMain.GetInputFocus(LoseFocusCallback);
+                GainedInputFocus?.Invoke(_parent, EventArgs.Empty);
+            }
         }
 
         protected virtual void LoseFocus()
         {
-            HasFocus = false;
-            LostFocus?.Invoke(_parent, EventArgs.Empty);
+            if (hasFocus)
+            {
+                hasFocus = false;
+                LostInputFocus?.Invoke(_parent, EventArgs.Empty);
+            }
         }
     }
 }

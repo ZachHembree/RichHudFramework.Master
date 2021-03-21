@@ -144,11 +144,27 @@ namespace RichHudFramework.UI
 
             slide.MouseInput.CursorEntered += CursorEnter;
             slide.MouseInput.CursorExited += CursorExit;
-            slide.MouseInput.LostFocus += LoseFocus;
+            slide.MouseInput.GainedInputFocus += GainFocus;
+            slide.MouseInput.LostInputFocus += LoseFocus;
         }
 
         public SliderBox() : this(null)
         { }
+
+        protected override void HandleInput(Vector2 cursorPos)
+        {
+            if (MouseInput.HasFocus)
+            {
+                if (SharedBinds.LeftArrow.IsNewPressed || SharedBinds.LeftArrow.IsPressedAndHeld)
+                {
+                    Percent -= 0.01f;
+                }
+                else if (SharedBinds.RightArrow.IsNewPressed || SharedBinds.RightArrow.IsPressedAndHeld)
+                {
+                    Percent += 0.01f;
+                }
+            }
+        }
 
         protected virtual void CursorEnter(object sender, EventArgs args)
         {
@@ -183,6 +199,16 @@ namespace RichHudFramework.UI
                     BarColor = lastBarColor;
                     BackgroundColor = lastBackgroundColor;
                 }
+            }
+        }
+
+        protected virtual void GainFocus(object sender, EventArgs args)
+        {
+            if (UseFocusFormatting && !MouseInput.IsMousedOver)
+            {
+                SliderColor = SliderFocusColor;
+                BarColor = BarFocusColor;
+                BackgroundColor = BackgroundFocusColor;
             }
         }
 
