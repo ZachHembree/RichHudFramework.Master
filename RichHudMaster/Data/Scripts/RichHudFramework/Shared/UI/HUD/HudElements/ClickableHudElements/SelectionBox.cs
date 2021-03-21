@@ -176,7 +176,7 @@ namespace RichHudFramework.UI
             FocusFormat = TerminalFormatting.InvControlFormat;
             Size = new Vector2(335f, 203f);
 
-            HighlightPadding = new Vector2(12f, 6f);
+            HighlightPadding = new Vector2(8f, 0f);
             MemberPadding = new Vector2(20f, 6f);
             LineHeight = 28f;
         }
@@ -355,7 +355,7 @@ namespace RichHudFramework.UI
             if (Selection != null && Selection.Element.Visible)
             {
                 selectionBox.Offset = Selection.Element.Position - selectionBox.Origin;
-                selectionBox.Size = Selection.Element.Size;
+                selectionBox.Size = Selection.Element.Size - HighlightPadding;
                 selectionBox.Visible = Selection.Element.Visible;
             }
 
@@ -365,7 +365,7 @@ namespace RichHudFramework.UI
                 TElementContainer entry = hudChain[listInput.HighlightIndex];
 
                 highlightBox.Visible = (listInput.IsMousedOver || listInput.HasFocus) && entry.Element.Visible;
-                highlightBox.Size = entry.Element.Size;
+                highlightBox.Size = entry.Element.Size - HighlightPadding;
                 highlightBox.Offset = entry.Element.Position - highlightBox.Origin;
             }
         }

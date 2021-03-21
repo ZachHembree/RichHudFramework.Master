@@ -97,7 +97,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Padding applied to the highlight box.
         /// </summary>
-        public Vector2 HighlightPadding { get; set; }
+        public Vector2 HighlightPadding { get { return listBox.HighlightPadding; } set { listBox.HighlightPadding = value; } }
 
         /// <summary>
         /// Minimum number of elements visible in the list at any given time.
@@ -142,16 +142,16 @@ namespace RichHudFramework.UI
                 Text = "None"
             };
 
-            listBox = new ListBox<TElementContainer, TElement, TValue>(display)
+            listBox = new ListBox<TElementContainer, TElement, TValue>()
             {
                 Visible = false,
                 ZOffset = 1,
-                MinVisibleCount = 4,
                 DimAlignment = DimAlignments.Width,
                 ParentAlignment = ParentAlignments.Bottom,
                 TabColor = new Color(0, 0, 0, 0),
             };
-
+            listBox.Register(display, false, true);
+            
             Size = new Vector2(331f, 43f);
 
             display.MouseInput.LeftClicked += ToggleList;

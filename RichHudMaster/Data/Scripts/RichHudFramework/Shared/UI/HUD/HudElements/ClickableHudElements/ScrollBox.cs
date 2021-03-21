@@ -155,8 +155,8 @@ namespace RichHudFramework.UI
                     Divider.Padding = new Vector2(2f, 0f);
                     Divider.Width = 1f;
 
-                    ScrollBar.Padding = new Vector2(30f, 8f);
-                    ScrollBar.Width = 45f;
+                    ScrollBar.Padding = new Vector2(30f, 10f);
+                    ScrollBar.Width = 43f;
                 }
                 else
                 {
@@ -230,7 +230,7 @@ namespace RichHudFramework.UI
         {
             // Calculate effective min and max element sizes
             Vector2 effectivePadding = cachedPadding;
-            scrollBarPadding = ScrollBar.Size[offAxis] + Divider.Size[offAxis];
+            scrollBarPadding = ScrollBar.Size[offAxis];
             effectivePadding[offAxis] += scrollBarPadding;
 
             ClampElementSizeRange();

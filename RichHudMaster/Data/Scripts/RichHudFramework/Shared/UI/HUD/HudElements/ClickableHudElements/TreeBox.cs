@@ -98,6 +98,11 @@ namespace RichHudFramework.UI
         public Color TabColor { get { return selectionBox.TabColor; } set { selectionBox.TabColor = value; } }
 
         /// <summary>
+        /// Padding applied to the highlight box.
+        /// </summary>
+        public Vector2 HighlightPadding { get { return selectionBox.HighlightPadding; } set { selectionBox.HighlightPadding = value; } }
+
+        /// <summary>
         /// Current selection. Null if empty.
         /// </summary>
         public TElementContainer Selection => selectionBox.Selection;
@@ -139,11 +144,13 @@ namespace RichHudFramework.UI
                 DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding
             };
 
-            selectionBox = new SelectionBox<HudChain<TElementContainer, TElement>, TElementContainer, TElement, TValue>(display)
+            selectionBox = new SelectionBox<HudChain<TElementContainer, TElement>, TElementContainer, TElement, TValue>()
             {
                 Visible = false,
-                ParentAlignment = ParentAlignments.Bottom
+                ParentAlignment = ParentAlignments.Bottom,
+                HighlightPadding = Vector2.Zero
             };
+            selectionBox.Register(display, false, true);
 
             selectionBox.border.Visible = false;
             selectionBox.hudChain.SizingMode = 
