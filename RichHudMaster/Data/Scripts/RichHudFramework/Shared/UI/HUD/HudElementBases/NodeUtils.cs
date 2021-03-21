@@ -284,6 +284,46 @@ namespace RichHudFramework
                         }
                     }
                 }
+
+                /// <summary>
+                /// Used internally to modify the state of hud nodes
+                /// </summary>
+                public static void SetNodesState(HudElementStates state, bool mask, IReadOnlyList<HudNodeBase> nodes, int index, int count)
+                {
+                    int end = index + count - 1;
+
+                    if (mask)
+                    {
+                        for (int i = index; i <= end; i++)
+                            nodes[i].State &= ~state;
+                    }
+                    else
+                    {
+                        for (int i = index; i <= end; i++)
+                            nodes[i].State |= state;
+                    }
+                }
+
+                /// <summary>
+                /// Used internally to modify the state of hud nodes
+                /// </summary>
+                public static void SetNodesState<TCon, TNode>(HudElementStates state, bool mask, IReadOnlyList<TCon> nodes, int index, int count)
+                    where TCon : IHudElementContainer<TNode>, new()
+                    where TNode : HudNodeBase
+                {
+                    int end = index + count - 1;
+
+                    if (mask)
+                    {
+                        for (int i = index; i <= end; i++)
+                            nodes[i].Element.State &= ~state;
+                    }
+                    else
+                    {
+                        for (int i = index; i <= end; i++)
+                            nodes[i].Element.State |= state;
+                    }
+                }
             }
         }
     }

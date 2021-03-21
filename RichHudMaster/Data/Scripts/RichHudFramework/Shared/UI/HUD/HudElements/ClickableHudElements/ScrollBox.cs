@@ -2,9 +2,19 @@
 using VRage;
 using System;
 using System.Collections.Generic;
+using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework.UI
 {
+    using HudUpdateAccessors = MyTuple<
+        ApiMemberAccessor,
+        MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
+        Action, // DepthTest
+        Action, // HandleInput
+        Action<bool>, // BeforeLayout
+        Action // BeforeDraw
+    >;
+
     /// <summary>
     /// Scrollable list of hud elements. Can be oriented vertically or horizontally. Min/Max size determines
     /// the maximum size of scrollbox elements as well as the scrollbox itself.
@@ -476,6 +486,19 @@ namespace RichHudFramework.UI
             }
 
             return size;
+        }
+
+        public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
+        {
+            int preloadStart = MathHelper.Clamp(Start - 10, 0, hudCollectionList.Count - 1),
+                preloadCount = MathHelper.Clamp((End + 10) - preloadStart, 0, hudCollectionList.Count);
+
+            NodeUtils.SetNodesState<TElementContainer, TElement>
+                (HudElementStates.CanPreload, true, hudCollectionList, 0, hudCollectionList.Count);
+            NodeUtils.SetNodesState<TElementContainer, TElement>
+                (HudElementStates.CanPreload, false, hudCollectionList, preloadStart, preloadCount);
+
+            base.GetUpdateAccessors(UpdateActions, treeDepth);
         }
     }
 
