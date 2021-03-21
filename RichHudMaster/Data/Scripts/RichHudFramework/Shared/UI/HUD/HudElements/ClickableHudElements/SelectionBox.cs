@@ -96,11 +96,7 @@ namespace RichHudFramework.UI
         public float LineHeight
         {
             get { return hudChain.MemberMaxSize.Y; }
-            set
-            {
-                hudChain.MemberMaxSize = new Vector2(hudChain.MemberMaxSize.X, value);
-                listInput.LineHeight = value;
-            }
+            set { hudChain.MemberMaxSize = new Vector2(hudChain.MemberMaxSize.X, value); }
         }
 
         /// <summary>
@@ -330,7 +326,7 @@ namespace RichHudFramework.UI
             highlightBox.Visible = false;
             selectionBox.Visible = false;
 
-            if ((ListRange.Y - ListRange.X) > 0)
+            if (hudChain.Count > 0)
             {
                 UpdateSelection();
             }
@@ -378,7 +374,10 @@ namespace RichHudFramework.UI
 
             if ((SelectionIndex == listInput.FocusIndex) && SelectionIndex != -1)
             {
-                if (listInput.KeyboardScroll ^ (SelectionIndex != listInput.HighlightIndex || !MouseInput.IsMousedOver))
+                if (
+                    ( listInput.KeyboardScroll ^ (SelectionIndex != listInput.HighlightIndex) ) ||
+                    ( !MouseInput.IsMousedOver && SelectionIndex == listInput.HighlightIndex )
+                )
                 {
                     selectionBox.Color = FocusColor;
                     hudChain[SelectionIndex].Element.TextBoard.SetFormatting(FocusFormat);

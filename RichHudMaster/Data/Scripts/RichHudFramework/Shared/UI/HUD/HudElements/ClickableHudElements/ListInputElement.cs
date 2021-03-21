@@ -32,11 +32,6 @@ namespace RichHudFramework.UI
         public TElementContainer Selection => (SelectionIndex != -1 && Entries.Count > 0) ? Entries[SelectionIndex] : default(TElementContainer);
 
         /// <summary>
-        /// Height of entries in the list.
-        /// </summary>
-        public float LineHeight { get; set; }
-
-        /// <summary>
         /// Index of the current selection. -1 if empty.
         /// </summary>
         public int SelectionIndex { get; protected set; }
@@ -132,7 +127,7 @@ namespace RichHudFramework.UI
 
         protected override void HandleInput(Vector2 cursorPos)
         {
-            if ((ListRange.Y - ListRange.X) > 0)
+            if (Entries.Count > 0)
             {
                 base.HandleInput(cursorPos);
                 UpdateSelectionInput(cursorPos);
@@ -193,16 +188,19 @@ namespace RichHudFramework.UI
                     // If the list is moused over, then calculate highlight index based on cursor position.
                     if (listBounds.Contains(cursorOffset) == ContainmentType.Contains)
                     {
-                        // Since ScrollBox doesn't support smooth scrolling and the entries are uniform in height,
-                        // I can do this.
-                        int highlightOffset = (int)(-(cursorOffset.Y - ListSize.Y / 2f) / LineHeight),
-                            newIndex = ListRange.X;
+                        float vOffset = -(cursorOffset.Y - ListSize.Y / 2f),
+                            entryOffset = 0f;
+                        int newIndex = ListRange.X;
 
-                        // Find the index of the visible entry {highlightOffset}s away from the first visible
-                        for (int i = ListRange.X; (i <= ListRange.Y && highlightOffset > 0); i++)
+                        for (int i = ListRange.X; i <= ListRange.Y; i++)
                         {
                             if (Entries[i].Enabled)
-                                highlightOffset--;
+                            {
+                                if ((entryOffset + Entries[i].Element.Height) >= vOffset)
+                                    break;
+                                else
+                                    entryOffset += Entries[i].Element.Height;
+                            }
 
                             newIndex++;
                         }
