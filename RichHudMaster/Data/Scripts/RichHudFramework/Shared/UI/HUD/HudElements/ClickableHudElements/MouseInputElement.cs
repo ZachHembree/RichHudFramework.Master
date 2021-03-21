@@ -160,9 +160,7 @@ namespace RichHudFramework.UI
 
                 if (!HasFocus && IsNewRightClicked || IsNewLeftClicked)
                 {
-                    HasFocus = true;
-                    HudMain.GetInputFocus(LoseFocusCallback);
-                    GainedFocus?.Invoke(_parent, EventArgs.Empty);
+                    GetInputFocus();
                 }
             }
             else
@@ -193,11 +191,17 @@ namespace RichHudFramework.UI
             }
         }
 
+        public virtual void GetInputFocus()
+        {
+            HasFocus = true;
+            HudMain.GetInputFocus(LoseFocusCallback);
+            GainedFocus?.Invoke(_parent, EventArgs.Empty);
+        }
+
         protected virtual void LoseFocus()
         {
             HasFocus = false;
             LostFocus?.Invoke(_parent, EventArgs.Empty);
-            HudMain.LoseInputFocus(LoseFocusCallback);
         }
     }
 }

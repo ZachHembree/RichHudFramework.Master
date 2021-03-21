@@ -350,17 +350,6 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Clears input focus callback if it matches the one last registered.
-            /// </summary>
-            public static void LoseInputFocus(Action LoseFocusCallback)
-            {
-                if (LoseFocusCallback == instance.LoseInputFocusCallback)
-                {
-                    instance.LoseInputFocusCallback = null;
-                }
-            }
-
-            /// <summary>
             /// Returns the ZOffset for focusing a window and registers a callback
             /// for when another object takes focus.
             /// </summary>

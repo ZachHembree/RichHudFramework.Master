@@ -207,8 +207,6 @@ namespace RichHudFramework
                             return instance._root.GetNodeOriginFunc;
                         case HudMainAccessors.GetInputFocus:
                             GetInputFocus(data as Action); break;
-                        case HudMainAccessors.LoseInputFocus:
-                            LoseInputFocus(data as Action); break;
                     }
 
                     return null;

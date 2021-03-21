@@ -83,11 +83,6 @@
             /// in: Action
             /// </summary>
             GetInputFocus = 16,
-
-            /// <summary>
-            /// out: Action
-            /// </summary>
-            LoseInputFocus = 17
         }
     }
 }

@@ -83,6 +83,12 @@ namespace RichHudFramework
             bool IsMousedOver { get; }
 
             /// <summary>
+            /// Gets input focus for keyboard controls. Input focus normally taken when an
+            /// element with mouse input is clicked.
+            /// </summary>
+            void GetInputFocus();
+
+            /// <summary>
             /// Clears all subscribers to mouse input events.
             /// </summary>
             void ClearSubscribers();
