@@ -75,7 +75,12 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Default format for member text;
         /// </summary>
-        public GlyphFormat Format { get { return display.Format; } set { display.Format = value; } }
+        public GlyphFormat Format { get { return display.Format; } set { display.Format = value; selectionBox.Format = value; } }
+
+        /// <summary>
+        /// Text formatting used for entries that have input focus
+        /// </summary>
+        public GlyphFormat FocusFormat { get { return selectionBox.FocusFormat; } set { selectionBox.FocusFormat = value; } }
 
         /// <summary>
         /// Determines the color of the header's background/
@@ -162,6 +167,8 @@ namespace RichHudFramework.UI
             IndentSize = 20f;
 
             Format = GlyphFormat.Blueish;
+            selectionBox.FocusFormat = Format.WithColor(TerminalFormatting.Charcoal);
+
             display.Name = "NewTreeBox";
             display.MouseInput.LeftClicked += ToggleList;
         }
