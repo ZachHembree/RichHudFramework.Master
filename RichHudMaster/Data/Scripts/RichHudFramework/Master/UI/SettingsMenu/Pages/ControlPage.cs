@@ -21,6 +21,13 @@ namespace RichHudFramework
         >;
 
         /// <summary>
+        /// Interactable list of vertically scrolling control categories
+        /// </summary>
+        public interface IVertControlPage : IControlPage<VertControlCategory, TerminalControlBase>
+        { }
+
+
+        /// <summary>
         /// Interactable collection of horizontally scrolling control categories
         /// </summary>
         public class ControlPage : ControlPage<ControlCategory, ControlTile>, IControlPage
