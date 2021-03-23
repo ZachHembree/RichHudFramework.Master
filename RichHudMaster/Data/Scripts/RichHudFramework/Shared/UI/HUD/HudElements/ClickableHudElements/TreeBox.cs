@@ -120,15 +120,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Determines how far to the right list members should be offset from the position of the header.
         /// </summary>
-        public float IndentSize 
-        { 
-            get { return selectionBox.Padding.X; } 
-            set 
-            {
-                selectionBox.Padding = new Vector2(value, selectionBox.Padding.Y);
-                selectionBox.Offset = selectionBox.Padding / 2f;
-            } 
-         }
+        public float IndentSize { get; set; }
 
         /// <summary>
         /// Handles mouse input for the header.
@@ -259,7 +251,7 @@ namespace RichHudFramework.UI
 
             if (ListOpen)
             {
-                selectionBox.Width = Width - IndentSize - Padding.X;
+                selectionBox.Width = Width - 2f * IndentSize - Padding.X;
                 selectionBox.Offset = new Vector2(IndentSize, 0f);
             }
         }
