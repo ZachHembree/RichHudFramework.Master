@@ -118,6 +118,8 @@ namespace RichHudFramework.UI.Server
                 dropdown = new Dropdown<T>()
                 {
                     Format = TerminalFormatting.ControlFormat,
+                    DropdownHeight = 172f,
+                    MinVisibleCount = 6
                 };
 
                 hudChain = new HudChain(true, this)
