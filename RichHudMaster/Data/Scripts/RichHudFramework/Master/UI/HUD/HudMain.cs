@@ -210,6 +210,11 @@ namespace RichHudFramework
             /// </summary>
             public static bool EnableCursor;
 
+            /// <summary>
+            /// Tick interval at which the UI tree updates. Lower is faster, higher is slower.
+            /// </summary>
+            public static int TreeRefreshRate { get; }
+
             private static HudMain instance;
             private static TreeManager treeManager;
 
@@ -231,6 +236,11 @@ namespace RichHudFramework
             private Action LoseInputFocusCallback;
             private byte unfocusedOffset;
             private int drawTick;
+
+            static HudMain()
+            {
+                TreeRefreshRate = treeRefreshRate;
+            }
 
             private HudMain() : base(false, true)
             {
