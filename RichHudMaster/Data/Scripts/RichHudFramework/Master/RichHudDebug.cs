@@ -90,12 +90,12 @@ namespace RichHudFramework.Server
                 statsBuilder += $"\tCursor Visible: {HudMain.Cursor.Visible}\n";
                 statsBuilder += $"\tClient Mods: {modClients.Count}\n";
 
-                for (int n = 0; n < modClients.Count; n++)
-                    statsBuilder += $"\t\t{modClients[n].name}\n";
+                foreach (RichHudMaster.ModClient client in modClients)
+                    statsBuilder += $"\t\t{client.name}\t\t|\tVersion: {client.VersionString}\t\t|\tSubtype: {client.ClientSubtype}\n";
 
                 statsBuilder += $"\n\tHudMain:\n";
-                statsBuilder += $"\t\tHUD Spaces Registered: {HudMain.TreeManager.HudSpacesRegistered}\n";
-                statsBuilder += $"\t\tElements Registered: {HudMain.TreeManager.ElementRegistered}\n";
+                statsBuilder += $"\t\tHUD Spaces Updating: {HudMain.TreeManager.HudSpacesRegistered}\n";
+                statsBuilder += $"\t\tElements Updating: {HudMain.TreeManager.ElementRegistered}\n";
                 statsBuilder += $"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n";
 
                 statsBuilder += $"\t\tUpdate Timers  (IsHighResolution: {Stopwatch.IsHighResolution}):\n";
