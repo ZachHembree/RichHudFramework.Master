@@ -133,10 +133,7 @@ namespace RichHudFramework.UI
         public ListBox() : this(null)
         { }
 
-        /// <summary>
-        /// Update indices for selections, highlight and focus
-        /// </summary>
-        protected override void UpdateSelection()
+        protected override void Layout()
         {
             if (listInput.KeyboardScroll)
             {
@@ -145,9 +142,6 @@ namespace RichHudFramework.UI
                 else if (listInput.HighlightIndex > hudChain.End)
                     hudChain.End = listInput.HighlightIndex;
             }
-
-            UpdateSelectionPositions();
-            UpdateSelectionFormatting();
         }
 
         protected override void Draw()
