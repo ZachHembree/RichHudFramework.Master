@@ -146,7 +146,7 @@ namespace RichHudFramework.UI
             listBox = new ListBox<TElementContainer, TElement, TValue>()
             {
                 Visible = false,
-                ZOffset = 1,
+                ZOffset = 3,
                 DimAlignment = DimAlignments.Width,
                 ParentAlignment = ParentAlignments.Bottom,
                 TabColor = new Color(0, 0, 0, 0),

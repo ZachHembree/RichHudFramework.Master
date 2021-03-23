@@ -126,7 +126,7 @@ namespace RichHudFramework.UI
 
         public ListBox(HudParentBase parent) : base(parent)
         {
-            hudChain.MinVisibleCount = 6;
+            hudChain.MinVisibleCount = 5;
             hudChain.Padding = new Vector2(0f, 8f);
         }
 
@@ -148,11 +148,6 @@ namespace RichHudFramework.UI
 
             UpdateSelectionPositions();
             UpdateSelectionFormatting();
-        }
-
-        protected override void Layout()
-        {
-            hudChain.Height = LineHeight * hudChain.MinVisibleCount;
         }
 
         protected override void Draw()
