@@ -16,7 +16,7 @@ namespace RichHudFramework.UI.Server
     /// <summary>
     /// A fixed size list box with a label. Designed to mimic the appearance of the list box in the SE terminal.
     /// </summary>
-    public class TerminalList<TValue> : TerminalValue<ListBoxLabel<TValue>>
+    public class TerminalList<TValue> : TerminalValue<ListBoxEntry<TValue>>
     {
         /// <summary>
         /// The name of the control as it appears in the terminal.
@@ -26,12 +26,12 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Currently selected list member.
         /// </summary>
-        public override ListBoxLabel<TValue> Value { get { return subtype.Selection; } set { subtype.SetSelection(value); } }
+        public override ListBoxEntry<TValue> Value { get { return subtype.Selection; } set { subtype.SetSelection(value); } }
 
         /// <summary>
         /// Used to periodically update the value associated with the control. Optional.
         /// </summary>
-        public override Func<ListBoxLabel<TValue>> CustomValueGetter { get; set; }
+        public override Func<ListBoxEntry<TValue>> CustomValueGetter { get; set; }
 
         /// <summary>
         /// List of entries in the dropdown.
@@ -78,12 +78,12 @@ namespace RichHudFramework.UI.Server
             /// <summary>
             /// List of entries in the dropdown.
             /// </summary>
-            public IReadOnlyList<ListBoxLabel<T>> ListEntries => listBox.ListEntries;
+            public IReadOnlyList<ListBoxEntry<T>> ListEntries => listBox.ListEntries;
 
             /// <summary>
             /// Currently selected list member.
             /// </summary>
-            public ListBoxLabel<T> Selection => listBox.Selection;
+            public ListBoxEntry<T> Selection => listBox.Selection;
 
             public override float Width
             {
@@ -143,7 +143,7 @@ namespace RichHudFramework.UI.Server
                 base.Layout();
             }
 
-            public void SetSelection(ListBoxLabel<T> entry) =>
+            public void SetSelection(ListBoxEntry<T> entry) =>
                 listBox.SetSelection(entry);
 
             public object GetOrSetMember(object data, int memberEnum) =>

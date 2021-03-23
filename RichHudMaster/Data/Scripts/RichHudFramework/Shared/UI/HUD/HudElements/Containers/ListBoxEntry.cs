@@ -43,12 +43,9 @@ namespace RichHudFramework.UI
     }
 
     /// <summary>
-    /// Label button assocated with an object of type T. Used in conjunction with list boxes.
+    /// Label assocated with an object of type T. Used in conjunction with list boxes.
     /// </summary>
-    public class ListBoxEntry<TValue> : ListBoxEntry<TValue, LabelButton>
-    { }
-
-    public class ListBoxLabel<TValue> : ListBoxEntry<TValue, Label>
+    public class ListBoxEntry<TValue> : ListBoxEntry<TValue, Label>
     { }
 
     public class ListBoxEntry<TValue, TElement>

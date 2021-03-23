@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using VRage;
 using VRageMath;
@@ -153,7 +153,7 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Scrollable list of text elements. Each list entry is associated with a value of type T.
     /// </summary>
-    public class ListBox<TValue> : ListBox<ListBoxLabel<TValue>, Label, TValue>
+    public class ListBox<TValue> : ListBox<ListBoxEntry<TValue>, Label, TValue>
     {
         public ListBox(HudParentBase parent) : base(parent)
         { }

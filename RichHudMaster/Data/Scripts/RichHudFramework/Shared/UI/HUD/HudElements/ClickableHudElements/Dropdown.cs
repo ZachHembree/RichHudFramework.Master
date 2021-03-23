@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using VRageMath;
 using VRage;
@@ -473,7 +473,7 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Collapsable list box. Designed to mimic the appearance of the dropdown in the SE terminal.
     /// </summary>
-    public class Dropdown<TValue> : Dropdown<ListBoxLabel<TValue>, Label, TValue>
+    public class Dropdown<TValue> : Dropdown<ListBoxEntry<TValue>, Label, TValue>
     {
         public Dropdown(HudParentBase parent) : base(parent)
         { }

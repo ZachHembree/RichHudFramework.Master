@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using VRageMath;
 
 namespace RichHudFramework
@@ -275,7 +275,7 @@ namespace RichHudFramework
                 {
                     if (instanceList.Selection != null)
                     {
-                        ListBoxLabel<TestWindowNode> selection = instanceList.Selection;
+                        ListBoxEntry<TestWindowNode> selection = instanceList.Selection;
                         TestWindowNode testNode = selection.AssocMember;
                         var instanceCollection = instanceList.HudCollection;
 

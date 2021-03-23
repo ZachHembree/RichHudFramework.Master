@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using VRageMath;
@@ -15,7 +15,7 @@ namespace RichHudFramework.UI
     public class TreeBox<TElementContainer, TElement, TValue> 
         : HudElementBase, IClickableElement, IEntryBox<TValue, TElementContainer, TElement>
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, IClickableElement, ILabelElement
+        where TElement : HudElementBase, ILabelElement
     {
         /// <summary>
         /// Invoked when an entry is selected.
@@ -363,7 +363,7 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Indented, collapsable list. Designed to fit in with SE UI elements.
     /// </summary>
-    public class TreeBox<TValue> : TreeBox<ListBoxEntry<TValue>, LabelButton, TValue>
+    public class TreeBox<TValue> : TreeBox<ListBoxEntry<TValue>, Label, TValue>
     {
         public TreeBox(HudParentBase parent) : base(parent)
         { }

@@ -28,6 +28,6 @@ namespace RichHudFramework.UI
         TElementContainer Selection { get; }
     }
 
-    public interface IEntryBox<TValue> : IEntryBox<TValue, ListBoxEntry<TValue>, LabelButton>
+    public interface IEntryBox<TValue> : IEntryBox<TValue, ListBoxEntry<TValue>, Label>
     { }
 }
