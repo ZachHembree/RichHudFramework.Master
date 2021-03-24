@@ -10,7 +10,7 @@ namespace RichHudFramework.UI
     /// <summary>
     /// HUD element used to render text.
     /// </summary>
-    public class Label : HudElementBase, ILabelElement
+    public class Label : HudElementBase, IMinLabelElement
     {
         /// <summary>
         /// Text rendered by the label.

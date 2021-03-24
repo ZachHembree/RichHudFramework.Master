@@ -37,7 +37,7 @@ namespace RichHudFramework.UI
     /// </summary>
     public interface IListBoxEntry<TElement, TValue>
         : IScrollBoxEntryTuple<TElement, TValue>
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
     {
         object GetOrSetMember(object data, int memberEnum);
     }
@@ -45,16 +45,17 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Label assocated with an object of type T. Used in conjunction with list boxes.
     /// </summary>
-    public class ListBoxEntry<TValue> : ListBoxEntry<TValue, Label>
+    public class ListBoxEntry<TValue> : ListBoxEntry<Label, TValue>
     { }
 
-    public class ListBoxEntry<TValue, TElement>
+    public class ListBoxEntry<TElement, TValue>
         : ScrollBoxEntryTuple<TElement, TValue>, IListBoxEntry<TElement, TValue>
-        where TElement : HudElementBase, ILabelElement, new()
+        where TElement : HudElementBase, IMinLabelElement, new()
     {
         public ListBoxEntry()
         {
-            SetElement(new TElement() { AutoResize = false });
+            SetElement(new TElement());
+            Element.TextBoard.AutoResize = false;
         }
 
         public object GetOrSetMember(object data, int memberEnum)
@@ -66,9 +67,9 @@ namespace RichHudFramework.UI
                 case ListBoxEntryAccessors.Name:
                     {
                         if (data != null)
-                            Element.Text = new RichText(data as List<RichStringMembers>);
+                            Element.TextBoard.SetText(data as List<RichStringMembers>);
                         else
-                            return Element.Text.apiData;
+                            return Element.TextBoard.GetText().apiData;
 
                         break;
                     }

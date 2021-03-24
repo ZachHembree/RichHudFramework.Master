@@ -68,7 +68,7 @@ namespace RichHudFramework.UI
     public class ListBox<TElementContainer, TElement, TValue>
         : SelectionBox<ScrollBox<TElementContainer, TElement>, TElementContainer, TElement, TValue>, IClickableElement
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
     {
         /// <summary>
         /// Background color

@@ -9,7 +9,7 @@ namespace RichHudFramework.UI
 
     public abstract class TreeBoxBase<TSelectionBox, THudChain, TElementContainer, TElement, TValue>
         : HudElementBase, IClickableElement, IEntryBox<TValue, TElementContainer, TElement>
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
         where THudChain : HudChain<TElementContainer, TElement>, new()
         where TSelectionBox : SelectionBoxBase<THudChain, TElementContainer, TElement, TValue>, new()

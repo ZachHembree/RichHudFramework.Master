@@ -13,7 +13,7 @@ namespace RichHudFramework.UI
     /// of the same height.
     /// </summary>
     public class ListInputElement<TElementContainer, TElement, TValue> : MouseInputElement
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
     {
         /// <summary>

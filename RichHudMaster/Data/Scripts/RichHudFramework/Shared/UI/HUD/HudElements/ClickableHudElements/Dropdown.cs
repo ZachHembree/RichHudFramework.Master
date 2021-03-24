@@ -16,7 +16,7 @@ namespace RichHudFramework.UI
     public class Dropdown<TElementContainer, TElement, TValue>
         : HudElementBase, IClickableElement, IEntryBox<TValue, TElementContainer, TElement>
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
     {
         /// <summary>
         /// Invoked when a member of the list is selected.

@@ -3,6 +3,16 @@ using System.Collections.Generic;
 
 namespace RichHudFramework.UI
 {
+    public class TreeBox<TElement, TValue> : TreeBox<ListBoxEntry<TElement, TValue>, TElement, TValue>
+        where TElement : HudElementBase, IMinLabelElement, new()
+    {
+        public TreeBox(HudParentBase parent) : base(parent)
+        { }
+
+        public TreeBox() : base(null)
+        { }
+    }
+
     public class TreeBox<TElementContainer, TElement, TValue>
         : TreeBoxBase<
             ChainSelectionBoxBase<TElementContainer, TElement, TValue>,
@@ -11,7 +21,7 @@ namespace RichHudFramework.UI
             TElement,
             TValue
         >, IHudCollection<TElementContainer, TElement>
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
     {
         public TElementContainer this[int index] => selectionBox.hudChain[index];
@@ -20,6 +30,12 @@ namespace RichHudFramework.UI
         /// UI elements in the collection
         /// </summary>
         public IReadOnlyList<TElementContainer> Collection => selectionBox.hudChain.Collection;
+
+        public TreeBox(HudParentBase parent) : base(parent)
+        { }
+
+        public TreeBox() : base(null)
+        { }
 
         /// <summary>
         /// Adds an element of type <see cref="TElement"/> to the collection.

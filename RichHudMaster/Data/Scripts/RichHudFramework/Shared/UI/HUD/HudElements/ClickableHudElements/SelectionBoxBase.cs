@@ -16,8 +16,14 @@ namespace RichHudFramework.UI
     public class ChainSelectionBoxBase<TElementContainer, TElement, TValue>
         : SelectionBox<HudChain<TElementContainer, TElement>, TElementContainer, TElement, TValue>
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, ILabelElement
-    { }
+        where TElement : HudElementBase, IMinLabelElement
+    {
+        public ChainSelectionBoxBase(HudParentBase parent) : base(parent)
+        { }
+
+        public ChainSelectionBoxBase() : base(null)
+        { }
+    }
 
     /// <summary>
     /// Generic SelectionBox using ScrollBox
@@ -25,15 +31,21 @@ namespace RichHudFramework.UI
     public class ScrollSelectionBoxBase<TElementContainer, TElement, TValue>
         : SelectionBox<ScrollBox<TElementContainer, TElement>, TElementContainer, TElement, TValue>
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, ILabelElement
-    { }
+        where TElement : HudElementBase, IMinLabelElement
+    {
+        public ScrollSelectionBoxBase(HudParentBase parent) : base(parent)
+        { }
+
+        public ScrollSelectionBoxBase() : base(null)
+        { }
+    }
 
     /// <summary>
     /// Abstract generic list of selectable UI elements of arbitrary size size.
     /// </summary>
     public class SelectionBoxBase<THudChain, TElementContainer, TElement, TValue> 
         : HudElementBase, IEntryBox<TValue, TElementContainer, TElement>, IClickableElement
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
         where THudChain : HudChain<TElementContainer, TElement>, new()
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
     {

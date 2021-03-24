@@ -19,7 +19,7 @@ namespace RichHudFramework.UI
     public class ChainSelectionBox<TElementContainer, TElement, TValue>
         : SelectionBox<HudChain<TElementContainer, TElement>, TElementContainer, TElement, TValue>
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
     { }
 
     /// <summary>
@@ -28,7 +28,7 @@ namespace RichHudFramework.UI
     public class ScrollSelectionBox<TElementContainer, TElement, TValue>
         : SelectionBox<ScrollBox<TElementContainer, TElement>, TElementContainer, TElement, TValue>
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
     { }
 
     /// <summary>
@@ -37,7 +37,7 @@ namespace RichHudFramework.UI
     public class SelectionBox<THudChain, TElementContainer, TElement, TValue> : SelectionBoxBase<THudChain, TElementContainer, TElement, TValue>
         where THudChain : HudChain<TElementContainer, TElement>, new()
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
     {
         /// <summary>
         /// Height of entries in the list.
@@ -77,7 +77,7 @@ namespace RichHudFramework.UI
         {
             TElementContainer entry = entryPool.Get();
 
-            entry.Element.Text = name;
+            entry.Element.TextBoard.SetText(name);
             entry.AssocMember = assocMember;
             entry.Enabled = enabled;
             hudChain.Add(entry);
@@ -94,7 +94,7 @@ namespace RichHudFramework.UI
             {
                 TElementContainer entry = entryPool.Get();
 
-                entry.Element.Text = entries[n].Item1;
+                entry.Element.TextBoard.SetText(entries[n].Item1);
                 entry.AssocMember = entries[n].Item2;
                 entry.Enabled = entries[n].Item3;
                 hudChain.Add(entry);
@@ -108,7 +108,7 @@ namespace RichHudFramework.UI
         {
             TElementContainer entry = entryPool.Get();
 
-            entry.Element.Text = name;
+            entry.Element.TextBoard.SetText(name);
             entry.AssocMember = assocMember;
             entry.Enabled = enabled;
             hudChain.Insert(index, entry);
@@ -163,7 +163,7 @@ namespace RichHudFramework.UI
         protected virtual TElementContainer GetNewEntry()
         {
             var entry = new TElementContainer();
-            entry.Element.Format = Format;
+            entry.Element.TextBoard.Format = Format;
             entry.Element.Padding = _memberPadding;
             entry.Element.ZOffset = 1;
             entry.Enabled = true;

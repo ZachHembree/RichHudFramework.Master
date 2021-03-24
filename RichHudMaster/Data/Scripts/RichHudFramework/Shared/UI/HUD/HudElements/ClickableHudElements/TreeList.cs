@@ -21,7 +21,7 @@ namespace RichHudFramework.UI
             TValue
         >
         where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where TElement : HudElementBase, ILabelElement
+        where TElement : HudElementBase, IMinLabelElement
     {
         /// <summary>
         /// Height of the treebox in pixels.
