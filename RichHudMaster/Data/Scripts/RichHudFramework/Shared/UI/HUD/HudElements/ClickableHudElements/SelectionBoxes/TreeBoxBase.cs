@@ -7,12 +7,41 @@ namespace RichHudFramework.UI
 {
     using Rendering;
 
-    public abstract class TreeBoxBase<TSelectionBox, THudChain, TElementContainer, TElement, TValue>
-        : HudElementBase, IClickableElement, IEntryBox<TValue, TElementContainer, TElement>
+    /// <summary>
+    /// Abstract, generic base for tree boxes/lists
+    /// </summary>
+    /// <typeparam name="TContainer">Container element type wrapping the UI element</typeparam>
+    /// <typeparam name="TElement">UI element in the list</typeparam>
+    public class TreeBoxBase<TContainer, TElement> 
+        : TreeBoxBase<
+            ChainSelectionBoxBase<TContainer, TElement>,
+            HudChain<TContainer, TElement>,
+            TContainer,
+            TElement
+        >
+        where TContainer : class, IScrollBoxEntry<TElement>, new()
         where TElement : HudElementBase, IMinLabelElement
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
-        where THudChain : HudChain<TElementContainer, TElement>, new()
-        where TSelectionBox : SelectionBoxBase<THudChain, TElementContainer, TElement, TValue>, new()
+    {
+        public TreeBoxBase(HudParentBase parent) : base(parent)
+        { }
+
+        public TreeBoxBase() : base(null)
+        { }
+    }
+
+    /// <summary>
+    /// Abstract, generic base for tree boxes/lists
+    /// </summary>
+    /// <typeparam name="TContainer">Container element type wrapping the UI element</typeparam>
+    /// <typeparam name="TElement">UI element in the list</typeparam>
+    /// <typeparam name="TChain">HudChain type used by the SelectionBox as the list container</typeparam>
+    /// <typeparam name="TSelectionBox">SelectionBox type</typeparam>
+    public abstract class TreeBoxBase<TSelectionBox, TChain, TContainer, TElement>
+        : HudElementBase, IEntryBox<TContainer, TElement>, IClickableElement
+        where TElement : HudElementBase, IMinLabelElement
+        where TContainer : class, IScrollBoxEntry<TElement>, new()
+        where TChain : HudChain<TContainer, TElement>, new()
+        where TSelectionBox : SelectionBoxBase<TChain, TContainer, TElement>, new()
     {
         /// <summary>
         /// Invoked when an entry is selected.
@@ -26,13 +55,13 @@ namespace RichHudFramework.UI
         /// <summary>
         /// List of entries in the treebox.
         /// </summary>
-        public IReadOnlyList<TElementContainer> EntryList => selectionBox.EntryList;
+        public IReadOnlyList<TContainer> EntryList => selectionBox.EntryList;
 
         /// <summary>
         /// Used to allow the addition of list entries using collection-initializer syntax in
         /// conjunction with normal initializers.
         /// </summary>
-        public TreeBoxBase<TSelectionBox, THudChain, TElementContainer, TElement, TValue> ListContainer => this;
+        public TreeBoxBase<TSelectionBox, TChain, TContainer, TElement> ListContainer => this;
 
         /// <summary>
         /// If true, then the dropdown list will be open
@@ -106,7 +135,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Current selection. Null if empty.
         /// </summary>
-        public TElementContainer Selection => selectionBox.Selection;
+        public TContainer Selection => selectionBox.Selection;
 
         /// <summary>
         /// Size of the entry collection.
@@ -164,15 +193,9 @@ namespace RichHudFramework.UI
         { }
 
         /// <summary>
-        /// Sets the selection to the member associated with the given object.
-        /// </summary>
-        public void SetSelection(TValue assocMember) =>
-            selectionBox.SetSelection(assocMember);
-
-        /// <summary>
         /// Sets the selection to the specified entry.
         /// </summary>
-        public void SetSelection(TElementContainer member) =>
+        public void SetSelection(TContainer member) =>
             selectionBox.SetSelection(member);
 
         /// <summary>
@@ -214,7 +237,7 @@ namespace RichHudFramework.UI
             }
         }
 
-        public IEnumerator<TElementContainer> GetEnumerator() =>
+        public IEnumerator<TContainer> GetEnumerator() =>
             selectionBox.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() =>

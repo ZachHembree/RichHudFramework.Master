@@ -62,12 +62,28 @@ namespace RichHudFramework.UI
     }
 
     /// <summary>
+    /// Scrollable list of text elements. Each list entry is associated with a value of type T.
+    /// </summary>
+    /// <typeparam name="TValue">Value paired with the list entry</typeparam>
+    public class ListBox<TValue> : ListBox<ListBoxEntry<TValue>, Label, TValue>
+    {
+        public ListBox(HudParentBase parent) : base(parent)
+        { }
+
+        public ListBox() : base(null)
+        { }
+    }
+
+    /// <summary>
     /// Generic scrollable list of text elements. Allows use of custom entry element types.
     /// Each list entry is associated with a value of type T.
     /// </summary>
-    public class ListBox<TElementContainer, TElement, TValue>
-        : SelectionBox<ScrollBox<TElementContainer, TElement>, TElementContainer, TElement, TValue>, IClickableElement
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
+    /// <typeparam name="TContainer">Container element type wrapping the UI element</typeparam>
+    /// <typeparam name="TElement">UI element in the list</typeparam>
+    /// <typeparam name="TValue">Value paired with the list entry</typeparam>
+    public class ListBox<TContainer, TElement, TValue>
+        : SelectionBox<ScrollBox<TContainer, TElement>, TContainer, TElement, TValue>, IClickableElement
+        where TContainer : class, IListBoxEntry<TElement, TValue>, new()
         where TElement : HudElementBase, IMinLabelElement
     {
         /// <summary>
@@ -148,18 +164,6 @@ namespace RichHudFramework.UI
         {
             Size = hudChain.Size + Padding;
         }
-    }
-
-    /// <summary>
-    /// Scrollable list of text elements. Each list entry is associated with a value of type T.
-    /// </summary>
-    public class ListBox<TValue> : ListBox<ListBoxEntry<TValue>, Label, TValue>
-    {
-        public ListBox(HudParentBase parent) : base(parent)
-        { }
-
-        public ListBox() : base(null)
-        { }
     }
 
 }

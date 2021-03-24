@@ -13,9 +13,11 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Generic SelectionBox using HudChain
     /// </summary>
-    public class ChainSelectionBoxBase<TElementContainer, TElement, TValue>
-        : SelectionBox<HudChain<TElementContainer, TElement>, TElementContainer, TElement, TValue>
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
+    /// <typeparam name="TContainer">Container element type wrapping the UI element</typeparam>
+    /// <typeparam name="TElement">UI element in the list</typeparam>
+    public class ChainSelectionBoxBase<TContainer, TElement>
+        : SelectionBoxBase<HudChain<TContainer, TElement>, TContainer, TElement>
+        where TContainer : class, IScrollBoxEntry<TElement>, new()
         where TElement : HudElementBase, IMinLabelElement
     {
         public ChainSelectionBoxBase(HudParentBase parent) : base(parent)
@@ -28,10 +30,12 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Generic SelectionBox using ScrollBox
     /// </summary>
-    public class ScrollSelectionBoxBase<TElementContainer, TElement, TValue>
-        : SelectionBox<ScrollBox<TElementContainer, TElement>, TElementContainer, TElement, TValue>
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
+    /// <typeparam name="TContainer">Container element type wrapping the UI element</typeparam>
+    /// <typeparam name="TElement">UI element in the list</typeparam>
+    public class ScrollSelectionBoxBase<TContainer, TElement>
+        : SelectionBoxBase<ScrollBox<TContainer, TElement>, TContainer, TElement>
         where TElement : HudElementBase, IMinLabelElement
+        where TContainer : class, IScrollBoxEntry<TElement>, new()
     {
         public ScrollSelectionBoxBase(HudParentBase parent) : base(parent)
         { }
@@ -43,11 +47,14 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Abstract generic list of selectable UI elements of arbitrary size size.
     /// </summary>
-    public class SelectionBoxBase<THudChain, TElementContainer, TElement, TValue> 
-        : HudElementBase, IEntryBox<TValue, TElementContainer, TElement>, IClickableElement
+    /// <typeparam name="TContainer">Container element type wrapping the UI element</typeparam>
+    /// <typeparam name="TElement">UI element in the list</typeparam>
+    /// <typeparam name="TChain">HudChain type used by the SelectionBox as the list container</typeparam>
+    public class SelectionBoxBase<TChain, TContainer, TElement> 
+        : HudElementBase, IEntryBox<TContainer, TElement>, IClickableElement
         where TElement : HudElementBase, IMinLabelElement
-        where THudChain : HudChain<TElementContainer, TElement>, new()
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
+        where TChain : HudChain<TContainer, TElement>, new()
+        where TContainer : class, IScrollBoxEntry<TElement>, new()
     {
         /// <summary>
         /// Invoked when an entry is selected.
@@ -62,17 +69,17 @@ namespace RichHudFramework.UI
         /// Used to allow the addition of list entries using collection-initializer syntax in
         /// conjunction with normal initializers.
         /// </summary>
-        public IEnumerable<TElementContainer> ListContainer => this;
+        public SelectionBoxBase<TChain, TContainer, TElement> ListContainer => this;
 
         /// <summary>
         /// Read-only collection of list entries.
         /// </summary>
-        public IReadOnlyList<TElementContainer> EntryList => hudChain.Collection;
+        public IReadOnlyList<TContainer> EntryList => hudChain.Collection;
 
         /// <summary>
         /// Read-only collection of list entries.
         /// </summary>
-        public IReadOnlyHudCollection<TElementContainer, TElement> HudCollection => hudChain;
+        public IReadOnlyHudCollection<TContainer, TElement> HudCollection => hudChain;
 
         /// <summary>
         /// Default background color of the highlight box
@@ -130,7 +137,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Current selection. Null if empty.
         /// </summary>
-        public TElementContainer Selection => listInput.Selection;
+        public TContainer Selection => listInput.Selection;
 
         /// <summary>
         /// Index of the current selection. -1 if empty.
@@ -162,14 +169,14 @@ namespace RichHudFramework.UI
         /// </summary>
         protected virtual Vector2 ListPos => hudChain.Position;
 
-        public readonly THudChain hudChain;
+        public readonly TChain hudChain;
         protected readonly HighlightBox selectionBox, highlightBox;
-        protected readonly ListInputElement<TElementContainer, TElement, TValue> listInput;
+        protected readonly ListInputElement<TContainer, TElement> listInput;
         protected Vector2 _memberPadding;
 
         public SelectionBoxBase(HudParentBase parent) : base(parent)
         {
-            hudChain = new THudChain()
+            hudChain = new TChain()
             {
                 AlignVertical = true,
                 SizingMode = 
@@ -180,7 +187,7 @@ namespace RichHudFramework.UI
             };
             hudChain.Register(this);
 
-            listInput = new ListInputElement<TElementContainer, TElement, TValue>(hudChain);
+            listInput = new ListInputElement<TContainer, TElement>(hudChain);
             selectionBox = new HighlightBox();
             highlightBox = new HighlightBox() { CanDrawTab = false };
 
@@ -201,7 +208,7 @@ namespace RichHudFramework.UI
         public SelectionBoxBase() : this(null)
         { }
 
-        public IEnumerator<TElementContainer> GetEnumerator() =>
+        public IEnumerator<TContainer> GetEnumerator() =>
             hudChain.Collection.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() =>
@@ -214,15 +221,9 @@ namespace RichHudFramework.UI
             listInput.SetSelectionAt(index);
 
         /// <summary>
-        /// Sets the selection to the member associated with the given object.
-        /// </summary>
-        public void SetSelection(TValue assocMember) =>
-            listInput.SetSelection(assocMember);
-
-        /// <summary>
         /// Sets the selection to the specified entry.
         /// </summary>
-        public void SetSelection(TElementContainer member) =>
+        public void SetSelection(TContainer member) =>
             listInput.SetSelection(member);
 
         /// <summary>
@@ -268,7 +269,7 @@ namespace RichHudFramework.UI
             // If highlight and selection indices dont match, draw highlight box
             if (listInput.HighlightIndex != listInput.SelectionIndex)
             {
-                TElementContainer entry = hudChain[listInput.HighlightIndex];
+                TContainer entry = hudChain[listInput.HighlightIndex];
 
                 highlightBox.Visible = (listInput.IsMousedOver || listInput.HasFocus) && entry.Element.Visible;
                 highlightBox.Size = entry.Element.Size - HighlightPadding;

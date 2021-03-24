@@ -9,18 +9,48 @@ namespace RichHudFramework.UI
     using Rendering;
 
     /// <summary>
+    /// Indented, collapsable list. Designed to fit in with SE UI elements.
+    /// </summary>
+    /// <typeparam name="TValue">Value paired with the list entry</typeparam>
+    public class TreeList<TValue> : TreeList<ListBoxEntry<TValue>, Label, TValue>
+    {
+        public TreeList(HudParentBase parent) : base(parent)
+        { }
+
+        public TreeList() : base(null)
+        { }
+    }
+
+    /// <summary>
+    /// Indented, collapsable list. Designed to fit in with SE UI elements.
+    /// </summary>
+    /// <typeparam name="TElement">UI element in the list</typeparam>
+    /// <typeparam name="TValue">Value paired with the list entry</typeparam>
+    public class TreeList<TElement, TValue> : TreeList<ListBoxEntry<TElement, TValue>, TElement, TValue>
+        where TElement : HudElementBase, IMinLabelElement, new()
+    {
+        public TreeList(HudParentBase parent) : base(parent)
+        { }
+
+        public TreeList() : base(null)
+        { }
+    }
+
+    /// <summary>
     /// Generic indented collapsable list of pooled, uniformly-sized entries. Allows use of custom entry element types. 
     /// Designed to fit in with SE UI elements.
     /// </summary>
-    public class TreeList<TElementContainer, TElement, TValue> 
+    /// <typeparam name="TContainer">Container element type wrapping the UI element</typeparam>
+    /// <typeparam name="TElement">UI element in the list</typeparam>
+    /// <typeparam name="TValue">Value paired with the list entry</typeparam>
+    public class TreeList<TContainer, TElement, TValue> 
         : TreeBoxBase<
-            ChainSelectionBox<TElementContainer, TElement, TValue>, 
-            HudChain<TElementContainer, TElement>, 
-            TElementContainer, 
-            TElement, 
-            TValue
+            ChainSelectionBox<TContainer, TElement, TValue>,
+            HudChain<TContainer, TElement>,
+            TContainer,
+            TElement
         >
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
+        where TContainer : class, IListBoxEntry<TElement, TValue>, new()
         where TElement : HudElementBase, IMinLabelElement
     {
         /// <summary>
@@ -64,7 +94,7 @@ namespace RichHudFramework.UI
         /// Adds a new member to the tree box with the given name and associated
         /// object.
         /// </summary>
-        public TElementContainer Add(RichText name, TValue assocMember, bool enabled = true) =>
+        public TContainer Add(RichText name, TValue assocMember, bool enabled = true) =>
             selectionBox.Add(name, assocMember, enabled);
 
         /// <summary>
@@ -96,17 +126,18 @@ namespace RichHudFramework.UI
         /// </summary>
         public void ClearEntries() =>
             selectionBox.ClearEntries();
-    }
 
-    /// <summary>
-    /// Indented, collapsable list. Designed to fit in with SE UI elements.
-    /// </summary>
-    public class TreeList<TValue> : TreeList<ListBoxEntry<TValue>, Label, TValue>
-    {
-        public TreeList(HudParentBase parent) : base(parent)
-        { }
+        /// <summary>
+        /// Sets the selection to the member associated with the given object.
+        /// </summary>
+        public void SetSelection(TValue assocMember)
+        {
+            int index = selectionBox.hudChain.FindIndex(x => assocMember.Equals(x.AssocMember));
 
-        public TreeList() : base(null)
-        { }
+            if (index != -1)
+            {
+                selectionBox.SetSelectionAt(index);
+            }
+        }
     }
 }

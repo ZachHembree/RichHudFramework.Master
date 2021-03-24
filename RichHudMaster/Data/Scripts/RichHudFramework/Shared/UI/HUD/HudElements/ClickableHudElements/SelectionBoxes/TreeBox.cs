@@ -3,33 +3,21 @@ using System.Collections.Generic;
 
 namespace RichHudFramework.UI
 {
-    public class TreeBox<TElement, TValue> : TreeBox<ListBoxEntry<TElement, TValue>, TElement, TValue>
-        where TElement : HudElementBase, IMinLabelElement, new()
-    {
-        public TreeBox(HudParentBase parent) : base(parent)
-        { }
-
-        public TreeBox() : base(null)
-        { }
-    }
-
-    public class TreeBox<TElementContainer, TElement, TValue>
-        : TreeBoxBase<
-            ChainSelectionBoxBase<TElementContainer, TElement, TValue>,
-            HudChain<TElementContainer, TElement>,
-            TElementContainer,
-            TElement,
-            TValue
-        >, IHudCollection<TElementContainer, TElement>
+    /// <summary>
+    /// Generic tree box supporting custom entry types of arbitrary height.
+    /// </summary>
+    /// <typeparam name="TContainer">Container element type wrapping the UI element</typeparam>
+    /// <typeparam name="TElement">UI element in the list</typeparam>
+    public class TreeBox<TContainer, TElement> : TreeBoxBase<TContainer, TElement>
         where TElement : HudElementBase, IMinLabelElement
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
+        where TContainer : class, IScrollBoxEntry<TElement>, new()
     {
-        public TElementContainer this[int index] => selectionBox.hudChain[index];
+        public TContainer this[int index] => selectionBox.hudChain[index];
 
         /// <summary>
         /// UI elements in the collection
         /// </summary>
-        public IReadOnlyList<TElementContainer> Collection => selectionBox.hudChain.Collection;
+        public IReadOnlyList<TContainer> Collection => selectionBox.hudChain.Collection;
 
         public TreeBox(HudParentBase parent) : base(parent)
         { }
@@ -44,15 +32,15 @@ namespace RichHudFramework.UI
             selectionBox.hudChain.Add(element);
 
         /// <summary>
-        /// Adds an element of type <see cref="TElementContainer"/> to the collection.
+        /// Adds an element of type <see cref="TContainer"/> to the collection.
         /// </summary>
-        public void Add(TElementContainer element) =>
+        public void Add(TContainer element) =>
             selectionBox.hudChain.Add(element);
 
         /// <summary>
         /// Add the given range to the end of the collection.
         /// </summary>
-        public void AddRange(IReadOnlyList<TElementContainer> newContainers) =>
+        public void AddRange(IReadOnlyList<TContainer> newContainers) =>
             selectionBox.hudChain.AddRange(newContainers);
 
         /// <summary>
@@ -67,25 +55,25 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Finds the collection member that meets the conditions required by the predicate.
         /// </summary>
-        public TElementContainer Find(Func<TElementContainer, bool> predicate) =>
+        public TContainer Find(Func<TContainer, bool> predicate) =>
             selectionBox.hudChain.Find(predicate);
 
         /// <summary>
         /// Finds the index of the collection member that meets the conditions required by the predicate.
         /// </summary>
-        public int FindIndex(Func<TElementContainer, bool> predicate) =>
+        public int FindIndex(Func<TContainer, bool> predicate) =>
             selectionBox.hudChain.FindIndex(predicate);
 
         /// <summary>
-        /// Adds an element of type <see cref="TElementContainer"/> at the given index.
+        /// Adds an element of type <see cref="TContainer"/> at the given index.
         /// </summary>
-        public void Insert(int index, TElementContainer container) =>
+        public void Insert(int index, TContainer container) =>
             selectionBox.hudChain.Insert(index, container);
 
         /// <summary>
         /// Insert the given range into the collection.
         /// </summary>
-        public void InsertRange(int index, IReadOnlyList<TElementContainer> newContainers) =>
+        public void InsertRange(int index, IReadOnlyList<TContainer> newContainers) =>
             selectionBox.hudChain.InsertRange(index, newContainers);
 
         /// <summary>
@@ -94,7 +82,7 @@ namespace RichHudFramework.UI
         /// <param name="fast">Prevents registration from triggering a draw list
         /// update. Meant to be used in conjunction with pooled elements being
         /// unregistered/reregistered to the same parent.</param>
-        public bool Remove(TElementContainer collectionElement, bool fast) =>
+        public bool Remove(TContainer collectionElement, bool fast) =>
             selectionBox.hudChain.Remove(collectionElement, fast);
 
         /// <summary>
@@ -103,7 +91,7 @@ namespace RichHudFramework.UI
         /// <param name="fast">Prevents registration from triggering a draw list
         /// update. Meant to be used in conjunction with pooled elements being
         /// unregistered/reregistered to the same parent.</param>
-        public bool Remove(Func<TElementContainer, bool> predicate, bool fast = false) =>
+        public bool Remove(Func<TContainer, bool> predicate, bool fast = false) =>
             selectionBox.hudChain.Remove(predicate, fast);
 
         /// <summary>

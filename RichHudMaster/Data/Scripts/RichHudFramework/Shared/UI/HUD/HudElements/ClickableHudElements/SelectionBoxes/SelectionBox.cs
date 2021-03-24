@@ -16,27 +16,28 @@ namespace RichHudFramework.UI
     /// <summary>
     /// Generic SelectionBox using HudChain
     /// </summary>
-    public class ChainSelectionBox<TElementContainer, TElement, TValue>
-        : SelectionBox<HudChain<TElementContainer, TElement>, TElementContainer, TElement, TValue>
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
+    public class ChainSelectionBox<TContainer, TElement, TValue>
+        : SelectionBox<HudChain<TContainer, TElement>, TContainer, TElement, TValue>
+        where TContainer : class, IListBoxEntry<TElement, TValue>, new()
         where TElement : HudElementBase, IMinLabelElement
     { }
 
     /// <summary>
     /// Generic SelectionBox using ScrollBox
     /// </summary>
-    public class ScrollSelectionBox<TElementContainer, TElement, TValue>
-        : SelectionBox<ScrollBox<TElementContainer, TElement>, TElementContainer, TElement, TValue>
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
+    public class ScrollSelectionBox<TContainer, TElement, TValue>
+        : SelectionBox<ScrollBox<TContainer, TElement>, TContainer, TElement, TValue>
+        where TContainer : class, IListBoxEntry<TElement, TValue>, new()
         where TElement : HudElementBase, IMinLabelElement
     { }
 
     /// <summary>
     /// Generic list of pooled, selectable entries of fixed size.
     /// </summary>
-    public class SelectionBox<THudChain, TElementContainer, TElement, TValue> : SelectionBoxBase<THudChain, TElementContainer, TElement, TValue>
-        where THudChain : HudChain<TElementContainer, TElement>, new()
-        where TElementContainer : class, IListBoxEntry<TElement, TValue>, new()
+    public class SelectionBox<TChain, TContainer, TElement, TValue> 
+        : SelectionBoxBase<TChain, TContainer, TElement>
+        where TChain : HudChain<TContainer, TElement>, new()
+        where TContainer : class, IListBoxEntry<TElement, TValue>, new()
         where TElement : HudElementBase, IMinLabelElement
     {
         /// <summary>
@@ -49,11 +50,11 @@ namespace RichHudFramework.UI
         }
 
         public readonly BorderBox border;
-        protected readonly ObjectPool<TElementContainer> entryPool;
+        protected readonly ObjectPool<TContainer> entryPool;
 
         public SelectionBox(HudParentBase parent) : base(parent)
         {
-            entryPool = new ObjectPool<TElementContainer>(GetNewEntry, ResetEntry);
+            entryPool = new ObjectPool<TContainer>(GetNewEntry, ResetEntry);
             hudChain.SizingMode = HudChainSizingModes.FitMembersBoth | HudChainSizingModes.ClampChainOffAxis;
 
             border = new BorderBox(hudChain)
@@ -73,9 +74,9 @@ namespace RichHudFramework.UI
         /// Adds a new member to the list box with the given name and associated
         /// object.
         /// </summary>
-        public TElementContainer Add(RichText name, TValue assocMember, bool enabled = true)
+        public TContainer Add(RichText name, TValue assocMember, bool enabled = true)
         {
-            TElementContainer entry = entryPool.Get();
+            TContainer entry = entryPool.Get();
 
             entry.Element.TextBoard.SetText(name);
             entry.AssocMember = assocMember;
@@ -92,7 +93,7 @@ namespace RichHudFramework.UI
         {
             for (int n = 0; n < entries.Count; n++)
             {
-                TElementContainer entry = entryPool.Get();
+                TContainer entry = entryPool.Get();
 
                 entry.Element.TextBoard.SetText(entries[n].Item1);
                 entry.AssocMember = entries[n].Item2;
@@ -106,7 +107,7 @@ namespace RichHudFramework.UI
         /// </summary>
         public void Insert(int index, RichText name, TValue assocMember, bool enabled = true)
         {
-            TElementContainer entry = entryPool.Get();
+            TContainer entry = entryPool.Get();
 
             entry.Element.TextBoard.SetText(name);
             entry.AssocMember = assocMember;
@@ -119,7 +120,7 @@ namespace RichHudFramework.UI
         /// </summary>
         public void RemoveAt(int index)
         {
-            TElementContainer entry = hudChain.Collection[index];
+            TContainer entry = hudChain.Collection[index];
             hudChain.RemoveAt(index, true);
             entryPool.Return(entry);
         }
@@ -127,7 +128,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Removes the member at the given index from the list box.
         /// </summary>
-        public bool Remove(TElementContainer entry)
+        public bool Remove(TContainer entry)
         {
             if (hudChain.Remove(entry, true))
             {
@@ -160,9 +161,22 @@ namespace RichHudFramework.UI
             hudChain.Clear(true);
         }
 
-        protected virtual TElementContainer GetNewEntry()
+        /// <summary>
+        /// Sets the selection to the member associated with the given object.
+        /// </summary>
+        public void SetSelection(TValue assocMember)
         {
-            var entry = new TElementContainer();
+            int index = hudChain.FindIndex(x => assocMember.Equals(x.AssocMember));
+
+            if (index != -1)
+            {
+                listInput.SetSelectionAt(index);
+            }
+        }
+
+        protected virtual TContainer GetNewEntry()
+        {
+            var entry = new TContainer();
             entry.Element.TextBoard.Format = Format;
             entry.Element.Padding = _memberPadding;
             entry.Element.ZOffset = 1;
@@ -171,7 +185,7 @@ namespace RichHudFramework.UI
             return entry;
         }
 
-        protected virtual void ResetEntry(TElementContainer entry)
+        protected virtual void ResetEntry(TContainer entry)
         {
             if (Selection == entry)
                 listInput.ClearSelection();
@@ -212,7 +226,7 @@ namespace RichHudFramework.UI
                         if (data == null)
                             return Selection;
                         else
-                            SetSelection(data as TElementContainer);
+                            SetSelection(data as TContainer);
 
                         break;
                     }
@@ -232,7 +246,7 @@ namespace RichHudFramework.UI
                         break;
                     }
                 case ListBoxAccessors.Remove:
-                    return Remove(data as TElementContainer);
+                    return Remove(data as TContainer);
                 case ListBoxAccessors.RemoveAt:
                     RemoveAt((int)data); break;
                 case ListBoxAccessors.ClearEntries:
