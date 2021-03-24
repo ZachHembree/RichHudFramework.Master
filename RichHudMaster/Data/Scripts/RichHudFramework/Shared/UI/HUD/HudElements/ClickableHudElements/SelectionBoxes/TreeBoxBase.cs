@@ -37,7 +37,7 @@ namespace RichHudFramework.UI
     /// <typeparam name="TChain">HudChain type used by the SelectionBox as the list container</typeparam>
     /// <typeparam name="TSelectionBox">SelectionBox type</typeparam>
     public abstract class TreeBoxBase<TSelectionBox, TChain, TContainer, TElement>
-        : HudElementBase, IEntryBox<TContainer, TElement>, IClickableElement
+        : LabelElementBase, IEntryBox<TContainer, TElement>, IClickableElement
         where TElement : HudElementBase, IMinLabelElement
         where TContainer : class, IScrollBoxEntry<TElement>, new()
         where TChain : HudChain<TContainer, TElement>, new()
@@ -96,6 +96,11 @@ namespace RichHudFramework.UI
         /// Name of the element as rendered on the display
         /// </summary>
         public RichText Name { get { return display.Name; } set { display.Name = value; } }
+
+        /// <summary>
+        /// TextBoard backing the name label
+        /// </summary>
+        public override ITextBoard TextBoard => display.name.TextBoard;
 
         /// <summary>
         /// Default format for member text;
