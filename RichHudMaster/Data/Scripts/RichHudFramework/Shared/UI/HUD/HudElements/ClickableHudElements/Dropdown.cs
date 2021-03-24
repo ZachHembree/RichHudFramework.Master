@@ -26,7 +26,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// List of entries in the dropdown.
         /// </summary>
-        public IReadOnlyList<TElementContainer> ListEntries => listBox.ListEntries;
+        public IReadOnlyList<TElementContainer> EntryList => listBox.EntryList;
 
         /// <summary>
         /// Read-only collection of list entries.
@@ -281,7 +281,7 @@ namespace RichHudFramework.UI
          listBox.GetOrSetMember(data, memberEnum);
 
         public IEnumerator<TElementContainer> GetEnumerator() =>
-            listBox.ListEntries.GetEnumerator();
+            listBox.EntryList.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() =>
             GetEnumerator();

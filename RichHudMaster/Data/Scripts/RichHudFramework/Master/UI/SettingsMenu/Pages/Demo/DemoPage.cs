@@ -249,7 +249,7 @@ namespace RichHudFramework
                         var testElement = new TestWindowNode(selection);
 
                         demoRoot.Add(testElement);
-                        instanceList.Add($"[#{instanceList.ListEntries.Count}] {selection}", testElement);
+                        instanceList.Add($"[#{instanceList.EntryList.Count}] {selection}", testElement);
 
                         // If selection is empty set selection to new element
                         if (instanceList.Selection == null)

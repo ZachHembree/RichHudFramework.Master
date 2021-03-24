@@ -40,7 +40,7 @@ namespace RichHudFramework
                 /// </summary>
                 public override bool Enabled
                 {
-                    get { return _enabled && Element.ListEntries.Count > 0; }
+                    get { return _enabled && Element.EntryList.Count > 0; }
                     set { _enabled = value; }
                 }
 
@@ -59,7 +59,7 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<ITerminalPage> Pages { get; }
 
-                public IReadOnlyList<ListBoxEntry<TerminalPageBase>> ListEntries => treeBox.ListEntries;
+                public IReadOnlyList<ListBoxEntry<TerminalPageBase>> ListEntries => treeBox.EntryList;
 
                 /// <summary>
                 /// Used to allow the addition of child elements using collection-initializer syntax in
@@ -77,8 +77,8 @@ namespace RichHudFramework
                     SetElement(treeBox);
                     Pages = new ReadOnlyCollectionData<ITerminalPage>
                     (
-                        x => Element.ListEntries[x].AssocMember,
-                        () => Element.ListEntries.Count
+                        x => Element.EntryList[x].AssocMember,
+                        () => Element.EntryList.Count
                     );
 
                     treeBox.SelectionChanged += InvokeCallback;
@@ -194,8 +194,8 @@ namespace RichHudFramework
                         Item1 = GetOrSetMember,
                         Item2 = new MyTuple<object, Func<int>>()
                         {
-                            Item1 = (Func<int, ControlMembers>)(x => Element.ListEntries[x].AssocMember.GetApiData()),
-                            Item2 = () => Element.ListEntries.Count
+                            Item1 = (Func<int, ControlMembers>)(x => Element.EntryList[x].AssocMember.GetApiData()),
+                            Item2 = () => Element.EntryList.Count
                         },
                         Item3 = this
                     };
@@ -205,7 +205,7 @@ namespace RichHudFramework
             /// <summary>
             /// TreeBox modified for use as the ModControlRoot's UI element.
             /// </summary>
-            private class ModControlRootTreeBox : TreeBox<TerminalPageBase>
+            private class ModControlRootTreeBox : TreeList<TerminalPageBase>
             {
                 public ModControlRootTreeBox(HudParentBase parent = null) : base(parent)
                 {

@@ -20,7 +20,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Read-only collection of list entries.
         /// </summary>
-        IReadOnlyList<TElementContainer> ListEntries { get; }
+        IReadOnlyList<TElementContainer> EntryList { get; }
 
         /// <summary>
         /// Current selection. Null if empty.

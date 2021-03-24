@@ -55,7 +55,6 @@ namespace RichHudFramework.UI
         public ListBoxEntry()
         {
             SetElement(new TElement() { AutoResize = false });
-            Element.ZOffset = 1;
         }
 
         public object GetOrSetMember(object data, int memberEnum)

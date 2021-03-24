@@ -78,7 +78,7 @@ namespace RichHudFramework.UI.Server
             /// <summary>
             /// List of entries in the dropdown.
             /// </summary>
-            public IReadOnlyList<ListBoxEntry<T>> ListEntries => listBox.ListEntries;
+            public IReadOnlyList<ListBoxEntry<T>> ListEntries => listBox.EntryList;
 
             /// <summary>
             /// Currently selected list member.
