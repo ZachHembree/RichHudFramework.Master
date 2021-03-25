@@ -10,20 +10,8 @@ using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageM
 
 namespace RichHudFramework
 {
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
-
     namespace UI.Server
     {
-        using ControlMembers = MyTuple<
-            ApiMemberAccessor, // GetOrSetMember
-            object // ID
-        >;
-        using ControlContainerMembers = MyTuple<
-            ApiMemberAccessor, // GetOrSetMember,
-            MyTuple<object, Func<int>>, // Member List
-            object // ID
-        >;
-
         public sealed partial class RichHudTerminal : RichHudComponentBase
         {
             private class ModControlRoot : TerminalPageCategory, IModControlRoot
@@ -76,6 +64,7 @@ namespace RichHudFramework
 
                 public ModControlRoot() : base()
                 {
+                    Enabled = false;
                     subcategories = new List<TerminalPageCategory>();
                     treeBox.SelectionChanged += InvokeCallback;
                 }
@@ -110,7 +99,7 @@ namespace RichHudFramework
                     }
                 }
 
-                private void InvokeCallback(object sender, EventArgs args)
+                public void OnSelectionChanged(object sender, EventArgs args)
                 {
                     SelectionChanged?.Invoke(this, EventArgs.Empty);
                     ApiCallbackAction?.Invoke();
@@ -129,6 +118,12 @@ namespace RichHudFramework
 
                                 return null;
                             }
+                        case ModControlRootAccessors.GetCategoryAccessors:
+                            return new MyTuple<object, Func<int>>()
+                            {
+                                Item1 = new Func<int, ControlContainerMembers>(x => subcategories[x].GetApiData()),
+                                Item2 = () => subcategories.Count
+                            };
                     }
 
                     return base.GetOrSetMember(data, memberEnum);

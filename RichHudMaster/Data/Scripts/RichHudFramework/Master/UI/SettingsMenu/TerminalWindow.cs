@@ -371,6 +371,7 @@ namespace RichHudFramework
                             }
 
                             SelectionChanged?.Invoke();
+                            SelectedModRoot?.OnSelectionChanged(SelectedModRoot, EventArgs.Empty);
                         }
                     }
 
