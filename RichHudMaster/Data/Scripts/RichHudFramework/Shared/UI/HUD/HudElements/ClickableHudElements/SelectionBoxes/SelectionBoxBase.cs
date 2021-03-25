@@ -160,12 +160,6 @@ namespace RichHudFramework.UI
 
         public SelectionBoxBase(HudParentBase parent) : base(parent)
         {
-            selectionBox = new HighlightBox();
-            highlightBox = new HighlightBox() { CanDrawTab = false };
-
-            selectionBox.Register(this, false, true);
-            highlightBox.Register(this, false, true);
-
             hudChain = new TChain()
             {
                 AlignVertical = true,
@@ -176,6 +170,12 @@ namespace RichHudFramework.UI
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
             };
             hudChain.Register(this);
+
+            selectionBox = new HighlightBox();
+            highlightBox = new HighlightBox() { CanDrawTab = false };
+
+            selectionBox.Register(hudChain, false, true);
+            highlightBox.Register(hudChain, false, true);
 
             listInput = new ListInputElement<TContainer, TElement>(hudChain);
 
