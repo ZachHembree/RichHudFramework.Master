@@ -24,7 +24,10 @@ namespace RichHudFramework
             object // ID
         >;
 
-        public class TerminalPageCategory : SelectionBoxEntryTuple<LabelElementBase, object>, ITerminalPageCategory
+        public class TerminalPageCategory : TerminalPageCategoryBase
+        { }
+
+        public abstract class TerminalPageCategoryBase : SelectionBoxEntryTuple<LabelElementBase, object>, ITerminalPageCategory
         {
             /// <summary>
             /// Name of the category as it appears in the terminal
@@ -61,10 +64,12 @@ namespace RichHudFramework
             /// </summary>
             public ITerminalPageCategory PageContainer => this;
 
+            public object ID => this;
+
             protected readonly List<TerminalPageBase> pages;
             protected readonly PageCategoryNodeBox treeBox;
 
-            public TerminalPageCategory()
+            public TerminalPageCategoryBase()
             {
                 AllowHighlighting = false;
 
@@ -73,7 +78,7 @@ namespace RichHudFramework
                 SetElement(treeBox);
             }
 
-            public IEnumerator<ITerminalPage> GetEnumerator() =>
+            public IEnumerator<TerminalPageBase> GetEnumerator() =>
                 Pages.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() =>

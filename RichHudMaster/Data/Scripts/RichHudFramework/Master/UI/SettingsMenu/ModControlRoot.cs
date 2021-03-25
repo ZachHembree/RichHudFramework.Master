@@ -12,9 +12,19 @@ namespace RichHudFramework
 {
     namespace UI.Server
     {
+        using ControlMembers = MyTuple<
+                ApiMemberAccessor, // GetOrSetMember
+                object // ID
+            >;
+        using ControlContainerMembers = MyTuple<
+            ApiMemberAccessor, // GetOrSetMember,
+            MyTuple<object, Func<int>>, // Member List
+            object // ID
+        >;
+
         public sealed partial class RichHudTerminal : RichHudComponentBase
         {
-            private class ModControlRoot : TerminalPageCategory, IModControlRoot
+            private class ModControlRoot : TerminalPageCategoryBase, IModControlRoot
             {
                 /// <summary>
                 /// Invoked when a new page is selected
@@ -32,7 +42,7 @@ namespace RichHudFramework
 
                         if (selection != null)
                         {
-                            var category = selection as TerminalPageCategory;
+                            var category = selection as TerminalPageCategoryBase;
 
                             if (category != null)
                                 return category.SelectedPage;
@@ -45,14 +55,14 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Currently selected <see cref="TerminalPageCategory"/>.
+                /// Currently selected <see cref="TerminalPageCategoryBase"/>.
                 /// </summary>
-                public TerminalPageCategory SelectedSubcategory => treeBox.Selection as TerminalPageCategory;
+                public TerminalPageCategoryBase SelectedSubcategory => treeBox.Selection as TerminalPageCategoryBase;
 
                 /// <summary>
                 /// Page subcategories attached to the mod root
                 /// </summary>
-                public IReadOnlyList<TerminalPageCategory> Subcategories => subcategories;
+                public IReadOnlyList<TerminalPageCategoryBase> Subcategories => subcategories;
 
                 /// <summary>
                 /// TreeBox member list
@@ -60,19 +70,18 @@ namespace RichHudFramework
                 public IReadOnlyList<SelectionBoxEntryTuple<LabelElementBase, object>> ListEntries => treeBox.EntryList;
 
                 private Action ApiCallbackAction;
-                protected readonly List<TerminalPageCategory> subcategories;
+                protected readonly List<TerminalPageCategoryBase> subcategories;
 
                 public ModControlRoot() : base()
                 {
                     Enabled = false;
-                    subcategories = new List<TerminalPageCategory>();
-                    treeBox.SelectionChanged += InvokeCallback;
+                    subcategories = new List<TerminalPageCategoryBase>();
                 }
 
                 /// <summary>
                 /// Adds a page subcategory to the control root
                 /// </summary>
-                public void Add(TerminalPageCategory subcategory)
+                public void Add(TerminalPageCategoryBase subcategory)
                 {
                     treeBox.Add(subcategory);
                     subcategories.Add(subcategory);
@@ -91,7 +100,7 @@ namespace RichHudFramework
                             Add(page);
                         else
                         {
-                            var subcategory = member as TerminalPageCategory;
+                            var subcategory = member as TerminalPageCategoryBase;
 
                             if (subcategory != null)
                                 Add(subcategory);
@@ -124,6 +133,8 @@ namespace RichHudFramework
                                 Item1 = new Func<int, ControlContainerMembers>(x => subcategories[x].GetApiData()),
                                 Item2 = () => subcategories.Count
                             };
+                        case ModControlRootAccessors.AddSubcategory:
+                            Add(data as TerminalPageCategory); return null;
                     }
 
                     return base.GetOrSetMember(data, memberEnum);

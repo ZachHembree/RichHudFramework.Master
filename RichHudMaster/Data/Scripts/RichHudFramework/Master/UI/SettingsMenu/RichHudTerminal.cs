@@ -182,6 +182,8 @@ namespace RichHudFramework
                             }
                         case TerminalAccessors.GetMenuOpen:
                             return Open;
+                        case TerminalAccessors.GetNewPageCategoryFunc:
+                            return new Func<ControlContainerMembers>(GetNewPageCategory);
                     }
 
                     return null;
@@ -241,6 +243,9 @@ namespace RichHudFramework
 
                     return default(ControlMembers);
                 }
+
+                private static ControlContainerMembers GetNewPageCategory() =>
+                    new TerminalPageCategory().GetApiData();
             }
         }
     }

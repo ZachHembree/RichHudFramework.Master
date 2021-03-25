@@ -274,7 +274,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Currently selected subcategory
                     /// </summary>
-                    public TerminalPageCategory SelectedSubcategory { get; private set; }
+                    public TerminalPageCategoryBase SelectedSubcategory { get; private set; }
 
                     /// <summary>
                     /// Currently selected control page.
@@ -363,7 +363,7 @@ namespace RichHudFramework
                                 if (root != SelectedModRoot)
                                     root.ClearSelection();
 
-                                foreach (TerminalPageCategory category in root.Subcategories)
+                                foreach (TerminalPageCategoryBase category in root.Subcategories)
                                 {
                                     if (category != SelectedSubcategory)
                                         category.ClearSelection();
@@ -414,7 +414,7 @@ namespace RichHudFramework
 
                         if (SelectedPage != newPage)
                         {
-                            TerminalPageCategory subcategory = null;
+                            TerminalPageCategoryBase subcategory = null;
                             bool contains = false;
 
                             foreach (TerminalPageBase page in modRoot.Pages)
@@ -428,7 +428,7 @@ namespace RichHudFramework
 
                             if (!contains)
                             {
-                                foreach (TerminalPageCategory cat in modRoot)
+                                foreach (TerminalPageCategoryBase cat in modRoot.Subcategories)
                                 {
                                     foreach (TerminalPageBase page in cat.Pages)
                                     {
