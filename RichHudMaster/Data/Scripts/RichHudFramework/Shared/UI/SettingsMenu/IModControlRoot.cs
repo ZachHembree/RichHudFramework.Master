@@ -57,13 +57,8 @@ namespace RichHudFramework
             TextPage = 3,
         }
 
-        public enum ModControlRootAccessors : int
+        public enum TerminalPageCategoryAccessors : int
         {
-            /// <summary>
-            /// Action
-            /// </summary>
-            GetOrSetCallback = 1,
-
             /// <summary>
             /// string
             /// </summary>
@@ -87,14 +82,65 @@ namespace RichHudFramework
             /// <summary>
             /// in: IReadOnlyList<TerminalPageBase>
             /// </summary>
-            AddRange = 6,
+            AddPageRange = 6,
+        }
+
+        public enum ModControlRootAccessors : int
+        {
+            /// <summary>
+            /// Action
+            /// </summary>
+            GetOrSetCallback = 1,
+        }
+
+        public interface IModRootMember
+        {
+            /// <summary>
+            /// Name of the member as it appears in the terminal
+            /// </summary>
+            string Name { get; set; }
+
+            /// <summary>
+            /// Determines whether or not the element will appear in the list.
+            /// Disabled by default.
+            /// </summary>
+            bool Enabled { get; set; }
+        }
+
+        public interface ITerminalPageCategory : IEnumerable<ITerminalPage>, IModRootMember
+        {
+            /// <summary>
+            /// Read only collection of <see cref="TerminalPageBase"/>s assigned to this object.
+            /// </summary>
+            IReadOnlyList<TerminalPageBase> Pages { get; }
+
+            /// <summary>
+            /// Used to allow the addition of category elements using collection-initializer syntax in
+            /// conjunction with normal initializers.
+            /// </summary>
+            ITerminalPageCategory PageContainer { get; }
+
+            /// <summary>
+            /// Currently selected <see cref="TerminalPageBase"/>.
+            /// </summary>
+            TerminalPageBase SelectedPage { get; }
+
+            /// <summary>
+            /// Adds a terminal page to the category
+            /// </summary>
+            void Add(TerminalPageBase page);
+
+            /// <summary>
+            /// Adds a range of terminal pages to the category
+            /// </summary>
+            void AddRange(IReadOnlyList<TerminalPageBase> pages);
         }
 
         /// <summary>
         /// Indented dropdown list of terminal pages. Root UI element for all terminal controls
         /// associated with a given mod.
         /// </summary>
-        public interface IModControlRoot : IEnumerable<ITerminalPage>
+        public interface IModControlRoot : ITerminalPageCategory
         {
             /// <summary>
             /// Invoked when a new page is selected
@@ -102,41 +148,19 @@ namespace RichHudFramework
             event EventHandler SelectionChanged;
 
             /// <summary>
-            /// Name of the mod as it appears in the <see cref="TerminalFormatting"/> mod list
+            /// Page subcategories attached to the mod root
             /// </summary>
-            string Name { get; set; }
+            IReadOnlyList<TerminalPageCategory> Subcategories { get; }
 
             /// <summary>
-            /// Read only collection of <see cref="ITerminalPage"/>s assigned to this object.
+            /// Adds a page subcategory to the control root
             /// </summary>
-            IReadOnlyList<ITerminalPage> Pages { get; }
+            void Add(TerminalPageCategory subcategory);
 
             /// <summary>
-            /// Used to allow the addition of page elements using collection-initializer syntax in
-            /// conjunction with normal initializers.
+            /// Adds a range of root members to the control root, either subcategories or pages.
             /// </summary>
-            IModControlRoot PageContainer { get; }
-
-            /// <summary>
-            /// Currently selected <see cref="ITerminalPage"/>.
-            /// </summary>
-            ITerminalPage Selection { get; }
-
-            /// <summary>
-            /// Determines whether or not the element will appear in the list.
-            /// Disabled by default.
-            /// </summary>
-            bool Enabled { get; set; }
-
-            /// <summary>
-            /// Adds the given <see cref="TerminalPageBase"/> to the object.
-            /// </summary>
-            void Add(TerminalPageBase page);
-
-            /// <summary>
-            /// Adds the given ranges of pages to the control root.
-            /// </summary>
-            void AddRange(IReadOnlyList<TerminalPageBase> terminalPageBases);
+            void AddRange(IReadOnlyList<IModRootMember> members);
 
             /// <summary>
             /// Retrieves data used by the Framework API

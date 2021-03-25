@@ -34,12 +34,12 @@ namespace RichHudFramework
                 /// <summary>
                 /// Currently selected mod root
                 /// </summary>
-                public ModControlRoot SelectedMod => modList.SelectedMod;
+                public ModControlRoot SelectedModRoot => modList.SelectedModRoot;
 
                 /// <summary>
                 /// Currently selected control page.
                 /// </summary>
-                public TerminalPageBase CurrentPage => modList.CurrentPage;
+                public TerminalPageBase SelectedPage => modList.SelectedPage;
 
                 /// <summary>
                 /// Read only collection of mod roots registered with the terminal
@@ -204,8 +204,8 @@ namespace RichHudFramework
                     base.Layout();
 
                     // Update sizing
-                    if (CurrentPage != null)
-                        CurrentPage.Element.Width = Width - Padding.X - modList.Width - bodyChain.Spacing;
+                    if (SelectedPage != null)
+                        SelectedPage.Element.Width = Width - Padding.X - modList.Width - bodyChain.Spacing;
 
                     bodyChain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
                     modList.Width = 270f * Scale;
@@ -226,17 +226,21 @@ namespace RichHudFramework
 
                     for (int i = 0; i < rootList.Count; i++)
                     {
-                        IReadOnlyList<ListBoxEntry<TerminalPageBase>> treePages = rootList[i].ListEntries;
+                        IReadOnlyList<SelectionBoxEntryTuple<LabelElementBase, object>> treePages = rootList[i].ListEntries;
 
                         for (int j = 0; j < treePages.Count; j++)
                         {
-                            ListBoxEntry<TerminalPageBase> entry = treePages[j];
-                            TerminalPageBase page = entry.AssocMember;
-                            entry.Enabled = page.Enabled;
-                            entry.Element.Visible = entry.Enabled;
+                            SelectionBoxEntryTuple<LabelElementBase, object> entry = treePages[j];
+                            var page = entry.AssocMember as TerminalPageBase;
 
-                            if (!page.Enabled && CurrentPage == page)
-                                modList.ClearSelection();
+                            if (page != null)
+                            {
+                                entry.Enabled = page.Enabled;
+                                entry.Element.Visible = entry.Enabled;
+
+                                if (!page.Enabled && SelectedPage == page)
+                                    modList.ClearSelection();
+                            }
                         }
                     }
                 }
@@ -244,12 +248,12 @@ namespace RichHudFramework
                 private void HandleSelectionChange()
                 {
                     if (lastPage != null)
-                        bodyChain.Remove(lastPage, true);
+                        bodyChain.Remove(lastPage);
 
-                    if (CurrentPage != null)
-                        bodyChain.Add(CurrentPage);
+                    if (SelectedPage != null)
+                        bodyChain.Add(SelectedPage);
 
-                    lastPage = CurrentPage;
+                    lastPage = SelectedPage;
                 }
 
                 /// <summary>
@@ -265,12 +269,17 @@ namespace RichHudFramework
                     /// <summary>
                     /// Currently selected mod root
                     /// </summary>
-                    public ModControlRoot SelectedMod { get; private set; }
+                    public ModControlRoot SelectedModRoot { get; private set; }
+
+                    /// <summary>
+                    /// Currently selected subcategory
+                    /// </summary>
+                    public TerminalPageCategory SelectedSubcategory { get; private set; }
 
                     /// <summary>
                     /// Currently selected control page.
                     /// </summary>
-                    public TerminalPageBase CurrentPage { get; private set; }
+                    public TerminalPageBase SelectedPage { get; private set; }
 
                     /// <summary>
                     /// Returns a read only list of mod root containers registered to the list
@@ -294,18 +303,20 @@ namespace RichHudFramework
                     }
 
                     private readonly LabelBox header;
-                    private readonly ScrollBox<ModControlRoot, ModControlRootTreeBox> scrollBox;
-                    private readonly EventHandler SelectionHandler;
+                    private readonly ScrollBox<ModControlRoot, LabelElementBase> scrollBox;
+                    private readonly ListInputElement<ModControlRoot, LabelElementBase> listInput;
 
                     public ModList(HudParentBase parent = null) : base(parent)
                     {
-                        scrollBox = new ScrollBox<ModControlRoot, ModControlRootTreeBox>(true, this)
+                        scrollBox = new ScrollBox<ModControlRoot, LabelElementBase>(true, this)
                         {
                             SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
                             Color = TerminalFormatting.DarkSlateGrey,
                             Padding = new Vector2(6f)
                         };
+
+                        listInput = new ListInputElement<ModControlRoot, LabelElementBase>(scrollBox);
 
                         header = new LabelBox(scrollBox)
                         {
@@ -333,16 +344,53 @@ namespace RichHudFramework
                             Thickness = 1f,
                             Color = new Color(53, 66, 75),
                         };
-
-                        SelectionHandler = UpdateSelection;
                     }
 
-                    private void UpdateSelection(object sender, EventArgs args)
+                    protected override void HandleInput(Vector2 cursorPos)
                     {
-                        var modRoot = sender as ModControlRoot;
-                        var newPage = modRoot?.Selection as TerminalPageBase;
+                        var nextRoot = listInput.Selection;
+                        var nextCategory = nextRoot?.SelectedSubcategory;
+                        var nextPage = nextRoot?.SelectedPage;
 
-                        SetSelection(modRoot, newPage);
+                        if (nextPage != null && nextPage != SelectedPage)
+                        {
+                            SelectedModRoot = nextRoot;
+                            SelectedSubcategory = nextCategory;
+                            SelectedPage = nextPage;
+
+                            foreach (ModControlRoot root in scrollBox.Collection)
+                            {
+                                if (root != SelectedModRoot)
+                                    root.ClearSelection();
+
+                                foreach (TerminalPageCategory category in root.Subcategories)
+                                {
+                                    if (category != SelectedSubcategory)
+                                        category.ClearSelection();
+                                }
+                            }
+
+                            SelectionChanged?.Invoke();
+                        }
+                    }
+
+                    protected override void Layout()
+                    {
+                        Vector2 listSize = scrollBox.Size,
+                            listPos = scrollBox.Position;
+
+                        listSize.X -= scrollBox.ScrollBar.Width;
+                        listPos.X -= scrollBox.ScrollBar.Width;
+
+                        listInput.ListRange = new Vector2I(scrollBox.Start, scrollBox.End);
+                        listInput.ListPos = listPos;
+                        listInput.ListSize = listSize;
+
+                        header.Color = TerminalFormatting.Dark.SetAlphaPct(HudMain.UiBkOpacity);
+                        scrollBox.Color = TerminalFormatting.DarkSlateGrey.SetAlphaPct(HudMain.UiBkOpacity);
+
+                        SliderBar slider = scrollBox.ScrollBar.slide;
+                        slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                     }
 
                     /// <summary>
@@ -351,31 +399,60 @@ namespace RichHudFramework
                     public ModControlRoot AddModRoot(string clientName)
                     {
                         ModControlRoot modSettings = new ModControlRoot() { Name = clientName };
-
                         scrollBox.Add(modSettings);
-                        modSettings.SelectionChanged += SelectionHandler;
 
                         return modSettings;
                     }
 
                     /// <summary>
-                    /// Opens the given terminal page
+                    /// Opens to the given terminal page
                     /// </summary>
                     public void SetSelection(ModControlRoot modRoot, TerminalPageBase newPage)
                     {
-                        SelectedMod = modRoot;
+                        listInput.SetSelection(modRoot);
 
-                        if (CurrentPage != newPage)
+                        if (SelectedPage != newPage)
                         {
-                            for (int n = 0; n < scrollBox.Collection.Count; n++)
+                            TerminalPageCategory subcategory = null;
+                            bool contains = false;
+
+                            foreach (TerminalPageBase page in modRoot.Pages)
                             {
-                                if (scrollBox.Collection[n] != SelectedMod)
-                                    scrollBox.Collection[n].Element.ClearSelection();
+                                if (page == newPage)
+                                {
+                                    contains = true;
+                                    break;
+                                }
                             }
 
-                            CurrentPage = newPage;
-                            SelectedMod?.SetSelection(newPage);
-                            SelectionChanged?.Invoke();
+                            if (!contains)
+                            {
+                                foreach (TerminalPageCategory cat in modRoot)
+                                {
+                                    foreach (TerminalPageBase page in cat.Pages)
+                                    {
+                                        if (page == newPage)
+                                        {
+                                            subcategory = cat;
+                                            contains = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            SelectedSubcategory = subcategory;
+                            var modRoots = scrollBox.Collection;
+
+                            if (SelectedSubcategory != null)
+                            {
+                                SelectedModRoot?.SetSelection(SelectedSubcategory);
+                                SelectedSubcategory.SetSelection(newPage);
+                            }
+                            else
+                                SelectedModRoot?.SetSelection(newPage);
+
+                            SelectedPage = newPage;
                         }
                     }
 
@@ -383,16 +460,7 @@ namespace RichHudFramework
                     /// Clears the current page selection
                     /// </summary>
                     public void ClearSelection() =>
-                        SetSelection(null, null);
-
-                    protected override void Layout()
-                    {
-                        header.Color = TerminalFormatting.Dark.SetAlphaPct(HudMain.UiBkOpacity);
-                        scrollBox.Color = TerminalFormatting.DarkSlateGrey.SetAlphaPct(HudMain.UiBkOpacity);
-
-                        SliderBar slider = scrollBox.ScrollBar.slide;
-                        slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
-                    }
+                        listInput.ClearSelection();
                 }
             }
         }
