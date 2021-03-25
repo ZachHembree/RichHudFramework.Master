@@ -41,6 +41,11 @@ namespace RichHudFramework.UI
         where TElement : HudElementBase, IMinLabelElement
     {
         /// <summary>
+        /// Padding applied to list members.
+        /// </summary>
+        public Vector2 MemberPadding { get; set; }
+
+        /// <summary>
         /// Height of entries in the list.
         /// </summary>
         public float LineHeight
@@ -65,6 +70,7 @@ namespace RichHudFramework.UI
             };
 
             LineHeight = 28f;
+            MemberPadding = new Vector2(20f, 6f);
         }
 
         public SelectionBox() : this(null)
@@ -174,11 +180,17 @@ namespace RichHudFramework.UI
             }
         }
 
+        protected override void Layout()
+        {
+            for (int n = 0; n < hudChain.Collection.Count; n++)
+                hudChain.Collection[n].Element.Padding = MemberPadding;
+        }
+
         protected virtual TContainer GetNewEntry()
         {
             var entry = new TContainer();
             entry.Element.TextBoard.Format = Format;
-            entry.Element.Padding = _memberPadding;
+            entry.Element.Padding = MemberPadding;
             entry.Element.ZOffset = 1;
             entry.Enabled = true;
 

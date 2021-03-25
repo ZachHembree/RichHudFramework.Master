@@ -10,7 +10,7 @@ namespace RichHudFramework.UI
     /// <typeparam name="TElement">UI element in the list</typeparam>
     public class TreeBox<TContainer, TElement> : TreeBoxBase<TContainer, TElement>
         where TElement : HudElementBase, IMinLabelElement
-        where TContainer : class, IScrollBoxEntry<TElement>, new()
+        where TContainer : class, ISelectionBoxEntry<TElement>, new()
     {
         public TContainer this[int index] => selectionBox.hudChain[index];
 

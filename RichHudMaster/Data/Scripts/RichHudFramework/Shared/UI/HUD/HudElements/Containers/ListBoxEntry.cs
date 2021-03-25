@@ -36,7 +36,7 @@ namespace RichHudFramework.UI
     /// Interface implemented by objects that function as list box entries.
     /// </summary>
     public interface IListBoxEntry<TElement, TValue>
-        : IScrollBoxEntryTuple<TElement, TValue>
+        : ISelectionBoxEntryTuple<TElement, TValue>
         where TElement : HudElementBase, IMinLabelElement
     {
         object GetOrSetMember(object data, int memberEnum);
@@ -49,7 +49,7 @@ namespace RichHudFramework.UI
     { }
 
     public class ListBoxEntry<TElement, TValue>
-        : ScrollBoxEntryTuple<TElement, TValue>, IListBoxEntry<TElement, TValue>
+        : SelectionBoxEntryTuple<TElement, TValue>, IListBoxEntry<TElement, TValue>
         where TElement : HudElementBase, IMinLabelElement, new()
     {
         public ListBoxEntry()

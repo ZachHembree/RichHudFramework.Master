@@ -17,7 +17,7 @@ namespace RichHudFramework.UI
     /// <typeparam name="TElement">UI element in the list</typeparam>
     public class ChainSelectionBoxBase<TContainer, TElement>
         : SelectionBoxBase<HudChain<TContainer, TElement>, TContainer, TElement>
-        where TContainer : class, IScrollBoxEntry<TElement>, new()
+        where TContainer : class, ISelectionBoxEntry<TElement>, new()
         where TElement : HudElementBase, IMinLabelElement
     {
         public ChainSelectionBoxBase(HudParentBase parent) : base(parent)
@@ -35,7 +35,7 @@ namespace RichHudFramework.UI
     public class ScrollSelectionBoxBase<TContainer, TElement>
         : SelectionBoxBase<ScrollBox<TContainer, TElement>, TContainer, TElement>
         where TElement : HudElementBase, IMinLabelElement
-        where TContainer : class, IScrollBoxEntry<TElement>, new()
+        where TContainer : class, ISelectionBoxEntry<TElement>, new()
     {
         public ScrollSelectionBoxBase(HudParentBase parent) : base(parent)
         { }
@@ -54,7 +54,7 @@ namespace RichHudFramework.UI
         : HudElementBase, IEntryBox<TContainer, TElement>, IClickableElement
         where TElement : HudElementBase, IMinLabelElement
         where TChain : HudChain<TContainer, TElement>, new()
-        where TContainer : class, IScrollBoxEntry<TElement>, new()
+        where TContainer : class, ISelectionBoxEntry<TElement>, new()
     {
         /// <summary>
         /// Invoked when an entry is selected.
@@ -101,21 +101,6 @@ namespace RichHudFramework.UI
             {
                 selectionBox.TabColor = value;
                 highlightBox.TabColor = value;
-            }
-        }
-
-        /// <summary>
-        /// Padding applied to list members.
-        /// </summary>
-        public Vector2 MemberPadding
-        {
-            get { return _memberPadding; }
-            set
-            {
-                _memberPadding = value;
-
-                for (int n = 0; n < hudChain.Collection.Count; n++)
-                    hudChain.Collection[n].Element.Padding = value;
             }
         }
 
@@ -172,10 +157,15 @@ namespace RichHudFramework.UI
         public readonly TChain hudChain;
         protected readonly HighlightBox selectionBox, highlightBox;
         protected readonly ListInputElement<TContainer, TElement> listInput;
-        protected Vector2 _memberPadding;
 
         public SelectionBoxBase(HudParentBase parent) : base(parent)
         {
+            selectionBox = new HighlightBox();
+            highlightBox = new HighlightBox() { CanDrawTab = false };
+
+            selectionBox.Register(this, false, true);
+            highlightBox.Register(this, false, true);
+
             hudChain = new TChain()
             {
                 AlignVertical = true,
@@ -188,11 +178,6 @@ namespace RichHudFramework.UI
             hudChain.Register(this);
 
             listInput = new ListInputElement<TContainer, TElement>(hudChain);
-            selectionBox = new HighlightBox();
-            highlightBox = new HighlightBox() { CanDrawTab = false };
-
-            selectionBox.Register(this, false, true);
-            highlightBox.Register(this, false, true);
 
             HighlightColor = TerminalFormatting.Atomic;
             FocusColor = TerminalFormatting.Mint;
@@ -202,7 +187,6 @@ namespace RichHudFramework.UI
             Size = new Vector2(335f, 203f);
 
             HighlightPadding = new Vector2(8f, 0f);
-            MemberPadding = new Vector2(20f, 6f);
         }
 
         public SelectionBoxBase() : this(null)
@@ -263,7 +247,7 @@ namespace RichHudFramework.UI
             {
                 selectionBox.Offset = Selection.Element.Position - selectionBox.Origin;
                 selectionBox.Size = Selection.Element.Size - HighlightPadding;
-                selectionBox.Visible = Selection.Element.Visible;
+                selectionBox.Visible = Selection.Element.Visible && Selection.AllowHighlighting;
             }
 
             // If highlight and selection indices dont match, draw highlight box
@@ -271,7 +255,10 @@ namespace RichHudFramework.UI
             {
                 TContainer entry = hudChain[listInput.HighlightIndex];
 
-                highlightBox.Visible = (listInput.IsMousedOver || listInput.HasFocus) && entry.Element.Visible;
+                highlightBox.Visible = 
+                    (listInput.IsMousedOver || listInput.HasFocus) 
+                    && entry.Element.Visible && entry.AllowHighlighting;
+
                 highlightBox.Size = entry.Element.Size - HighlightPadding;
                 highlightBox.Offset = entry.Element.Position - highlightBox.Origin;
             }
@@ -290,8 +277,11 @@ namespace RichHudFramework.UI
                     (!MouseInput.IsMousedOver && SelectionIndex == listInput.HighlightIndex)
                 )
                 {
-                    selectionBox.Color = FocusColor;
-                    hudChain[SelectionIndex].Element.TextBoard.SetFormatting(FocusFormat);
+                    if (hudChain[SelectionIndex].AllowHighlighting)
+                    {
+                        selectionBox.Color = FocusColor;
+                        hudChain[SelectionIndex].Element.TextBoard.SetFormatting(FocusFormat);
+                    }
                 }
                 else
                     selectionBox.Color = HighlightColor;
@@ -302,8 +292,11 @@ namespace RichHudFramework.UI
             {
                 if (listInput.KeyboardScroll)
                 {
-                    highlightBox.Color = FocusColor;
-                    hudChain[listInput.HighlightIndex].Element.TextBoard.SetFormatting(FocusFormat);
+                    if (hudChain[SelectionIndex].AllowHighlighting)
+                    {
+                        highlightBox.Color = FocusColor;
+                        hudChain[listInput.HighlightIndex].Element.TextBoard.SetFormatting(FocusFormat);
+                    }
                 }
                 else
                     highlightBox.Color = HighlightColor;

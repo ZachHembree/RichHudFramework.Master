@@ -19,7 +19,7 @@ namespace RichHudFramework.UI
             TContainer,
             TElement
         >
-        where TContainer : class, IScrollBoxEntry<TElement>, new()
+        where TContainer : class, ISelectionBoxEntry<TElement>, new()
         where TElement : HudElementBase, IMinLabelElement
     {
         public TreeBoxBase(HudParentBase parent) : base(parent)
@@ -39,7 +39,7 @@ namespace RichHudFramework.UI
     public abstract class TreeBoxBase<TSelectionBox, TChain, TContainer, TElement>
         : LabelElementBase, IEntryBox<TContainer, TElement>, IClickableElement
         where TElement : HudElementBase, IMinLabelElement
-        where TContainer : class, IScrollBoxEntry<TElement>, new()
+        where TContainer : class, ISelectionBoxEntry<TElement>, new()
         where TChain : HudChain<TContainer, TElement>, new()
         where TSelectionBox : SelectionBoxBase<TChain, TContainer, TElement>, new()
     {
@@ -153,6 +153,33 @@ namespace RichHudFramework.UI
         public float IndentSize { get; set; }
 
         /// <summary>
+        /// Sizing mode used by the chain containing the tree box's member list
+        /// </summary>
+        public HudChainSizingModes MemberSizingModes 
+        {
+            get { return selectionBox.hudChain.SizingMode; } 
+            set { selectionBox.hudChain.SizingMode = value; } 
+        }
+
+        /// <summary>
+        /// Member lists' min member size
+        /// </summary>
+        public Vector2 MemberMinSize
+        {
+            get { return selectionBox.hudChain.MemberMinSize; }
+            set { selectionBox.hudChain.MemberMinSize = value; }
+        }
+
+        /// <summary>
+        /// Member lists' max member size
+        /// </summary>
+        public Vector2 MemberMaxSize
+        {
+            get { return selectionBox.hudChain.MemberMinSize; }
+            set { selectionBox.hudChain.MemberMinSize = value; }
+        }
+
+        /// <summary>
         /// Handles mouse input for the header.
         /// </summary>
         public IMouseInput MouseInput => display.MouseInput;
@@ -202,6 +229,12 @@ namespace RichHudFramework.UI
         /// </summary>
         public void SetSelection(TContainer member) =>
             selectionBox.SetSelection(member);
+
+        /// <summary>
+        /// Sets the selection to the member associated with the given object.
+        /// </summary>
+        public void SetSelectionAt(int index) =>
+            selectionBox.SetSelectionAt(index);
 
         /// <summary>
         /// Clears the current selection.
