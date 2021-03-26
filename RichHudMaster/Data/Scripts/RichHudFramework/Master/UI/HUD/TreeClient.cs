@@ -98,9 +98,6 @@ namespace RichHudFramework
                     if (refreshDrawList || continuousRefresh)
                         refreshRequested = true;
 
-                    if (enableCursor)
-                        instance._cursor.Visible = true;
-
                     if (refreshRequested && (tick % treeRefreshRate) == 0)
                     {
                         updateAccessors.Clear();

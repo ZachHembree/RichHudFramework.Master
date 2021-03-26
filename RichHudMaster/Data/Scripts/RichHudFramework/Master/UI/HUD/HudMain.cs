@@ -274,7 +274,6 @@ namespace RichHudFramework
             public override void Draw()
             {
                 UpdateCache();
-                _cursor.Visible = EnableCursor;
                 treeManager.Draw();
 
                 drawTick++;

@@ -152,11 +152,20 @@ namespace RichHudFramework
                     float resScale = instance._resScale;
 
                     treeTimer.Restart();
+                    mainClient.enableCursor = EnableCursor;
 
                     if ((drawTick % treeRefreshRate) == 0)
                     {
                         RebuildUpdateLists();
                         SortUpdateAccessors(); // Apply depth and zoffset sorting
+                    }
+
+                    instance._cursor.Visible = false;
+
+                    for (int n = 0; n < clients.Count; n++)
+                    {
+                        if (clients[n].enableCursor)
+                            instance._cursor.Visible = true;
                     }
 
                     for (int n = 0; n < clients.Count; n++)
