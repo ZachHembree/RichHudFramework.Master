@@ -98,11 +98,11 @@ namespace RichHudFramework
 
 
             /// <summary>
-            /// Sets the selection to the given page
+            /// Sets the selection to the given page or category
             /// </summary>
             public void SetSelection(object member)
             {
-                int index = treeBox.FindIndex(x => x.AssocMember == member);
+                int index = treeBox.FindIndex(x => x == member);
 
                 if (index != -1)
                 {

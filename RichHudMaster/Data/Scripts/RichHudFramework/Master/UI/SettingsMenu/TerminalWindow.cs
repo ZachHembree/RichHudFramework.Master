@@ -427,18 +427,13 @@ namespace RichHudFramework
                                 }
                             }
 
-                            SelectedSubcategory = subcategory;
-                            var modRoots = scrollBox.Collection;
-
-                            if (SelectedSubcategory != null)
+                            if (subcategory != null)
                             {
-                                SelectedModRoot?.SetSelection(SelectedSubcategory);
-                                SelectedSubcategory.SetSelection(newPage);
+                                modRoot.SetSelection(subcategory);
+                                subcategory.SetSelection(newPage);
                             }
                             else
-                                SelectedModRoot?.SetSelection(newPage);
-
-                            SelectedPage = newPage;
+                                modRoot.SetSelection(newPage);
                         }
                     }
 
