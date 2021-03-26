@@ -83,7 +83,6 @@ namespace RichHudFramework
 
             protected HudParentBase _parent, reregParent;
             protected float parentScale;
-            protected sbyte parentZOffset;
 
             public HudNodeBase(HudParentBase parent)
             {
@@ -116,7 +115,7 @@ namespace RichHudFramework
                         {
                             ParentVisible = _parent.Visible;
                             parentScale = _parent.Scale;
-                            parentZOffset = _parent.ZOffset;
+                            layerData.parentZOffset = _parent.ZOffset;
                         }
 
                         if (Visible || refresh)
@@ -210,7 +209,7 @@ namespace RichHudFramework
                         }
                         else
                         {
-                            parentZOffset = _parent.ZOffset;
+                            layerData.parentZOffset = _parent.ZOffset;
                             parentScale = _parent.Scale;
                             ParentVisible = _parent.Visible;
                             State &= ~HudElementStates.WasFastUnregistered;
@@ -261,7 +260,7 @@ namespace RichHudFramework
                         State |= HudElementStates.WasFastUnregistered;
                     }
 
-                    parentZOffset = 0;
+                    layerData.parentZOffset = 0;
                     State &= ~HudElementStates.WasParentVisible;
                 }
 

@@ -260,7 +260,7 @@ namespace RichHudFramework
                         {
                             ParentVisible = _parent.Visible;
                             parentScale = _parent.Scale;
-                            parentZOffset = _parent.ZOffset;
+                            layerData.parentZOffset = _parent.ZOffset;
                         }
 
                         if (Visible || refresh)
