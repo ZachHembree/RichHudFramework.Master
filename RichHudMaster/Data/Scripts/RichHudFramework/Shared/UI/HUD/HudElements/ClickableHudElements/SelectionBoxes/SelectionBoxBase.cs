@@ -157,6 +157,7 @@ namespace RichHudFramework.UI
         public readonly TChain hudChain;
         protected readonly HighlightBox selectionBox, highlightBox;
         protected readonly ListInputElement<TContainer, TElement> listInput;
+        protected readonly bool chainHidesDisabled;
 
         public SelectionBoxBase(HudParentBase parent) : base(parent)
         {
@@ -170,6 +171,7 @@ namespace RichHudFramework.UI
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
             };
             hudChain.Register(this);
+            chainHidesDisabled = hudChain is ScrollBox<TContainer, TElement>;
 
             selectionBox = new HighlightBox();
             highlightBox = new HighlightBox() { CanDrawTab = false };
@@ -215,6 +217,17 @@ namespace RichHudFramework.UI
         /// </summary>
         public void ClearSelection() =>
             listInput.ClearSelection();
+
+        protected override void Layout()
+        {
+            if (!chainHidesDisabled)
+            {
+                foreach (TContainer entry in hudChain)
+                {
+                    entry.Element.Visible = entry.Enabled;
+                }
+            }
+        }
 
         protected override void HandleInput(Vector2 cursorPos)
         {
