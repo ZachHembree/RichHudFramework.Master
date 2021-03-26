@@ -19,7 +19,7 @@ namespace RichHudFramework.Server
         public static bool EnableDebug { get; set; }
 
         private static RichHudDebug instance;
-        private readonly DemoPage demoPage;
+        private readonly TerminalPageCategory pageCategory;
         private readonly TextPage statsText;
         private RichText statsBuilder;
 
@@ -33,10 +33,9 @@ namespace RichHudFramework.Server
             else
                 throw new Exception($"Only one instance of {GetType().Name} can exist at any given time.");
 
-            demoPage = new DemoPage()
+            var demoPage = new DemoPage()
             {
                 Name = "Demo",
-                Enabled = false
             };
 
             statsText = new TextPage()
@@ -44,7 +43,6 @@ namespace RichHudFramework.Server
                 Name = "Statistics",
                 HeaderText = "Debug Statistics",
                 SubHeaderText = "Update Times and API Usage",
-                Enabled = false
             };
 
             statsText.TextBuilder.BuilderMode = TextBuilderModes.Lined;
@@ -54,8 +52,13 @@ namespace RichHudFramework.Server
 
             stats = new UpdateStats();
 
-            RichHudTerminal.Root.Add(demoPage);
-            RichHudTerminal.Root.Add(statsText);
+            pageCategory = new TerminalPageCategory() 
+            {
+                Name = "Debug",
+                Enabled = false,
+                PageContainer = { demoPage, statsText }
+            };
+            RichHudTerminal.Root.Add(pageCategory);
 
             EnableDebug = false;
         }
@@ -73,8 +76,7 @@ namespace RichHudFramework.Server
 
         public override void Draw()
         {
-            demoPage.Enabled = EnableDebug;
-            statsText.Enabled = EnableDebug;
+            pageCategory.Enabled = EnableDebug;
 
             if (EnableDebug && updateTimer.ElapsedMilliseconds > 100)
             {
