@@ -205,7 +205,10 @@ namespace RichHudFramework
 
                     // Update sizing
                     if (SelectedPage != null)
-                        SelectedPage.Element.Width = Width - Padding.X - modList.Width - bodyChain.Spacing;
+                    {
+                        var pageElement = SelectedPage.AssocMember as HudElementBase;
+                        pageElement.Width = Width - Padding.X - modList.Width - bodyChain.Spacing;
+                    }
 
                     bodyChain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
                     modList.Width = 270f * Scale;
@@ -220,38 +223,20 @@ namespace RichHudFramework
 
                     // Display warning if cursor is disabled
                     warningBox.Visible = !HudMain.Cursor.Visible;
-
-                    // Update enabled/disabled pages
-                    IReadOnlyList<ModControlRoot> rootList = modList.ModRoots;
-
-                    for (int i = 0; i < rootList.Count; i++)
-                    {
-                        IReadOnlyList<SelectionBoxEntryTuple<LabelElementBase, object>> treePages = rootList[i].ListEntries;
-
-                        for (int j = 0; j < treePages.Count; j++)
-                        {
-                            SelectionBoxEntryTuple<LabelElementBase, object> entry = treePages[j];
-                            var page = entry.AssocMember as TerminalPageBase;
-
-                            if (page != null)
-                            {
-                                entry.Enabled = page.Enabled;
-                                entry.Element.Visible = entry.Enabled;
-
-                                if (!page.Enabled && SelectedPage == page)
-                                    modList.ClearSelection();
-                            }
-                        }
-                    }
                 }
 
                 private void HandleSelectionChange()
                 {
                     if (lastPage != null)
-                        bodyChain.Remove(lastPage);
+                    {
+                        var pageElement = lastPage.AssocMember as HudElementBase;
+                        int index = bodyChain.FindIndex(x => x.Element == pageElement);
+
+                        bodyChain.RemoveAt(index);
+                    }
 
                     if (SelectedPage != null)
-                        bodyChain.Add(SelectedPage);
+                        bodyChain.Add(SelectedPage.AssocMember as HudElementBase);
 
                     lastPage = SelectedPage;
                 }

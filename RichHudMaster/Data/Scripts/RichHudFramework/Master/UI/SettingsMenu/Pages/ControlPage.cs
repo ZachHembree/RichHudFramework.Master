@@ -64,10 +64,9 @@ namespace RichHudFramework
 
             protected readonly CategoryScrollBox catBox;
 
-            public ControlPage(bool alignVertical)
+            public ControlPage(bool alignVertical) : base (new CategoryScrollBox(alignVertical))
             {
-                catBox = new CategoryScrollBox(alignVertical);
-                SetElement(catBox);
+                catBox = AssocMember as CategoryScrollBox;
             }
 
             /// <summary>

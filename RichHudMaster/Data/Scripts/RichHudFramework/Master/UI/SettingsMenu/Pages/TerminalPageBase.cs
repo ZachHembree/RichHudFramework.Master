@@ -21,47 +21,33 @@ namespace RichHudFramework
         /// <summary>
         /// Base class for named pages attached to a mod control root.
         /// </summary>
-        public abstract class TerminalPageBase : HudElementContainer, ITerminalPage
+        public abstract class TerminalPageBase : SelectionBoxEntryTuple<LabelElementBase, object>, ITerminalPage
         {
             /// <summary>
             /// Name of the <see cref="ITerminalPage"/> as it appears in the dropdown of the <see cref="IModControlRoot"/>.
             /// </summary>
             public string Name
             {
-                get
-                {
-                    if (NameBuilder != null)
-                        return NameBuilder.ToString();
-                    else
-                        return name;
-                }
-
-                set
-                {
-                    if (NameBuilder != null)
-                        NameBuilder.SetText(value);
-                    else
-                        name = value;
-                }
+                get { return Element.TextBoard.ToString(); }
+                set { Element.TextBoard.SetText(value); }
             }
-
-            public ITextBuilder NameBuilder { get; set; }
-
-            public bool Enabled { get; set; }
 
             public object ID => this;
 
             protected string name;
 
-            public TerminalPageBase()
+            public TerminalPageBase(HudElementBase assocMember)
             {
+                SetElement(new Label());
+                AssocMember = assocMember;
+
                 Name = "NewPage";
                 Enabled = true;
             }
 
             public virtual void Reset()
             {
-                NameBuilder.Clear();
+                Element.TextBoard.Clear();
                 Enabled = false;
             }
 

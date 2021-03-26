@@ -41,10 +41,9 @@ namespace RichHudFramework
 
             private readonly ScrollableTextBox textBox;
 
-            public TextPage()
+            public TextPage() : base(new ScrollableTextBox())
             {
-                textBox = new ScrollableTextBox();
-                SetElement(textBox);
+                textBox = AssocMember as ScrollableTextBox;
             }
 
             protected override object GetOrSetMember(object data, int memberEnum)

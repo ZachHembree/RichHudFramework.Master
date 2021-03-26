@@ -56,7 +56,7 @@ namespace RichHudFramework
             /// <summary>
             /// Currently selected <see cref="TerminalPageBase"/>.
             /// </summary>
-            public virtual TerminalPageBase SelectedPage => treeBox.Selection?.AssocMember as TerminalPageBase;
+            public virtual TerminalPageBase SelectedPage => treeBox.Selection as TerminalPageBase;
 
             /// <summary>
             /// Used to allow the addition of category elements using collection-initializer syntax in
@@ -89,18 +89,10 @@ namespace RichHudFramework
             /// </summary>
             public void Add(TerminalPageBase page)
             {
-                var entry = new SelectionBoxEntryTuple<LabelElementBase, object>();
-                entry.SetElement(new Label());
-                entry.AssocMember = page;
-                entry.Enabled = true;
-                entry.Element.Padding = new Vector2(20f, 6f);
+                page.Element.TextBoard.AutoResize = false;
+                page.Element.Padding = new Vector2(20f, 6f);
 
-                ITextBoard textBoard = entry.Element.TextBoard;
-                textBoard.SetText(page.Name);
-                textBoard.AutoResize = false;
-                page.NameBuilder = textBoard;
-
-                treeBox.Add(entry);
+                treeBox.Add(page);
                 pages.Add(page);
             }
 

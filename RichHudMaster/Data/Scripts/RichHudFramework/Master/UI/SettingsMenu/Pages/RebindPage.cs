@@ -29,10 +29,9 @@ namespace RichHudFramework
 
             private readonly BindGroupList bindGroups;
 
-            public RebindPage()
+            public RebindPage() : base(new BindGroupList())
             {
-                bindGroups = new BindGroupList();
-                SetElement(bindGroups);
+                bindGroups = AssocMember as BindGroupList;
 
                 BindGroups = new ReadOnlyCollectionData<IBindGroup>
                 (

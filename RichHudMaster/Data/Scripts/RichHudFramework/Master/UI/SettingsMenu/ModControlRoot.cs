@@ -47,7 +47,7 @@ namespace RichHudFramework
                             if (category != null)
                                 return category.SelectedPage;
                             else
-                                return selection.AssocMember as TerminalPageBase;
+                                return selection as TerminalPageBase;
                         }
                         else
                             return null;

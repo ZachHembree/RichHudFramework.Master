@@ -10,10 +10,8 @@ namespace RichHudFramework
         /// </summary>
         public partial class DemoPage : TerminalPageBase
         {
-            public DemoPage()
-            {
-                SetElement(new DemoBox());
-            }
+            public DemoPage() : base(new DemoBox())
+            { }
 
             private class DemoBox : HudElementBase
             {
