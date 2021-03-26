@@ -27,6 +27,7 @@ namespace RichHudFramework
         public abstract partial class HudNodeBase : HudParentBase, IReadOnlyHudNode
         {
             protected const HudElementStates nodeVisible = HudElementStates.IsVisible | HudElementStates.WasParentVisible | HudElementStates.IsRegistered;
+            protected const int maxPreloadDepth = 5;
 
             /// <summary>
             /// Read-only parent object of the node.
@@ -131,12 +132,15 @@ namespace RichHudFramework
             /// <summary>
             /// Adds update delegates for members in the order dictated by the UI tree
             /// </summary>
-            public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte treeDepth)
+            public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte preloadDepth)
             {
                 bool wasSetVisible = (State & HudElementStates.IsVisible) > 0;
                 State |= HudElementStates.WasParentVisible;
 
-                if ((State & HudElementStates.CanPreload) > 0)
+                if (!wasSetVisible && (State & HudElementStates.CanPreload) > 0)
+                    preloadDepth++;
+
+                if (preloadDepth < maxPreloadDepth && (State & HudElementStates.CanPreload) > 0)
                     State |= HudElementStates.IsVisible;
 
                 if (Visible)
@@ -148,10 +152,9 @@ namespace RichHudFramework
                     accessorDelegates.Item2.Item2 = HudSpace.GetNodeOriginFunc;
 
                     UpdateActions.Add(accessorDelegates); ;
-                    treeDepth++;
 
                     for (int n = 0; n < children.Count; n++)
-                        children[n].GetUpdateAccessors(UpdateActions, treeDepth);
+                        children[n].GetUpdateAccessors(UpdateActions, preloadDepth);
                 }
 
                 if (!wasSetVisible)
