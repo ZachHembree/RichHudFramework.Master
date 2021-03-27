@@ -96,7 +96,7 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        if (Visible)
+                        if ((State & HudElementStates.CanUseCursor) > 0 && Visible)
                             InputDepth();
                     }
                     catch (Exception e)
