@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
 using VRage;
+using VRageMath;
 
 namespace RichHudFramework.Server
 {
@@ -21,10 +23,13 @@ namespace RichHudFramework.Server
         private static RichHudDebug instance;
         private readonly TerminalPageCategory pageCategory;
         private readonly TextPage statsText;
-        private RichText statsBuilder;
+        private StringBuilder statsBuilder;
 
         private readonly Stopwatch updateTimer;
         private readonly UpdateStats stats;
+        private readonly TextBoard overlay;
+        private bool enableOverlay;
+        private Vector2 overlayPos;
 
         private RichHudDebug() : base(false, true)
         {
@@ -32,11 +37,6 @@ namespace RichHudFramework.Server
                 instance = this;
             else
                 throw new Exception($"Only one instance of {GetType().Name} can exist at any given time.");
-
-            var demoPage = new DemoPage()
-            {
-                Name = "Demo",
-            };
 
             statsText = new TextPage()
             {
@@ -46,21 +46,80 @@ namespace RichHudFramework.Server
             };
 
             statsText.TextBuilder.BuilderMode = TextBuilderModes.Lined;
-            statsBuilder = new RichText();
+            statsBuilder = new StringBuilder();
             updateTimer = new Stopwatch();
             updateTimer.Start();
 
             stats = new UpdateStats();
 
+            overlayPos = new Vector2(-0.5f, 0.5f);
+            enableOverlay = false;
+            EnableDebug = false;
+
+            overlay = new TextBoard() 
+            {
+                AutoResize = true,
+                BuilderMode = TextBuilderModes.Lined,
+                Scale = 0.8f,
+                Format = new GlyphFormat(Color.Orange)
+            };
+
             pageCategory = new TerminalPageCategory() 
             {
                 Name = "Debug",
                 Enabled = false,
-                PageContainer = { demoPage, statsText }
-            };
-            RichHudTerminal.Root.Add(pageCategory);
+                PageContainer = 
+                {
+                    new DemoPage()
+                    {
+                        Name = "Demo",
+                    }, 
 
-            EnableDebug = false;
+                    statsText,
+
+                    new ControlPage()
+                    {
+                        Name = "Settings",
+                        CategoryContainer = 
+                        {
+                            new ControlCategory()
+                            {
+                                HeaderText = "Debug Settings",
+                                SubheaderText = "",
+                                TileContainer = 
+                                {
+                                    new ControlTile()
+                                    {
+                                        new TerminalCheckbox()
+                                        {
+                                            Name = "Enable Overlay",
+                                            Value = enableOverlay,
+                                            ControlChangedHandler = (obj, args) =>
+                                            {
+                                                var element = obj as TerminalCheckbox;
+                                                enableOverlay = element.Value;
+                                            }
+                                        },
+                                        new TerminalDragBox()
+                                        {
+                                            Name = "Set Overlay Pos",
+                                            Value = overlayPos,
+                                            AlignToEdge = true,
+                                            ControlChangedHandler = (obj, args) =>
+                                            {
+                                                var element = obj as TerminalDragBox;
+                                                overlayPos = element.Value;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            RichHudTerminal.Root.Add(pageCategory);
         }
 
         public static void Init()
@@ -86,21 +145,21 @@ namespace RichHudFramework.Server
                 BindManager.Client masterInput = BindManager.MainClient;
 
                 stats.Update();
-
                 statsBuilder.Clear();
-                statsBuilder += $"Summary:\n";
-                statsBuilder += $"\tCursor Visible: {HudMain.Cursor.Visible}\n";
-                statsBuilder += $"\tClient Mods: {modClients.Count}\n";
+
+                statsBuilder.Append($"Summary:\n");
+                statsBuilder.Append($"\tCursor Visible: {HudMain.Cursor.Visible}\n");
+                statsBuilder.Append($"\tClient Mods: {modClients.Count}\n");
 
                 foreach (RichHudMaster.ModClient client in modClients)
-                    statsBuilder += $"\t\t{client.name}\t\t|\tVersion: {client.VersionString}\t\t|\tSubtype: {client.ClientSubtype}\n";
+                    statsBuilder.Append($"\t\t{client.name}\t\t|\tVersion: {client.VersionString}\t\t|\tSubtype: {client.ClientSubtype}\n");
 
-                statsBuilder += $"\n\tHudMain:\n";
-                statsBuilder += $"\t\tHUD Spaces Updating: {HudMain.TreeManager.HudSpacesRegistered}\n";
-                statsBuilder += $"\t\tElements Updating: {HudMain.TreeManager.ElementRegistered}\n";
-                statsBuilder += $"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n";
+                statsBuilder.Append($"\n\tHudMain:\n");
+                statsBuilder.Append($"\t\tHUD Spaces Updating: {HudMain.TreeManager.HudSpacesRegistered}\n");
+                statsBuilder.Append($"\t\tElements Updating: {HudMain.TreeManager.ElementRegistered}\n");
+                statsBuilder.Append($"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n");
 
-                statsBuilder += $"\t\tUpdate Timers  (IsHighResolution: {Stopwatch.IsHighResolution}):\n";
+                statsBuilder.Append($"\t\tUpdate Timers  (IsHighResolution: {Stopwatch.IsHighResolution}):\n");
                 AddGrid(statsBuilder, new string[,]
                 {
                     { "Name",   "Avg",                          "50th",                     "99th" },
@@ -110,12 +169,14 @@ namespace RichHudFramework.Server
                     { "Total",  $"{stats.AvgTotalTime:F2}ms",   $"{stats.Total50th:F2}ms",  $"{stats.Total99th:F2}ms" },
                 }, 3, 4);
 
-                statsBuilder += $"\n\tBindManager:\n";
-                statsBuilder += $"\t\tControls Registered: {BindManager.Controls.Count}\n";
-                statsBuilder += $"\t\tClients Registered: {BindManager.Clients.Count}\n\n";
+                overlay.SetText(statsBuilder);
 
-                statsBuilder += $"\tFontManager:\n";
-                statsBuilder += $"\t\tFonts Registered: {fonts.Count}\n\n";
+                statsBuilder.Append($"\n\tBindManager:\n");
+                statsBuilder.Append($"\t\tControls Registered: {BindManager.Controls.Count}\n");
+                statsBuilder.Append($"\t\tClients Registered: {BindManager.Clients.Count}\n\n");
+
+                statsBuilder.Append($"\tFontManager:\n");
+                statsBuilder.Append($"\t\tFonts Registered: {fonts.Count}\n\n");
 
                 foreach (IFont font in fonts)
                 {
@@ -124,20 +185,20 @@ namespace RichHudFramework.Server
                     if (font.IsStyleDefined(FontStyles.Bold))
                         supportedStyles |= FontStyles.Bold;
 
-                    statsBuilder += $"\t\t{font.Name}\n";
-                    statsBuilder += $"\t\t\tAtlas PtSize: {font.PtSize}\n";
-                    statsBuilder += $"\t\t\tStyles: Regular, {supportedStyles}\n\n";
+                    statsBuilder.Append($"\t\t{font.Name}\n");
+                    statsBuilder.Append($"\t\t\tAtlas PtSize: {font.PtSize}\n");
+                    statsBuilder.Append($"\t\t\tStyles: Regular, {supportedStyles}\n\n");
                 }
 
-                statsBuilder += $"Details:\n";
-                statsBuilder += $"\tMaster:\n";
+                statsBuilder.Append($"Details:\n");
+                statsBuilder.Append($"\tMaster:\n");
 
                 GetHudStats(masterHud, statsBuilder);
                 GetBindStats(masterInput, statsBuilder);
 
                 foreach (RichHudMaster.ModClient modClient in modClients)
                 {
-                    statsBuilder += $"\n\t{modClient.name}:\n";
+                    statsBuilder.Append($"\n\t{modClient.name}:\n");
                     GetHudStats(modClient.hudClient, statsBuilder);
                     GetBindStats(modClient.bindClient, statsBuilder);
                 }
@@ -145,21 +206,40 @@ namespace RichHudFramework.Server
                 statsText.Text = statsBuilder;
                 updateTimer.Restart();
             }
+
+            if (EnableDebug && enableOverlay)
+            {
+                var screenRes = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight);
+                var offset = HudMain.GetPixelVector(overlayPos);
+
+                if (offset.X < 0f)
+                    offset.X += overlay.Size.X / 2f;
+                else
+                    offset.X -= overlay.Size.X / 2f;
+
+                if (offset.Y < 0f)
+                    offset.Y += overlay.Size.Y / 2f;
+                else
+                    offset.Y -= overlay.Size.Y / 2f;
+
+                overlay.Scale = 0.8f * HudMain.ResScale;
+                overlay.Draw(offset, HudMain.PixelToWorld);
+            }
         }
 
-        private static void GetHudStats(HudMain.TreeClient client, RichText statsBuilder)
+        private static void GetHudStats(HudMain.TreeClient client, StringBuilder statsBuilder)
         {
-            statsBuilder += $"\t\tHudMain:\n";
-            statsBuilder += $"\t\t\tEnable Cursor: {client.enableCursor}\n";
-            statsBuilder += $"\t\t\tElements Registered: {client.UpdateAccessors.Count}\n\n";
+            statsBuilder.Append($"\t\tHudMain:\n");
+            statsBuilder.Append($"\t\t\tEnable Cursor: {client.enableCursor}\n");
+            statsBuilder.Append($"\t\t\tElements Registered: {client.UpdateAccessors.Count}\n\n");
         }
 
-        private static void GetBindStats(BindManager.Client client, RichText statsBuilder)
+        private static void GetBindStats(BindManager.Client client, StringBuilder statsBuilder)
         {
             IReadOnlyList<IBindGroup> bindGroups = client.Groups;
 
-            statsBuilder += $"\t\tBindManager:\n";
-            statsBuilder += $"\t\t\tGroups: {client.Groups.Count}\n";
+            statsBuilder.Append($"\t\tBindManager:\n");
+            statsBuilder.Append($"\t\t\tGroups: {client.Groups.Count}\n");
 
             var groupGrid = new string[bindGroups.Count + 1, 2];
             groupGrid[0, 0] = $"Name";
@@ -174,25 +254,25 @@ namespace RichHudFramework.Server
             AddGrid(statsBuilder, groupGrid, 4, 5);
         }
 
-        private static void AddGrid(RichText builder, string[,] grid, int leftPadding, int rowSpacing)
+        private static void AddGrid(StringBuilder builder, string[,] grid, int leftPadding, int rowSpacing)
         {
             for (int i = 0; i < grid.GetLength(0); i++)
             {
                 for (int k = 0; k < leftPadding; k++)
-                    builder += "\t";
+                    builder.Append("\t");
 
                 for (int j = 0; j < grid.GetLength(1); j++)
                 {
                     string entry = grid[i, j];
                     int tabStops = rowSpacing - (entry.Length / 3);
 
-                    builder += $"|\t{entry}";
+                    builder.Append($"|\t{entry}");
 
                     for (int k = 0; k < tabStops; k++)
-                        builder += "\t";
+                        builder.Append("\t");
                 }
 
-                builder += "\n";
+                builder.Append("\n");
             }
         }
 
