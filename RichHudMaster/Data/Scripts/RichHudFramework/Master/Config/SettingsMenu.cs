@@ -14,6 +14,7 @@ namespace RichHudFramework.Server
     {
         private void InitSettingsMenu()
         {
+            RichHudTerminal.Root.Enabled = true;
             RichHudTerminal.Root.AddRange(new TerminalPageBase[] 
             {
                 new RebindPage()

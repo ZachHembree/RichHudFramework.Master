@@ -29,10 +29,9 @@ namespace RichHudFramework
 
             private readonly BindGroupList bindGroups;
 
-            public RebindPage()
+            public RebindPage() : base(new BindGroupList())
             {
-                bindGroups = new BindGroupList();
-                SetElement(bindGroups);
+                bindGroups = AssocMember as BindGroupList;
 
                 BindGroups = new ReadOnlyCollectionData<IBindGroup>
                 (
@@ -100,15 +99,15 @@ namespace RichHudFramework
                     Spacing = 30f;
                     SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;
 
-                    background.Visible = false;
+                    Background.Visible = false;
                 }
 
                 protected override void Layout()
                 {
                     base.Layout();
 
-                    SliderBar slider = scrollBar.slide;
-                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    SliderBar slider = ScrollBar.slide;
+                    slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                 }
             }
 
@@ -189,7 +188,7 @@ namespace RichHudFramework
                         Spacing = 8f,
                     };
 
-                    scrollBox.background.Visible = false;
+                    scrollBox.Background.Visible = false;
 
                     var divider1 = new TexturedBox()
                     {
@@ -209,6 +208,8 @@ namespace RichHudFramework
                     {
                         SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                         DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                        Padding = new Vector2(20f, 0f),
+                        Offset = new Vector2(-10f, 0f),
                         CollectionContainer = { name, divider1, scrollBox, divider2 },
                     };
 
@@ -217,8 +218,8 @@ namespace RichHudFramework
 
                 protected override void Layout()
                 {
-                    SliderBar slider = scrollBox.scrollBar.slide;
-                    slider.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                    SliderBar slider = scrollBox.ScrollBar.slide;
+                    slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
 
                     scrollBox.Height = cachedSize.Y - (layout.Height - scrollBox.Height);
                 }

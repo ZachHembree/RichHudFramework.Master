@@ -70,20 +70,21 @@ namespace RichHudFramework.UI.Server
             };
 
             openButton.MouseInput.LeftClicked += Open;
-            window.Confirmed += Close;
+            window.Confirmed += ConfirmPosition;
         }
 
         private void Open(object sender, EventArgs args)
         {
-            RichHudTerminal.OpenMenu();
+            RichHudTerminal.CloseMenu();
+            HudMain.EnableCursor = true;
             window.Visible = true;
             window.GetFocus();
         }
 
-        private void Close()
+        private void ConfirmPosition()
         {
             window.Visible = false;
-            RichHudTerminal.CloseMenu();
+            RichHudTerminal.OpenMenu();
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

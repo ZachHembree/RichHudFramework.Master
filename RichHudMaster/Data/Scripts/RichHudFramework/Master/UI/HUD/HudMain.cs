@@ -37,7 +37,7 @@ namespace RichHudFramework
         {
             public const int tickResetInterval = 240;
             private const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
-            private const int treeRefreshRate = 10;
+            private const int treeRefreshRate = 5;
 
             /// <summary>
             /// Root parent for all HUD elements.
@@ -206,14 +206,14 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Used to indicate when the draw list should be refreshed. Resets every frame.
-            /// </summary>
-            public static bool RefreshDrawList;
-
-            /// <summary>
             /// If true then the cursor will be visible while chat is open
             /// </summary>
             public static bool EnableCursor;
+
+            /// <summary>
+            /// Tick interval at which the UI tree updates. Lower is faster, higher is slower.
+            /// </summary>
+            public static int TreeRefreshRate { get; }
 
             private static HudMain instance;
             private static TreeManager treeManager;
@@ -233,8 +233,14 @@ namespace RichHudFramework
             private float _fovScale;
 
             private Action<byte> LoseFocusCallback;
+            private Action LoseInputFocusCallback;
             private byte unfocusedOffset;
             private int drawTick;
+
+            static HudMain()
+            {
+                TreeRefreshRate = treeRefreshRate;
+            }
 
             private HudMain() : base(false, true)
             {
@@ -268,7 +274,6 @@ namespace RichHudFramework
             public override void Draw()
             {
                 UpdateCache();
-                _cursor.Visible = EnableCursor;
                 treeManager.Draw();
 
                 drawTick++;
@@ -338,6 +343,19 @@ namespace RichHudFramework
                     Init();
 
                 return instance.GetFocusOffsetInternal(LoseFocusCallback);
+            }
+
+            /// <summary>
+            /// Registers a callback for UI elements taking input focus. Callback
+            /// invoked when another element takes focus.
+            /// </summary>
+            public static void GetInputFocus(Action LoseFocusCallback)
+            {
+                if (LoseFocusCallback != null)
+                {
+                    instance.LoseInputFocusCallback?.Invoke();
+                    instance.LoseInputFocusCallback = LoseFocusCallback;
+                }
             }
 
             /// <summary>

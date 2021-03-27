@@ -82,21 +82,21 @@ namespace RichHudFramework
                 public bool refreshDrawList;
 
                 private bool refreshRequested;
+                private readonly bool continuousRefresh;
                 private readonly List<HudUpdateAccessors> updateAccessors;
 
-                public TreeClient()
+                public TreeClient(bool continuousRefresh = true)
                 {
+                    this.continuousRefresh = continuousRefresh;
+
                     updateAccessors = new List<HudUpdateAccessors>();
                     Registered = TreeManager.RegisterClient(this);
                 }
 
                 public void Update(int tick)
                 {
-                    if (refreshDrawList)
+                    if (refreshDrawList || continuousRefresh)
                         refreshRequested = true;
-
-                    if (enableCursor)
-                        instance._cursor.Visible = true;
 
                     if (refreshRequested && (tick % treeRefreshRate) == 0)
                     {
@@ -108,7 +108,9 @@ namespace RichHudFramework
 
                         refreshRequested = false;
                         refreshDrawList = false;
-                        TreeManager.RefreshRequested = true;
+
+                        if (!continuousRefresh)
+                            TreeManager.RefreshRequested = true;
                     }
                 }
 
@@ -200,6 +202,8 @@ namespace RichHudFramework
                             return instance._root.GetHudSpaceFunc;
                         case HudMainAccessors.GetPixelSpaceOriginFunc:
                             return instance._root.GetNodeOriginFunc;
+                        case HudMainAccessors.GetInputFocus:
+                            GetInputFocus(data as Action); break;
                     }
 
                     return null;

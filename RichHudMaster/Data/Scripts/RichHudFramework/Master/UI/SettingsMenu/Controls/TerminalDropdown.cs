@@ -76,7 +76,7 @@ namespace RichHudFramework.UI.Server
             /// <summary>
             /// List of entries in the dropdown.
             /// </summary>
-            public IReadOnlyList<ListBoxEntry<T>> ListEntries => dropdown.ListEntries;
+            public IReadOnlyList<ListBoxEntry<T>> ListEntries => dropdown.EntryList;
 
             /// <summary>
             /// Currently selected list member.
@@ -118,6 +118,8 @@ namespace RichHudFramework.UI.Server
                 dropdown = new Dropdown<T>()
                 {
                     Format = TerminalFormatting.ControlFormat,
+                    DropdownHeight = 172f,
+                    MinVisibleCount = 6
                 };
 
                 hudChain = new HudChain(true, this)

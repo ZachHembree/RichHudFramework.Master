@@ -78,7 +78,7 @@ namespace RichHudFramework.UI.Server
             /// <summary>
             /// List of entries in the dropdown.
             /// </summary>
-            public IReadOnlyList<ListBoxEntry<T>> ListEntries => listBox.ListEntries;
+            public IReadOnlyList<ListBoxEntry<T>> ListEntries => listBox.EntryList;
 
             /// <summary>
             /// Currently selected list member.
@@ -120,22 +120,25 @@ namespace RichHudFramework.UI.Server
                 listBox = new ListBox<T>()
                 {
                     Format = TerminalFormatting.ControlFormat,
+                    Height = 172f,
+                    MinVisibleCount = 6
                 };
 
                 hudChain = new HudChain(true, this)
                 {
                     SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                     CollectionContainer = { name, listBox },
+                    Spacing = 2f
                 };
 
-                Padding = new Vector2(20f, 0f);
+                Padding = new Vector2(10f, 0f);
                 Size = new Vector2(250f, 200f);
             }
 
             protected override void Layout()
             {
-                listBox.Color = TerminalFormatting.ListBgColor.SetAlphaPct(HudMain.UiBkOpacity);
-                listBox.BarColor = TerminalFormatting.ScrollBarColor.SetAlphaPct(HudMain.UiBkOpacity);
+                listBox.Color = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
+                listBox.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
 
                 base.Layout();
             }

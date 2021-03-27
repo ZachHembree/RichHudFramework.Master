@@ -32,7 +32,7 @@ namespace RichHudFramework
             /// <summary>
             /// Read only collection of <see cref="TerminalControlBase"/>s attached to the tile
             /// </summary>
-            public IReadOnlyList<ITerminalControl> Controls => tileElement.Controls;
+            public IReadOnlyList<TerminalControlBase> Controls => tileElement.Controls;
 
             /// <summary>
             /// Used to allow the addition of controls to tiles using collection-initializer syntax in
@@ -121,7 +121,7 @@ namespace RichHudFramework
                     background = new TexturedBox(this)
                     {
                         DimAlignment = DimAlignments.Both,
-                        Color = TerminalFormatting.TileColor,
+                        Color = TerminalFormatting.Gunmetal,
                     };
 
                     var border = new BorderBox(this)

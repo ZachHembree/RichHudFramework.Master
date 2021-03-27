@@ -1,5 +1,6 @@
 ﻿using System;
 using VRage;
+using VRageMath;
 
 namespace RichHudFramework.Server
 {
@@ -41,6 +42,21 @@ namespace RichHudFramework.Server
             public bool Registered { get; private set; }
 
             /// <summary>
+            /// Version ID for the client. X, Y, Z, Q = Major, Minor, Rev, Hotfix.
+            /// </summary>
+            public Vector4I VersionID { get; private set; }
+
+            /// <summary>
+            /// Client subtype (full, nolib, etc.)
+            /// </summary>
+            public ClientSubtypes ClientSubtype { get; private set; }
+
+            /// <summary>
+            /// Version ID as string
+            /// </summary>
+            public string VersionString { get; private set; }
+
+            /// <summary>
             /// Delegate used to invoke methods within the scope of the client's exception handler. 
             /// </summary>
             public Action<Action> RunOnExceptionHandler { get; private set; }
@@ -61,7 +77,7 @@ namespace RichHudFramework.Server
                 ReloadAction = data.Item3;
                 apiVersionID = data.Item4;
 
-                hudClient = new HudMain.TreeClient();
+                hudClient = new HudMain.TreeClient(apiVersionID > 7);
                 bindClient = new BindManager.Client(this);
                 menuData = RichHudTerminal.GetClientData(name);
 
@@ -69,6 +85,9 @@ namespace RichHudFramework.Server
 
                 SendData(MsgTypes.RegistrationSuccessful, new ServerData(Unregister, GetApiData, apiVersionID));
                 ExceptionHandler.WriteToLogAndConsole($"[RHF] Successfully registered {name} with the API.");
+
+                ClientSubtype = ClientSubtypes.Full;
+                VersionString = "1.0.3.0-";
             }
 
             /// <summary>
@@ -103,6 +122,12 @@ namespace RichHudFramework.Server
                 {
                     this.RunOnExceptionHandler = RunWithExceptionHandler;
                     this.GetOrSetMemberFunc = GetOrSetMemberFunc;
+
+                    VersionID = (Vector4I)(GetOrSetMemberFunc(null, (int)ClientDataAccessors.GetVersionID) ?? new Vector4I(0, 0, 0, 0));
+                    ClientSubtype = (ClientSubtypes)(GetOrSetMemberFunc(null, (int)ClientDataAccessors.GetSubtype) ?? ClientSubtypes.Full);
+
+                    if (VersionID.X > 0)
+                        VersionString = $"{VersionID.X}.{VersionID.Y}.{VersionID.Z}.{VersionID.W}";
                 }
             }
 

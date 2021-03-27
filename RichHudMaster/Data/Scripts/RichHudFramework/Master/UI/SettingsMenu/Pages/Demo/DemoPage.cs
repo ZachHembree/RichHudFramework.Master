@@ -10,10 +10,8 @@ namespace RichHudFramework
         /// </summary>
         public partial class DemoPage : TerminalPageBase
         {
-            public DemoPage()
-            {
-                SetElement(new DemoBox());
-            }
+            public DemoPage() : base(new DemoBox())
+            { }
 
             private class DemoBox : HudElementBase
             {
@@ -180,21 +178,10 @@ namespace RichHudFramework
 
                     for (int n = 0; n < instanceCollection.Count; n++)
                     {
-                        GlyphFormat format;
                         var entry = instanceCollection[n];
                         var windowNode = entry.AssocMember;
 
-                        // Update instance list text to color code entries based on whether the corresponding nodes are
-                        // visible, in front of and facing the camera
-                        if (entry.AssocMember.Visible)
-                            format = GlyphFormat.White;
-                        else if (!entry.AssocMember.HudSpace.IsFacingCamera)
-                            format = new GlyphFormat(color: Color.Yellow);
-                        else
-                            format = TerminalFormatting.WarningFormat;
-
                         // Update index display
-                        entry.Element.Format = format;
                         entry.Element.Text = $"[#{n}] {windowNode.elementEnum}";
                         windowNode.window.HeaderText = $"[#{n}] {windowNode.elementEnum}";
                     }
@@ -260,7 +247,7 @@ namespace RichHudFramework
                         var testElement = new TestWindowNode(selection);
 
                         demoRoot.Add(testElement);
-                        instanceList.Add($"[#{instanceList.ListEntries.Count}] {selection}", testElement);
+                        instanceList.Add($"[#{instanceList.EntryList.Count}] {selection}", testElement);
 
                         // If selection is empty set selection to new element
                         if (instanceList.Selection == null)

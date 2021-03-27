@@ -27,7 +27,8 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int versionID = 7, minSupportedVersion = 7;
+        private const int apiVID = 8, minApiVID = 7;
+        public static readonly Vector4I versionID = new Vector4I(1, 1, 0, 0); // Major, Minor, Rev, Hotfix
 
         /// <summary>
         /// Read-only list of currently registered clients
@@ -130,7 +131,7 @@ namespace RichHudFramework.Server
         private ModClient RegisterClient(ClientData clientData)
         {
             int clientVID = clientData.Item4;
-            bool supported = clientVID <= versionID && clientVID >= minSupportedVersion;
+            bool supported = clientVID <= apiVID && clientVID >= minApiVID;
             ModClient client = clients.Find(x => (x.name == clientData.Item1));
 
             if (client == null && supported)
@@ -145,10 +146,10 @@ namespace RichHudFramework.Server
                 if (!supported)
                 {
                     string error = $"Error: Client version for {clientData.Item1} is not supported. " +
-                    $"API vID: Min: {minSupportedVersion}, Max: {versionID}; Client vID: {clientVID}";
+                    $"API vID: Min: {minApiVID}, Max: {apiVID}; Client vID: {clientVID}";
 
                     GetOrSendFunc((int)MsgTypes.RegistrationFailed, error);
-                    ExceptionHandler.WriteToLogAndConsole($" [RHF] {error}");
+                    ExceptionHandler.WriteToLogAndConsole($"[RHF] {error}");
                 }
                 else
                     GetOrSendFunc((int)MsgTypes.RegistrationFailed, "Client already registered.");

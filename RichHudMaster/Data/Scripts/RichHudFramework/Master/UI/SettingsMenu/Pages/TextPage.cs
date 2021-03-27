@@ -41,10 +41,9 @@ namespace RichHudFramework
 
             private readonly ScrollableTextBox textBox;
 
-            public TextPage()
+            public TextPage() : base(new ScrollableTextBox())
             {
-                textBox = new ScrollableTextBox();
-                SetElement(textBox);
+                textBox = AssocMember as ScrollableTextBox;
             }
 
             protected override object GetOrSetMember(object data, int memberEnum)
@@ -142,6 +141,7 @@ namespace RichHudFramework
                         VertCenterText = false,
                         EnableEditing = false,
                         EnableHighlighting = true,
+                        ClearSelectionOnLoseFocus = true
                     };
 
                     headerDivider = new TexturedBox(textBox)
@@ -158,8 +158,6 @@ namespace RichHudFramework
                         ParentAlignment = ParentAlignments.Right,
                         DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
                         Vertical = true,
-                        Padding = new Vector2(30f, 8f),
-                        Width = 45f,
                     };
 
                     scrollDivider = new TexturedBox(verticalScroll)
@@ -182,7 +180,9 @@ namespace RichHudFramework
                 {
                     ITextBoard textBoard = textBox.TextBoard;
 
-                    verticalScroll.slide.SliderHeight = (textBoard.Size.Y / textBoard.TextSize.Y) * verticalScroll.Height;
+                    SliderBar slider = verticalScroll.slide;
+                    slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
+                    slider.SliderHeight = (textBoard.Size.Y / textBoard.TextSize.Y) * verticalScroll.Height;
 
                     textBox.Height = Height - header.Height - subheader.Height - Padding.Y;
                     textBox.Width = Width - verticalScroll.Width - Padding.X;

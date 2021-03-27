@@ -1,7 +1,6 @@
 ﻿using RichHudFramework.Internal;
 using RichHudFramework.UI.Rendering;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using VRage;
@@ -11,14 +10,12 @@ using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageM
 
 namespace RichHudFramework
 {
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
-
     namespace UI.Server
     {
         using ControlMembers = MyTuple<
-            ApiMemberAccessor, // GetOrSetMember
-            object // ID
-        >;
+                ApiMemberAccessor, // GetOrSetMember
+                object // ID
+            >;
         using ControlContainerMembers = MyTuple<
             ApiMemberAccessor, // GetOrSetMember,
             MyTuple<object, Func<int>>, // Member List
@@ -27,7 +24,7 @@ namespace RichHudFramework
 
         public sealed partial class RichHudTerminal : RichHudComponentBase
         {
-            private class ModControlRoot : ScrollBoxEntry<ModControlRootTreeBox>, IModControlRoot
+            private class ModControlRoot : TerminalPageCategoryBase, IModControlRoot
             {
                 /// <summary>
                 /// Invoked when a new page is selected
@@ -35,114 +32,91 @@ namespace RichHudFramework
                 public event EventHandler SelectionChanged;
 
                 /// <summary>
-                /// Determines whether or not the element will appear in the list.
-                /// Disabled by default.
+                /// Currently selected <see cref="TerminalPageBase"/>.
                 /// </summary>
-                public override bool Enabled
+                public override TerminalPageBase SelectedPage
                 {
-                    get { return _enabled && Element.ListEntries.Count > 0; }
-                    set { _enabled = value; }
+                    get
+                    {
+                        var selection = treeBox.Selection;
+
+                        if (selection != null)
+                        {
+                            var category = selection as TerminalPageCategoryBase;
+
+                            if (category != null)
+                                return category.SelectedPage;
+                            else
+                                return selection as TerminalPageBase;
+                        }
+                        else
+                            return null;
+                    }
                 }
 
                 /// <summary>
-                /// Name of the mod as it appears in the <see cref="RichHudTerminal"/> mod list
+                /// Currently selected <see cref="TerminalPageCategoryBase"/>.
                 /// </summary>
-                public string Name { get { return Element.Name.ToString(); } set { Element.Name = value; } }
+                public TerminalPageCategoryBase SelectedSubcategory => treeBox.Selection as TerminalPageCategoryBase;
 
                 /// <summary>
-                /// Currently selected <see cref="ITerminalPage"/>.
+                /// Page subcategories attached to the mod root
                 /// </summary>
-                public ITerminalPage Selection => Element.Selection?.AssocMember;
+                public IReadOnlyList<TerminalPageCategoryBase> Subcategories => subcategories;
 
                 /// <summary>
-                /// Read only collection of <see cref="ITerminalPage"/>s assigned to this object.
+                /// TreeBox member list
                 /// </summary>
-                public IReadOnlyList<ITerminalPage> Pages { get; }
-
-                public IReadOnlyList<ListBoxEntry<TerminalPageBase>> ListEntries => treeBox.ListEntries;
-
-                /// <summary>
-                /// Used to allow the addition of child elements using collection-initializer syntax in
-                /// conjunction with normal initializers.
-                /// </summary>
-                public IModControlRoot PageContainer => this;
+                public IReadOnlyList<SelectionBoxEntryTuple<LabelElementBase, object>> ListEntries => treeBox.EntryList;
 
                 private Action ApiCallbackAction;
-                private readonly ModControlRootTreeBox treeBox;
-                private bool _enabled;
+                protected readonly List<TerminalPageCategoryBase> subcategories;
 
-                public ModControlRoot()
+                public ModControlRoot() : base()
                 {
-                    treeBox = new ModControlRootTreeBox();
-                    SetElement(treeBox);
-                    Pages = new ReadOnlyCollectionData<ITerminalPage>
-                    (
-                        x => Element.ListEntries[x].AssocMember,
-                        () => Element.ListEntries.Count
-                    );
-
-                    treeBox.SelectionChanged += InvokeCallback;
-                }
-
-                public IEnumerator<ITerminalPage> GetEnumerator() =>
-                    Pages.GetEnumerator();
-
-                IEnumerator IEnumerable.GetEnumerator() =>
-                    Pages.GetEnumerator();
-
-                /// <summary>
-                /// Sets the selection to the given page
-                /// </summary>
-                public void SetSelection(TerminalPageBase page)
-                {
-                    treeBox.SetSelection(page);
-                    treeBox.OpenList();
+                    Enabled = false;
+                    subcategories = new List<TerminalPageCategoryBase>();
                 }
 
                 /// <summary>
-                /// Adds the given <see cref="TerminalPageBase"/> to the object.
+                /// Adds a page subcategory to the control root
                 /// </summary>
-                public void Add(TerminalPageBase page)
+                public void Add(TerminalPageCategoryBase subcategory)
                 {
-                    ListBoxEntry<TerminalPageBase> listMember = Element.Add(page.Name, page);
-                    page.NameBuilder = listMember.Element.TextBoard;
+                    treeBox.Add(subcategory);
+                    subcategories.Add(subcategory);
                 }
 
-                /// <summary>
-                /// Adds the given ranges of pages to the control root.
-                /// </summary>
-                public void AddRange(IReadOnlyList<TerminalPageBase> pages)
+                public void AddRange(IReadOnlyList<IModRootMember> members) =>
+                    AddRangeInternal(members);
+
+                protected override void AddRangeInternal(IReadOnlyList<object> members)
                 {
-                    foreach (TerminalPageBase page in pages)
+                    foreach (object member in members)
                     {
-                        ListBoxEntry<TerminalPageBase> listMember = Element.Add(page.Name, page);
-                        page.NameBuilder = listMember.Element.TextBoard;
+                        var page = member as TerminalPageBase;
+
+                        if (page != null)
+                            Add(page);
+                        else
+                        {
+                            var subcategory = member as TerminalPageCategoryBase;
+
+                            if (subcategory != null)
+                                Add(subcategory);
+                        }
                     }
                 }
 
-                /// <summary>
-                /// Adds the given ranges of pages to the control root.
-                /// </summary>
-                private void AddRangeInternal(IReadOnlyList<object> pages)
-                {
-                    foreach (TerminalPageBase page in pages)
-                    {
-                        ListBoxEntry<TerminalPageBase> listMember = Element.Add(page.Name, page);
-                        page.NameBuilder = listMember.Element.TextBoard;
-                    }
-                }
-
-                private void InvokeCallback(object sender, EventArgs args)
+                public void OnSelectionChanged(object sender, EventArgs args)
                 {
                     SelectionChanged?.Invoke(this, EventArgs.Empty);
                     ApiCallbackAction?.Invoke();
                 }
 
-                private object GetOrSetMember(object data, int memberEnum)
+                protected override object GetOrSetMember(object data, int memberEnum)
                 {
-                    var member = (ModControlRootAccessors)memberEnum;
-
-                    switch (member)
+                    switch ((ModControlRootAccessors)memberEnum)
                     {
                         case ModControlRootAccessors.GetOrSetCallback:
                             {
@@ -151,77 +125,19 @@ namespace RichHudFramework
                                 else
                                     ApiCallbackAction = data as Action;
 
-                                break;
+                                return null;
                             }
-                        case ModControlRootAccessors.Name:
+                        case ModControlRootAccessors.GetCategoryAccessors:
+                            return new MyTuple<object, Func<int>>()
                             {
-                                if (data == null)
-                                    return Name;
-                                else
-                                    Name = data as string;
-
-                                break;
-                            }
-                        case ModControlRootAccessors.Enabled:
-                            {
-                                if (data == null)
-                                    return Enabled;
-                                else
-                                    Enabled = (bool)data;
-
-                                break;
-                            }
-                        case ModControlRootAccessors.Selection:
-                            {
-                                return Element.Selection?.AssocMember;
-                            }
-                        case ModControlRootAccessors.AddPage:
-                            Add(data as TerminalPageBase); break;
-                        case ModControlRootAccessors.AddRange:
-                            AddRangeInternal(data as object[]); break;
+                                Item1 = new Func<int, ControlContainerMembers>(x => subcategories[x].GetApiData()),
+                                Item2 = () => subcategories.Count
+                            };
+                        case ModControlRootAccessors.AddSubcategory:
+                            Add(data as TerminalPageCategory); return null;
                     }
 
-                    return null;
-                }
-
-                /// <summary>
-                /// Retrieves data used by the Framework API
-                /// </summary>
-                public ControlContainerMembers GetApiData()
-                {
-                    return new ControlContainerMembers()
-                    {
-                        Item1 = GetOrSetMember,
-                        Item2 = new MyTuple<object, Func<int>>()
-                        {
-                            Item1 = (Func<int, ControlMembers>)(x => Element.ListEntries[x].AssocMember.GetApiData()),
-                            Item2 = () => Element.ListEntries.Count
-                        },
-                        Item3 = this
-                    };
-                }
-            }
-
-            /// <summary>
-            /// TreeBox modified for use as the ModControlRoot's UI element.
-            /// </summary>
-            private class ModControlRootTreeBox : TreeBox<TerminalPageBase>
-            {
-                public ModControlRootTreeBox(HudParentBase parent = null) : base(parent)
-                {
-                    HeaderColor = TerminalFormatting.TileColor;
-                }
-
-                protected override void Layout()
-                {
-                    display.Color = display.Color.SetAlphaPct(HudMain.UiBkOpacity);
-                    base.Layout();
-                }
-
-                public override bool Unregister(bool fast = false)
-                {
-                    entryChain.Clear(fast);
-                    return base.Unregister(fast);
+                    return base.GetOrSetMember(data, memberEnum);
                 }
             }
         }

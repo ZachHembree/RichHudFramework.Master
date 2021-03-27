@@ -136,7 +136,7 @@ namespace RichHudFramework
                         case DemoElements.TextBox:
                             return new TestWindow<TextBox>();
                         case DemoElements.TreeBox:
-                            return new TestWindow<TreeBox<int>>();
+                            return new TestWindow<TreeList<int>>();
                         case DemoElements.DoubleLabelBox:
                             return new TestWindow<DoubleLabelBox>();
                         case DemoElements.Label:

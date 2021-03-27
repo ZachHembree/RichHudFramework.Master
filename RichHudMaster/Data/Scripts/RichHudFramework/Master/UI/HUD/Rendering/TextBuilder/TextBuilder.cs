@@ -97,6 +97,7 @@ namespace RichHudFramework
                 private readonly ObjectPool<StringBuilder> sbPool;
                 private RichText lastText;
                 private List<RichStringMembers> lastTextData;
+                private bool canReuseFormatting;
 
                 public TextBuilder()
                 {
@@ -175,6 +176,7 @@ namespace RichHudFramework
                         Clear();
                         formatter.Append(text);
                         AfterTextUpdate();
+                        canReuseFormatting = false;
                     }
                 }
 
@@ -242,6 +244,7 @@ namespace RichHudFramework
 
                     formatter.Append(text);
                     AfterTextUpdate();
+                    canReuseFormatting = false;
                 }
 
                 /// <summary>
@@ -308,6 +311,7 @@ namespace RichHudFramework
 
                     formatter.Insert(text, start);
                     AfterTextUpdate();
+                    canReuseFormatting = false;
                 }
 
                 /// <summary>
@@ -327,9 +331,20 @@ namespace RichHudFramework
 
                 protected void SetFormattingData(Vector2I start, Vector2I end, GlyphFormatMembers format)
                 {
+                    bool formatEqual = Format.data.Item1 == format.Item1
+                        && Format.data.Item2 == format.Item2
+                        && Format.data.Item3 == format.Item3
+                        && Format.data.Item4 == format.Item4;
+
                     Format = new GlyphFormat(format);
-                    formatter.SetFormatting(start, end, Format);
-                    AfterTextUpdate();
+
+                    if (!(canReuseFormatting && formatEqual))
+                    {
+                        formatter.SetFormatting(start, end, Format);
+                        AfterTextUpdate();
+                    }
+                    
+                    canReuseFormatting = true;
                 }
 
                 /// <summary>
@@ -402,6 +417,7 @@ namespace RichHudFramework
                 {
                     formatter.RemoveRange(start, end);
                     AfterTextUpdate();
+                    canReuseFormatting = false;
                 }
 
                 /// <summary>
@@ -413,6 +429,7 @@ namespace RichHudFramework
                     {
                         formatter.Clear();
                         AfterTextUpdate();
+                        canReuseFormatting = false;
                     }
                 }
 

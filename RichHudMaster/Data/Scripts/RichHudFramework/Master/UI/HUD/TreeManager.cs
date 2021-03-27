@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
+using VRage.Utils;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
@@ -26,17 +27,12 @@ namespace RichHudFramework
                 /// <summary>
                 /// Number of unique HUD spaces registered
                 /// </summary>
-                public static int HudSpacesRegistered => treeManager.distMap.Count;
+                public static int HudSpacesRegistered { get; private set; }
 
                 /// <summary>
                 /// Number of UI elements registered from all clients
                 /// </summary>
                 public static int ElementRegistered => treeManager.updateAccessors.Count;
-
-                /// <summary>
-                /// Set to true if a client is requesting a tree rebuild
-                /// </summary>
-                public static bool RefreshRequested { get; set; }
 
                 /// <summary>
                 /// Read-only list of registered tree clients
@@ -63,29 +59,26 @@ namespace RichHudFramework
                 /// <summary>
                 /// Ticks elapsed during last rebuild
                 /// </summary>
-                public static long RebuildElapsedTicks => treeManager.rebuildTimer.ElapsedTicks;
+                public static IReadOnlyList<long> TreeElapsedTicks => treeManager.treeTimes;
 
-                /// <summary>
-                /// Ticks elapsed during last rebuild
-                /// </summary>
-                public static long TicksSinceLastRebuild => treeManager.lastRebuildTime.ElapsedTicks;
+                public static bool RefreshRequested;
 
                 private readonly List<HudUpdateAccessors> updateAccessors;
                 private readonly Dictionary<Func<Vector3D>, ushort> distMap;
                 private readonly HashSet<Func<Vector3D>> uniqueOriginFuncs;
-                private readonly List<ulong> indexList;
+                private readonly List<ulong> indexBuffer;
 
-                private readonly List<Action> depthTestActions;
-                private readonly List<Action> inputActions;
-                private readonly List<Action<bool>> layoutActions;
-                private readonly List<Action> drawActions;
+                private List<Action> depthTestActions, depthTestActionBuffer;
+                private List<Action> inputActions, inputActionBuffer;
+                private List<Action> drawActions, drawActionBuffer;
+                private List<Action<bool>> layoutActions;
                 private float lastResScale;
 
                 private readonly List<TreeClient> clients;
                 private readonly TreeClient mainClient;
 
-                private readonly Stopwatch rebuildTimer, drawTimer, inputTimer, lastRebuildTime;
-                private readonly long[] drawTimes, inputTimes;
+                private readonly Stopwatch treeTimer, drawTimer, inputTimer;
+                private readonly long[] drawTimes, inputTimes, treeTimes;
 
                 private TreeManager()
                 {
@@ -99,12 +92,18 @@ namespace RichHudFramework
                     updateAccessors = new List<HudUpdateAccessors>(200);
                     distMap = new Dictionary<Func<Vector3D>, ushort>(50);
                     uniqueOriginFuncs = new HashSet<Func<Vector3D>>();
-                    indexList = new List<ulong>(200);
+                    indexBuffer = new List<ulong>(200);
 
                     depthTestActions = new List<Action>(200);
+                    depthTestActionBuffer = new List<Action>(200);
+
                     inputActions = new List<Action>(200);
-                    layoutActions = new List<Action<bool>>(200);
+                    inputActionBuffer = new List<Action>(200);
+
                     drawActions = new List<Action>(200);
+                    drawActionBuffer = new List<Action>(200);
+
+                    layoutActions = new List<Action<bool>>(200);
 
                     clients = new List<TreeClient>();
                     mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
@@ -115,10 +114,8 @@ namespace RichHudFramework
                     inputTimer = new Stopwatch();
                     inputTimes = new long[tickResetInterval];
 
-                    rebuildTimer = new Stopwatch();
-                    lastRebuildTime = new Stopwatch();
-
-                    RefreshRequested = false;
+                    treeTimer = new Stopwatch();
+                    treeTimes = new long[tickResetInterval];
                 }
 
                 public static void Init()
@@ -145,7 +142,6 @@ namespace RichHudFramework
                     if (treeManager != null)
                     {
                         bool success = treeManager.clients.Remove(client);
-                        RefreshRequested = success;
                         return success;
                     }
                     else
@@ -157,29 +153,32 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw()
                 {
-                    drawTimer.Restart();    
-
                     int drawTick = instance.drawTick;
                     float resScale = instance._resScale;
 
-                    if (RefreshDrawList)
-                        mainClient.refreshDrawList = true;
+                    treeTimer.Restart();
+                    mainClient.enableCursor = EnableCursor;
+
+                    UpdateAccessorLists(drawTick);
+                    instance._cursor.Visible = false;
 
                     for (int n = 0; n < clients.Count; n++)
-                        clients[n].Update(drawTick + n); // Spread out client tree updates
-
-                    bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
-                        refreshLayout = lastResScale != resScale || rebuildLists,
-                        resortLists = rebuildLists || (drawTick % treeRefreshRate) == 0;
-
-                    lastResScale = resScale;
-
-                    if (rebuildLists)
                     {
-                        RebuildUpdateLists();
-                        RefreshRequested = false;
-                        RefreshDrawList = false;
+                        if (clients[n].enableCursor)
+                            instance._cursor.Visible = true;
                     }
+
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].Update(drawTick + (n % treeRefreshRate)); // Spread out client tree updates
+
+                    treeTimer.Stop();
+                    treeTimes[drawTick] = treeTimer.ElapsedTicks;
+
+                    drawTimer.Restart();
+
+                    // Older clients (1.0.3-) node spaces require layout refreshes to function
+                    bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
+                        refreshLayout = lastResScale != resScale || rebuildLists;
 
                     for (int n = 0; n < layoutActions.Count; n++)
                         layoutActions[n](refreshLayout);
@@ -188,12 +187,13 @@ namespace RichHudFramework
                     for (int n = 0; n < drawActions.Count; n++)
                         drawActions[n]();
 
-                    // Apply depth and zoffset sorting
-                    if (resortLists)
-                        SortUpdateAccessors();
-
                     drawTimer.Stop();
                     drawTimes[drawTick] = drawTimer.ElapsedTicks;
+
+                    if (rebuildLists)
+                        RefreshRequested = false;
+
+                    lastResScale = resScale;
                 }
 
                 /// <summary>
@@ -214,12 +214,37 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Rebuilds update accessor list from UI tree
+                /// Updates tree accessor delegate lists, spreading out updates over 5 ticks
+                /// </summary>
+                private void UpdateAccessorLists(int tick)
+                {
+                    if (tick % treeRefreshRate == 0)
+                    {
+                        RebuildUpdateLists();
+                    }
+                    else if (tick % treeRefreshRate == 1)
+                    {
+                        UpdateDistMap();
+                    }
+                    else if (tick % treeRefreshRate == 2)
+                    {
+                        UpdateIndexBuffer();
+                    }
+                    else if (tick % treeRefreshRate == 3)
+                    {
+                        ResetUpdateBuffers();
+                    }
+                    else if (tick % treeRefreshRate == 4)
+                    {
+                        BuildSortedUpdateLists();
+                    }
+                }
+
+                /// <summary>
+                /// Rebuilds main update accessor list from UI tree as well as the layout accessors
                 /// </summary>
                 private void RebuildUpdateLists()
                 {
-                    rebuildTimer.Restart();
-
                     // Clear update lists and rebuild accessor lists from HUD tree
                     updateAccessors.Clear();
                     layoutActions.Clear();
@@ -229,7 +254,7 @@ namespace RichHudFramework
                     for (int n = 0; n < clients.Count; n++)
                         updateAccessors.AddRange(clients[n].UpdateAccessors);
 
-                    if (updateAccessors.Capacity > updateAccessors.Count * 2)
+                    if (updateAccessors.Capacity > updateAccessors.Count * 3 && updateAccessors.Count > 200)
                         updateAccessors.TrimExcess();
 
                     // Build distance func HashSet
@@ -245,25 +270,16 @@ namespace RichHudFramework
                         layoutActions.Add(accessors.Item5);
                     }
 
-                    rebuildTimer.Stop();
-                    lastRebuildTime.Restart();
+                    if (layoutActions.Capacity > layoutActions.Count * 3 && layoutActions.Count > 200)
+                        layoutActions.TrimExcess();
                 }
 
                 /// <summary>
-                /// Sorts draw and input accessors first by distance, then by zOffset, then by index
+                /// Builds distance map for HUD Space Nodes
                 /// </summary>
-                private void SortUpdateAccessors()
+                private void UpdateDistMap()
                 {
-                    indexList.Clear();
-                    depthTestActions.Clear();
-                    inputActions.Clear();
-                    drawActions.Clear();
                     distMap.Clear();
-
-                    indexList.EnsureCapacity(updateAccessors.Count);
-                    depthTestActions.EnsureCapacity(updateAccessors.Count);
-                    inputActions.EnsureCapacity(updateAccessors.Count);
-                    drawActions.EnsureCapacity(updateAccessors.Count);
 
                     // Update distance for each unique position delegate
                     // Max distance: 655.35m; Precision: 1cm/unit
@@ -281,8 +297,16 @@ namespace RichHudFramework
                         distMap.Add(OriginFunc, reverseDist);
                     }
 
-                    // Lower 32 bits store the index, upper 32 store draw depth and distance
-                    ulong indexMask = 0x00000000FFFFFFFF;
+                    HudSpacesRegistered = distMap.Count;
+                }
+
+                /// <summary>
+                /// Builds sorted index list for sorted accessor lists
+                /// </summary>
+                private void UpdateIndexBuffer()
+                {
+                    indexBuffer.Clear();
+                    indexBuffer.EnsureCapacity(updateAccessors.Count);
 
                     // Build index list and sort by zOffset
                     for (int n = 0; n < updateAccessors.Count; n++)
@@ -292,40 +316,76 @@ namespace RichHudFramework
                             zOffset = accessors.Item1(),
                             distance = distMap[accessors.Item2];
 
-                        indexList.Add((distance << 48) | (zOffset << 32) | index);
+                        indexBuffer.Add((distance << 48) | (zOffset << 32) | index);
                     }
 
+                    if (indexBuffer.Capacity > indexBuffer.Count * 3 && indexBuffer.Count > 200)
+                        indexBuffer.TrimExcess();
+
                     // Sort in ascending order
-                    indexList.Sort();
+                    indexBuffer.Sort();
+                }
+
+                /// <summary>
+                /// Clears depth, input and draw buffer lists and preallocates the lists as needed
+                /// </summary>
+                private void ResetUpdateBuffers()
+                {
+                    depthTestActionBuffer.Clear();
+                    inputActionBuffer.Clear();
+                    drawActionBuffer.Clear();
+
+                    depthTestActionBuffer.EnsureCapacity(updateAccessors.Count);
+                    inputActionBuffer.EnsureCapacity(updateAccessors.Count);
+                    drawActionBuffer.EnsureCapacity(updateAccessors.Count);
+                }
+
+                /// <summary>
+                /// Builds sorted update accessor lists
+                /// </summary>
+                private void BuildSortedUpdateLists()
+                {
+                    // Lower 32 bits store the index, upper 32 store draw depth and distance
+                    ulong indexMask = 0x00000000FFFFFFFF;
 
                     // Build sorted depth test list
-                    for (int n = 0; n < indexList.Count; n++)
+                    for (int n = 0; n < indexBuffer.Count; n++)
                     {
-                        int index = (int)(indexList[n] & indexMask);
+                        int index = (int)(indexBuffer[n] & indexMask);
                         HudUpdateAccessors accessors = updateAccessors[index];
 
-                        depthTestActions.Add(accessors.Item3);
+                        depthTestActionBuffer.Add(accessors.Item3);
                     }
 
                     // Build sorted input list
-                    for (int n = 0; n < indexList.Count; n++)
+                    for (int n = 0; n < indexBuffer.Count; n++)
                     {
-                        int index = (int)(indexList[n] & indexMask);
+                        int index = (int)(indexBuffer[n] & indexMask);
                         HudUpdateAccessors accessors = updateAccessors[index];
 
-                        inputActions.Add(accessors.Item4);
+                        inputActionBuffer.Add(accessors.Item4);
                     }
 
                     // Build sorted draw list
-                    for (int n = 0; n < indexList.Count; n++)
+                    for (int n = 0; n < indexBuffer.Count; n++)
                     {
-                        int index = (int)(indexList[n] & indexMask);
+                        int index = (int)(indexBuffer[n] & indexMask);
                         HudUpdateAccessors accessors = updateAccessors[index];
 
-                        drawActions.Add(accessors.Item6);
+                        drawActionBuffer.Add(accessors.Item6);
                     }
-                }
 
+                    if (depthTestActionBuffer.Capacity > depthTestActionBuffer.Count * 3 && depthTestActionBuffer.Count > 200)
+                    {
+                        depthTestActionBuffer.TrimExcess();
+                        inputActionBuffer.TrimExcess();
+                        drawActionBuffer.TrimExcess();
+                    }
+
+                    MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
+                    MyUtils.Swap(ref inputActionBuffer, ref inputActions);
+                    MyUtils.Swap(ref drawActionBuffer, ref drawActions);
+                }
             }
         }
     }
