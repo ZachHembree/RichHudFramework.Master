@@ -173,8 +173,8 @@ namespace RichHudFramework.UI
             hudChain.Register(this);
             chainHidesDisabled = hudChain is ScrollBox<TContainer, TElement>;
 
-            selectionBox = new HighlightBox();
-            highlightBox = new HighlightBox() { CanDrawTab = false };
+            selectionBox = new HighlightBox() { Visible = false };
+            highlightBox = new HighlightBox() { Visible = false, CanDrawTab = false };
 
             selectionBox.Register(hudChain, false, true);
             highlightBox.Register(hudChain, false, true);
