@@ -61,7 +61,7 @@ namespace RichHudFramework.Server
                 AutoResize = true,
                 BuilderMode = TextBuilderModes.Lined,
                 Scale = 0.8f,
-                Format = new GlyphFormat(Color.Orange)
+                Format = new GlyphFormat(new Color(255, 191, 0))
             };
 
             pageCategory = new TerminalPageCategory() 
@@ -171,6 +171,30 @@ namespace RichHudFramework.Server
 
                 overlay.SetText(statsBuilder);
 
+                var cursor = HudMain.Cursor as HudMain.HudCursor;
+
+                statsBuilder.Append($"\n\tCursor:\n");
+                statsBuilder.Append($"\t\tVisible: {cursor.Visible}\n");
+                statsBuilder.Append($"\t\tPosition: {cursor.ScreenPos}\n");
+                statsBuilder.Append($"\t\tCaptured: {cursor.IsCaptured}\n");
+
+                if (cursor.IsCaptured)
+                {
+                    var modName = cursor.CapturedElement(null, (int)HudElementAccessors.ModName) as string ?? "None";
+                    var type = cursor.CapturedElement(null, (int)HudElementAccessors.GetType) as Type;
+                    var ZOffset = (sbyte)cursor.CapturedElement(null, (int)HudElementAccessors.ZOffset);
+                    var fullZOffset = (ushort)cursor.CapturedElement(null, (int)HudElementAccessors.FullZOffset);
+                    var pos = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Position);
+                    var size = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Size);
+
+                    statsBuilder.Append($"\t\t\tMod: {modName}\n");
+                    statsBuilder.Append($"\t\t\tType: {type}\n");
+                    statsBuilder.Append($"\t\t\tZOffset: {ZOffset}\n");
+                    statsBuilder.Append($"\t\t\tFullZOffset: {fullZOffset}\n");
+                    statsBuilder.Append($"\t\t\tPosition: {pos}\n");
+                    statsBuilder.Append($"\t\t\tSize: {size}\n");
+                }
+
                 statsBuilder.Append($"\n\tBindManager:\n");
                 statsBuilder.Append($"\t\tControls Registered: {BindManager.Controls.Count}\n");
                 statsBuilder.Append($"\t\tClients Registered: {BindManager.Clients.Count}\n\n");
@@ -231,7 +255,7 @@ namespace RichHudFramework.Server
         {
             statsBuilder.Append($"\t\tHudMain:\n");
             statsBuilder.Append($"\t\t\tEnable Cursor: {client.enableCursor}\n");
-            statsBuilder.Append($"\t\t\tElements Registered: {client.UpdateAccessors.Count}\n\n");
+            statsBuilder.Append($"\t\t\tElements Updating: {client.UpdateAccessors.Count}\n\n");
         }
 
         private static void GetBindStats(BindManager.Client client, StringBuilder statsBuilder)
