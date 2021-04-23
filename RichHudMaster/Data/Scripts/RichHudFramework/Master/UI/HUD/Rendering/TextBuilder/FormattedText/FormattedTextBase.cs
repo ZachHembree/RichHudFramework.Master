@@ -143,7 +143,7 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <summary>
             /// Builds a list of <see cref="Line.RichChar"/>s from RichString data.
             /// </summary>
-            protected static void GetRichChars(RichStringMembers richString, Line charBuffer, GlyphFormat previous, bool allowSpecialChars)
+            protected static void GetRichChars(RichStringMembers richString, Line charBuffer, GlyphFormat? previous, bool allowSpecialChars)
             {
                 StringBuilder text = richString.Item1;
                 GlyphFormatMembers newFormat = richString.Item2;
@@ -151,13 +151,14 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 if (previous != null)
                 {
-                    bool formatEqual = previous.Data.Item1 == newFormat.Item1
-                        && previous.Data.Item2 == newFormat.Item2
-                        && previous.Data.Item3 == newFormat.Item3
-                        && previous.Data.Item4 == newFormat.Item4;
+                    var previousData = previous.Value.Data;
+                    bool formatEqual = previousData.Item1 == newFormat.Item1
+                        && previousData.Item2 == newFormat.Item2
+                        && previousData.Item3 == newFormat.Item3
+                        && previousData.Item4 == newFormat.Item4;
 
                     if (formatEqual)
-                        format = previous;
+                        format = previous.Value;
                     else
                         format = new GlyphFormat(newFormat);
                 }
@@ -177,7 +178,7 @@ namespace RichHudFramework.UI.Rendering.Server
             /// Returns the glyph formatting of the character immediately preceding the one
             /// at the index given, if it exists.
             /// </summary>
-            protected GlyphFormat GetPreviousFormat(Vector2I i)
+            protected GlyphFormat? GetPreviousFormat(Vector2I i)
             {
                 if (lines.TryGetLastIndex(i, out i))
                     return lines[i.X].FormattedGlyphs[i.Y].format;

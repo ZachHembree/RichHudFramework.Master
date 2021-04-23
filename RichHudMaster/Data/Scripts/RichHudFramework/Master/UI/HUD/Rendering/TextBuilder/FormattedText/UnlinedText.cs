@@ -56,7 +56,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 start.X = 0;
                 start = ClampIndex(start);
-                GlyphFormat previous = GetPreviousFormat(start);
+                GlyphFormat? previous = GetPreviousFormat(start);
                 charBuffer.Clear();
 
                 for (int n = 0; n < text.Count; n++)

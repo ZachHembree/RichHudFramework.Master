@@ -605,39 +605,44 @@ namespace RichHudFramework
 
                         if (line.Count > 0)
                         {
-                            GlyphFormat format = line.FormattedGlyphs[0].format;
+                            GlyphFormatMembers formatData = line.FormattedGlyphs[0].format.Data;
                             int startCh = 0;
 
                             for (int ch = 0; ch < lines[ln].Count; ch++)
                             {
-                                GlyphFormat nextFormat = null;
+                                GlyphFormatMembers? nextFormat = null;
 
                                 if (ch != line.Count - 1)
-                                    nextFormat = line.FormattedGlyphs[ch + 1].format;
+                                    nextFormat = line.FormattedGlyphs[ch + 1].format.Data;
 
-                                if (format != nextFormat)
+                                bool formatEqual = nextFormat != null && formatData.Item1 == nextFormat.Value.Item1
+                                    && formatData.Item2 == nextFormat.Value.Item2
+                                    && formatData.Item3 == nextFormat.Value.Item3
+                                    && formatData.Item4 == nextFormat.Value.Item4;
+
+                                if (formatEqual)
                                 {
-                                    if ((format.FontStyle & FontStyles.Underline) > 0)
+                                    if (((FontStyles)formatData.Item3.Y & FontStyles.Underline) > 0)
                                     {
                                         GlyphLocData start = line.LocData[startCh], end = line.LocData[ch];
                                         Vector2 pos = new Vector2
                                         (
                                             (start.bbOffset.X + end.bbOffset.X) / 2f,
-                                            end.bbOffset.Y - (end.chSize.Y / 2f - (1f * format.TextSize))
+                                            end.bbOffset.Y - (end.chSize.Y / 2f - (1f * formatData.Item2))
                                         );
 
                                         Vector2 size = new Vector2
                                         (
                                             (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) / 2f,
-                                            Math.Max((int)format.TextSize, 1)
+                                            Math.Max((int)formatData.Item2, 1)
                                         );
 
-                                        Vector4 color = QuadBoard.GetQuadBoardColor(format.Color) * .9f;
+                                        Vector4 color = QuadBoard.GetQuadBoardColor(formatData.Item4) * .9f;
                                         underlines.Add(new UnderlineBoard(size, pos, color));
                                     }
 
                                     startCh = ch;
-                                    format = nextFormat;
+                                    formatData = nextFormat.Value;
                                 }
                             }
                         }

@@ -14,7 +14,7 @@ namespace RichHudFramework
         /// <summary>
         /// Defines the formatting of the characters in rich text types.
         /// </summary>
-        public class GlyphFormat
+        public struct GlyphFormat
         {
             public static readonly GlyphFormat 
                 Black = new GlyphFormat(),
@@ -52,7 +52,7 @@ namespace RichHudFramework
             /// </summary>
             public Color Color => Data.Item4;
 
-            public GlyphFormatMembers Data { get; protected set; }
+            public GlyphFormatMembers Data { get; }
 
             public GlyphFormat(Color color = default(Color), TextAlignment alignment = TextAlignment.Left, float textSize = 1f, Vector2I fontStyle = default(Vector2I))
             {
@@ -129,17 +129,23 @@ namespace RichHudFramework
             /// </summary>
             public override bool Equals(object obj)
             {
-                var format = obj as GlyphFormat;
-
-                if (format != null)
-                {
-                    return Data.Item1 == format.Data.Item1
-                        && Data.Item2 == format.Data.Item2
-                        && Data.Item3 == format.Data.Item3
-                        && Data.Item4 == format.Data.Item4;
-                }
-                else
+                if (obj == null)
                     return false;
+
+                var format = (GlyphFormat)obj;
+
+                return Data.Item1 == format.Data.Item1
+                    && Data.Item2 == format.Data.Item2
+                    && Data.Item3 == format.Data.Item3
+                    && Data.Item4 == format.Data.Item4;
+            }
+
+            public bool DataEqual(GlyphFormatMembers data)
+            {
+                return Data.Item1 == data.Item1
+                    && Data.Item2 == data.Item2
+                    && Data.Item3 == data.Item3
+                    && Data.Item4 == data.Item4;
             }
 
             public override int GetHashCode() =>

@@ -97,8 +97,6 @@ namespace RichHudFramework
                 private readonly ObjectPool<StringBuilder> sbPool;
                 private RichText lastText;
                 private List<RichStringMembers> lastTextData;
-                protected readonly ReusableGlyphFormat clientFormat, tempFormat;
-                private bool canReuseFormatting;
 
                 public TextBuilder()
                 {
@@ -106,9 +104,6 @@ namespace RichHudFramework
                     sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
                     BuilderMode = TextBuilderModes.Unlined;
                     Format = GlyphFormat.White;
-
-                    clientFormat = new ReusableGlyphFormat();
-                    tempFormat = new ReusableGlyphFormat();
                 }
 
                 protected virtual void AfterTextUpdate()
@@ -135,7 +130,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Clears current text and appends a copy of the <see cref="StringBuilder"/> given.
                 /// </summary>
-                public void SetText(StringBuilder text, GlyphFormat format = null)
+                public void SetText(StringBuilder text, GlyphFormat? format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
@@ -148,7 +143,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Clears current text and appends a copy of the <see cref="string"/> given.
                 /// </summary>
-                public void SetText(string text, GlyphFormat format = null)
+                public void SetText(string text, GlyphFormat? format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
@@ -175,12 +170,11 @@ namespace RichHudFramework
 
                     lastTextData = text as List<RichStringMembers>;
 
-                    if (!IsTextEqual(lastTextData))
+                    if (!GetIsTextEqual(lastTextData))
                     {
                         Clear();
                         formatter.Append(text);
                         AfterTextUpdate();
-                        canReuseFormatting = false;
                     }
                 }
 
@@ -195,7 +189,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Appends a copy of the text in the <see cref="StringBuilder"/>
                 /// </summary>
-                public void Append(StringBuilder text, GlyphFormat format = null)
+                public void Append(StringBuilder text, GlyphFormat? format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
@@ -208,7 +202,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Appends a copy of the <see cref="string"/>
                 /// </summary>
-                public void Append(string text, GlyphFormat format = null)
+                public void Append(string text, GlyphFormat? format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
@@ -221,7 +215,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Appends the given <see cref="char"/>
                 /// </summary>
-                public void Append(char ch, GlyphFormat format = null)
+                public void Append(char ch, GlyphFormat? format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
@@ -248,7 +242,6 @@ namespace RichHudFramework
 
                     formatter.Append(text);
                     AfterTextUpdate();
-                    canReuseFormatting = false;
                 }
 
                 /// <summary>
@@ -262,7 +255,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Inserts a copy of the given <see cref="StringBuilder"/> starting at the specified starting index
                 /// </summary>
-                public void Insert(StringBuilder text, Vector2I start, GlyphFormat format = null)
+                public void Insert(StringBuilder text, Vector2I start, GlyphFormat? format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
@@ -275,7 +268,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Inserts a copy of the given <see cref="string"/> starting at the specified starting index
                 /// </summary>
-                public void Insert(string text, Vector2I start, GlyphFormat format = null)
+                public void Insert(string text, Vector2I start, GlyphFormat? format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
@@ -288,7 +281,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Inserts the given <see cref="char"/> starting at the specified starting index
                 /// </summary>
-                public void Insert(char ch, Vector2I start, GlyphFormat format = null)
+                public void Insert(char ch, Vector2I start, GlyphFormat? format = null)
                 {
                     if (lastText == null)
                         lastText = new RichText();
@@ -315,7 +308,6 @@ namespace RichHudFramework
 
                     formatter.Insert(text, start);
                     AfterTextUpdate();
-                    canReuseFormatting = false;
                 }
 
                 /// <summary>
@@ -337,20 +329,11 @@ namespace RichHudFramework
 
                 protected void SetFormattingData(Vector2I start, Vector2I end, GlyphFormatMembers format)
                 {
-                    bool formatEqual = Format.Data.Item1 == format.Item1
-                        && Format.Data.Item2 == format.Item2
-                        && Format.Data.Item3 == format.Item3
-                        && Format.Data.Item4 == format.Item4;
-
-                    tempFormat.SetFormat(format);
-
-                    if (!(canReuseFormatting && formatEqual))
+                    if (!GetIsFormatEqual(format, start, end))
                     {
-                        formatter.SetFormatting(start, end, tempFormat);
+                        formatter.SetFormatting(start, end, new GlyphFormat(format));
                         AfterTextUpdate();
-                    }
-                    
-                    canReuseFormatting = true;
+                    }                    
                 }
 
                 /// <summary>
@@ -362,7 +345,7 @@ namespace RichHudFramework
                     {
                         List<RichStringMembers> nextTextData;
 
-                        if (!IsTextEqual(lastTextData))
+                        if (!GetIsTextEqual(lastTextData))
                         {
                             Vector2I end = new Vector2I(lines.Count - 1, lines[lines.Count - 1].Count - 1);
                             nextTextData = GetTextRangeData(Vector2I.Zero, end);
@@ -423,7 +406,6 @@ namespace RichHudFramework
                 {
                     formatter.RemoveRange(start, end);
                     AfterTextUpdate();
-                    canReuseFormatting = false;
                 }
 
                 /// <summary>
@@ -435,16 +417,52 @@ namespace RichHudFramework
                     {
                         formatter.Clear();
                         AfterTextUpdate();
-                        canReuseFormatting = false;
                     }
                 }
 
-                protected bool IsTextEqual(List<RichStringMembers> text)
+                /// <summary>
+                /// Compares text formatting in the given range to the new formatting given and returns true
+                /// if the formatting is equivalent.
+                /// </summary>
+                protected bool GetIsFormatEqual(GlyphFormatMembers newFormat, Vector2I start, Vector2I end)
                 {
-                    if (IsTextLengthEqual(text))
+                    Vector2I i = start;
+
+                    for (int x = start.X; x < lines.Count; x++)
+                    {
+                        int chStart = x == start.X ? start.Y : 0;
+
+                        for (int y = chStart; y < lines[x].Count; y++)
+                        {
+                            // Compare formatting
+                            GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
+
+                            bool formatEqual = currentFormat.Data.Item1 == newFormat.Item1
+                                && currentFormat.Data.Item2 == newFormat.Item2
+                                && currentFormat.Data.Item3 == newFormat.Item3
+                                && currentFormat.Data.Item4 == newFormat.Item4;
+
+                            if (!formatEqual)
+                                return false;
+
+                            lines.TryGetNextIndex(i, out i);
+
+                            if (i.X > start.X || i.Y > end.Y)
+                                break;
+                        }
+                    }
+
+                    return true;
+                }
+
+                /// <summary>
+                /// Returns true if the text supplied is equivalent to the contents of the TextBuilder
+                /// </summary>
+                protected bool GetIsTextEqual(IReadOnlyList<RichStringMembers> text)
+                {
+                    if (GetIsTextLengthEqual(text))
                     {
                         Vector2I i = Vector2I.Zero;
-                        GlyphFormat lastFormat = null;
 
                         for (int x = 0; x < text.Count; x++)
                         {
@@ -456,18 +474,13 @@ namespace RichHudFramework
                                 // Compare formatting
                                 GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
 
-                                if (lastFormat == null || lastFormat != currentFormat)
-                                {
-                                    bool formatEqual = currentFormat.Data.Item1 == newFormat.Item1
-                                        && currentFormat.Data.Item2 == newFormat.Item2
-                                        && currentFormat.Data.Item3 == newFormat.Item3
-                                        && currentFormat.Data.Item4 == newFormat.Item4;
+                                bool formatEqual = currentFormat.Data.Item1 == newFormat.Item1
+                                    && currentFormat.Data.Item2 == newFormat.Item2
+                                    && currentFormat.Data.Item3 == newFormat.Item3
+                                    && currentFormat.Data.Item4 == newFormat.Item4;
 
-                                    if (formatEqual)
-                                        lastFormat = currentFormat;
-                                    else
-                                        return false;
-                                }
+                                if (!formatEqual)
+                                    return false;
 
                                 // Compare text
                                 char ch = lines[i.X].Chars[i.Y];
@@ -489,7 +502,7 @@ namespace RichHudFramework
                 /// Returns true if the text supplied has the same number of characters as
                 /// the text builder.
                 /// </summary>
-                private bool IsTextLengthEqual(List<RichStringMembers> text)
+                protected bool GetIsTextLengthEqual(IReadOnlyList<RichStringMembers> text)
                 {
                     int newTextLength = 0, currentLength = 0;
 
@@ -552,8 +565,7 @@ namespace RichHudFramework
                                     return Format.Data;
                                 else
                                 {
-                                    clientFormat.SetFormat((GlyphFormatMembers)data);
-                                    Format = clientFormat;
+                                    Format = new GlyphFormat((GlyphFormatMembers)data);
                                     break;
                                 }
                             }
@@ -635,14 +647,6 @@ namespace RichHudFramework
                     }
 
                     return sb.ToString();
-                }
-
-                protected class ReusableGlyphFormat : GlyphFormat
-                { 
-                    public void SetFormat(GlyphFormatMembers data)
-                    {
-                        this.Data = data;
-                    }
                 }
             }
         }
