@@ -61,7 +61,7 @@ namespace RichHudFramework
             {
                 this.defaultFormat = defaultFormat ?? GlyphFormat.Empty;
                 apiData = new List<RichStringMembers>();
-                apiData.Add(new RichStringMembers(new StringBuilder(text), this.defaultFormat.data));
+                apiData.Add(new RichStringMembers(new StringBuilder(text), this.defaultFormat.Data));
             }
 
             /// <summary>
@@ -140,11 +140,11 @@ namespace RichHudFramework
                     sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
 
                 List<RichStringMembers> richStrings = apiData;
-                GlyphFormatMembers format = newFormat?.data ?? defaultFormat?.data ?? GlyphFormat.Empty.data;
+                GlyphFormatMembers format = newFormat?.Data ?? defaultFormat?.Data ?? GlyphFormat.Empty.Data;
                 StringBuilder sb;
                 bool formatEqual;
 
-                GetNextStringBuilder(newFormat?.data ?? GlyphFormat.Empty.data, out sb, out formatEqual);
+                GetNextStringBuilder(newFormat?.Data ?? GlyphFormat.Empty.Data, out sb, out formatEqual);
 
                 // If format is equal, reuse last StringBuilder
                 if (!formatEqual)
@@ -175,11 +175,11 @@ namespace RichHudFramework
                     sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
 
                 List<RichStringMembers> richStrings = apiData;
-                GlyphFormatMembers format = newFormat?.data ?? defaultFormat?.data ?? GlyphFormat.Empty.data;
+                GlyphFormatMembers format = newFormat?.Data ?? defaultFormat?.Data ?? GlyphFormat.Empty.Data;
                 StringBuilder sb;
                 bool formatEqual;
 
-                GetNextStringBuilder(newFormat?.data ?? GlyphFormat.Empty.data, out sb, out formatEqual);
+                GetNextStringBuilder(newFormat?.Data ?? GlyphFormat.Empty.Data, out sb, out formatEqual);
 
                 // If format is equal, reuse last StringBuilder
                 if (!formatEqual)
@@ -201,11 +201,11 @@ namespace RichHudFramework
                     sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
 
                 List<RichStringMembers> richStrings = apiData;
-                GlyphFormatMembers format = newFormat?.data ?? defaultFormat?.data ?? GlyphFormat.Empty.data;
+                GlyphFormatMembers format = newFormat?.Data ?? defaultFormat?.Data ?? GlyphFormat.Empty.Data;
                 StringBuilder sb;
                 bool formatEqual;
 
-                GetNextStringBuilder(newFormat?.data ?? GlyphFormat.Empty.data, out sb, out formatEqual);
+                GetNextStringBuilder(newFormat?.Data ?? GlyphFormat.Empty.Data, out sb, out formatEqual);
 
                 // If format is equal, reuse last StringBuilder
                 if (!formatEqual)

@@ -151,10 +151,10 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 if (previous != null)
                 {
-                    bool formatEqual = previous.data.Item1 == newFormat.Item1
-                        && previous.data.Item2 == newFormat.Item2
-                        && previous.data.Item3 == newFormat.Item3
-                        && previous.data.Item4 == newFormat.Item4;
+                    bool formatEqual = previous.Data.Item1 == newFormat.Item1
+                        && previous.Data.Item2 == newFormat.Item2
+                        && previous.Data.Item3 == newFormat.Item3
+                        && previous.Data.Item4 == newFormat.Item4;
 
                     if (formatEqual)
                         format = previous;

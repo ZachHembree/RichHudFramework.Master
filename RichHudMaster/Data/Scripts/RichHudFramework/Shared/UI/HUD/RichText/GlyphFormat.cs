@@ -25,51 +25,51 @@ namespace RichHudFramework
             /// <summary>
             /// Determines the alignment (left, center, right) of a given piece of RichText.
             /// </summary>
-            public TextAlignment Alignment => (TextAlignment)data.Item1;
+            public TextAlignment Alignment => (TextAlignment)Data.Item1;
 
             /// <summary>
             /// Text size
             /// </summary>
-            public float TextSize => data.Item2;
+            public float TextSize => Data.Item2;
 
             /// <summary>
             /// Font specified by the format.
             /// </summary>
-            public IFontMin Font => FontManager.GetFont(data.Item3.X);
+            public IFontMin Font => FontManager.GetFont(Data.Item3.X);
 
             /// <summary>
             /// The font style specifed by the format.
             /// </summary>
-            public FontStyles FontStyle => (FontStyles)data.Item3.Y;
+            public FontStyles FontStyle => (FontStyles)Data.Item3.Y;
 
             /// <summary>
             /// The font and style used by the format represented as a pair of integers.
             /// </summary>
-            public Vector2I StyleIndex => data.Item3;
+            public Vector2I StyleIndex => Data.Item3;
 
             /// <summary>
             /// Text color
             /// </summary>
-            public Color Color => data.Item4;
+            public Color Color => Data.Item4;
 
-            public readonly GlyphFormatMembers data;
+            public GlyphFormatMembers Data { get; protected set; }
 
             public GlyphFormat(Color color = default(Color), TextAlignment alignment = TextAlignment.Left, float textSize = 1f, Vector2I fontStyle = default(Vector2I))
             {
                 if (color == default(Color))
                     color = Color.Black;
 
-                data = new GlyphFormatMembers((byte)alignment, textSize, fontStyle, color);
+                Data = new GlyphFormatMembers((byte)alignment, textSize, fontStyle, color);
             }
 
             public GlyphFormat(GlyphFormatMembers data)
             {
-                this.data = data;
+                this.Data = data;
             }
 
             public GlyphFormat(GlyphFormat original)
             {
-                data = original.data;
+                Data = original.Data;
             }
 
             /// <summary>
@@ -133,17 +133,17 @@ namespace RichHudFramework
 
                 if (format != null)
                 {
-                    return data.Item1 == format.data.Item1
-                        && data.Item2 == format.data.Item2
-                        && data.Item3 == format.data.Item3
-                        && data.Item4 == format.data.Item4;
+                    return Data.Item1 == format.Data.Item1
+                        && Data.Item2 == format.Data.Item2
+                        && Data.Item3 == format.Data.Item3
+                        && Data.Item4 == format.Data.Item4;
                 }
                 else
                     return false;
             }
 
             public override int GetHashCode() =>
-                data.GetHashCode();
+                Data.GetHashCode();
         }
     }
 }

@@ -176,14 +176,14 @@ namespace RichHudFramework
                             GlyphFormat format = formattedGlyphs[ch].format;
                             GlyphFormatMembers lastFormat = lastString.Item2;
                             bool formatEqual = lastString.Item1 != null
-                                && lastFormat.Item1 == format.data.Item1
-                                && lastFormat.Item2 == format.data.Item2
-                                && lastFormat.Item3 == format.data.Item3
-                                && lastFormat.Item4 == format.data.Item4;
+                                && lastFormat.Item1 == format.Data.Item1
+                                && lastFormat.Item2 == format.Data.Item2
+                                && lastFormat.Item3 == format.Data.Item3
+                                && lastFormat.Item4 == format.Data.Item4;
 
                             sb = formatEqual ? lastString.Item1 : builder.sbPool.Get();
                             sb.Append(chars[ch]);
-                            var nextString = new RichStringMembers(sb, format.data);
+                            var nextString = new RichStringMembers(sb, format.Data);
 
                             if (lastString.Item1 != nextString.Item1)
                                 text.Add(nextString);

@@ -97,6 +97,7 @@ namespace RichHudFramework
                 private readonly ObjectPool<StringBuilder> sbPool;
                 private RichText lastText;
                 private List<RichStringMembers> lastTextData;
+                protected readonly ReusableGlyphFormat clientFormat, tempFormat;
                 private bool canReuseFormatting;
 
                 public TextBuilder()
@@ -105,6 +106,9 @@ namespace RichHudFramework
                     sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
                     BuilderMode = TextBuilderModes.Unlined;
                     Format = GlyphFormat.White;
+
+                    clientFormat = new ReusableGlyphFormat();
+                    tempFormat = new ReusableGlyphFormat();
                 }
 
                 protected virtual void AfterTextUpdate()
@@ -159,14 +163,14 @@ namespace RichHudFramework
                     for (int n = 0; n < text.Count; n++)
                     {
                         GlyphFormatMembers format = text[n].Item2,
-                            empty = GlyphFormat.Empty.data;
+                            empty = GlyphFormat.Empty.Data;
                         bool formatEmpty = format.Item1 == empty.Item1
                             && format.Item2 == empty.Item2
                             && format.Item3 == empty.Item3
                             && format.Item4 == empty.Item4;
 
                         if (formatEmpty)
-                            text[n] = new RichStringMembers(text[n].Item1, Format.data);
+                            text[n] = new RichStringMembers(text[n].Item1, Format.Data);
                     }
 
                     lastTextData = text as List<RichStringMembers>;
@@ -232,14 +236,14 @@ namespace RichHudFramework
                     for (int n = 0; n < text.Count; n++)
                     {
                         GlyphFormatMembers format = text[n].Item2,
-                            empty = GlyphFormat.Empty.data;
+                            empty = GlyphFormat.Empty.Data;
                         bool formatEmpty = format.Item1 == empty.Item1
                             && format.Item2 == empty.Item2
                             && format.Item3 == empty.Item3
                             && format.Item4 == empty.Item4;
 
                         if (formatEmpty)
-                            text[n] = new RichStringMembers(text[n].Item1, Format.data);
+                            text[n] = new RichStringMembers(text[n].Item1, Format.Data);
                     }
 
                     formatter.Append(text);
@@ -299,14 +303,14 @@ namespace RichHudFramework
                     for (int n = 0; n < text.Count; n++)
                     {
                         GlyphFormatMembers format = text[n].Item2,
-                            empty = GlyphFormat.Empty.data;
+                            empty = GlyphFormat.Empty.Data;
                         bool formatEmpty = format.Item1 == empty.Item1
                             && format.Item2 == empty.Item2
                             && format.Item3 == empty.Item3
                             && format.Item4 == empty.Item4;
 
                         if (formatEmpty)
-                            text[n] = new RichStringMembers(text[n].Item1, Format.data);
+                            text[n] = new RichStringMembers(text[n].Item1, Format.Data);
                     }
 
                     formatter.Insert(text, start);
@@ -319,28 +323,30 @@ namespace RichHudFramework
                 /// </summary>
                 public void SetFormatting(GlyphFormat format)
                 {
+                    Format = format;
+
                     if (lines.Count > 0 && lines[lines.Count - 1].Count > 0)
-                        SetFormattingData(Vector2I.Zero, new Vector2I(lines.Count - 1, lines[lines.Count - 1].Count - 1), format.data);
+                        SetFormattingData(Vector2I.Zero, new Vector2I(lines.Count - 1, lines[lines.Count - 1].Count - 1), format.Data);
                 }
 
                 /// <summary>
                 /// Changes the formatting for the text within the given range to the given format.
                 /// </summary>
                 public void SetFormatting(Vector2I start, Vector2I end, GlyphFormat format) =>
-                    SetFormattingData(start, end, format.data);
+                    SetFormattingData(start, end, format.Data);
 
                 protected void SetFormattingData(Vector2I start, Vector2I end, GlyphFormatMembers format)
                 {
-                    bool formatEqual = Format.data.Item1 == format.Item1
-                        && Format.data.Item2 == format.Item2
-                        && Format.data.Item3 == format.Item3
-                        && Format.data.Item4 == format.Item4;
+                    bool formatEqual = Format.Data.Item1 == format.Item1
+                        && Format.Data.Item2 == format.Item2
+                        && Format.Data.Item3 == format.Item3
+                        && Format.Data.Item4 == format.Item4;
 
-                    Format = new GlyphFormat(format);
+                    tempFormat.SetFormat(format);
 
                     if (!(canReuseFormatting && formatEqual))
                     {
-                        formatter.SetFormatting(start, end, Format);
+                        formatter.SetFormatting(start, end, tempFormat);
                         AfterTextUpdate();
                     }
                     
@@ -452,10 +458,10 @@ namespace RichHudFramework
 
                                 if (lastFormat == null || lastFormat != currentFormat)
                                 {
-                                    bool formatEqual = currentFormat.data.Item1 == newFormat.Item1
-                                        && currentFormat.data.Item2 == newFormat.Item2
-                                        && currentFormat.data.Item3 == newFormat.Item3
-                                        && currentFormat.data.Item4 == newFormat.Item4;
+                                    bool formatEqual = currentFormat.Data.Item1 == newFormat.Item1
+                                        && currentFormat.Data.Item2 == newFormat.Item2
+                                        && currentFormat.Data.Item3 == newFormat.Item3
+                                        && currentFormat.Data.Item4 == newFormat.Item4;
 
                                     if (formatEqual)
                                         lastFormat = currentFormat;
@@ -543,11 +549,13 @@ namespace RichHudFramework
                         case TextBuilderAccessors.Format:
                             {
                                 if (data == null)
-                                    return Format.data;
+                                    return Format.Data;
                                 else
-                                    Format = new GlyphFormat((GlyphFormatMembers)data);
-
-                                break;
+                                {
+                                    clientFormat.SetFormat((GlyphFormatMembers)data);
+                                    Format = clientFormat;
+                                    break;
+                                }
                             }
                         case TextBuilderAccessors.ToString:
                             return ToString();
@@ -584,7 +592,7 @@ namespace RichHudFramework
                         case RichCharAccessors.Ch:
                             return lines[i.X].Chars[i.Y];
                         case RichCharAccessors.Format:
-                            return lines[i.X].FormattedGlyphs[i.Y].format.data;
+                            return lines[i.X].FormattedGlyphs[i.Y].format.Data;
                         case RichCharAccessors.Offset:
                             return lines[i.X].LocData[i.Y].bbOffset * Scale;
                         case RichCharAccessors.Size:
@@ -627,6 +635,14 @@ namespace RichHudFramework
                     }
 
                     return sb.ToString();
+                }
+
+                protected class ReusableGlyphFormat : GlyphFormat
+                { 
+                    public void SetFormat(GlyphFormatMembers data)
+                    {
+                        this.Data = data;
+                    }
                 }
             }
         }
