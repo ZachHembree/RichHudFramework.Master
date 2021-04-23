@@ -358,10 +358,20 @@ namespace RichHudFramework
                 /// <summary>
                 /// Called when the text builder is updated
                 /// </summary>
-                protected override void AfterTextUpdate()
+                protected override void AfterFullTextUpdate()
                 {
                     UpdateOffsets();
                     updateEvent = true;
+
+                    base.AfterFullTextUpdate();
+                }
+
+                protected override void AfterColorUpdate()
+                {
+                    base.AfterColorUpdate();
+
+                    if (lines.Count > 0)
+                        UpdateUnderlines();
                 }
 
                 /// <summary>
@@ -421,8 +431,6 @@ namespace RichHudFramework
                         int visRange = endLine - startLine;
                         underlines.Clear();
                         underlines.EnsureCapacity(visRange);
-
-                        UpdateUnderlines();
 
                         if (visRange > 9 && underlines.Capacity > 3 * underlines.Count && underlines.Capacity > visRange)
                             underlines.TrimExcess();

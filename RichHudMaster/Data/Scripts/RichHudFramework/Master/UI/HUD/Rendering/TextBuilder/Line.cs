@@ -118,22 +118,30 @@ namespace RichHudFramework
                     /// <summary>
                     /// Sets the formatting for the given range of characters
                     /// </summary>
-                    public void SetFormatting(GlyphFormat format)
+                    public void SetFormatting(GlyphFormat format, bool onlyChangeColor)
                     {
-                        SetFormatting(0, chars.Count, format);
+                        SetFormatting(0, chars.Count, format, onlyChangeColor);
                     }
 
                     /// <summary>
                     /// Sets the formatting for the given range of characters in the line
                     /// </summary>
-                    public void SetFormatting(int start, int end, GlyphFormat format)
+                    public void SetFormatting(int start, int end, GlyphFormat format, bool onlyChangeColor)
                     {
                         for (int n = start; n <= end; n++)
                         {
-                            if (!formattedGlyphs[n].format.Equals(format))
+                            if (onlyChangeColor)
                             {
-                                IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
-                                float scale = format.TextSize * fontStyle.FontScale;
+                                var quadBoard = glyphBoards[n];
+                                quadBoard.bbColor = QuadBoard.GetQuadBoardColor(format.Color);
+
+                                glyphBoards[n] = quadBoard;
+                                formattedGlyphs[n] = new FormattedGlyph(formattedGlyphs[n].glyph, format);
+                            }
+                            else if (!formattedGlyphs[n].format.Equals(format))
+                            {
+                                IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
+                                float scale = format.Data.Item2 * fontStyle.FontScale;
                                 Glyph glyph = fontStyle[chars[n]];
                                 Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * scale;
 
@@ -147,9 +155,9 @@ namespace RichHudFramework
                     /// <summary>
                     /// Sets the formatting of the character at the given index.
                     /// </summary>
-                    public void SetFormattingAt(int index, GlyphFormat format)
+                    public void SetFormattingAt(int index, GlyphFormat format, bool onlyChangeColor)
                     {
-                        SetFormatting(index, index, format);
+                        SetFormatting(index, index, format, onlyChangeColor);
                     }
 
                     public void SetOffsetAt(int index, Vector2 offset)
@@ -223,7 +231,7 @@ namespace RichHudFramework
                     public void InsertNew(int index, char ch, GlyphFormat format)
                     {
                         IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
-                        float scale = format.TextSize * fontStyle.FontScale;
+                        float scale = format.Data.Item2 * fontStyle.FontScale;
                         Glyph glyph = fontStyle[ch];
                         Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * scale;
 

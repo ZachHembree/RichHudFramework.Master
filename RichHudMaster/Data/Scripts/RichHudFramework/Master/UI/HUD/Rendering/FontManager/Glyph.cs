@@ -44,8 +44,8 @@ namespace RichHudFramework
                     (
                         matFrame.Material.TextureID,
                         matAlignment,
-                        format.Color,
-                        (format.FontStyle & FontStyles.Italic) > 0 ? .4f : 0f
+                        format.Data.Item4,
+                        ((FontStyles)format.Data.Item3.Y & FontStyles.Italic) > 0 ? .4f : 0f
                     );
                 }
             }

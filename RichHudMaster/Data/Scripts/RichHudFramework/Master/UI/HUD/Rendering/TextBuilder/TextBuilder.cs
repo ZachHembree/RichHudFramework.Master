@@ -79,7 +79,7 @@ namespace RichHudFramework
                             }
 
                             if (formatter != null)
-                                AfterTextUpdate();
+                                AfterFullTextUpdate();
 
                             formatter = newFormatter;
                             builderMode = value;
@@ -106,7 +106,12 @@ namespace RichHudFramework
                     Format = GlyphFormat.White;
                 }
 
-                protected virtual void AfterTextUpdate()
+                protected virtual void AfterFullTextUpdate()
+                {
+                    AfterColorUpdate();
+                }
+
+                protected virtual void AfterColorUpdate()
                 { }
 
                 protected void SetWrapWidth(float width)
@@ -114,7 +119,7 @@ namespace RichHudFramework
                     if (BuilderMode == TextBuilderModes.Wrapped && (width < wrappedText.MaxLineWidth - 2f || width > wrappedText.MaxLineWidth + 4f))
                     {
                         wrappedText.SetWrapWidth(width);
-                        AfterTextUpdate();
+                        AfterFullTextUpdate();
                     }
                 }
 
@@ -174,7 +179,7 @@ namespace RichHudFramework
                     {
                         Clear();
                         formatter.Append(text);
-                        AfterTextUpdate();
+                        AfterFullTextUpdate();
                     }
                 }
 
@@ -241,7 +246,7 @@ namespace RichHudFramework
                     }
 
                     formatter.Append(text);
-                    AfterTextUpdate();
+                    AfterFullTextUpdate();
                 }
 
                 /// <summary>
@@ -307,7 +312,7 @@ namespace RichHudFramework
                     }
 
                     formatter.Insert(text, start);
-                    AfterTextUpdate();
+                    AfterFullTextUpdate();
                 }
 
                 /// <summary>
@@ -329,11 +334,19 @@ namespace RichHudFramework
 
                 protected void SetFormattingData(Vector2I start, Vector2I end, GlyphFormatMembers format)
                 {
-                    if (!GetIsFormatEqual(format, start, end))
+                    bool isOtherEqual, isColorEqual;
+                    GetIsFormatEqual(format, start, end, out isOtherEqual, out isColorEqual);
+
+                    if (isOtherEqual && !isColorEqual)
                     {
-                        formatter.SetFormatting(start, end, new GlyphFormat(format));
-                        AfterTextUpdate();
-                    }                    
+                        formatter.SetFormatting(start, end, new GlyphFormat(format), true);
+                        AfterColorUpdate();
+                    }
+                    else if (!isOtherEqual)
+                    {
+                        formatter.SetFormatting(start, end, new GlyphFormat(format), false);
+                        AfterFullTextUpdate();
+                    }
                 }
 
                 /// <summary>
@@ -405,7 +418,7 @@ namespace RichHudFramework
                 public void RemoveRange(Vector2I start, Vector2I end)
                 {
                     formatter.RemoveRange(start, end);
-                    AfterTextUpdate();
+                    AfterFullTextUpdate();
                 }
 
                 /// <summary>
@@ -416,7 +429,7 @@ namespace RichHudFramework
                     if (lines.Count > 0)
                     {
                         formatter.Clear();
-                        AfterTextUpdate();
+                        AfterFullTextUpdate();
                     }
                 }
 
@@ -424,9 +437,11 @@ namespace RichHudFramework
                 /// Compares text formatting in the given range to the new formatting given and returns true
                 /// if the formatting is equivalent.
                 /// </summary>
-                protected bool GetIsFormatEqual(GlyphFormatMembers newFormat, Vector2I start, Vector2I end)
+                protected void GetIsFormatEqual(GlyphFormatMembers newFormat, Vector2I start, Vector2I end, out bool isOtherEqual, out bool isColorEqual)
                 {
                     Vector2I i = start;
+                    isOtherEqual = false;
+                    isColorEqual = true;
 
                     for (int x = start.X; x < lines.Count; x++)
                     {
@@ -437,13 +452,15 @@ namespace RichHudFramework
                             // Compare formatting
                             GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
 
-                            bool formatEqual = currentFormat.Data.Item1 == newFormat.Item1
+                            isOtherEqual = currentFormat.Data.Item1 == newFormat.Item1
                                 && currentFormat.Data.Item2 == newFormat.Item2
-                                && currentFormat.Data.Item3 == newFormat.Item3
-                                && currentFormat.Data.Item4 == newFormat.Item4;
+                                && currentFormat.Data.Item3 == newFormat.Item3;
 
-                            if (!formatEqual)
-                                return false;
+                            if (currentFormat.Data.Item4 != newFormat.Item4)
+                                isColorEqual = false;
+
+                            if (!isOtherEqual)
+                                break;
 
                             lines.TryGetNextIndex(i, out i);
 
@@ -451,8 +468,6 @@ namespace RichHudFramework
                                 break;
                         }
                     }
-
-                    return true;
                 }
 
                 /// <summary>
