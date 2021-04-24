@@ -107,9 +107,7 @@ namespace RichHudFramework
                 }
 
                 protected virtual void AfterFullTextUpdate()
-                {
-                    AfterColorUpdate();
-                }
+                { }
 
                 protected virtual void AfterColorUpdate()
                 { }

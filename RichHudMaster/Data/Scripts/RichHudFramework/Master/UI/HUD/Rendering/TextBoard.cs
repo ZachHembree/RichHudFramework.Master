@@ -304,7 +304,7 @@ namespace RichHudFramework
                         updateEvent = false;
                     }
 
-                    offset += _textOffset * Scale;
+                    Vector2 glyphOffset = offset + _textOffset * Scale;
 
                     float min = -_size.X / 2f - 2f, max = -min;
 
@@ -324,7 +324,7 @@ namespace RichHudFramework
 
                             if ((xPos - edge) >= min && (xPos + edge) <= max)
                             {
-                                Vector2 glyphPos = offset + locData.bbOffset * Scale;
+                                Vector2 glyphPos = glyphOffset + locData.bbOffset * Scale;
 
                                 glyphBoard.Draw((locData.bbSize * Scale), glyphPos, ref matrix);
                             }
@@ -332,14 +332,11 @@ namespace RichHudFramework
                     }
 
                     QuadBoard underlineBoard = QuadBoard.Default;
-                    offset /= Scale;
-                    min += offset.X;
-                    max += offset.X;
 
                     // Draw underlines
                     for (int n = 0; n < underlines.Count; n++)
                     {
-                        Vector2 bbPos = offset + underlines[n].offset;
+                        Vector2 bbPos = _textOffset + underlines[n].offset;
                         Vector2 bbSize = underlines[n].size;
 
                         // Calculate the position of the left and rightmost bounds of the box
@@ -351,7 +348,7 @@ namespace RichHudFramework
                         bbPos.X = (rightBound + leftBound) / 2f;
 
                         underlineBoard.bbColor = underlines[n].color;
-                        underlineBoard.Draw(bbSize * Scale, bbPos * Scale, ref matrix);
+                        underlineBoard.Draw(bbSize * Scale, offset + bbPos * Scale, ref matrix);
                     }
                 }
 
@@ -371,7 +368,9 @@ namespace RichHudFramework
                     base.AfterColorUpdate();
 
                     if (lines.Count > 0)
+                    {
                         UpdateUnderlines();
+                    }
                 }
 
                 /// <summary>
@@ -428,13 +427,7 @@ namespace RichHudFramework
                                 UpdateLineOffsets(line, lines[line]._verticalOffset);
                         }
 
-                        int visRange = endLine - startLine;
-                        underlines.Clear();
-                        underlines.EnsureCapacity(visRange);
-
-                        if (visRange > 9 && underlines.Capacity > 3 * underlines.Count && underlines.Capacity > visRange)
-                            underlines.TrimExcess();
-
+                        UpdateUnderlines();
                     }
                 }
 
@@ -607,13 +600,17 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateUnderlines()
                 {
+                    int visRange = endLine - startLine;
+                    underlines.Clear();
+                    underlines.EnsureCapacity(visRange);
+
                     for (int ln = startLine; ln <= endLine; ln++)
                     {
                         Line line = lines[ln];
 
                         if (line.Count > 0)
                         {
-                            GlyphFormatMembers formatData = line.FormattedGlyphs[0].format.Data;
+                            GlyphFormatMembers? formatData = line.FormattedGlyphs[0].format.Data;
                             int startCh = 0;
 
                             for (int ch = 0; ch < lines[ln].Count; ch++)
@@ -623,38 +620,42 @@ namespace RichHudFramework
                                 if (ch != line.Count - 1)
                                     nextFormat = line.FormattedGlyphs[ch + 1].format.Data;
 
-                                bool formatEqual = nextFormat != null && formatData.Item1 == nextFormat.Value.Item1
-                                    && formatData.Item2 == nextFormat.Value.Item2
-                                    && formatData.Item3 == nextFormat.Value.Item3
-                                    && formatData.Item4 == nextFormat.Value.Item4;
+                                bool formatEqual = nextFormat != null 
+                                    && formatData.Value.Item1 == nextFormat.Value.Item1
+                                    && formatData.Value.Item2 == nextFormat.Value.Item2
+                                    && formatData.Value.Item3 == nextFormat.Value.Item3
+                                    && formatData.Value.Item4 == nextFormat.Value.Item4;
 
-                                if (formatEqual)
+                                if (!formatEqual)
                                 {
-                                    if (((FontStyles)formatData.Item3.Y & FontStyles.Underline) > 0)
+                                    if (((FontStyles)formatData.Value.Item3.Y & FontStyles.Underline) > 0)
                                     {
                                         GlyphLocData start = line.LocData[startCh], end = line.LocData[ch];
                                         Vector2 pos = new Vector2
                                         (
                                             (start.bbOffset.X + end.bbOffset.X) / 2f,
-                                            end.bbOffset.Y - (end.chSize.Y / 2f - (1f * formatData.Item2))
+                                            end.bbOffset.Y - (end.chSize.Y / 2f - (1f * formatData.Value.Item2))
                                         );
 
                                         Vector2 size = new Vector2
                                         (
                                             (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) / 2f,
-                                            Math.Max((int)formatData.Item2, 1)
+                                            Math.Max((int)formatData.Value.Item2, 1)
                                         );
 
-                                        Vector4 color = QuadBoard.GetQuadBoardColor(formatData.Item4) * .9f;
+                                        Vector4 color = QuadBoard.GetQuadBoardColor(formatData.Value.Item4) * .9f;
                                         underlines.Add(new UnderlineBoard(size, pos, color));
                                     }
 
                                     startCh = ch;
-                                    formatData = nextFormat.Value;
+                                    formatData = nextFormat;
                                 }
                             }
                         }
                     }
+
+                    if (visRange > 9 && underlines.Capacity > 3 * underlines.Count && underlines.Capacity > visRange)
+                        underlines.TrimExcess();
                 }
 
                 /// <summary>

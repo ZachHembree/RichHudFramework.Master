@@ -143,34 +143,17 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <summary>
             /// Builds a list of <see cref="Line.RichChar"/>s from RichString data.
             /// </summary>
-            protected static void GetRichChars(RichStringMembers richString, Line charBuffer, GlyphFormat? previous, bool allowSpecialChars)
+            protected static void GetRichChars(RichStringMembers richString, Line charBuffer, bool allowSpecialChars)
             {
                 StringBuilder text = richString.Item1;
-                GlyphFormatMembers newFormat = richString.Item2;
-                GlyphFormat format;
-
-                if (previous != null)
-                {
-                    var previousData = previous.Value.Data;
-                    bool formatEqual = previousData.Item1 == newFormat.Item1
-                        && previousData.Item2 == newFormat.Item2
-                        && previousData.Item3 == newFormat.Item3
-                        && previousData.Item4 == newFormat.Item4;
-
-                    if (formatEqual)
-                        format = previous.Value;
-                    else
-                        format = new GlyphFormat(newFormat);
-                }
-                else
-                    format = new GlyphFormat(newFormat);
+                GlyphFormatMembers formatData = richString.Item2;
 
                 charBuffer.EnsureCapacity(charBuffer.Count + text.Length);
 
                 for (int n = 0; n < text.Length; n++)
                 {
                     if (text[n] >= ' ' || allowSpecialChars && (text[n] == '\n' || text[n] == '\t'))
-                        charBuffer.AddNew(text[n], format);
+                        charBuffer.AddNew(text[n], new GlyphFormat(formatData));
                 }
             }
 

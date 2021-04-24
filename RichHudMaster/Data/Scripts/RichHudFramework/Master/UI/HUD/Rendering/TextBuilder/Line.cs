@@ -217,13 +217,13 @@ namespace RichHudFramework
                     /// Adds a new character to the end of the line with the given format
                     /// </summary>
                     public void AddNew(char ch, GlyphFormat format) =>
-                        InsertNew(Count, ch, format);
+                        InsertNew(chars.Count, ch, format);
 
                     /// <summary>
                     /// Adds the characters in the line given to the end of this line.
                     /// </summary>
                     public void AddRange(Line newChars) =>
-                        InsertRange(Count, newChars);
+                        InsertRange(chars.Count, newChars);
 
                     /// <summary>
                     /// Inserts a new character at the index specified with the given format
@@ -291,7 +291,7 @@ namespace RichHudFramework
 
                     public void TrimExcess()
                     {
-                        if (Count > 20 && Capacity > 5 * Count)
+                        if (chars.Count > 20 && chars.Capacity > 5 * chars.Count)
                         {
                             chars.TrimExcess();
                             formattedGlyphs.TrimExcess();

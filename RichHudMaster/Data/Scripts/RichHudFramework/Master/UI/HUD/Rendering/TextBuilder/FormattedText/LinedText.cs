@@ -22,11 +22,10 @@ namespace RichHudFramework.UI.Rendering.Server
             public override void Insert(IList<RichStringMembers> text, Vector2I start)
             {
                 start = ClampIndex(start);
-                GlyphFormat? previous = GetPreviousFormat(start);
                 charBuffer.Clear();
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, previous, true);
+                    GetRichChars(text[n], charBuffer, true);
 
                 InsertChars(start);
             }
