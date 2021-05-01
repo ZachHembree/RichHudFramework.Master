@@ -147,6 +147,8 @@ namespace RichHudFramework.Server
                 stats.Update();
                 statsBuilder.Clear();
 
+                var vID = RichHudMaster.versionID;
+                statsBuilder.Append($"Rich HUD Master (v{vID.X}.{vID.Y}.{vID.Z}.{vID.W})\n");
                 statsBuilder.Append($"Summary:\n");
                 statsBuilder.Append($"\tCursor Visible: {HudMain.Cursor.Visible}\n");
                 statsBuilder.Append($"\tClient Mods: {modClients.Count}\n");
@@ -170,7 +172,7 @@ namespace RichHudFramework.Server
                 }, 3, 4);
 
                 overlay.SetText(statsBuilder);
-
+                
                 var cursor = HudMain.Cursor as HudMain.HudCursor;
 
                 statsBuilder.Append($"\n\tCursor:\n");
