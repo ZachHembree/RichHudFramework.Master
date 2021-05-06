@@ -177,11 +177,12 @@ namespace RichHudFramework.Server
 
                 statsBuilder.Append($"\n\tCursor:\n");
                 statsBuilder.Append($"\t\tVisible: {cursor.Visible}\n");
-                statsBuilder.Append($"\t\tPosition: {cursor.ScreenPos}\n");
                 statsBuilder.Append($"\t\tCaptured: {cursor.IsCaptured}\n");
 
                 if (cursor.IsCaptured)
                 {
+                    statsBuilder.Append($"\t\tPosition: {cursor.ScreenPos}\n");
+
                     var modName = cursor.CapturedElement(null, (int)HudElementAccessors.ModName) as string ?? "None";
                     var type = cursor.CapturedElement(null, (int)HudElementAccessors.GetType) as Type;
                     var ZOffset = (sbyte)cursor.CapturedElement(null, (int)HudElementAccessors.ZOffset);

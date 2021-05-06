@@ -169,6 +169,8 @@ namespace RichHudFramework
 
                         if (formatEmpty)
                             text[n] = new RichStringMembers(text[n].Item1, Format.Data);
+                        else if (n == 0)
+                            Format = new GlyphFormat(text[0].Item2);
                     }
 
                     lastTextData = text as List<RichStringMembers>;
