@@ -22,49 +22,6 @@ namespace RichHudFramework.Server
                     Name = "Binds",
                     GroupContainer = { { MasterBinds.BindGroup, BindsConfig.DefaultBinds } }
                 },
-                new ControlPage()
-                {
-                    Name = "Test Page",
-                    CategoryContainer = 
-                    {
-                        new ControlCategory()
-                        {
-                            new ControlTile()
-                            {
-                                new TerminalDropdown<int>()
-                                {
-                                    List =
-                                    {
-                                        { "Entry 1", 0 },
-                                        { "Entry 2", 0 },
-                                        { "Entry 3", 0 },
-                                        { "Entry 4", 0 },
-                                        { "Entry 5", 0 },
-                                        { "Entry 6", 0 },
-                                        { "Entry 7", 0 },
-                                    }
-                                },
-                                new TerminalList<int>()
-                                {
-                                    List =
-                                    {
-                                        { "Entry 1", 0 },
-                                        { "Entry 2", 0 },
-                                        { "Entry 3", 0 },
-                                        { "Entry 4", 0 },
-                                        { "Entry 5", 0 },
-                                        { "Entry 6", 0 },
-                                        { "Entry 7", 0 },
-                                    }
-                                }
-                            },
-                            new ControlTile()
-                            {
-                                new TerminalColorPicker()
-                            }
-                        }
-                    }
-                }
             });
         }
     }
