@@ -35,8 +35,11 @@ namespace RichHudFramework.Server
         /// </summary>
         public static IReadOnlyList<ModClient> Clients => Instance.clients;
 
-        private static RichHudMaster Instance { get; set; }
+        public static bool FreezePlayer { get; set; }
+
+        public static RichHudMaster Instance { get; private set; }
         private readonly List<ModClient> clients;
+        private MatrixD lastWorldMatrix;
 
         public RichHudMaster() : base(false, true)
         {
@@ -61,6 +64,19 @@ namespace RichHudFramework.Server
             FontManager.Init();
             BindManager.Init();
             MasterConfig.Load(true);
+        }
+
+        protected override void Update()
+        {
+            if (FreezePlayer)
+            {
+                IMyCharacter plyChar = MyAPIGateway.Session.Player.Character;
+                plyChar.WorldMatrix = lastWorldMatrix;
+                plyChar.MoveAndRotate(Vector3.Zero, Vector2.Zero, 0);
+                plyChar.CurrentMovementState = MyCharacterMovementEnum.Standing;
+            }
+            else
+                lastWorldMatrix = MyAPIGateway.Session.Player.Character.WorldMatrix;
         }
 
         protected override void AfterInit()

@@ -2,7 +2,10 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Sandbox.ModAPI;
 using VRage;
+using VRage.Game;
+using VRage.Game.ModAPI;
 using VRageMath;
 
 namespace RichHudFramework.Server
@@ -111,6 +114,31 @@ namespace RichHudFramework.Server
                                                 overlayPos = element.Value;
                                             }
                                         }
+                                    },
+                                    new ControlTile()
+                                    {
+                                        new TerminalCheckbox()
+                                        {
+                                            Name = "Blacklist All Input",
+                                            Value = BindManager.SeMouseControlsBlacklisted,
+                                            CustomValueGetter = () => BindManager.SeControlsBlacklisted,
+                                            ControlChangedHandler = (obj, args) =>
+                                            {
+                                                var element = obj as TerminalCheckbox;
+                                                BindManager.SeControlsBlacklisted = element.Value;
+                                            }
+                                        },
+                                        new TerminalCheckbox()
+                                        {
+                                            Name = "Blacklist Mouse Input",
+                                            Value = BindManager.SeMouseControlsBlacklisted,
+                                            CustomValueGetter = () => BindManager.SeMouseControlsBlacklisted,
+                                            ControlChangedHandler = (obj, args) =>
+                                            {
+                                                var element = obj as TerminalCheckbox;
+                                                BindManager.SeMouseControlsBlacklisted = element.Value;
+                                            }
+                                        },
                                     }
                                 }
                             }

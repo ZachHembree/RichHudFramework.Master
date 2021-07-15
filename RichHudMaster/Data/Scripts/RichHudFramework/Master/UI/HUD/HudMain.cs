@@ -2,6 +2,8 @@ using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using VRage.Game;
+using VRage.Game.ModAPI;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
@@ -12,6 +14,7 @@ using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRa
 
 namespace RichHudFramework
 {
+    using Server;
     using TextBoardMembers = MyTuple<
         // TextBuilderMembers
         MyTuple<
@@ -236,6 +239,8 @@ namespace RichHudFramework
             private Action LoseInputFocusCallback;
             private byte unfocusedOffset;
             private int drawTick;
+            private MatrixD lastViewMatrix;
+            private bool wasCursorEnabled;
 
             static HudMain()
             {
@@ -287,6 +292,29 @@ namespace RichHudFramework
                 // Reset cursor
                 _cursor.Release();
                 treeManager.HandleInput();
+
+                if (EnableCursor)
+                {
+                    var viewMatrix = lastViewMatrix;
+                    viewMatrix.Translation += new Vector3D(0d, 0d, .15);
+
+                    MyAPIGateway.Session.SetCameraController(MyCameraControllerEnum.SpectatorFixed);
+                    MySpectator.Static.SetViewMatrix(viewMatrix);
+
+                    wasCursorEnabled = true;
+                }
+                else
+                {
+                    lastViewMatrix = MyAPIGateway.Session.Camera.ViewMatrix;
+
+                    if (wasCursorEnabled)
+                        MyAPIGateway.Session.SetCameraController(MyCameraControllerEnum.Entity, MyAPIGateway.Session.Player.Character);
+
+                    wasCursorEnabled = false;
+                }
+
+                RichHudMaster.FreezePlayer = EnableCursor;
+                BindManager.SeMouseControlsBlacklisted = EnableCursor;
             }
 
             /// <summary>

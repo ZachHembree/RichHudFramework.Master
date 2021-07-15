@@ -47,7 +47,18 @@ namespace RichHudFramework
                 /// <summary>
                 /// Indicates whether the cursor is currently visible
                 /// </summary>
-                public override bool Visible { get { return base.Visible && (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible); } }
+                public override bool Visible 
+                { 
+                    get 
+                    { 
+                        return base.Visible && 
+                        (
+                            MyAPIGateway.Gui.ChatEntryVisible || 
+                            MyAPIGateway.Gui.IsCursorVisible || 
+                            BindManager.SeMouseControlsBlacklisted
+                        ); 
+                    } 
+                }
 
                 /// <summary>
                 /// Returns true if the cursor has been captured by a UI element

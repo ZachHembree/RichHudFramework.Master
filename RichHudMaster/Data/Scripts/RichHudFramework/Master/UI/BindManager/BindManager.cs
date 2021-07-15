@@ -1,8 +1,10 @@
 using RichHudFramework.Internal;
 using Sandbox.ModAPI;
+using Sandbox.Game;
 using System;
 using System.Collections.Generic;
 using VRage.Input;
+using VRage.Utils;
 
 namespace RichHudFramework
 {
@@ -33,6 +35,43 @@ namespace RichHudFramework
             /// </summary>
             public static Client MainClient => Instance.mainClient;
 
+            public static bool SeControlsBlacklisted 
+            {
+                get { if (_instance == null) Init(); return _instance.controlsBlacklisted; }
+                set 
+                {
+                    if (_instance == null)
+                        Init();
+
+                    if (_instance.controlsBlacklisted != value)
+                    {
+                        foreach (string control in _instance.seControlIDs)
+                            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
+                    }
+
+                    _instance.controlsBlacklisted = value;
+                    _instance.mouseControlsBlacklisted = value;
+                }
+            }
+
+            public static bool SeMouseControlsBlacklisted
+            {
+                get { if (_instance == null) Init(); return _instance.mouseControlsBlacklisted; }
+                set
+                {
+                    if (_instance == null)
+                        Init();
+
+                    if (_instance.mouseControlsBlacklisted != value)
+                    {
+                        foreach (string control in _instance.seMouseControlIDs)
+                            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
+                    }
+
+                    _instance.mouseControlsBlacklisted = value;
+                }
+            }
+
             private static BindManager Instance
             {
                 get { Init(); return _instance; }
@@ -41,11 +80,13 @@ namespace RichHudFramework
             private static BindManager _instance;
 
             private readonly Control[] controls;
+            private readonly string[] seControlIDs, seMouseControlIDs;
             private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
             private readonly HashSet<MyKeys> controlBlacklist;
             private readonly List<Client> bindClients;
 
             private Client mainClient;
+            private bool controlsBlacklisted, mouseControlsBlacklisted;
 
             private BindManager() : base(false, true)
             {
@@ -65,7 +106,10 @@ namespace RichHudFramework
                 controlDict = new Dictionary<string, IControl>(300);
                 controlDictFriendly = new Dictionary<string, IControl>(300);
 
-                controls = GenerateControls();
+                var keys = Enum.GetValues(typeof(MyKeys)) as MyKeys[];
+                controls = GenerateControls(keys);
+                GetControlStringIDs(keys, out seControlIDs, out seMouseControlIDs);
+
                 bindClients = new List<Client>();
             }
 
@@ -140,9 +184,8 @@ namespace RichHudFramework
             /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
             /// </summary>
-            private Control[] GenerateControls()
+            private Control[] GenerateControls(MyKeys[] keys)
             {
-                var keys = Enum.GetValues(typeof(MyKeys)) as MyKeys[];
                 Control[] controls = new Control[258];
 
                 for (int n = 0; n < keys.Length; n++)
@@ -179,6 +222,34 @@ namespace RichHudFramework
                 controlDictFriendly.Add("mwdn", controls[257]);
 
                 return controls;
+            }
+
+            private void GetControlStringIDs(MyKeys[] keys, out string[] allControls, out string[] mouseControls)
+            {
+                var mouseButtons = Enum.GetValues(typeof(MyMouseButtonsEnum)) as MyMouseButtonsEnum[];
+                List<string> controlIDs = new List<string>(keys.Length),
+                    mouseControlIDs = new List<string>(mouseButtons.Length);
+
+                foreach (MyKeys key in keys)
+                {
+                    MyStringId? id = MyAPIGateway.Input.GetControl(key)?.GetGameControlEnum();
+                    string stringID = id?.ToString();
+
+                    if (stringID != null && stringID.Length > 0)
+                        controlIDs.Add(stringID);
+                }
+
+                foreach (MyKeys key in mouseButtons)
+                {
+                    MyStringId? id = MyAPIGateway.Input.GetControl(key)?.GetGameControlEnum();
+                    string stringID = id?.ToString();
+
+                    if (stringID != null && stringID.Length > 0)
+                        mouseControlIDs.Add(stringID);
+                }
+
+                allControls = controlIDs.ToArray();
+                mouseControls = mouseControlIDs.ToArray();
             }
 
             /// <summary>
