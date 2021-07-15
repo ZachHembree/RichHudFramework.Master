@@ -165,10 +165,10 @@ namespace RichHudFramework.Server
                 AddGrid(statsBuilder, new string[,]
                 {
                     { "Name",   "Avg",                          "50th",                     "99th" },
-                    { "Tree",   $"{stats.AvgTreeTime:F2}ms",    $"{stats.Tree50th:F2}ms",   $"{stats.Tree99th:F2}ms" },
                     { "Draw",   $"{stats.AvgDrawTime:F2}ms",    $"{stats.Draw50th:F2}ms",   $"{stats.Draw99th:F2}ms" },
                     { "Input",  $"{stats.AvgInputTime:F2}ms",   $"{stats.Input50th:F2}ms",  $"{stats.Input99th:F2}ms" },
                     { "Total",  $"{stats.AvgTotalTime:F2}ms",   $"{stats.Total50th:F2}ms",  $"{stats.Total99th:F2}ms" },
+                    { "Tree*",   $"{stats.AvgTreeTime:F2}ms",    $"{stats.Tree50th:F2}ms",   $"{stats.Tree99th:F2}ms" },
                 }, 3, 4);
 
                 overlay.SetText(statsBuilder);
@@ -329,11 +329,11 @@ namespace RichHudFramework.Server
             public double Input99th => inputStats.Pct99th;
 
 
-            public double AvgTotalTime => treeStats.AvgTime + drawStats.AvgTime + inputStats.AvgTime;
+            public double AvgTotalTime => drawStats.AvgTime + inputStats.AvgTime;
 
-            public double Total50th => treeStats.Pct50th + drawStats.Pct50th + inputStats.Pct50th;
+            public double Total50th => drawStats.Pct50th + inputStats.Pct50th;
 
-            public double Total99th => treeStats.Pct99th + drawStats.Pct99th + inputStats.Pct99th;
+            public double Total99th => drawStats.Pct99th + inputStats.Pct99th;
 
             private readonly TickStats drawStats, inputStats, treeStats;
             private readonly List<long> tickBuffer;

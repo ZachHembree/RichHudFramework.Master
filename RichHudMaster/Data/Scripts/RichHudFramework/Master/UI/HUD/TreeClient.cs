@@ -98,7 +98,7 @@ namespace RichHudFramework
                     if (refreshDrawList || continuousRefresh)
                         refreshRequested = true;
 
-                    if (refreshRequested && (tick % treeRefreshRate) == 0)
+                    if (!treeManager.UpdatingTree && refreshRequested && (tick % treeRefreshRate) == 0)
                     {
                         updateAccessors.Clear();
                         GetUpdateAccessors?.Invoke(updateAccessors, 0);

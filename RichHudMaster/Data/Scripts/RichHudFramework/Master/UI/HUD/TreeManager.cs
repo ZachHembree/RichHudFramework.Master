@@ -9,6 +9,7 @@ using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
+    using Internal;
     namespace UI.Server
     {
         using HudUpdateAccessors = MyTuple<
@@ -32,7 +33,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Number of UI elements registered from all clients
                 /// </summary>
-                public static int ElementRegistered => treeManager.updateAccessors.Count;
+                public static int ElementRegistered { get; private set; }
 
                 /// <summary>
                 /// Read-only list of registered tree clients
@@ -62,6 +63,8 @@ namespace RichHudFramework
                 public static IReadOnlyList<long> TreeElapsedTicks => treeManager.treeTimes;
 
                 public static bool RefreshRequested;
+
+                public bool UpdatingTree { get; private set; }
 
                 private readonly List<HudUpdateAccessors> updateAccessors;
                 private readonly Dictionary<Func<Vector3D>, ushort> distMap;
@@ -156,10 +159,11 @@ namespace RichHudFramework
                     int drawTick = instance.drawTick;
                     float resScale = instance._resScale;
 
-                    treeTimer.Restart();
                     mainClient.enableCursor = EnableCursor;
 
-                    UpdateAccessorLists(drawTick);
+                    if (!UpdatingTree)
+                        UpdateAccessorLists();
+
                     instance._cursor.Visible = false;
 
                     for (int n = 0; n < clients.Count; n++)
@@ -171,7 +175,6 @@ namespace RichHudFramework
                     for (int n = 0; n < clients.Count; n++)
                         clients[n].Update(drawTick + (n % treeRefreshRate)); // Spread out client tree updates
 
-                    treeTimer.Stop();
                     treeTimes[drawTick] = treeTimer.ElapsedTicks;
 
                     drawTimer.Restart();
@@ -216,28 +219,31 @@ namespace RichHudFramework
                 /// <summary>
                 /// Updates tree accessor delegate lists, spreading out updates over 5 ticks
                 /// </summary>
-                private void UpdateAccessorLists(int tick)
+                private void UpdateAccessorLists()
                 {
-                    if (tick % treeRefreshRate == 0)
+                    instance.EnqueueTask(() => 
                     {
+                        treeTimer.Restart();
+                        UpdatingTree = true;
+
                         RebuildUpdateLists();
-                    }
-                    else if (tick % treeRefreshRate == 1)
-                    {
                         UpdateDistMap();
-                    }
-                    else if (tick % treeRefreshRate == 2)
-                    {
                         UpdateIndexBuffer();
-                    }
-                    else if (tick % treeRefreshRate == 3)
-                    {
                         ResetUpdateBuffers();
-                    }
-                    else if (tick % treeRefreshRate == 4)
-                    {
                         BuildSortedUpdateLists();
-                    }
+
+                        treeTimer.Stop();
+                        ElementRegistered = updateAccessors.Count;
+
+                        instance.EnqueueAction(() =>
+                        {
+                            MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
+                            MyUtils.Swap(ref inputActionBuffer, ref inputActions);
+                            MyUtils.Swap(ref drawActionBuffer, ref drawActions);
+
+                            UpdatingTree = false;
+                        });
+                    });
                 }
 
                 /// <summary>
@@ -381,10 +387,6 @@ namespace RichHudFramework
                         inputActionBuffer.TrimExcess();
                         drawActionBuffer.TrimExcess();
                     }
-
-                    MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
-                    MyUtils.Swap(ref inputActionBuffer, ref inputActions);
-                    MyUtils.Swap(ref drawActionBuffer, ref drawActions);
                 }
             }
         }

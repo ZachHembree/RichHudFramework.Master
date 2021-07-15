@@ -33,7 +33,7 @@ namespace RichHudFramework
     {
         using Rendering.Server;
 
-        public sealed partial class HudMain : RichHudComponentBase
+        public sealed partial class HudMain : RichHudParallelComponentBase
         {
             public const int tickResetInterval = 240;
             private const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
