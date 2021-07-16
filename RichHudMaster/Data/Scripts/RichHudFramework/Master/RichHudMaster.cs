@@ -28,7 +28,7 @@ namespace RichHudFramework.Server
     {
         private const long modID = 1965654081, queueID = 1314086443;
         private const int apiVID = 8, minApiVID = 7;
-        public static readonly Vector4I versionID = new Vector4I(1, 1, 1, 0); // Major, Minor, Rev, Hotfix
+        public static readonly Vector4I versionID = new Vector4I(1, 1, 2, 0); // Major, Minor, Rev, Hotfix
 
         /// <summary>
         /// Read-only list of currently registered clients
@@ -70,13 +70,16 @@ namespace RichHudFramework.Server
         {
             if (FreezePlayer)
             {
-                IMyCharacter plyChar = MyAPIGateway.Session.Player.Character;
-                plyChar.WorldMatrix = lastWorldMatrix;
-                plyChar.MoveAndRotate(Vector3.Zero, Vector2.Zero, 0);
-                plyChar.CurrentMovementState = MyCharacterMovementEnum.Standing;
+                IMyCharacter plyChar = MyAPIGateway.Session.Player?.Character;
+
+                if (plyChar != null)
+                {
+                    plyChar.WorldMatrix = lastWorldMatrix;
+                    plyChar.MoveAndRotate(Vector3.Zero, Vector2.Zero, 0);
+                }
             }
             else
-                lastWorldMatrix = MyAPIGateway.Session.Player.Character.WorldMatrix;
+                lastWorldMatrix = MyAPIGateway.Session.Player?.Character?.WorldMatrix ?? default(MatrixD);
         }
 
         protected override void AfterInit()

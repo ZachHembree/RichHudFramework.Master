@@ -2,9 +2,10 @@ using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using VRage;
 using VRage.Game;
 using VRage.Game.ModAPI;
-using VRage;
+using VRage.ModAPI;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
@@ -239,7 +240,9 @@ namespace RichHudFramework
             private Action LoseInputFocusCallback;
             private byte unfocusedOffset;
             private int drawTick;
+
             private MatrixD lastViewMatrix;
+            private IMyEntity lastCamController;
             private bool wasCursorEnabled;
 
             static HudMain()
@@ -289,32 +292,46 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
+                IMyPlayer ply = MyAPIGateway.Session?.Player;
+                IMyCharacter plyChar = ply?.Character;
+
+                if (plyChar != null)
+                {
+                    if (EnableCursor)
+                    {
+                        var viewMatrix = lastViewMatrix;
+
+                        var camController = MyAPIGateway.Session.CameraController ?? plyChar;
+                        lastCamController = camController?.Entity;
+
+                        MyAPIGateway.Session.SetCameraController(MyCameraControllerEnum.SpectatorFixed);
+                        MySpectator.Static.SetViewMatrix(viewMatrix);
+
+                        if (!wasCursorEnabled && plyChar.IsInFirstPersonView)
+                            plyChar.Visible = false;
+
+                        wasCursorEnabled = true;
+                    }
+                    else
+                    {
+                        lastViewMatrix = MyAPIGateway.Session.Camera.ViewMatrix;
+
+                        if (wasCursorEnabled)
+                        {
+                            MyAPIGateway.Session.SetCameraController(MyCameraControllerEnum.Entity, lastCamController ?? plyChar);
+                            plyChar.Visible = true;
+                        }
+
+                        wasCursorEnabled = false;
+                    }
+
+                    RichHudMaster.FreezePlayer = EnableCursor;
+                    BindManager.SeMouseControlsBlacklisted = EnableCursor;
+                }
+
                 // Reset cursor
                 _cursor.Release();
                 treeManager.HandleInput();
-
-                if (EnableCursor)
-                {
-                    var viewMatrix = lastViewMatrix;
-                    viewMatrix.Translation += new Vector3D(0d, 0d, .15);
-
-                    MyAPIGateway.Session.SetCameraController(MyCameraControllerEnum.SpectatorFixed);
-                    MySpectator.Static.SetViewMatrix(viewMatrix);
-
-                    wasCursorEnabled = true;
-                }
-                else
-                {
-                    lastViewMatrix = MyAPIGateway.Session.Camera.ViewMatrix;
-
-                    if (wasCursorEnabled)
-                        MyAPIGateway.Session.SetCameraController(MyCameraControllerEnum.Entity, MyAPIGateway.Session.Player.Character);
-
-                    wasCursorEnabled = false;
-                }
-
-                RichHudMaster.FreezePlayer = EnableCursor;
-                BindManager.SeMouseControlsBlacklisted = EnableCursor;
             }
 
             /// <summary>
