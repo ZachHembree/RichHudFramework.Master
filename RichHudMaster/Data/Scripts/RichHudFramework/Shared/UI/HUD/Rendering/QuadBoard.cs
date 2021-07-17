@@ -148,6 +148,46 @@ namespace RichHudFramework
                     AddBillboard(ref quad, textureID, ref matFit, bbColor);
                 }
 
+                public void DrawCroppedTex(Vector2 size, Vector2 origin, Vector2 scale, Vector2 normOffset, ref MatrixD matrix)
+                {
+                    FlatQuad texCoords = matFit;
+
+                    if (normOffset != Vector2.Zero && scale != Vector2.One)
+                    {
+                        Vector2 uvScale = texCoords.Point2 - texCoords.Point0,
+                            uvOffset = .5f * (texCoords.Point2 + texCoords.Point0);
+
+                        origin += normOffset * size; // Offset billboard to compensate for changes in size
+                        size *= scale; // Resize
+                        normOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
+
+                        // Recalculate texture coordinates to simulate clipping without affecting material alignment
+                        texCoords.Point0 = ((texCoords.Point0 - uvOffset) * scale) + uvOffset + normOffset;
+                        texCoords.Point1 = ((texCoords.Point1 - uvOffset) * scale) + uvOffset + normOffset;
+                        texCoords.Point2 = ((texCoords.Point2 - uvOffset) * scale) + uvOffset + normOffset;
+                        texCoords.Point3 = ((texCoords.Point3 - uvOffset) * scale) + uvOffset + normOffset;
+                    }
+
+                    Vector3D worldPos = new Vector3D(origin.X, origin.Y, 0d);
+                    MyQuadD quad;
+
+                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
+                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X / 2f, size.Y / 2f, ref matrix);
+
+                    if (skewRatio != 0f)
+                    {
+                        Vector3D start = quad.Point0, end = quad.Point3,
+                            offset = (end - start) * skewRatio * .5;
+
+                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
+                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
+                        quad.Point1 -= offset;
+                        quad.Point2 -= offset;
+                    }
+
+                    AddBillboard(ref quad, textureID, ref texCoords, bbColor);
+                }
+
                 public static Vector4 GetQuadBoardColor(Color color)
                 {   
                     float opacity = color.A / 255f;

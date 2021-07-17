@@ -48,16 +48,19 @@ namespace RichHudFramework
                 /// ID of the Texture the <see cref="Material"/> is based on.
                 /// </summary>
                 public readonly MyStringId TextureID;
+
                 /// <summary>
                 /// The dimensions, in pixels, of the <see cref="Material"/>.
                 /// </summary>
                 public readonly Vector2 size;
+
                 /// <summary>
-                /// The dimensions of the <see cref="Material"/> relative to the size of the texture its based on.
+                /// The dimensions of the <see cref="Material"/> in normalized texture coordinates.
                 /// </summary>
                 public readonly Vector2 uvSize;
+
                 /// <summary>
-                /// Center of the <see cref="Material"/> on the texture scaled relative to the size of the texture.
+                /// Center of the <see cref="Material"/> in normalized texture coordinates.
                 /// </summary>
                 public readonly Vector2 uvOffset;
 

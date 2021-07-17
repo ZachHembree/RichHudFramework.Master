@@ -92,9 +92,9 @@ namespace RichHudFramework
 
                     return new FlatQuad
                     (
-                        Vector2.Clamp(matOrigin - matStep, min, max), // Bottom left
+                        matOrigin - matStep, // Bottom left
                         Vector2.Clamp(matOrigin + new Vector2(-matStep.X, matStep.Y), min, max), // Upper left
-                        Vector2.Clamp(matOrigin + matStep, min, max), // Upper right
+                        matOrigin + matStep, // Upper right
                         Vector2.Clamp(matOrigin + new Vector2(matStep.X, -matStep.Y), min, max) // Bottom right
                     );
                 }
@@ -105,7 +105,7 @@ namespace RichHudFramework
             /// </summary>
             public struct FlatQuad
             {
-                public readonly Vector2 Point0, Point1, Point2, Point3;
+                public Vector2 Point0, Point1, Point2, Point3;
 
                 public FlatQuad(Vector2 Point0, Vector2 Point1, Vector2 Point2, Vector2 Point3)
                 {
