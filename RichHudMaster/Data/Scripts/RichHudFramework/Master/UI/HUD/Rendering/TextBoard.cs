@@ -171,13 +171,13 @@ namespace RichHudFramework
                     if (index > endLine) // Scroll down
                     {
                         _textOffset.Y = -line._verticalOffset;
-                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y / 2f : _fixedSize.Y / 2f;
+                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y * .5f : _fixedSize.Y * .5f;
                         _textOffset.Y -= (_fixedSize.Y - line.UnscaledSize.Y);
                     }
                     else if (index < startLine) // Scroll up
                     {
                         _textOffset.Y = -line._verticalOffset;
-                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y / 2f : _fixedSize.Y / 2f;
+                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y * .5f : _fixedSize.Y * .5f;
                     }
                 }
 
@@ -196,7 +196,7 @@ namespace RichHudFramework
                         {
                             GlyphLocData locData = line.LocData[index.Y];
 
-                            float minOffset = -locData.bbOffset.X + locData.chSize.X / 2f - _fixedSize.X / 2f,
+                            float minOffset = -locData.bbOffset.X + locData.chSize.X * .5f - _fixedSize.X * .5f,
                                 maxOffset = minOffset - locData.chSize.X + _fixedSize.X;
 
                             offset = MathHelper.Clamp(offset, minOffset, maxOffset);
@@ -215,7 +215,7 @@ namespace RichHudFramework
                 {
                     int line = 0, ch = 0;
                     charOffset /= Scale;
-                    charOffset = Vector2.Clamp(charOffset, -_size / 2f, _size / 2f);
+                    charOffset = Vector2.Clamp(charOffset, -_size * .5f, _size * .5f);
                     charOffset -= _textOffset;
 
                     if (lines.Count > 0)
@@ -304,9 +304,7 @@ namespace RichHudFramework
                         updateEvent = false;
                     }
 
-                    Vector2 glyphOffset = offset + _textOffset * Scale;
-
-                    float min = -_size.X / 2f - 2f, max = -min;
+                    Vector2 min = -_size * .5f - 2f, max = -min;
 
                     // Draw glyphs
                     for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
@@ -318,15 +316,32 @@ namespace RichHudFramework
                             GlyphLocData locData = line.LocData[ch];
                             QuadBoard glyphBoard = line.GlyphBoards[ch];
 
-                            float
-                                xPos = locData.bbOffset.X + _textOffset.X,
-                                edge = locData.chSize.X / 2f;
+                            Vector2 chSize = locData.chSize,
+                                bbPos = locData.bbOffset + _textOffset,
+                                // Bounds
+                                glyphMin = Vector2.Max(bbPos - chSize * .5f, min),
+                                glyphMax = Vector2.Min(bbPos + chSize * .5f, max),
+                                // Cropped dimensions
+                                clipSize = Vector2.Max(glyphMax - glyphMin, Vector2.Zero);
 
-                            if ((xPos - edge) >= min && (xPos + edge) <= max)
+                            if (Math.Abs(clipSize.X * clipSize.Y) > 1E-5)
                             {
-                                Vector2 glyphPos = glyphOffset + locData.bbOffset * Scale;
+                                if ((clipSize - chSize).LengthSquared() < 1E-3)
+                                {
+                                    glyphBoard.Draw(locData.bbSize * Scale, bbPos * Scale + offset, ref matrix);
+                                }
+                                else
+                                {
+                                    // Normalized cropped size and offset
+                                    Vector2 bbSize = locData.bbSize,
+                                        clipScale = clipSize / chSize,
+                                        clipOffset = (.5f * (glyphMax + glyphMin) - bbPos) / chSize;
 
-                                glyphBoard.Draw((locData.bbSize * Scale), glyphPos, ref matrix);
+                                    bbSize *= Scale;
+                                    bbPos = bbPos * Scale + offset;
+
+                                    glyphBoard.DrawCroppedTex(bbSize, bbPos, clipScale, clipOffset, ref matrix);
+                                }
                             }
                         }
                     }
@@ -339,16 +354,20 @@ namespace RichHudFramework
                         Vector2 bbPos = _textOffset + underlines[n].offset;
                         Vector2 bbSize = underlines[n].size;
 
-                        // Calculate the position of the left and rightmost bounds of the box
-                        float leftBound = Math.Max(bbPos.X - bbSize.X / 2f, min),
-                            rightBound = Math.Min(bbPos.X + bbSize.X / 2f, max);
+                        // Calculate the position of the -/+ bounds of the box
+                        Vector2 leftBound = Vector2.Max(bbPos - bbSize * .5f, min),
+                            rightBound = Vector2.Min(bbPos + bbSize * .5f, max);
 
                         // Adjust size and offset to simulate clipping
-                        bbSize.X = Math.Max(0, rightBound - leftBound);
-                        bbPos.X = (rightBound + leftBound) / 2f;
+                        bbSize = Vector2.Max(rightBound - leftBound, Vector2.Zero);
 
-                        underlineBoard.bbColor = underlines[n].color;
-                        underlineBoard.Draw(bbSize * Scale, offset + bbPos * Scale, ref matrix);
+                        if (bbSize.X * bbSize.Y > 1E-4)
+                        {
+                            bbPos = (rightBound + leftBound) * .5f;
+
+                            underlineBoard.bbColor = underlines[n].color;
+                            underlineBoard.Draw(bbSize * Scale, offset + bbPos * Scale, ref matrix);
+                        }
                     }
                 }
 
@@ -455,7 +474,7 @@ namespace RichHudFramework
                         if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
                             tSize.Y -= lastLine.UnscaledSize.Y;
 
-                        float vAlign = (VertCenterText || AutoResize) ? tSize.Y / 2f : _fixedSize.Y / 2f;
+                        float vAlign = ((VertCenterText || AutoResize) ? tSize.Y : _fixedSize.Y) * .5f;
 
                         for (int line = 0; line < lines.Count; line++)
                             lines[line]._verticalOffset += vAlign;
@@ -474,20 +493,22 @@ namespace RichHudFramework
                         float height = _textOffset.Y;
 
                         if (VertCenterText)
-                            height += MathHelper.Max(0f, _textSize.Y - _size.Y) / 2f;
+                            height += MathHelper.Max(0f, _textSize.Y - _size.Y) * .5f;
 
                         int start = 0, end = -1;
 
                         for (int line = 0; line < lines.Count; line++)
                         {
-                            if (height <= 2f)
+                            float lineHeight = lines[line].UnscaledSize.Y;
+
+                            if (height <= lineHeight)
                             {
                                 if (end == -1)
                                 {
                                     start = line;
                                     end = line;
                                 }
-                                else if (height > (-_fixedSize.Y + lines[line].UnscaledSize.Y - 2f))
+                                else if (height > -_fixedSize.Y)
                                 {
                                     end = line;
                                 }
@@ -495,7 +516,7 @@ namespace RichHudFramework
                                     break;
                             }
 
-                            height -= lines[line].UnscaledSize.Y;
+                            height -= lineHeight;
                         }
 
                         return new Vector2I(start, end);
@@ -530,11 +551,11 @@ namespace RichHudFramework
                     TextAlignment alignment = line[ch].Format.Alignment;
 
                     if (alignment == TextAlignment.Left)
-                        offset = -_size.X / 2f;
+                        offset = -_size.X * .5f;
                     else if (alignment == TextAlignment.Center)
-                        offset = (MathHelper.Max(0f, _textSize.X - _size.X) - line.UnscaledSize.X) / 2f;
+                        offset = (MathHelper.Max(0f, _textSize.X - _size.X) - line.UnscaledSize.X) * .5f;
                     else if (alignment == TextAlignment.Right)
-                        offset = MathHelper.Max(_size.X, _textSize.X) - (_size.X / 2f) - line.UnscaledSize.X;
+                        offset = MathHelper.Max(_size.X, _textSize.X) - (_size.X * .5f) - line.UnscaledSize.X;
 
                     return offset;
                 }
@@ -553,7 +574,7 @@ namespace RichHudFramework
                             GlyphFormat format = lines[line].FormattedGlyphs[ch].format;
                             IFontStyle fontStyle = FontManager.Fonts[format.StyleIndex.X][format.StyleIndex.Y];
 
-                            baseline = (fontStyle.BaseLine - (fontStyle.Height - fontStyle.BaseLine) / 2f) * (format.TextSize * fontStyle.FontScale);
+                            baseline = (fontStyle.BaseLine - (fontStyle.Height - fontStyle.BaseLine) * .5f) * (format.TextSize * fontStyle.FontScale);
                             break;
                         }
                     }
@@ -588,8 +609,8 @@ namespace RichHudFramework
 
                     line.SetOffsetAt(right, new Vector2()
                     {
-                        X = pos.X + locData.bbSize.X / 2f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
-                        Y = pos.Y - (locData.bbSize.Y / 2f) + (fontStyle.BaseLine * formatScale) + cjkOffset
+                        X = pos.X + locData.bbSize.X * .5f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
+                        Y = pos.Y - (locData.bbSize.Y * .5f) + (fontStyle.BaseLine * formatScale) + cjkOffset
                     });
 
                     return pos.X + locData.chSize.X;
@@ -633,13 +654,13 @@ namespace RichHudFramework
                                         GlyphLocData start = line.LocData[startCh], end = line.LocData[ch];
                                         Vector2 pos = new Vector2
                                         (
-                                            (start.bbOffset.X + end.bbOffset.X) / 2f,
-                                            end.bbOffset.Y - (end.chSize.Y / 2f - (1f * formatData.Value.Item2))
+                                            (start.bbOffset.X + end.bbOffset.X) * .5f,
+                                            end.bbOffset.Y - (end.chSize.Y * .5f - (1f * formatData.Value.Item2))
                                         );
 
                                         Vector2 size = new Vector2
                                         (
-                                            (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) / 2f,
+                                            (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) * .5f,
                                             Math.Max((int)formatData.Value.Item2, 1)
                                         );
 
