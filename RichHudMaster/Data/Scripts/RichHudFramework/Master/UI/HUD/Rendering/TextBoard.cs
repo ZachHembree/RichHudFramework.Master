@@ -304,45 +304,25 @@ namespace RichHudFramework
                         updateEvent = false;
                     }
 
-                    Vector2 min = -_size * .5f - 2f, max = -min;
+                    Vector2 min = -_size * .5f, max = -min;
+                    min = min * Scale + offset;
+                    max = max * Scale + offset;
+                    offset += _textOffset * Scale;
+
+                    IReadOnlyList<Line> lineList = lines.PooledLines;
 
                     // Draw glyphs
                     for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
                     {
-                        Line line = lines[ln];
+                        Line line = lineList[ln];
 
                         for (int ch = 0; ch < line.Count; ch++)
                         {
                             GlyphLocData locData = line.LocData[ch];
-                            QuadBoard glyphBoard = line.GlyphBoards[ch];
+                            Vector2 bbSize = locData.bbSize * Scale,
+                                bbPos = offset + locData.bbOffset * Scale;
 
-                            Vector2 chSize = locData.chSize,
-                                bbPos = locData.bbOffset + _textOffset,
-                                // Bounds
-                                glyphMin = Vector2.Max(bbPos - chSize * .5f, min),
-                                glyphMax = Vector2.Min(bbPos + chSize * .5f, max),
-                                // Cropped dimensions
-                                clipSize = Vector2.Max(glyphMax - glyphMin, Vector2.Zero);
-
-                            if (Math.Abs(clipSize.X * clipSize.Y) > 1E-5)
-                            {
-                                if ((clipSize - chSize).LengthSquared() < 1E-3)
-                                {
-                                    glyphBoard.Draw(locData.bbSize * Scale, bbPos * Scale + offset, ref matrix);
-                                }
-                                else
-                                {
-                                    // Normalized cropped size and offset
-                                    Vector2 bbSize = locData.bbSize,
-                                        clipScale = clipSize / chSize,
-                                        clipOffset = (.5f * (glyphMax + glyphMin) - bbPos) / chSize;
-
-                                    bbSize *= Scale;
-                                    bbPos = bbPos * Scale + offset;
-
-                                    glyphBoard.DrawCroppedTex(bbSize, bbPos, clipScale, clipOffset, ref matrix);
-                                }
-                            }
+                            line.GlyphBoards[ch].DrawCroppedTex(bbSize, bbPos, min, max, ref matrix);
                         }
                     }
 
@@ -351,23 +331,11 @@ namespace RichHudFramework
                     // Draw underlines
                     for (int n = 0; n < underlines.Count; n++)
                     {
-                        Vector2 bbPos = _textOffset + underlines[n].offset;
-                        Vector2 bbSize = underlines[n].size;
+                        Vector2 bbPos = offset + underlines[n].offset * Scale;
+                        Vector2 bbSize = underlines[n].size * Scale;
 
-                        // Calculate the position of the -/+ bounds of the box
-                        Vector2 leftBound = Vector2.Max(bbPos - bbSize * .5f, min),
-                            rightBound = Vector2.Min(bbPos + bbSize * .5f, max);
-
-                        // Adjust size and offset to simulate clipping
-                        bbSize = Vector2.Max(rightBound - leftBound, Vector2.Zero);
-
-                        if (bbSize.X * bbSize.Y > 1E-4)
-                        {
-                            bbPos = (rightBound + leftBound) * .5f;
-
-                            underlineBoard.bbColor = underlines[n].color;
-                            underlineBoard.Draw(bbSize * Scale, offset + bbPos * Scale, ref matrix);
-                        }
+                        underlineBoard.bbColor = underlines[n].color;
+                        underlineBoard.DrawCropped(bbSize, bbPos, min, max, ref matrix);
                     }
                 }
 
