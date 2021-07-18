@@ -80,7 +80,7 @@ namespace RichHudFramework
                     MyQuadD quad;
 
                     Vector3D.TransformNoProjection(ref origin, ref matrix, out origin);
-                    MyUtils.GenerateQuad(out quad, ref origin, size.X / 2f, size.Y / 2f, ref matrix);
+                    MyUtils.GenerateQuad(out quad, ref origin, size.X * .5f, size.Y * .5f, ref matrix);
 
                     if (skewRatio != 0f)
                     {
@@ -106,7 +106,7 @@ namespace RichHudFramework
                     MyQuadD quad;
 
                     Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X / 2f, size.Y / 2f, ref matrix);
+                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
 
                     if (skewRatio != 0f)
                     {
@@ -132,7 +132,7 @@ namespace RichHudFramework
                     MyQuadD quad;
 
                     Vector3D.TransformNoProjection(ref worldPos, ref ptw, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X / 2f, size.Y / 2f, ref ptw);
+                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref ptw);
 
                     if (skewRatio != 0f)
                     {
@@ -148,44 +148,90 @@ namespace RichHudFramework
                     AddBillboard(ref quad, textureID, ref matFit, bbColor);
                 }
 
-                public void DrawCroppedTex(Vector2 size, Vector2 origin, Vector2 scale, Vector2 normOffset, ref MatrixD matrix)
+                public void DrawCropped(Vector2 size, Vector2 origin, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
                 {
-                    FlatQuad texCoords = matFit;
+                    // Calculate the position of the -/+ bounds of the box
+                    Vector2 minBound = Vector2.Max(origin - size * .5f, maskMin),
+                        maxBound = Vector2.Min(origin + size * .5f, maskMax);
 
-                    if (normOffset != Vector2.Zero && scale != Vector2.One)
+                    // Adjust size and offset to simulate clipping
+                    size = Vector2.Max(maxBound - minBound, Vector2.Zero);
+
+                    if ((size.X + size.Y) > 1E-3)
                     {
-                        Vector2 uvScale = texCoords.Point2 - texCoords.Point0,
-                            uvOffset = .5f * (texCoords.Point2 + texCoords.Point0);
+                        origin = (maxBound + minBound) * .5f;
 
-                        origin += normOffset * size; // Offset billboard to compensate for changes in size
-                        size *= scale; // Resize
-                        normOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
+                        Vector3D worldPos = new Vector3D(origin.X, origin.Y, 0d);
+                        MyQuadD quad;
 
-                        // Recalculate texture coordinates to simulate clipping without affecting material alignment
-                        texCoords.Point0 = ((texCoords.Point0 - uvOffset) * scale) + uvOffset + normOffset;
-                        texCoords.Point1 = ((texCoords.Point1 - uvOffset) * scale) + uvOffset + normOffset;
-                        texCoords.Point2 = ((texCoords.Point2 - uvOffset) * scale) + uvOffset + normOffset;
-                        texCoords.Point3 = ((texCoords.Point3 - uvOffset) * scale) + uvOffset + normOffset;
+                        Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
+                        MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
+
+                        if (skewRatio != 0f)
+                        {
+                            Vector3D start = quad.Point0, end = quad.Point3,
+                                offset = (end - start) * skewRatio * .5;
+
+                            quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
+                            quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
+                            quad.Point1 -= offset;
+                            quad.Point2 -= offset;
+                        }
+
+                        AddBillboard(ref quad, textureID, ref matFit, bbColor);
                     }
+                }
 
-                    Vector3D worldPos = new Vector3D(origin.X, origin.Y, 0d);
-                    MyQuadD quad;
+                public void DrawCroppedTex(Vector2 size, Vector2 origin, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
+                {
+                    // Calculate the position of the -/+ bounds of the box
+                    Vector2 minBound = Vector2.Max(origin - size * .5f, maskMin),
+                        maxBound = Vector2.Min(origin + size * .5f, maskMax);
+                    // Cropped dimensions
+                    Vector2 clipSize = Vector2.Max(maxBound - minBound, Vector2.Zero);
 
-                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X / 2f, size.Y / 2f, ref matrix);
-
-                    if (skewRatio != 0f)
+                    if ((clipSize.X * clipSize.Y) > 1E-10)
                     {
-                        Vector3D start = quad.Point0, end = quad.Point3,
-                            offset = (end - start) * skewRatio * .5;
+                        FlatQuad texCoords = matFit;
+                        // Normalized cropped size and offset
+                        Vector2 clipScale = clipSize / size,
+                            clipOffset = (.5f * (maxBound + minBound) - origin) / size;
 
-                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
-                        quad.Point1 -= offset;
-                        quad.Point2 -= offset;
+                        if ((clipScale.X * clipScale.Y) > 1E-3)
+                        {
+                            Vector2 uvScale = texCoords.Point2 - texCoords.Point0,
+                                uvOffset = .5f * (texCoords.Point2 + texCoords.Point0);
+
+                            origin += clipOffset * size; // Offset billboard to compensate for changes in size
+                            size *= clipScale; // Calculate final billboard size
+                            clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
+
+                            // Recalculate texture coordinates to simulate clipping without affecting material alignment
+                            texCoords.Point0 = ((texCoords.Point0 - uvOffset) * clipScale) + uvOffset + clipOffset;
+                            texCoords.Point1 = ((texCoords.Point1 - uvOffset) * clipScale) + uvOffset + clipOffset;
+                            texCoords.Point2 = ((texCoords.Point2 - uvOffset) * clipScale) + uvOffset + clipOffset;
+                            texCoords.Point3 = ((texCoords.Point3 - uvOffset) * clipScale) + uvOffset + clipOffset;
+                        }
+
+                        Vector3D worldPos = new Vector3D(origin.X, origin.Y, 0d);
+                        MyQuadD quad;
+
+                        Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
+                        MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
+
+                        if (skewRatio != 0f)
+                        {
+                            Vector3D start = quad.Point0, end = quad.Point3,
+                                offset = (end - start) * skewRatio * .5;
+
+                            quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
+                            quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
+                            quad.Point1 -= offset;
+                            quad.Point2 -= offset;
+                        }
+
+                        AddBillboard(ref quad, textureID, ref texCoords, bbColor);
                     }
-
-                    AddBillboard(ref quad, textureID, ref texCoords, bbColor);
                 }
 
                 public static Vector4 GetQuadBoardColor(Color color)
