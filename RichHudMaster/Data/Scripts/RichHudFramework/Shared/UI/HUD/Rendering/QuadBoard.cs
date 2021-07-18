@@ -72,7 +72,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Draws a billboard in world space facing the +Z direction the matrix specified. Units in meters matrix
+                /// Draws a billboard in world space facing the +Z direction of the matrix specified. Units in meters matrix
                 /// transform notwithstanding.
                 /// </summary>
                 public void Draw(Vector2 size, Vector3D origin, ref MatrixD matrix)
@@ -97,7 +97,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Draws a billboard in world space facing the +Z direction the matrix specified. Units in meters, matrix
+                /// Draws a billboard in world space facing the +Z direction of the matrix specified. Units in meters, matrix
                 /// transform notwithstanding.
                 /// </summary>
                 public void Draw(Vector2 size, Vector2 origin, ref MatrixD matrix)
@@ -148,6 +148,12 @@ namespace RichHudFramework
                     AddBillboard(ref quad, textureID, ref matFit, bbColor);
                 }
 
+                /// <summary>
+                /// Draws a cropped billboard in world space facing the +Z direction of the matrix specified. Cropping is 
+                /// performed s.t. any parts outside the box defined by maskMin and maskMax are not rendered. For 
+                /// NON-TEXTURED billboards ONLY. This method will warp textures. Units in meters, matrix transform 
+                /// notwithstanding.
+                /// </summary>
                 public void DrawCropped(Vector2 size, Vector2 origin, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
                 {
                     // Calculate the position of the -/+ bounds of the box
@@ -182,6 +188,11 @@ namespace RichHudFramework
                     }
                 }
 
+                /// <summary>
+                /// Draws a cropped billboard in world space facing the +Z direction of the matrix specified. Cropping is 
+                /// performed s.t. any parts outside the box defined by maskMin and maskMax are not rendered and WITHOUT 
+                /// warping the texture or displacing the billboard. Units in meters, matrix transform notwithstanding.
+                /// </summary>
                 public void DrawCroppedTex(Vector2 size, Vector2 origin, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
                 {
                     // Calculate the position of the -/+ bounds of the box
