@@ -11,6 +11,11 @@ namespace RichHudFramework
         using Client;
         using Internal;
 
+        public class HudMaskingBox
+        {
+            public Vector2 min, max;
+        }
+
         /// <summary>
         /// Base type for all hud elements with definite size and position. Inherits from HudParentBase and HudNodeBase.
         /// </summary>
@@ -138,6 +143,22 @@ namespace RichHudFramework
             }
 
             /// <summary>
+            /// Is set to true, the hud element will act as a clipping mask for child elements.
+            /// False by default. Masking parent elements can still affect non-masking children.
+            /// </summary>
+            public bool IsMasking
+            {
+                get { return (State & HudElementStates.IsMasking) > 0; }
+                set
+                {
+                    if (value)
+                        State |= HudElementStates.IsMasking;
+                    else
+                        State &= ~HudElementStates.IsMasking;
+                }
+            }
+
+            /// <summary>
             /// Indicates whether or not the element is capturing the cursor.
             /// </summary>
             public virtual bool IsMousedOver => (State & HudElementStates.IsMousedOver) > 0;
@@ -162,6 +183,7 @@ namespace RichHudFramework
             /// </summary>
             protected Vector2 cachedOrigin, cachedPosition, cachedSize, cachedPadding;
 
+            protected HudMaskingBox maskingBox;
             protected HudElementBase _parentFull;
             private Vector2 originAlignment;
 
@@ -315,14 +337,38 @@ namespace RichHudFramework
                     GetDimAlignment();
                     originAlignment = GetParentAlignment();
                     cachedOrigin = _parentFull.cachedPosition + originAlignment;
+                    cachedPosition = cachedOrigin + Offset;
+
+                    if ((State & HudElementStates.IsMasking) > 0)
+                    {
+                        // Pool these
+                        if (maskingBox == null)
+                            maskingBox = new HudMaskingBox();
+
+                        Vector2 maskOffset = .5f * (cachedSize - cachedPadding);
+                        maskingBox.min = -maskOffset + cachedPosition;
+                        maskingBox.max = maskOffset + cachedPosition;
+                    }
+
+                    if (_parentFull.maskingBox != null)
+                    {
+                        if ((State & HudElementStates.IsMasking) > 0)
+                        {
+                            maskingBox.min = Vector2.Max(maskingBox.min, _parentFull.maskingBox.min);
+                            maskingBox.max = Vector2.Min(maskingBox.max, _parentFull.maskingBox.max);
+                        }
+                        else
+                        {
+                            maskingBox = _parentFull.maskingBox;
+                        }
+                    }
                 }
                 else
                 {
                     cachedSize = new Vector2(Width, Height);
                     cachedOrigin = Vector2.Zero;
+                    cachedPosition = cachedOrigin + Offset;
                 }
-
-                cachedPosition = cachedOrigin + Offset;
             }
 
             /// <summary>

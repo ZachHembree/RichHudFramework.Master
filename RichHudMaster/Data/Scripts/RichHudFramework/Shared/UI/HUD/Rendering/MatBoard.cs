@@ -152,6 +152,40 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
+                /// Draws a cropped billboard in world space facing the +Z direction of the matrix specified. Cropping is 
+                /// performed s.t. any parts outside the box defined by maskMin and maskMax are not rendered. For 
+                /// NON-TEXTURED billboards ONLY. This method will warp textures. Units in meters, matrix transform 
+                /// notwithstanding.
+                /// </summary>
+                public void DrawCropped(Vector2 offset, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
+                {
+                    if (updateMatFit && matFrame.Material != Material.Default)
+                    {
+                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
+                        updateMatFit = false;
+                    }
+
+                    minBoard.DrawCropped(size, offset, maskMin, maskMax, ref matrix);
+                }
+
+                /// <summary>
+                /// Draws a cropped billboard in world space facing the +Z direction of the matrix specified. Cropping is 
+                /// performed s.t. any parts outside the box defined by maskMin and maskMax are not rendered. For 
+                /// NON-TEXTURED billboards ONLY. This method will warp textures. Units in meters, matrix transform 
+                /// notwithstanding.
+                /// </summary>
+                public void DrawCroppedTex(Vector2 offset, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
+                {
+                    if (updateMatFit && matFrame.Material != Material.Default)
+                    {
+                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
+                        updateMatFit = false;
+                    }
+
+                    minBoard.DrawCroppedTex(size, offset, maskMin, maskMax, ref matrix);
+                }
+
+                /// <summary>
                 /// Draws a billboard in world space facing the +Z direction of the matrix given. Units in meters,
                 /// matrix transform notwithstanding. Dont forget to compensate for perspective scaling!
                 /// </summary>

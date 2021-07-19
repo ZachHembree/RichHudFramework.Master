@@ -44,26 +44,68 @@ namespace RichHudFramework.UI
         {
             if (Color.A > 0)
             {
-                var ptw = HudSpace.PlaneToWorld;
+                var matrix = HudSpace.PlaneToWorld;
 
                 float thickness = _thickness * Scale, 
                     height = _absoluteHeight * Scale, width = _absoluteWidth * Scale;
 
-                // Left
-                hudBoard.Size = new Vector2(thickness, height);
-                hudBoard.Draw(cachedPosition + new Vector2(-width / 2f, 0f), ref ptw);
+                if (maskingBox != null)
+                {
+                    if (hudBoard.Material != Material.Default)
+                    {
+                        // Left
+                        hudBoard.Size = new Vector2(thickness, height);
+                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(-width / 2f, 0f), maskingBox.min, maskingBox.max, ref matrix);
 
-                // Top
-                hudBoard.Size = new Vector2(width, thickness);
-                hudBoard.Draw(cachedPosition + new Vector2(0f, height / 2f), ref ptw);
+                        // Top
+                        hudBoard.Size = new Vector2(width, thickness);
+                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(0f, height / 2f), maskingBox.min, maskingBox.max, ref matrix);
 
-                // Right
-                hudBoard.Size = new Vector2(thickness, height);
-                hudBoard.Draw(cachedPosition + new Vector2(width / 2f, 0f), ref ptw);
+                        // Right
+                        hudBoard.Size = new Vector2(thickness, height);
+                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(width / 2f, 0f), maskingBox.min, maskingBox.max, ref matrix);
 
-                // Bottom
-                hudBoard.Size = new Vector2(width, thickness);
-                hudBoard.Draw(cachedPosition + new Vector2(0f, -height / 2f), ref ptw);
+                        // Bottom
+                        hudBoard.Size = new Vector2(width, thickness);
+                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(0f, -height / 2f), maskingBox.min, maskingBox.max, ref matrix);
+                    }
+                    else
+                    {
+                        // Left
+                        hudBoard.Size = new Vector2(thickness, height);
+                        hudBoard.DrawCropped(cachedPosition + new Vector2(-width / 2f, 0f), maskingBox.min, maskingBox.max, ref matrix);
+
+                        // Top
+                        hudBoard.Size = new Vector2(width, thickness);
+                        hudBoard.DrawCropped(cachedPosition + new Vector2(0f, height / 2f), maskingBox.min, maskingBox.max, ref matrix);
+
+                        // Right
+                        hudBoard.Size = new Vector2(thickness, height);
+                        hudBoard.DrawCropped(cachedPosition + new Vector2(width / 2f, 0f), maskingBox.min, maskingBox.max, ref matrix);
+
+                        // Bottom
+                        hudBoard.Size = new Vector2(width, thickness);
+                        hudBoard.DrawCropped(cachedPosition + new Vector2(0f, -height / 2f), maskingBox.min, maskingBox.max, ref matrix);
+                    }
+                }
+                else
+                {
+                    // Left
+                    hudBoard.Size = new Vector2(thickness, height);
+                    hudBoard.Draw(cachedPosition + new Vector2(-width / 2f, 0f), ref matrix);
+
+                    // Top
+                    hudBoard.Size = new Vector2(width, thickness);
+                    hudBoard.Draw(cachedPosition + new Vector2(0f, height / 2f), ref matrix);
+
+                    // Right
+                    hudBoard.Size = new Vector2(thickness, height);
+                    hudBoard.Draw(cachedPosition + new Vector2(width / 2f, 0f), ref matrix);
+
+                    // Bottom
+                    hudBoard.Size = new Vector2(width, thickness);
+                    hudBoard.Draw(cachedPosition + new Vector2(0f, -height / 2f), ref matrix);
+                }
             }
         }
     }

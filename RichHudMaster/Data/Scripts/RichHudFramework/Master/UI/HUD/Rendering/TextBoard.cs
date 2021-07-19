@@ -271,7 +271,7 @@ namespace RichHudFramework
                 public void Draw(Vector2 origin)
                 {
                     MatrixD pixelToWorld = HudMain.PixelToWorld;
-                    Draw(origin, ref pixelToWorld);
+                    Draw(origin, -Vector2.PositiveInfinity, Vector2.PositiveInfinity, ref pixelToWorld);
                 }
 
                 /// <summary>
@@ -280,7 +280,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, MatrixD matrix)
                 {
-                    Draw(offset, ref matrix);
+                    Draw(offset, -Vector2.PositiveInfinity, Vector2.PositiveInfinity, ref matrix);
                 }
 
                 /// <summary>
@@ -288,6 +288,15 @@ namespace RichHudFramework
                 /// direction.
                 /// </summary>
                 public void Draw(Vector2 offset, ref MatrixD matrix)
+                {
+                    Draw(offset, -Vector2.PositiveInfinity, Vector2.PositiveInfinity, ref matrix);
+                }
+
+                /// <summary>
+                /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
+                /// direction.
+                /// </summary>
+                public void Draw(Vector2 offset, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
                 {
                     if (offsetsAreStale)
                         UpdateOffsets();
@@ -305,8 +314,8 @@ namespace RichHudFramework
                     }
 
                     Vector2 min = -_size * .5f, max = -min;
-                    min = min * Scale + offset;
-                    max = max * Scale + offset;
+                    min = Vector2.Max(maskMin, min * Scale + offset);
+                    max = Vector2.Min(maskMax, max * Scale + offset);
                     offset += _textOffset * Scale;
 
                     IReadOnlyList<Line> lineList = lines.PooledLines;

@@ -86,8 +86,8 @@ namespace RichHudFramework.UI
         /// </summary>
         public readonly BorderBox border;
 
-        private readonly MouseInputElement inputInner, resizeInput;
-        private readonly TexturedBox bodyBg;
+        protected readonly MouseInputElement inputInner, resizeInput;
+        protected readonly TexturedBox bodyBg;
 
         protected readonly Action<byte> LoseFocusCallback;
         protected float cornerSize = 16f;
@@ -117,7 +117,8 @@ namespace RichHudFramework.UI
             bodyBg = new TexturedBox(body)
             {
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
-                ZOffset = -2
+                ZOffset = -2,
+                IsMasking = true
             };
 
             border = new BorderBox(this)
@@ -143,6 +144,7 @@ namespace RichHudFramework.UI
             CanDrag = true;
             UseCursor = true;
             ShareCursor = false;
+            IsMasking = true;
             MinimumSize = new Vector2(200f, 200f);
 
             LoseFocusCallback = LoseFocus;

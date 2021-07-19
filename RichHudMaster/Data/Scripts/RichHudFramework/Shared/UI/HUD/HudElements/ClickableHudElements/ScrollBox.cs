@@ -206,6 +206,7 @@ namespace RichHudFramework.UI
             UseCursor = true;
             ShareCursor = false;
             EnableScrolling = true;
+            IsMasking = true;
             ZOffset = 1;
         }
 
@@ -367,7 +368,7 @@ namespace RichHudFramework.UI
                 {
                     TElement element = hudCollectionList[n].Element;
 
-                    if (length >= element.Size[alignAxis] || VisCount < MinVisibleCount)
+                    if (length >= 0f || VisCount < MinVisibleCount)
                     {
                         range.Y = n;
                         length -= element.Size[alignAxis];
@@ -411,7 +412,7 @@ namespace RichHudFramework.UI
                 {
                     TElement element = hudCollectionList[n].Element;
 
-                    if (length >= element.Size[alignAxis] || VisCount < MinVisibleCount)
+                    if (length >= 0f || VisCount < MinVisibleCount)
                     {
                         range.X = n;
                         length -= element.Size[alignAxis];

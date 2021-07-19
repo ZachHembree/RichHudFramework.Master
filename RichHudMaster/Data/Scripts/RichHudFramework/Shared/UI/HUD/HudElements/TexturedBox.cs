@@ -46,7 +46,16 @@ namespace RichHudFramework.UI
             if (hudBoard.Color.A > 0)
             {
                 var matrix = HudSpace.PlaneToWorld;
-                hudBoard.Draw(cachedPosition, ref matrix);
+
+                if (maskingBox != null)
+                {
+                    if (hudBoard.Material != Material.Default)
+                        hudBoard.DrawCroppedTex(cachedPosition, maskingBox.min, maskingBox.max, ref matrix);
+                    else
+                        hudBoard.DrawCropped(cachedPosition, maskingBox.min, maskingBox.max, ref matrix);
+                }
+                else
+                    hudBoard.Draw(cachedPosition, ref matrix);
             }
         }
     }
