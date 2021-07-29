@@ -224,17 +224,16 @@ namespace RichHudFramework.UI
         protected readonly TexturedBox slider, bar;
         protected readonly MouseInputElement mouseInput;
         protected Vector2 _barSize, _sliderSize;
+        protected Vector2 startCursorOffset;
 
         protected float _min, _max, _current, _percent;
         protected bool canMoveSlider;
 
         public SliderBar(HudParentBase parent) : base(parent)
         {
-            mouseInput = new MouseInputElement(this) { DimAlignment = DimAlignments.Both };
-            mouseInput.LeftClicked += BarClicked;
-
             bar = new TexturedBox(this);
-            slider = new TexturedBox(bar);
+            slider = new TexturedBox(bar) { UseCursor = true, ShareCursor = true };
+            mouseInput = new MouseInputElement(this) { DimAlignment = DimAlignments.Both };
 
             _barSize = new Vector2(100f, 12f);
             _sliderSize = new Vector2(6f, 12f);
@@ -258,14 +257,18 @@ namespace RichHudFramework.UI
         public SliderBar() : this(null)
         { }
 
-        protected virtual void BarClicked(object sender, EventArgs args)
-        {
-            canMoveSlider = true;
-        }
-
         protected override void HandleInput(Vector2 cursorPos)
         {
-            if (canMoveSlider && !SharedBinds.LeftButton.IsPressed)
+            if (!canMoveSlider && mouseInput.IsNewLeftClicked)
+            {
+                canMoveSlider = true;
+
+                if (slider.IsMousedOver)
+                    startCursorOffset = cursorPos - slider.Position;
+                else
+                    startCursorOffset = Vector2.Zero;
+            }
+            else if (canMoveSlider && !SharedBinds.LeftButton.IsPressed)
             {
                 canMoveSlider = false;
             }
@@ -294,7 +297,8 @@ namespace RichHudFramework.UI
             if (canMoveSlider)
             {
                 float minOffset, maxOffset, pos;
-                Vector3 cursorPos = HudSpace.CursorPos;
+                Vector3 fullCurosrPos = HudSpace.CursorPos;
+                Vector2 cursorPos = new Vector2(fullCurosrPos.X, fullCurosrPos.Y) - startCursorOffset;
 
                 if (Vertical)
                 {
