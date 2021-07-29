@@ -271,7 +271,7 @@ namespace RichHudFramework
                 public void Draw(Vector2 origin)
                 {
                     MatrixD pixelToWorld = HudMain.PixelToWorld;
-                    Draw(origin, -Vector2.PositiveInfinity, Vector2.PositiveInfinity, ref pixelToWorld);
+                    Draw(origin, new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity), ref pixelToWorld);
                 }
 
                 /// <summary>
@@ -280,7 +280,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, MatrixD matrix)
                 {
-                    Draw(offset, -Vector2.PositiveInfinity, Vector2.PositiveInfinity, ref matrix);
+                    Draw(offset, new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity), ref matrix);
                 }
 
                 /// <summary>
@@ -289,14 +289,14 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, ref MatrixD matrix)
                 {
-                    Draw(offset, -Vector2.PositiveInfinity, Vector2.PositiveInfinity, ref matrix);
+                    Draw(offset, new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity), ref matrix);
                 }
 
                 /// <summary>
                 /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
                 /// direction.
                 /// </summary>
-                public void Draw(Vector2 offset, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
+                public void Draw(Vector2 offset, BoundingBox2 mask, ref MatrixD matrix)
                 {
                     if (offsetsAreStale)
                         UpdateOffsets();
@@ -313,9 +313,10 @@ namespace RichHudFramework
                         updateEvent = false;
                     }
 
-                    Vector2 min = -_size * .5f, max = -min;
-                    min = Vector2.Max(maskMin, min * Scale + offset);
-                    max = Vector2.Min(maskMax, max * Scale + offset);
+                    BoundingBox2 textMask = new BoundingBox2(
+                        Vector2.Max(mask.Min, -_size * .5f * Scale + offset), 
+                        Vector2.Min(mask.Max, _size * .5f * Scale + offset)
+                    );
                     offset += _textOffset * Scale;
 
                     IReadOnlyList<Line> lineList = lines.PooledLines;
@@ -331,7 +332,7 @@ namespace RichHudFramework
                             Vector2 bbSize = locData.bbSize * Scale,
                                 bbPos = offset + locData.bbOffset * Scale;
 
-                            line.GlyphBoards[ch].DrawCroppedTex(bbSize, bbPos, min, max, ref matrix);
+                            line.GlyphBoards[ch].DrawCroppedTex(bbSize, bbPos, textMask, ref matrix);
                         }
                     }
 
@@ -344,7 +345,7 @@ namespace RichHudFramework
                         Vector2 bbSize = underlines[n].size * Scale;
 
                         underlineBoard.bbColor = underlines[n].color;
-                        underlineBoard.DrawCropped(bbSize, bbPos, min, max, ref matrix);
+                        underlineBoard.DrawCropped(bbSize, bbPos, textMask, ref matrix);
                     }
                 }
 

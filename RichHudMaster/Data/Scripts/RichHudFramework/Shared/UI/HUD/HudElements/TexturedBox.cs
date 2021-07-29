@@ -50,9 +50,9 @@ namespace RichHudFramework.UI
                 if (maskingBox != null)
                 {
                     if (hudBoard.Material != Material.Default)
-                        hudBoard.DrawCroppedTex(cachedPosition, maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCroppedTex(cachedPosition, maskingBox.Value, ref matrix);
                     else
-                        hudBoard.DrawCropped(cachedPosition, maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCropped(cachedPosition, maskingBox.Value, ref matrix);
                 }
                 else
                     hudBoard.Draw(cachedPosition, ref matrix);

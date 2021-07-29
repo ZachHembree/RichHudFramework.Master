@@ -118,7 +118,6 @@ namespace RichHudFramework.UI
             {
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
                 ZOffset = -2,
-                IsMasking = true
             };
 
             border = new BorderBox(this)

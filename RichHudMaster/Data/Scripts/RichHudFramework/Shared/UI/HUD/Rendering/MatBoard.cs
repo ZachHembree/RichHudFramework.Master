@@ -157,7 +157,7 @@ namespace RichHudFramework
                 /// NON-TEXTURED billboards ONLY. This method will warp textures. Units in meters, matrix transform 
                 /// notwithstanding.
                 /// </summary>
-                public void DrawCropped(Vector2 offset, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
+                public void DrawCropped(Vector2 offset, BoundingBox2 mask, ref MatrixD matrix)
                 {
                     if (updateMatFit && matFrame.Material != Material.Default)
                     {
@@ -165,7 +165,7 @@ namespace RichHudFramework
                         updateMatFit = false;
                     }
 
-                    minBoard.DrawCropped(size, offset, maskMin, maskMax, ref matrix);
+                    minBoard.DrawCropped(size, offset, mask, ref matrix);
                 }
 
                 /// <summary>
@@ -174,7 +174,7 @@ namespace RichHudFramework
                 /// NON-TEXTURED billboards ONLY. This method will warp textures. Units in meters, matrix transform 
                 /// notwithstanding.
                 /// </summary>
-                public void DrawCroppedTex(Vector2 offset, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
+                public void DrawCroppedTex(Vector2 offset, BoundingBox2 mask, ref MatrixD matrix)
                 {
                     if (updateMatFit && matFrame.Material != Material.Default)
                     {
@@ -182,7 +182,7 @@ namespace RichHudFramework
                         updateMatFit = false;
                     }
 
-                    minBoard.DrawCroppedTex(size, offset, maskMin, maskMax, ref matrix);
+                    minBoard.DrawCroppedTex(size, offset, mask, ref matrix);
                 }
 
                 /// <summary>

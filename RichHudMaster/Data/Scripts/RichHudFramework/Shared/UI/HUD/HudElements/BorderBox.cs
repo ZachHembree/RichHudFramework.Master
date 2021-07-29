@@ -55,56 +55,56 @@ namespace RichHudFramework.UI
                     {
                         // Left
                         hudBoard.Size = new Vector2(thickness, height);
-                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(-width / 2f, 0f), maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2((-width + thickness) * .5f, 0f), maskingBox.Value, ref matrix);
 
                         // Top
                         hudBoard.Size = new Vector2(width, thickness);
-                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(0f, height / 2f), maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(0f, (height - thickness) * .5f), maskingBox.Value, ref matrix);
 
                         // Right
                         hudBoard.Size = new Vector2(thickness, height);
-                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(width / 2f, 0f), maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2((width - thickness) * .5f, 0f), maskingBox.Value, ref matrix);
 
                         // Bottom
                         hudBoard.Size = new Vector2(width, thickness);
-                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(0f, -height / 2f), maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCroppedTex(cachedPosition + new Vector2(0f, (-height + thickness) * .5f), maskingBox.Value, ref matrix);
                     }
                     else
                     {
                         // Left
                         hudBoard.Size = new Vector2(thickness, height);
-                        hudBoard.DrawCropped(cachedPosition + new Vector2(-width / 2f, 0f), maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCropped(cachedPosition + new Vector2((-width + thickness) * .5f, 0f), maskingBox.Value, ref matrix);
 
                         // Top
                         hudBoard.Size = new Vector2(width, thickness);
-                        hudBoard.DrawCropped(cachedPosition + new Vector2(0f, height / 2f), maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCropped(cachedPosition + new Vector2(0f, (height - thickness) * .5f), maskingBox.Value, ref matrix);
 
                         // Right
                         hudBoard.Size = new Vector2(thickness, height);
-                        hudBoard.DrawCropped(cachedPosition + new Vector2(width / 2f, 0f), maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCropped(cachedPosition + new Vector2((width - thickness) * .5f, 0f), maskingBox.Value, ref matrix);
 
                         // Bottom
                         hudBoard.Size = new Vector2(width, thickness);
-                        hudBoard.DrawCropped(cachedPosition + new Vector2(0f, -height / 2f), maskingBox.min, maskingBox.max, ref matrix);
+                        hudBoard.DrawCropped(cachedPosition + new Vector2(0f, (-height + thickness) * .5f), maskingBox.Value, ref matrix);
                     }
                 }
                 else
                 {
                     // Left
                     hudBoard.Size = new Vector2(thickness, height);
-                    hudBoard.Draw(cachedPosition + new Vector2(-width / 2f, 0f), ref matrix);
+                    hudBoard.Draw(cachedPosition + new Vector2((-width + thickness) * .5f, 0f), ref matrix);
 
                     // Top
                     hudBoard.Size = new Vector2(width, thickness);
-                    hudBoard.Draw(cachedPosition + new Vector2(0f, height / 2f), ref matrix);
+                    hudBoard.Draw(cachedPosition + new Vector2(0f, (height - thickness) * .5f), ref matrix);
 
                     // Right
                     hudBoard.Size = new Vector2(thickness, height);
-                    hudBoard.Draw(cachedPosition + new Vector2(width / 2f, 0f), ref matrix);
+                    hudBoard.Draw(cachedPosition + new Vector2((width - thickness) * .5f, 0f), ref matrix);
 
                     // Bottom
                     hudBoard.Size = new Vector2(width, thickness);
-                    hudBoard.Draw(cachedPosition + new Vector2(0f, -height / 2f), ref matrix);
+                    hudBoard.Draw(cachedPosition + new Vector2(0f, (-height + thickness) * .5f), ref matrix);
                 }
             }
         }

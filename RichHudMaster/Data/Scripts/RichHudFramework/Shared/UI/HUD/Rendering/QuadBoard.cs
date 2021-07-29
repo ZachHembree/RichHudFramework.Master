@@ -154,16 +154,16 @@ namespace RichHudFramework
                 /// NON-TEXTURED billboards ONLY. This method will warp textures. Units in meters, matrix transform 
                 /// notwithstanding.
                 /// </summary>
-                public void DrawCropped(Vector2 size, Vector2 origin, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
+                public void DrawCropped(Vector2 size, Vector2 origin, BoundingBox2 mask, ref MatrixD matrix)
                 {
                     // Calculate the position of the -/+ bounds of the box
-                    Vector2 minBound = Vector2.Max(origin - size * .5f, maskMin),
-                        maxBound = Vector2.Min(origin + size * .5f, maskMax);
+                    Vector2 minBound = Vector2.Max(origin - size * .5f, mask.Min),
+                        maxBound = Vector2.Min(origin + size * .5f, mask.Max);
 
                     // Adjust size and offset to simulate clipping
                     size = Vector2.Max(maxBound - minBound, Vector2.Zero);
 
-                    if ((size.X + size.Y) > 1E-3)
+                    if ((size.X * size.Y) > 1E-6)
                     {
                         origin = (maxBound + minBound) * .5f;
 
@@ -193,24 +193,24 @@ namespace RichHudFramework
                 /// performed s.t. any parts outside the box defined by maskMin and maskMax are not rendered and WITHOUT 
                 /// warping the texture or displacing the billboard. Units in meters, matrix transform notwithstanding.
                 /// </summary>
-                public void DrawCroppedTex(Vector2 size, Vector2 origin, Vector2 maskMin, Vector2 maskMax, ref MatrixD matrix)
+                public void DrawCroppedTex(Vector2 size, Vector2 origin, BoundingBox2 mask, ref MatrixD matrix)
                 {
                     // Calculate the position of the -/+ bounds of the box
-                    Vector2 minBound = Vector2.Max(origin - size * .5f, maskMin),
-                        maxBound = Vector2.Min(origin + size * .5f, maskMax);
+                    Vector2 minBound = Vector2.Max(origin - size * .5f, mask.Min),
+                        maxBound = Vector2.Min(origin + size * .5f, mask.Max);
                     // Cropped dimensions
                     Vector2 clipSize = Vector2.Max(maxBound - minBound, Vector2.Zero);
 
-                    if ((clipSize.X * clipSize.Y) > 1E-10)
+                    if ((clipSize.X * clipSize.Y) > 1E-6)
                     {
-                        FlatQuad texCoords = matFit;
-                        // Normalized cropped size and offset
-                        Vector2 clipScale = clipSize / size,
-                            clipOffset = (.5f * (maxBound + minBound) - origin) / size;
+                        FlatQuad texCoords = matFit;                        
 
-                        if ((clipScale.X * clipScale.Y) > 1E-3)
+                        if ((clipSize - size).LengthSquared() > 1E-3)
                         {
-                            Vector2 uvScale = texCoords.Point2 - texCoords.Point0,
+                            // Normalized cropped size and offset
+                            Vector2 clipScale = clipSize / size,
+                                clipOffset = (.5f * (maxBound + minBound) - origin) / size,
+                                uvScale = texCoords.Point2 - texCoords.Point0,
                                 uvOffset = .5f * (texCoords.Point2 + texCoords.Point0);
 
                             origin += clipOffset * size; // Offset billboard to compensate for changes in size
