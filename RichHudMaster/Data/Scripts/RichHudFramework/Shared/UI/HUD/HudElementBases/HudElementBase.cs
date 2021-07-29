@@ -154,6 +154,22 @@ namespace RichHudFramework
             }
 
             /// <summary>
+            /// Is set to true, the hud element will treat its parent as a clipping mask, whether
+            /// it's configured as a mask or not.
+            /// </summary>
+            public bool IsSelectivelyMasked
+            {
+                get { return (State & HudElementStates.IsSelectivelyMasked) > 0; }
+                set
+                {
+                    if (value)
+                        State |= HudElementStates.IsSelectivelyMasked;
+                    else
+                        State &= ~HudElementStates.IsSelectivelyMasked;
+                }
+            }
+
+            /// <summary>
             /// Indicates whether or not the element is capturing the cursor.
             /// </summary>
             public virtual bool IsMousedOver => (State & HudElementStates.IsMousedOver) > 0;
@@ -354,6 +370,18 @@ namespace RichHudFramework
                     box.Max = maskOffset + cachedPosition;
 
                     if (_parentFull?.maskingBox != null)
+                        maskingBox = box.Intersect(_parentFull.maskingBox.Value);
+                    else
+                        maskingBox = box;
+                }
+                else if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
+                {
+                    BoundingBox2 box = maskingBox != null ? maskingBox.Value : new BoundingBox2();
+                    Vector2 maskOffset = .5f * _parentFull.cachedSize;
+                    box.Min = -maskOffset + _parentFull.cachedPosition;
+                    box.Max = maskOffset + _parentFull.cachedPosition;
+
+                    if (_parentFull.maskingBox != null)
                         maskingBox = box.Intersect(_parentFull.maskingBox.Value);
                     else
                         maskingBox = box;

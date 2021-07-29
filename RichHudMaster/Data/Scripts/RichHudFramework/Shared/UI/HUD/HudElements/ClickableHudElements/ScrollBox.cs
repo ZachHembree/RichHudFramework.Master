@@ -211,7 +211,6 @@ namespace RichHudFramework.UI
             };
 
             MinVisibleCount = 1;
-            IsMasking = true;
             UseCursor = true;
             ShareCursor = false;
             EnableScrolling = true;
@@ -504,7 +503,7 @@ namespace RichHudFramework.UI
             NodeUtils.SetNodesState<TElementContainer, TElement>
                 (HudElementStates.CanPreload, true, hudCollectionList, 0, hudCollectionList.Count);
             NodeUtils.SetNodesState<TElementContainer, TElement>
-                (HudElementStates.CanPreload, false, hudCollectionList, preloadStart, preloadCount);
+                (HudElementStates.CanPreload | HudElementStates.IsSelectivelyMasked, false, hudCollectionList, preloadStart, preloadCount);
 
             base.GetUpdateAccessors(UpdateActions, treeDepth);
         }
