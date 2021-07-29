@@ -361,14 +361,24 @@ namespace RichHudFramework.UI
                 var ptw = HudSpace.PlaneToWorld;
 
                 if (hudBoard.Color.A > 0)
-                    hudBoard.Draw(cachedPosition, ref ptw);
+                {
+                    if (maskingBox != null)
+                        hudBoard.DrawCropped(cachedPosition, maskingBox.Value, ref ptw);
+                    else
+                        hudBoard.Draw(cachedPosition, ref ptw);
+                }
 
                 // Left align the tab
                 Vector2 tabPos = cachedPosition;
                 tabPos.X += (-hudBoard.Size.X + tabBoard.Size.X) / 2f;
 
                 if (CanDrawTab && tabBoard.Color.A > 0)
-                    tabBoard.Draw(tabPos, ref ptw);
+                {
+                    if (maskingBox != null)
+                        tabBoard.DrawCropped(tabPos, maskingBox.Value, ref ptw);
+                    else
+                        tabBoard.Draw(tabPos, ref ptw);
+                }
             }
         }
     }
