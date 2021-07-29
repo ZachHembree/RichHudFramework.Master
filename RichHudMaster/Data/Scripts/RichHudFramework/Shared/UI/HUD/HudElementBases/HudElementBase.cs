@@ -348,10 +348,7 @@ namespace RichHudFramework
 
                 if ((State & HudElementStates.IsMasking) > 0)
                 {
-                    if (maskingBox == null)
-                        maskingBox = new BoundingBox2();
-
-                    BoundingBox2 box = maskingBox.Value;
+                    BoundingBox2 box = maskingBox != null ? maskingBox.Value : new BoundingBox2();
                     Vector2 maskOffset = .5f * cachedSize;
                     box.Min = -maskOffset + cachedPosition;
                     box.Max = maskOffset + cachedPosition;

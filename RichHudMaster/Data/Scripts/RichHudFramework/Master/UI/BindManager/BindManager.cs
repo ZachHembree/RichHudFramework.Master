@@ -47,10 +47,13 @@ namespace RichHudFramework
                     {
                         foreach (string control in _instance.seControlIDs)
                             MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
+
+                        _instance.mouseControlsBlacklisted = value;
                     }
+                    else
+                        SeMouseControlsBlacklisted = value;
 
                     _instance.controlsBlacklisted = value;
-                    _instance.mouseControlsBlacklisted = value;
                 }
             }
 
@@ -134,6 +137,8 @@ namespace RichHudFramework
 
             public override void Close()
             {
+                SeControlsBlacklisted = false;
+                SeMouseControlsBlacklisted = false;
                 bindClients.Clear();
                 mainClient = null;
 
