@@ -165,7 +165,7 @@ namespace RichHudFramework.Server
         {
             pageCategory.Enabled = EnableDebug;
 
-            if (EnableDebug && updateTimer.ElapsedMilliseconds > 100)
+            if (EnableDebug && (statsText.Element.Visible || enableOverlay) && updateTimer.ElapsedMilliseconds > 100)
             {
                 IReadOnlyList<RichHudMaster.ModClient> modClients = RichHudMaster.Clients;
                 IReadOnlyList<IFont> fonts = FontManager.Fonts;

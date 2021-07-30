@@ -309,6 +309,8 @@ namespace RichHudFramework
                             cachedPadding = Padding;
                             cachedSize = new Vector2(Width, Height);
                             cachedPosition = cachedOrigin + Offset;
+
+                            UpdateMasking();
                         }
                     }
                     catch (Exception e)
@@ -361,34 +363,60 @@ namespace RichHudFramework
                     cachedOrigin = Vector2.Zero;
                     cachedPosition = cachedOrigin + Offset;
                 }
+            }
 
-                if ((State & HudElementStates.IsMasking) > 0)
+            /// <summary>
+            /// Updates masking state and bounding boxes used to mask billboards
+            /// </summary>
+            private void UpdateMasking()
+            {
+                if (_parentFull != null && (_parentFull.State & HudElementStates.IsMasked) > 0)
+                    State |= HudElementStates.IsMasked;
+                else
+                    State &= ~HudElementStates.IsMasked;
+
+                if ((State & HudElementStates.IsMasking) > 0 || (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0))
                 {
-                    BoundingBox2 box = maskingBox != null ? maskingBox.Value : new BoundingBox2();
-                    Vector2 maskOffset = .5f * cachedSize;
-                    box.Min = -maskOffset + cachedPosition;
-                    box.Max = maskOffset + cachedPosition;
+                    State |= HudElementStates.IsMasked;
+                    BoundingBox2? parentBox, box = null;
 
-                    if (_parentFull?.maskingBox != null)
-                        maskingBox = box.Intersect(_parentFull.maskingBox.Value);
+                    if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
+                    {
+                        Vector2 parentOffset = .5f * _parentFull.cachedSize;
+                        parentBox = new BoundingBox2(
+                            -parentOffset + _parentFull.cachedPosition,
+                            parentOffset + _parentFull.cachedPosition
+                        );
+
+                        if (_parentFull.maskingBox != null)
+                            parentBox = parentBox.Value.Intersect(_parentFull.maskingBox.Value);
+                    }
                     else
-                        maskingBox = box;
+                        parentBox = _parentFull?.maskingBox;
+
+                    if ((State & HudElementStates.IsMasking) > 0)
+                    {
+                        Vector2 offset = .5f * cachedSize;
+                        box = new BoundingBox2(
+                            -offset + cachedPosition,
+                            offset + cachedPosition
+                        );
+                    }
+
+                    if (parentBox != null && box != null)
+                        box = box.Value.Intersect(parentBox.Value);
+                    else if (box == null)
+                        box = parentBox;
+
+                    maskingBox = box;
                 }
-                else if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
+                else if ((State & HudElementStates.IsMasked) > 0)
                 {
-                    BoundingBox2 box = maskingBox != null ? maskingBox.Value : new BoundingBox2();
-                    Vector2 maskOffset = .5f * _parentFull.cachedSize;
-                    box.Min = -maskOffset + _parentFull.cachedPosition;
-                    box.Max = maskOffset + _parentFull.cachedPosition;
-
-                    if (_parentFull.maskingBox != null)
-                        maskingBox = box.Intersect(_parentFull.maskingBox.Value);
-                    else
-                        maskingBox = box;
+                    maskingBox = _parentFull?.maskingBox;
                 }
                 else
                 {
-                    maskingBox = _parentFull?.maskingBox;
+                    maskingBox = null;
                 }
             }
 

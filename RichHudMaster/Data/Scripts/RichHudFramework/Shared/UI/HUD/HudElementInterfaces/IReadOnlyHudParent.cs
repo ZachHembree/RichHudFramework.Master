@@ -30,8 +30,9 @@ namespace RichHudFramework
             IsMousedOver = 0x40,
             IsMouseInBounds = 0x80,
             CanPreload = 0x100,
-            IsMasking = 0x200,
-            IsSelectivelyMasked = 0x400
+            IsMasked = 0x200,
+            IsMasking = 0x400,
+            IsSelectivelyMasked = 0x800,
         }
 
         public struct HudLayerData
