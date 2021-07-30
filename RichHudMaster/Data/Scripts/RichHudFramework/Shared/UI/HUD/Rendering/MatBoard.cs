@@ -129,7 +129,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit && matFrame.Material != Material.Default)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
+                        minBoard.texCoords = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 
@@ -144,7 +144,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit && matFrame.Material != Material.Default)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
+                        minBoard.texCoords = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 
@@ -161,7 +161,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit && matFrame.Material != Material.Default)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
+                        minBoard.texCoords = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 
@@ -178,7 +178,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit && matFrame.Material != Material.Default)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
+                        minBoard.texCoords = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 
@@ -193,7 +193,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit && matFrame.Material != Material.Default)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
+                        minBoard.texCoords = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 
@@ -207,7 +207,7 @@ namespace RichHudFramework
                 {
                     if (updateMatFit && matFrame.Material != Material.Default)
                     {
-                        minBoard.matFit = matFrame.GetMaterialAlignment(size.X / size.Y);
+                        minBoard.texCoords = matFrame.GetMaterialAlignment(size.X / size.Y);
                         updateMatFit = false;
                     }
 

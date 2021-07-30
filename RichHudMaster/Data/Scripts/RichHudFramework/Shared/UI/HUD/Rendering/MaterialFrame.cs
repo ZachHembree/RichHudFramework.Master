@@ -23,7 +23,7 @@ namespace RichHudFramework
                 /// </summary>
                 Vector2 UvOffset { get; }
 
-                FlatQuad GetMaterialAlignment(float bbAspectRatio);
+                BoundingBox2 GetMaterialAlignment(float bbAspectRatio);
             }
 
             /// <summary>
@@ -57,7 +57,7 @@ namespace RichHudFramework
                 /// Calculates the texture coordinates needed to fit the material to the billboard. 
                 /// Aspect ratio = Width/Height
                 /// </summary>
-                public FlatQuad GetMaterialAlignment(float bbAspectRatio)
+                public BoundingBox2 GetMaterialAlignment(float bbAspectRatio)
                 {
                     Vector2 matOrigin = Material.uvOffset + UvOffset,
                         matStep = Material.uvSize / 2f;
@@ -86,16 +86,12 @@ namespace RichHudFramework
                         matStep *= localUV;
                     }
 
-                    Vector2
-                        min = matOrigin - matStep,
-                        max = matOrigin + matStep;
-
-                    return new FlatQuad
+                    return new BoundingBox2
                     (
                         matOrigin - matStep, // Bottom left
-                        Vector2.Clamp(matOrigin + new Vector2(-matStep.X, matStep.Y), min, max), // Upper left
-                        matOrigin + matStep, // Upper right
-                        Vector2.Clamp(matOrigin + new Vector2(matStep.X, -matStep.Y), min, max) // Bottom right
+                        //Vector2.Clamp(matOrigin + new Vector2(-matStep.X, matStep.Y), min, max), // Upper left
+                        matOrigin + matStep // Upper right
+                        //Vector2.Clamp(matOrigin + new Vector2(matStep.X, -matStep.Y), min, max) // Bottom right
                     );
                 }
             }

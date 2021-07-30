@@ -22,6 +22,11 @@ namespace RichHudFramework
                 public static readonly QuadBoard Default;
 
                 /// <summary>
+                /// Determines the extent to which the quad will be rhombused
+                /// </summary>
+                public float skewRatio;
+
+                /// <summary>
                 /// Material ID used by the billboard.
                 /// </summary>
                 public MyStringId textureID;
@@ -34,31 +39,26 @@ namespace RichHudFramework
                 /// <summary>
                 /// Determines the scale and aspect ratio of the texture as rendered.
                 /// </summary>
-                public FlatQuad matFit;
-
-                /// <summary>
-                /// Determines the extent to which the quad will be rhombused
-                /// </summary>
-                public float skewRatio;
+                public BoundingBox2 texCoords;
 
                 static QuadBoard()
                 {
-                    var matFit = new FlatQuad(new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f));
+                    var matFit = new BoundingBox2(new Vector2(0f, 0f), new Vector2(0f, 1f));
                     Default = new QuadBoard(Material.Default.TextureID, matFit, Color.White);
                 }
 
-                public QuadBoard(MyStringId textureID, FlatQuad matFit, Vector4 bbColor, float skewRatio = 0f)
+                public QuadBoard(MyStringId textureID, BoundingBox2 matFit, Vector4 bbColor, float skewRatio = 0f)
                 {
                     this.textureID = textureID;
-                    this.matFit = matFit;
+                    this.texCoords = matFit;
                     this.bbColor = bbColor;
                     this.skewRatio = skewRatio;
                 }
 
-                public QuadBoard(MyStringId textureID, FlatQuad matFit, Color color, float skewRatio = 0f)
+                public QuadBoard(MyStringId textureID, BoundingBox2 matFit, Color color, float skewRatio = 0f)
                 {
                     this.textureID = textureID;
-                    this.matFit = matFit;
+                    this.texCoords = matFit;
                     bbColor = GetQuadBoardColor(color);
                     this.skewRatio = skewRatio;
                 }
@@ -68,7 +68,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(ref MyQuadD quad)
                 {
-                    AddBillboard(ref quad, textureID, ref matFit, bbColor);
+                    AddBillboard(ref quad, textureID, texCoords, bbColor);
                 }
 
                 /// <summary>
@@ -93,7 +93,7 @@ namespace RichHudFramework
                         quad.Point2 -= offset;
                     }
 
-                    AddBillboard(ref quad, textureID, ref matFit, bbColor);
+                    AddBillboard(ref quad, textureID, texCoords, bbColor);
                 }
 
                 /// <summary>
@@ -119,7 +119,7 @@ namespace RichHudFramework
                         quad.Point2 -= offset;
                     }
 
-                    AddBillboard(ref quad, textureID, ref matFit, bbColor);
+                    AddBillboard(ref quad, textureID, texCoords, bbColor);
                 }
 
                 /// <summary>
@@ -145,7 +145,7 @@ namespace RichHudFramework
                         quad.Point2 -= offset;
                     }
 
-                    AddBillboard(ref quad, textureID, ref matFit, bbColor);
+                    AddBillboard(ref quad, textureID, texCoords, bbColor);
                 }
 
                 /// <summary>
@@ -184,7 +184,7 @@ namespace RichHudFramework
                             quad.Point2 -= offset;
                         }
 
-                        AddBillboard(ref quad, textureID, ref matFit, bbColor);
+                        AddBillboard(ref quad, textureID, texCoords, bbColor);
                     }
                 }
 
@@ -203,25 +203,23 @@ namespace RichHudFramework
 
                     if ((clipSize.X * clipSize.Y) > 1E-6)
                     {
-                        FlatQuad texCoords = matFit;                        
+                        BoundingBox2 tc = texCoords;                        
 
                         if ((clipSize - size).LengthSquared() > 1E-3)
                         {
                             // Normalized cropped size and offset
                             Vector2 clipScale = clipSize / size,
                                 clipOffset = (.5f * (maxBound + minBound) - origin) / size,
-                                uvScale = texCoords.Point2 - texCoords.Point0,
-                                uvOffset = .5f * (texCoords.Point2 + texCoords.Point0);
+                                uvScale = tc.Size,
+                                uvOffset = tc.Center;
 
                             origin += clipOffset * size; // Offset billboard to compensate for changes in size
                             size *= clipScale; // Calculate final billboard size
                             clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
 
                             // Recalculate texture coordinates to simulate clipping without affecting material alignment
-                            texCoords.Point0 = ((texCoords.Point0 - uvOffset) * clipScale) + uvOffset + clipOffset;
-                            texCoords.Point1 = ((texCoords.Point1 - uvOffset) * clipScale) + uvOffset + clipOffset;
-                            texCoords.Point2 = ((texCoords.Point2 - uvOffset) * clipScale) + uvOffset + clipOffset;
-                            texCoords.Point3 = ((texCoords.Point3 - uvOffset) * clipScale) + uvOffset + clipOffset;
+                            tc.Min = ((tc.Min - uvOffset) * clipScale) + uvOffset + clipOffset;
+                            tc.Max = ((tc.Max - uvOffset) * clipScale) + uvOffset + clipOffset;
                         }
 
                         Vector3D worldPos = new Vector3D(origin.X, origin.Y, 0d);
@@ -241,7 +239,7 @@ namespace RichHudFramework
                             quad.Point2 -= offset;
                         }
 
-                        AddBillboard(ref quad, textureID, ref texCoords, bbColor);
+                        AddBillboard(ref quad, textureID, tc, bbColor);
                     }
                 }
 
@@ -256,7 +254,7 @@ namespace RichHudFramework
                     return ((Vector4)color).ToLinearRGB();
                 }
 
-                private static void AddBillboard(ref MyQuadD quad, MyStringId matID, ref FlatQuad matFit, Vector4 color)
+                private static void AddBillboard(ref MyQuadD quad, MyStringId matID, BoundingBox2 matFit, Vector4 color)
                 {
                     MyTransparentGeometry.AddTriangleBillboard
                     (
@@ -264,9 +262,9 @@ namespace RichHudFramework
                         quad.Point1,
                         quad.Point2,
                         Vector3.Zero, Vector3.Zero, Vector3.Zero,
-                        matFit.Point0,
-                        matFit.Point1,
-                        matFit.Point2,
+                        matFit.Min,
+                        (matFit.Min + new Vector2(0f, matFit.Size.Y)),
+                        matFit.Max,
                         matID, 0,
                         Vector3D.Zero,
                         color,
@@ -279,9 +277,9 @@ namespace RichHudFramework
                         quad.Point2,
                         quad.Point3,
                         Vector3.Zero, Vector3.Zero, Vector3.Zero,
-                        matFit.Point0,
-                        matFit.Point2,
-                        matFit.Point3,
+                        matFit.Min,
+                        matFit.Max,
+                        (matFit.Min + new Vector2(matFit.Size.X, 0f)),
                         matID, 0,
                         Vector3D.Zero,
                         color,

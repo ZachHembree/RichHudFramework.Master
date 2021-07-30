@@ -20,7 +20,7 @@ namespace RichHudFramework
                 public readonly float advanceWidth, leftSideBearing;
 
                 private readonly MaterialFrame matFrame;
-                private readonly FlatQuad matAlignment;
+                private readonly BoundingBox2 matAlignment;
 
                 public Glyph(Material atlas, Vector2 size, Vector2 origin, float aw, float lsb)
                 {
