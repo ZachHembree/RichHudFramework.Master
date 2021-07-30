@@ -26,7 +26,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Size of the border on all four sides in pixels.
         /// </summary>
-        public float Thickness { get { return _thickness * Scale; } set { _thickness = value / Scale; } }
+        public float Thickness { get { return _thickness * (LocalScale * parentScale); } set { _thickness = value / (LocalScale * parentScale); } }
 
         private float _thickness;
         protected readonly MatBoard hudBoard;
@@ -46,8 +46,9 @@ namespace RichHudFramework.UI
             {
                 var matrix = HudSpace.PlaneToWorld;
 
-                float thickness = _thickness * Scale, 
-                    height = _absoluteHeight * Scale, width = _absoluteWidth * Scale;
+                float scale = (LocalScale * parentScale),
+                    thickness = _thickness * scale, 
+                    height = _absoluteHeight * scale, width = _absoluteWidth * scale;
 
                 if (maskingBox != null)
                 {

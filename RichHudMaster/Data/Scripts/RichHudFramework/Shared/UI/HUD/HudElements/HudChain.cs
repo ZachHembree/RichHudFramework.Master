@@ -116,7 +116,7 @@ namespace RichHudFramework
                     if (value > Padding.X)
                         value -= Padding.X;
 
-                    _absoluteWidth = value / Scale;
+                    _absoluteWidth = value / (LocalScale * parentScale);
 
                     if (value > 0f && offAxis == 0 && (SizingMode & (HudChainSizingModes.ClampMembersOffAxis | HudChainSizingModes.FitMembersOffAxis)) > 0)
                         _absMaxSize.X = _absoluteWidth;
@@ -133,7 +133,7 @@ namespace RichHudFramework
                     if (value > Padding.Y)
                         value -= Padding.Y;
 
-                    _absoluteHeight = value / Scale;
+                    _absoluteHeight = value / (LocalScale * parentScale);
 
                     if (value > 0f && offAxis == 1 && (SizingMode & (HudChainSizingModes.ClampMembersOffAxis | HudChainSizingModes.FitMembersOffAxis)) > 0)
                         _absMaxSize.Y = _absoluteHeight;
@@ -143,17 +143,17 @@ namespace RichHudFramework
             /// <summary>
             /// Maximum chain member size. If no maximum is set, then the currently set size will be used as the maximum.
             /// </summary>
-            public Vector2 MemberMaxSize { get { return _absMaxSize * Scale; } set { _absMaxSize = value / Scale; } }
+            public Vector2 MemberMaxSize { get { return _absMaxSize * (LocalScale * parentScale); } set { _absMaxSize = value / (LocalScale * parentScale); } }
 
             /// <summary>
             /// Minimum allowable member size.
             /// </summary>
-            public Vector2 MemberMinSize { get { return _absMinSize * Scale; } set { _absMinSize = value / Scale; } }
+            public Vector2 MemberMinSize { get { return _absMinSize * (LocalScale * parentScale); } set { _absMinSize = value / (LocalScale * parentScale); } }
 
             /// <summary>
             /// Distance between chain elements along their axis of alignment.
             /// </summary>
-            public float Spacing { get { return _spacing * Scale; } set { _spacing = value / Scale; } }
+            public float Spacing { get { return _spacing * (LocalScale * parentScale); } set { _spacing = value / (LocalScale * parentScale); } }
 
             /// <summary>
             /// Determines how/if the chain will attempt to resize member elements. Default sizing mode is 
@@ -216,16 +216,17 @@ namespace RichHudFramework
                 Vector2 visibleTotalSize = GetVisibleTotalSize(),
                     listSize = GetListSize(cachedSize - cachedPadding, visibleTotalSize);
 
-                _absoluteWidth = listSize.X / Scale;
-                _absoluteHeight = listSize.Y / Scale;
+                float scale = (LocalScale * parentScale);
+                _absoluteWidth = listSize.X / scale;
+                _absoluteHeight = listSize.Y / scale;
 
                 // Calculate member start offset
                 Vector2 startOffset = new Vector2();
 
                 if (alignAxis == 1)
-                    startOffset.Y = listSize.Y / 2f;
+                    startOffset.Y = listSize.Y * .5f;
                 else
-                    startOffset.X = -listSize.X / 2f;
+                    startOffset.X = -listSize.X * .5f;
 
                 UpdateMemberOffsets(startOffset, cachedPadding);
             }

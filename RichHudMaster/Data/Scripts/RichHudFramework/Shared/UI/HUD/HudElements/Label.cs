@@ -80,8 +80,7 @@ namespace RichHudFramework.UI
 
         protected override void Layout()
         {
-            if (_textBoard.Scale != Scale)
-                _textBoard.Scale = Scale;
+            _textBoard.Scale = (LocalScale * parentScale);
         }
 
         protected override void Draw()

@@ -60,7 +60,7 @@ namespace RichHudFramework
                 public BoundingBox2 GetMaterialAlignment(float bbAspectRatio)
                 {
                     Vector2 matOrigin = Material.uvOffset + UvOffset,
-                        matStep = Material.uvSize / 2f;
+                        matStep = Material.uvSize * .5f;
 
                     if (Alignment != MaterialAlignment.StretchToFit)
                     {

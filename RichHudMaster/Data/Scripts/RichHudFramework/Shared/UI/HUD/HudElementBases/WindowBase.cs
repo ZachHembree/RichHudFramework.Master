@@ -44,7 +44,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Minimum allowable size for the window.
         /// </summary>
-        public Vector2 MinimumSize { get { return minimumSize * Scale; } set { minimumSize = value / Scale; } }
+        public Vector2 MinimumSize { get { return minimumSize * (LocalScale * parentScale); } set { minimumSize = value / (LocalScale * parentScale); } }
 
         /// <summary>
         /// Determines whether or not the window can be resized by the user
@@ -181,32 +181,32 @@ namespace RichHudFramework.UI
             // 1 == horizontal, 3 == both
             if (resizeDir == 1 || resizeDir == 3)
             {
-                newWidth = Math.Abs(newOffset.X - cursorPos.X) + Width / 2f;
+                newWidth = Math.Abs(newOffset.X - cursorPos.X) + Width * .5f;
 
                 if (newWidth >= MinimumSize.X)
                 {
                     Width = newWidth;
 
                     if (cursorPos.X > center.X)
-                        newOffset.X = cursorPos.X - Width / 2f;
+                        newOffset.X = cursorPos.X - Width * .5f;
                     else
-                        newOffset.X = cursorPos.X + Width / 2f;
+                        newOffset.X = cursorPos.X + Width * .5f;
                 }
             }
 
             // 2 == vertical
             if (resizeDir == 2 || resizeDir == 3)
             {
-                newHeight = Math.Abs(newOffset.Y - cursorPos.Y) + Height / 2f;
+                newHeight = Math.Abs(newOffset.Y - cursorPos.Y) + Height * .5f;
 
                 if (newHeight >= MinimumSize.Y)
                 {
                     Height = newHeight;
 
                     if (cursorPos.Y > center.Y)
-                        newOffset.Y = cursorPos.Y - Height / 2f;
+                        newOffset.Y = cursorPos.Y - Height * .5f;
                     else
-                        newOffset.Y = cursorPos.Y + Height / 2f;
+                        newOffset.Y = cursorPos.Y + Height * .5f;
                 }
             }
 
@@ -223,14 +223,15 @@ namespace RichHudFramework.UI
 
             if (AllowResizing && resizeInput.IsNewLeftClicked && !inputInner.IsMousedOver)
             {
+                float scale = (LocalScale * parentScale);
                 Vector2 pos = Origin + Offset;
                 canResize = true;
                 resizeDir = 0;
 
-                if (Width - (2f * Scale) * Math.Abs(pos.X - cursorPos.X) <= cornerSize * Scale)
+                if (Width - (2f * scale) * Math.Abs(pos.X - cursorPos.X) <= cornerSize * scale)
                     resizeDir += 1;
 
-                if (Height - (2f * Scale) * Math.Abs(pos.Y - cursorPos.Y) <= cornerSize * Scale)
+                if (Height - (2f * scale) * Math.Abs(pos.Y - cursorPos.Y) <= cornerSize * scale)
                     resizeDir += 2;
             }
             else if (CanDrag && header.MouseInput.IsNewLeftClicked)

@@ -33,12 +33,13 @@ namespace RichHudFramework.UI
                 if (value > Padding.X)
                     value -= Padding.X;
 
-                _absoluteWidth = value / Scale;
+                float scale = (LocalScale * parentScale);
+                _absoluteWidth = value / scale;
 
                 if (offAxis == 0)
                 {
                     if (value > 0f && (SizingMode & (HudChainSizingModes.ClampMembersOffAxis | HudChainSizingModes.FitMembersOffAxis)) > 0)
-                        _absMaxSize.X = (value - scrollBarPadding) / Scale;
+                        _absMaxSize.X = (value - scrollBarPadding) / scale;
                 }
                 else
                     _absMinLengthInternal = _absoluteWidth;
@@ -55,12 +56,13 @@ namespace RichHudFramework.UI
                 if (value > Padding.Y)
                     value -= Padding.Y;
 
-                _absoluteHeight = value / Scale;
+                float scale = (LocalScale * parentScale);
+                _absoluteHeight = value / scale;
 
                 if (offAxis == 1)
                 {
                     if (value > 0f && (SizingMode & (HudChainSizingModes.ClampMembersOffAxis | HudChainSizingModes.FitMembersOffAxis)) > 0)
-                        _absMaxSize.Y = (value - scrollBarPadding) / Scale;
+                        _absMaxSize.Y = (value - scrollBarPadding) / scale;
                 }
                 else
                     _absMinLengthInternal = _absoluteHeight;
@@ -77,7 +79,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Minimum total length (on the align axis) of visible members allowed in the scrollbox.
         /// </summary>
-        public float MinLength { get { return _absMinLength * Scale; } set { _absMinLength = value / Scale; } }
+        public float MinLength { get { return _absMinLength * (LocalScale * parentScale); } set { _absMinLength = value / (LocalScale * parentScale); } }
 
         /// <summary>
         /// Index of the first element in the visible range in the chain.
@@ -254,7 +256,8 @@ namespace RichHudFramework.UI
             UpdateMemberSizes();
 
             // Get the list length
-            float rangeLength = Math.Max(MinLength, _absMinLengthInternal * Scale);
+            float scale = (LocalScale * parentScale),
+                rangeLength = Math.Max(MinLength, _absMinLengthInternal * scale);
 
             Vector2 size = cachedSize,
                 visibleTotalSize = GetVisibleTotalSize(),
@@ -263,8 +266,8 @@ namespace RichHudFramework.UI
 
             size = listSize;
             size[offAxis] += scrollBarPadding;
-            _absoluteWidth = size.X / Scale;
-            _absoluteHeight = size.Y / Scale;
+            _absoluteWidth = size.X / scale;
+            _absoluteHeight = size.Y / scale;
 
             // Update scrollbar max bound and calculate offset for scrolling
             ScrollBar.Max = Math.Max(visibleTotalSize[alignAxis] - listSize[alignAxis], 0f);

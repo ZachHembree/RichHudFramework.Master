@@ -137,7 +137,7 @@ namespace RichHudFramework.UI.Server
                 get { return _absolutePosition; } 
                 set 
                 {
-                    value = Vector2.Clamp(value, -Vector2.One / 2f, Vector2.One / 2f);
+                    value = Vector2.Clamp(value, -Vector2.One * .5f, Vector2.One * .5f);
                     _absolutePosition = value; 
                 } 
             }
@@ -191,14 +191,14 @@ namespace RichHudFramework.UI.Server
                 if (AlignToEdge)
                 {
                     if (cachedPosition.X > 0f)
-                        alignment.X = Width / 2f;
+                        alignment.X = Width * .5f;
                     else
-                        alignment.X = -Width / 2f;
+                        alignment.X = -Width * .5f;
 
                     if (cachedPosition.Y > 0f)
-                        alignment.Y = Height / 2f;
+                        alignment.Y = Height * .5f;
                     else
-                        alignment.Y = -Height / 2f;
+                        alignment.Y = -Height * .5f;
                 }
             }
 

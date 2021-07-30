@@ -197,7 +197,7 @@ namespace RichHudFramework
                     // centered in the middle of the screen rather than the upper left
                     // corner.
                     screenPos.Y *= -1f;
-                    screenPos += new Vector2(-ScreenWidth / 2f, ScreenHeight / 2f);
+                    screenPos += new Vector2(-ScreenWidth * .5f, ScreenHeight * .5f);
 
                     // Calculate position of the cursor in world space
                     MatrixD ptw = HudMain.PixelToWorld;

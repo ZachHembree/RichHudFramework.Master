@@ -353,7 +353,7 @@ namespace RichHudFramework.UI
             protected override void Layout()
             {
                 hudBoard.Size = cachedSize - cachedPadding;
-                tabBoard.Size = new Vector2(4f * Scale, cachedSize.Y - cachedPadding.Y);
+                tabBoard.Size = new Vector2(4f * (LocalScale * parentScale), cachedSize.Y - cachedPadding.Y);
             }
 
             protected override void Draw()
@@ -370,7 +370,7 @@ namespace RichHudFramework.UI
 
                 // Left align the tab
                 Vector2 tabPos = cachedPosition;
-                tabPos.X += (-hudBoard.Size.X + tabBoard.Size.X) / 2f;
+                tabPos.X += (-hudBoard.Size.X + tabBoard.Size.X) * .5f;
 
                 if (CanDrawTab && tabBoard.Color.A > 0)
                 {

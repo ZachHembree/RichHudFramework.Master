@@ -143,7 +143,7 @@ namespace RichHudFramework
                     if (normScreenSize.Y < 1080 || HudMain.AspectRatio < (16f/9f))
                         Height = MinimumSize.Y;
 
-                    Offset = (normScreenSize - Size) / 2f - new Vector2(40f);
+                    Offset = (normScreenSize - Size) * .5f - new Vector2(40f);
                 }
 
                 /// <summary>

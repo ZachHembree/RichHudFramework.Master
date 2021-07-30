@@ -44,13 +44,13 @@ namespace RichHudFramework
             /// </summary>
             public virtual float Width
             {
-                get { return (_absoluteWidth * Scale) + Padding.X; }
+                get { return (_absoluteWidth * (LocalScale * parentScale)) + Padding.X; }
                 set
                 {
                     if (value > Padding.X)
                         value -= Padding.X;
 
-                    _absoluteWidth = (value / Scale);
+                    _absoluteWidth = (value / (LocalScale * parentScale));
                 }
             }
 
@@ -59,13 +59,13 @@ namespace RichHudFramework
             /// </summary>
             public virtual float Height
             {
-                get { return (_absoluteHeight * Scale) + Padding.Y; }
+                get { return (_absoluteHeight * (LocalScale * parentScale)) + Padding.Y; }
                 set
                 {
                     if (value > Padding.Y)
                         value -= Padding.Y;
 
-                    _absoluteHeight = (value / Scale);
+                    _absoluteHeight = (value / (LocalScale * parentScale));
                 }
             }
 
@@ -74,8 +74,8 @@ namespace RichHudFramework
             /// </summary>
             public virtual Vector2 Padding
             {
-                get { return _absolutePadding * Scale; }
-                set { _absolutePadding = value / Scale; }
+                get { return _absolutePadding * (LocalScale * parentScale); }
+                set { _absolutePadding = value / (LocalScale * parentScale); }
             }
 
             /// <summary>
@@ -88,8 +88,8 @@ namespace RichHudFramework
             /// </summary>
             public virtual Vector2 Offset
             {
-                get { return _absoluteOffset * Scale; }
-                set { _absoluteOffset = value / Scale; }
+                get { return _absoluteOffset * (LocalScale * parentScale); }
+                set { _absoluteOffset = value / (LocalScale * parentScale); }
             }
 
             /// <summary>
@@ -218,7 +218,7 @@ namespace RichHudFramework
                 if (HudSpace?.IsFacingCamera ?? false)
                 {
                     Vector3 cursorPos = HudSpace.CursorPos;
-                    Vector2 offset = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) / 2f;
+                    Vector2 offset = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) * .5f;
                     BoundingBox2 box = new BoundingBox2(cachedPosition - offset, cachedPosition + offset);
                     bool mouseInBounds;
 
@@ -465,13 +465,13 @@ namespace RichHudFramework
             private Vector2 GetParentAlignment()
             {
                 Vector2 alignment = Vector2.Zero,
-                    max = (_parentFull.cachedSize + cachedSize) / 2f,
+                    max = (_parentFull.cachedSize + cachedSize) * .5f,
                     min = -max;
 
                 if ((ParentAlignment & ParentAlignments.UsePadding) == ParentAlignments.UsePadding)
                 {
-                    min += _parentFull.cachedPadding / 2f;
-                    max -= _parentFull.cachedPadding / 2f;
+                    min += _parentFull.cachedPadding * .5f;
+                    max -= _parentFull.cachedPadding * .5f;
                 }
 
                 if ((ParentAlignment & ParentAlignments.InnerV) == ParentAlignments.InnerV)

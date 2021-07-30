@@ -420,36 +420,37 @@ namespace RichHudFramework.UI
             private void UpdateOffset()
             {
                 Vector2 offset = new Vector2();
+                float scale = (LocalScale * parentScale);
 
                 if (text.Count > 0 && text[Index.X].Count > 0)
                 {
                     IRichChar ch;
-                    Height = text[Index.X].Size.Y - (2f * Scale);
+                    Height = text[Index.X].Size.Y - (2f * scale);
                     
                     if (Index.Y == -1)
                     {
                         ch = text[Index + new Vector2I(0, 1)];
                         offset = ch.Offset + text.TextOffset;
-                        offset.X -= ch.Size.X / 2f + (1f * Scale);
+                        offset.X -= ch.Size.X * .5f + (1f * scale);
                     }
                     else
                     {
                         ch = text[Index];
                         offset = ch.Offset + text.TextOffset;
-                        offset.X += ch.Size.X / 2f + (1f * Scale);
+                        offset.X += ch.Size.X * .5f + (1f * scale);
                     }
                 }
                 else
                 {
                     if (text.Format.Alignment == TextAlignment.Left)
-                        offset.X = -textElement.Size.X / 2f + (2f * Scale);
+                        offset.X = -textElement.Size.X * .5f + (2f * scale);
                     else if (text.Format.Alignment == TextAlignment.Right)
-                        offset.X = textElement.Size.X / 2f - (2f * Scale);
+                        offset.X = textElement.Size.X * .5f - (2f * scale);
 
-                    offset += _parentFull.Padding / 2f;
+                    offset += _parentFull.Padding * .5f;
 
                     if (!text.VertCenterText)
-                        offset.Y = (text.Size.Y - Height) / 2f - (4f * Scale);
+                        offset.Y = (text.Size.Y - Height) * .5f - (4f * scale);
                 }
 
                 Offset = offset;
@@ -486,7 +487,7 @@ namespace RichHudFramework.UI
             /// </summary>
             private void GetClickedChar(Vector2 cursorPos)
             {
-                if ((cursorPos - lastCursorPos).LengthSquared() > 4f * Scale)
+                if ((cursorPos - lastCursorPos).LengthSquared() > 4f * (LocalScale * parentScale))
                 {
                     Vector2 offset = cursorPos - textElement.Position;
                     Vector2I newIndex = text.GetCharAtOffset(offset);
@@ -683,7 +684,7 @@ namespace RichHudFramework.UI
                     }
 
                     var ptw = HudSpace.PlaneToWorld;
-                    Vector2 tbOffset = text.TextOffset, bounds = new Vector2(-text.Size.X / 2f, text.Size.X / 2f);
+                    Vector2 tbOffset = text.TextOffset, bounds = new Vector2(-text.Size.X * .5f, text.Size.X * .5f);
 
                     for (int n = 0; n < highlightList.Count; n++)
                         highlightList[n].Draw(highlightBoard, Origin, tbOffset, bounds, ref ptw);
@@ -737,13 +738,13 @@ namespace RichHudFramework.UI
                     {
                         size = new Vector2()
                         {
-                            X = right.Offset.X - left.Offset.X + (left.Size.X + right.Size.X) / 2f,
+                            X = right.Offset.X - left.Offset.X + (left.Size.X + right.Size.X) * .5f,
                             Y = text[line].Size.Y
                         },
                         offset = new Vector2()
                         {
-                            X = (right.Offset.X + left.Offset.X) / 2f - 2f,
-                            Y = text[line].VerticalOffset - text[line].Size.Y / 2f
+                            X = (right.Offset.X + left.Offset.X) * .5f - 2f,
+                            Y = text[line].VerticalOffset - text[line].Size.Y * .5f
                         }
                     };
 
@@ -763,12 +764,12 @@ namespace RichHudFramework.UI
                     Vector2 drawSize = size, drawOffset = offset + tbOffset;
 
                     // Determine the visible extents of the highlight box within the bounds of the textboard
-                    float leftBound = Math.Max(drawOffset.X - drawSize.X / 2f, xBounds.X),
-                        rightBound = Math.Min(drawOffset.X + drawSize.X / 2f, xBounds.Y);
+                    float leftBound = Math.Max(drawOffset.X - drawSize.X * .5f, xBounds.X),
+                        rightBound = Math.Min(drawOffset.X + drawSize.X * .5f, xBounds.Y);
 
                     // Adjust highlight size and offset to compensate for textboard clipping and offset
                     drawSize.X = Math.Max(0, rightBound - leftBound);
-                    drawOffset.X = (rightBound + leftBound) / 2f;
+                    drawOffset.X = (rightBound + leftBound) * .5f;
 
                     matBoard.Size = drawSize;
                     matBoard.Draw(origin + drawOffset, ref matrix);

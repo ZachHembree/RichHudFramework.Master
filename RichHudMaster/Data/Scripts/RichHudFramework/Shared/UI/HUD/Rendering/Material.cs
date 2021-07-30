@@ -94,7 +94,7 @@ namespace RichHudFramework
                     this.size = size;
 
                     uvSize = Vector2.One;
-                    uvOffset = uvSize / 2f;
+                    uvOffset = uvSize * .5f;
                 }
 
                 /// <summary>
@@ -117,7 +117,7 @@ namespace RichHudFramework
                     offset.X /= textureSize.X;
                     offset.Y /= textureSize.Y;
 
-                    uvOffset = offset + (uvSize / 2f);
+                    uvOffset = offset + (uvSize * .5f);
                 }
             }
 
