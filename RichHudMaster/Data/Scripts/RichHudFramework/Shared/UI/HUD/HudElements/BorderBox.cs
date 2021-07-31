@@ -51,76 +51,31 @@ namespace RichHudFramework.UI
                 float scale = (LocalScale * parentScale),
                     thickness = _thickness * scale, 
                     height = _absoluteHeight * scale, width = _absoluteWidth * scale;
+                Vector2 halfSize, pos;
 
-                if (maskingBox != null)
-                {
-                    if (hudBoard.Material != Material.Default)
-                    {
-                        // Left
-                        box.size = new Vector2(thickness, height);
-                        box.pos = cachedPosition + new Vector2((-width + thickness) * .5f, 0f);
-                        hudBoard.DrawCroppedTex(ref box, ref matrix);
+                // Left
+                halfSize = new Vector2(thickness, height) * .5f;
+                pos = cachedPosition + new Vector2((-width + thickness) * .5f, 0f);
+                box.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                hudBoard.Draw(ref box, ref matrix);
 
-                        // Top
-                        box.size = new Vector2(width, thickness);
-                        box.pos = cachedPosition + new Vector2(0f, (height - thickness) * .5f);
-                        hudBoard.DrawCroppedTex(ref box, ref matrix);
+                // Top
+                halfSize = new Vector2(width, thickness) * .5f;
+                pos = cachedPosition + new Vector2(0f, (height - thickness) * .5f);
+                box.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                hudBoard.Draw(ref box, ref matrix);
 
-                        // Right
-                        box.size = new Vector2(thickness, height);
-                        box.pos = cachedPosition + new Vector2((width - thickness) * .5f, 0f);
-                        hudBoard.DrawCroppedTex(ref box, ref matrix);
+                // Right
+                halfSize = new Vector2(thickness, height) * .5f;
+                pos = cachedPosition + new Vector2((width - thickness) * .5f, 0f);
+                box.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                hudBoard.Draw(ref box, ref matrix);
 
-                        // Bottom
-                        box.size = new Vector2(width, thickness);
-                        box.pos = cachedPosition + new Vector2(0f, (-height + thickness) * .5f);
-                        hudBoard.DrawCroppedTex(ref box, ref matrix);
-                    }
-                    else
-                    {
-                        // Left
-                        box.size = new Vector2(thickness, height);
-                        box.pos = cachedPosition + new Vector2((-width + thickness) * .5f, 0f);
-                        hudBoard.DrawCropped(ref box, ref matrix);
-
-                        // Top
-                        box.size = new Vector2(width, thickness);
-                        box.pos = cachedPosition + new Vector2(0f, (height - thickness) * .5f);
-                        hudBoard.DrawCropped(ref box, ref matrix);
-
-                        // Right
-                        box.size = new Vector2(thickness, height);
-                        box.pos = cachedPosition + new Vector2((width - thickness) * .5f, 0f);
-                        hudBoard.DrawCropped(ref box, ref matrix);
-
-                        // Bottom
-                        box.size = new Vector2(width, thickness);
-                        box.pos = cachedPosition + new Vector2(0f, (-height + thickness) * .5f);
-                        hudBoard.DrawCropped(ref box, ref matrix);
-                    }
-                }
-                else
-                {
-                    // Left
-                    box.size = new Vector2(thickness, height);
-                    box.pos = cachedPosition + new Vector2((-width + thickness) * .5f, 0f);
-                    hudBoard.Draw(ref box, ref matrix);
-
-                    // Top
-                    box.size = new Vector2(width, thickness);
-                    box.pos = cachedPosition + new Vector2(0f, (height - thickness) * .5f);
-                    hudBoard.Draw(ref box, ref matrix);
-
-                    // Right
-                    box.size = new Vector2(thickness, height);
-                    box.pos = cachedPosition + new Vector2((width - thickness) * .5f, 0f);
-                    hudBoard.Draw(ref box, ref matrix);
-
-                    // Bottom
-                    box.size = new Vector2(width, thickness);
-                    box.pos = cachedPosition + new Vector2(0f, (-height + thickness) * .5f);
-                    hudBoard.Draw(ref box, ref matrix);
-                }
+                // Bottom
+                halfSize = new Vector2(width, thickness) * .5f;
+                pos = cachedPosition + new Vector2(0f, (-height + thickness) * .5f);
+                box.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                hudBoard.Draw(ref box, ref matrix);
             }
         }
     }

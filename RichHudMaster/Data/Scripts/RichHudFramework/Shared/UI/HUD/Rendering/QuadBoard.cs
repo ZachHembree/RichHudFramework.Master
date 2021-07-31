@@ -16,8 +16,7 @@ namespace RichHudFramework
         {
             public struct CroppedBox
             {
-                public Vector2 size;
-                public Vector2 pos;
+                public BoundingBox2 bounds;
                 public BoundingBox2? mask;
             }
 
@@ -110,11 +109,13 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(ref CroppedBox box, ref MatrixD matrix)
                 {
-                    Vector3D worldPos = new Vector3D(box.pos.X, box.pos.Y, 0d);
+                    Vector2 size = box.bounds.Size,
+                        pos = box.bounds.Center;
+                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
                     MyQuadD quad;
 
                     Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, box.size.X * .5f, box.size.Y * .5f, ref matrix);
+                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
 
                     if (skewRatio != 0f)
                     {
@@ -138,35 +139,28 @@ namespace RichHudFramework
                 /// </summary>
                 public void DrawCropped(ref CroppedBox box, ref MatrixD matrix)
                 {
-                    // Calculate the position of the -/+ bounds of the box
-                    Vector2 minBound = Vector2.Max(box.pos - box.size * .5f, box.mask.Value.Min),
-                        maxBound = Vector2.Min(box.pos + box.size * .5f, box.mask.Value.Max);
-                    // Adjust size and offset to simulate clipping
-                    box.size = Vector2.Max(maxBound - minBound, Vector2.Zero);
+                    box.bounds = box.bounds.Intersect(box.mask.Value);
+                    Vector2 size = box.bounds.Size,
+                        pos = box.bounds.Center;
 
-                    if (box.size.X > 1E-6 && box.size.Y > 1E-6)
+                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
+                    MyQuadD quad;
+
+                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
+                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
+
+                    if (skewRatio != 0f)
                     {
-                        box.pos = (maxBound + minBound) * .5f;
+                        Vector3D start = quad.Point0, end = quad.Point3,
+                            offset = (end - start) * skewRatio * .5;
 
-                        Vector3D worldPos = new Vector3D(box.pos.X, box.pos.Y, 0d);
-                        MyQuadD quad;
-
-                        Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                        MyUtils.GenerateQuad(out quad, ref worldPos, box.size.X * .5f, box.size.Y * .5f, ref matrix);
-
-                        if (skewRatio != 0f)
-                        {
-                            Vector3D start = quad.Point0, end = quad.Point3,
-                                offset = (end - start) * skewRatio * .5;
-
-                            quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                            quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
-                            quad.Point1 -= offset;
-                            quad.Point2 -= offset;
-                        }
-
-                        AddBillboard(ref this, ref quad);
+                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
+                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
+                        quad.Point1 -= offset;
+                        quad.Point2 -= offset;
                     }
+
+                    AddBillboard(ref this, ref quad);
                 }
 
                 /// <summary>
@@ -176,52 +170,48 @@ namespace RichHudFramework
                 /// </summary>
                 public void DrawCroppedTex(ref CroppedBox box, ref MatrixD matrix)
                 {
-                    // Calculate the position of the -/+ bounds of the box
-                    Vector2 minBound = Vector2.Max(box.pos - box.size * .5f, box.mask.Value.Min),
-                        maxBound = Vector2.Min(box.pos + box.size * .5f, box.mask.Value.Max);
-                    // Cropped dimensions
-                    Vector2 clipSize = Vector2.Max(maxBound - minBound, Vector2.Zero);
+                    Vector2 size = box.bounds.Size,
+                        pos = box.bounds.Center;
+                    box.bounds = box.bounds.Intersect(box.mask.Value);
 
-                    if (clipSize.X > 1E-6 && clipSize.Y > 1E-6)
+                    Vector2 clipSize = box.bounds.Size,
+                        clipDelta = size - clipSize;
+                    CroppedQuad crop = default(CroppedQuad);
+                    crop.matBounds = texCoords;
+
+                    if (clipDelta.X > 1E-3 || clipDelta.Y > 1E-3)
                     {
-                        Vector2 clipDelta = clipSize - box.size;
-                        CroppedQuad crop = default(CroppedQuad);
-                        crop.matBounds = texCoords;
+                        // Normalized cropped size and offset
+                        Vector2 clipScale = clipSize / size,
+                            clipOffset = (box.bounds.Center - pos) / size,
+                            uvScale = crop.matBounds.Size,
+                            uvOffset = crop.matBounds.Center;
 
-                        if (Math.Abs(clipDelta.X) > 1E-3 || Math.Abs(clipDelta.Y) > 1E-3)
-                        {
-                            // Normalized cropped size and offset
-                            Vector2 clipScale = clipSize / box.size,
-                                clipOffset = (.5f * (maxBound + minBound) - box.pos) / box.size,
-                                uvScale = crop.matBounds.Size,
-                                uvOffset = crop.matBounds.Center;
+                        pos += clipOffset * size; // Offset billboard to compensate for changes in size
+                        size = clipSize; // Use cropped billboard size
+                        clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
 
-                            box.pos += clipOffset * box.size; // Offset billboard to compensate for changes in size
-                            box.size *= clipScale; // Calculate final billboard size
-                            clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
-
-                            // Recalculate texture coordinates to simulate clipping without affecting material alignment
-                            crop.matBounds.Min = ((crop.matBounds.Min - uvOffset) * clipScale) + uvOffset + clipOffset;
-                            crop.matBounds.Max = ((crop.matBounds.Max - uvOffset) * clipScale) + uvOffset + clipOffset;
-                        }
-
-                        Vector3D worldPos = new Vector3D(box.pos.X, box.pos.Y, 0d);
-                        Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                        MyUtils.GenerateQuad(out crop.quad, ref worldPos, box.size.X * .5f, box.size.Y * .5f, ref matrix);
-
-                        if (skewRatio != 0f)
-                        {
-                            Vector3D start = crop.quad.Point0, end = crop.quad.Point3,
-                                offset = (end - start) * skewRatio * .5;
-
-                            crop.quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                            crop.quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
-                            crop.quad.Point1 -= offset;
-                            crop.quad.Point2 -= offset;
-                        }
-
-                        AddBillboard(ref this, ref crop);
+                        // Recalculate texture coordinates to simulate clipping without affecting material alignment
+                        crop.matBounds.Min = ((crop.matBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
+                        crop.matBounds.Max = ((crop.matBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
                     }
+
+                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
+                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
+                    MyUtils.GenerateQuad(out crop.quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
+
+                    if (skewRatio != 0f)
+                    {
+                        Vector3D start = crop.quad.Point0, end = crop.quad.Point3,
+                            offset = (end - start) * skewRatio * .5;
+
+                        crop.quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
+                        crop.quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
+                        crop.quad.Point1 -= offset;
+                        crop.quad.Point2 -= offset;
+                    }
+
+                    AddBillboard(ref this, ref crop);
                 }
 
                 public static Vector4 GetQuadBoardColor(Color color)

@@ -354,35 +354,25 @@ namespace RichHudFramework.UI
             {
                 var ptw = HudSpace.PlaneToWorld;
                 CroppedBox box = default(CroppedBox);
-                box.size = cachedSize - cachedPadding;
-                box.pos = cachedPosition;
+                Vector2 size = (cachedSize - cachedPadding),
+                    halfSize = size * .5f;
+
+                box.bounds = new BoundingBox2(cachedPosition - halfSize, cachedPosition + halfSize);
                 box.mask = maskingBox;
 
                 if (hudBoard.Color.A > 0)
-                {
-                    if (box.mask != null)
-                        hudBoard.DrawCropped(ref box, ref ptw);
-                    else
-                        hudBoard.Draw(ref box, ref ptw);
-                }
-
-                box.size = cachedSize - cachedPadding;
-                box.pos = cachedPosition;
+                    hudBoard.Draw(ref box, ref ptw);
 
                 // Left align the tab
-                Vector2 tabPos = box.pos,
-                    tabSize = new Vector2(4f * (LocalScale * parentScale), box.size.Y - cachedPadding.Y);
-                tabPos.X += (-box.size.X + tabSize.X) * .5f;
+                Vector2 tabPos = cachedPosition,
+                    tabSize = new Vector2(4f * (LocalScale * parentScale), size.Y - cachedPadding.Y);
+                tabPos.X += (-size.X + tabSize.X) * .5f;
+                tabSize *= .5f;
 
                 if (CanDrawTab && tabBoard.Color.A > 0)
                 {
-                    box.size = tabSize;
-                    box.pos = tabPos;
-
-                    if (box.mask != null)
-                        tabBoard.DrawCropped(ref box, ref ptw);
-                    else
-                        tabBoard.Draw(ref box, ref ptw);
+                    box.bounds = new BoundingBox2(tabPos - tabSize, tabPos + tabSize);
+                    tabBoard.Draw(ref box, ref ptw);
                 }
             }
         }

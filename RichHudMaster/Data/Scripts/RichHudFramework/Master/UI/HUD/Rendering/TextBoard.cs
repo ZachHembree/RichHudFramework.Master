@@ -331,10 +331,17 @@ namespace RichHudFramework
                         for (int ch = 0; ch < line.Count; ch++)
                         {
                             GlyphLocData locData = line.LocData[ch];
-                            bb.size = locData.bbSize * Scale;
-                            bb.pos = offset + locData.bbOffset * Scale;
+                            Vector2 halfSize = locData.bbSize * Scale * .5f,
+                                pos = offset + locData.bbOffset * Scale;
+                            ContainmentType containment;
 
-                            line.GlyphBoards[ch].DrawCroppedTex(ref bb, ref matrix);
+                            bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                            bb.mask.Value.Contains(ref bb.bounds, out containment);
+
+                            if (containment == ContainmentType.Contains)
+                                line.GlyphBoards[ch].Draw(ref bb, ref matrix);
+                            else if (containment != ContainmentType.Disjoint)
+                                line.GlyphBoards[ch].DrawCroppedTex(ref bb, ref matrix);
                         }
                     }
 
@@ -343,11 +350,18 @@ namespace RichHudFramework
                     // Draw underlines
                     for (int n = 0; n < underlines.Count; n++)
                     {
-                        bb.size = underlines[n].size * Scale;
-                        bb.pos = offset + underlines[n].offset * Scale;
+                        Vector2 halfSize = underlines[n].size * Scale * .5f,
+                            pos = offset + underlines[n].offset * Scale;
+                        ContainmentType containment;
 
+                        bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                        bb.mask.Value.Contains(ref bb.bounds, out containment);
                         underlineBoard.bbColor = underlines[n].color;
-                        underlineBoard.DrawCropped(ref bb, ref matrix);
+
+                        if (containment == ContainmentType.Contains)
+                            underlineBoard.Draw(ref bb, ref matrix);
+                        else if (containment != ContainmentType.Disjoint)
+                            underlineBoard.DrawCropped(ref bb, ref matrix);
                     }
                 }
 

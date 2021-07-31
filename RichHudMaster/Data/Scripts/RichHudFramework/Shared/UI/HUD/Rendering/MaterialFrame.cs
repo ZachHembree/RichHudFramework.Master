@@ -89,9 +89,7 @@ namespace RichHudFramework
                     return new BoundingBox2
                     (
                         matOrigin - matStep, // Bottom left
-                        //Vector2.Clamp(matOrigin + new Vector2(-matStep.X, matStep.Y), min, max), // Upper left
                         matOrigin + matStep // Upper right
-                        //Vector2.Clamp(matOrigin + new Vector2(matStep.X, -matStep.Y), min, max) // Bottom right
                     );
                 }
             }

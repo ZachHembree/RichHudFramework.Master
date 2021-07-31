@@ -272,14 +272,14 @@ namespace RichHudFramework.Server
                 var offset = HudMain.GetPixelVector(overlayPos);
 
                 if (offset.X < 0f)
-                    offset.X += overlay.Size.X / 2f;
+                    offset.X += overlay.Size.X * .5f;
                 else
-                    offset.X -= overlay.Size.X / 2f;
+                    offset.X -= overlay.Size.X * .5f;
 
                 if (offset.Y < 0f)
-                    offset.Y += overlay.Size.Y / 2f;
+                    offset.Y += overlay.Size.Y * .5f;
                 else
-                    offset.Y -= overlay.Size.Y / 2f;
+                    offset.Y -= overlay.Size.Y * .5f;
 
                 overlay.Scale = 0.8f * HudMain.ResScale;
                 overlay.Draw(offset, HudMain.PixelToWorld);

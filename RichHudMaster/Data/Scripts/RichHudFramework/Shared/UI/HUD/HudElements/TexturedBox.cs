@@ -42,19 +42,11 @@ namespace RichHudFramework.UI
             {
                 var matrix = HudSpace.PlaneToWorld;
                 CroppedBox box = default(CroppedBox);
-                box.size = cachedSize - cachedPadding;
-                box.pos = cachedPosition;
-                box.mask = maskingBox;
+                Vector2 halfSize = (cachedSize - cachedPadding) * .5f;
 
-                if (maskingBox != null)
-                {
-                    if (hudBoard.Material != Material.Default)
-                        hudBoard.DrawCroppedTex(ref box, ref matrix);
-                    else
-                        hudBoard.DrawCropped(ref box, ref matrix);
-                }
-                else
-                    hudBoard.Draw(ref box, ref matrix);
+                box.bounds = new BoundingBox2(cachedPosition - halfSize, cachedPosition + halfSize);
+                box.mask = maskingBox;
+                hudBoard.Draw(ref box, ref matrix);
             }
         }
     }
