@@ -36,26 +36,25 @@ namespace RichHudFramework.UI
         public TexturedBox() : this(null)
         { }
 
-        protected override void Layout()
-        {
-            hudBoard.Size = cachedSize - cachedPadding;
-        }
-
         protected override void Draw()
         {
             if (hudBoard.Color.A > 0)
             {
                 var matrix = HudSpace.PlaneToWorld;
+                CroppedBox box = default(CroppedBox);
+                box.size = cachedSize - cachedPadding;
+                box.pos = cachedPosition;
+                box.mask = maskingBox;
 
                 if (maskingBox != null)
                 {
                     if (hudBoard.Material != Material.Default)
-                        hudBoard.DrawCroppedTex(cachedPosition, maskingBox.Value, ref matrix);
+                        hudBoard.DrawCroppedTex(ref box, ref matrix);
                     else
-                        hudBoard.DrawCropped(cachedPosition, maskingBox.Value, ref matrix);
+                        hudBoard.DrawCropped(ref box, ref matrix);
                 }
                 else
-                    hudBoard.Draw(cachedPosition, ref matrix);
+                    hudBoard.Draw(ref box, ref matrix);
             }
         }
     }

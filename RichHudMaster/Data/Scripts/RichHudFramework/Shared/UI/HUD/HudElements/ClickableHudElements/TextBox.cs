@@ -761,18 +761,20 @@ namespace RichHudFramework.UI
 
                 public void Draw(MatBoard matBoard, Vector2 origin, Vector2 tbOffset, Vector2 xBounds, ref MatrixD matrix)
                 {
-                    Vector2 drawSize = size, drawOffset = offset + tbOffset;
+                    CroppedBox box = default(CroppedBox);
+                    box.size = size;
+                    box.pos = offset + tbOffset;
 
                     // Determine the visible extents of the highlight box within the bounds of the textboard
-                    float leftBound = Math.Max(drawOffset.X - drawSize.X * .5f, xBounds.X),
-                        rightBound = Math.Min(drawOffset.X + drawSize.X * .5f, xBounds.Y);
+                    float leftBound = Math.Max(box.pos.X - box.size.X * .5f, xBounds.X),
+                        rightBound = Math.Min(box.pos.X + box.size.X * .5f, xBounds.Y);
 
                     // Adjust highlight size and offset to compensate for textboard clipping and offset
-                    drawSize.X = Math.Max(0, rightBound - leftBound);
-                    drawOffset.X = (rightBound + leftBound) * .5f;
+                    box.size.X = Math.Max(0, rightBound - leftBound);
+                    box.pos.X = (rightBound + leftBound) * .5f;
+                    box.pos += origin;
 
-                    matBoard.Size = drawSize;
-                    matBoard.Draw(origin + drawOffset, ref matrix);
+                    matBoard.Draw(ref box, ref matrix);
                 }
             }
         }

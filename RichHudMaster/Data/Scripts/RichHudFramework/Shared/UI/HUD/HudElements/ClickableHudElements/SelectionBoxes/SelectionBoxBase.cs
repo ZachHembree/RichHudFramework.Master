@@ -350,34 +350,39 @@ namespace RichHudFramework.UI
                 CanDrawTab = true;
             }
 
-            protected override void Layout()
-            {
-                hudBoard.Size = cachedSize - cachedPadding;
-                tabBoard.Size = new Vector2(4f * (LocalScale * parentScale), cachedSize.Y - cachedPadding.Y);
-            }
-
             protected override void Draw()
             {
                 var ptw = HudSpace.PlaneToWorld;
+                CroppedBox box = default(CroppedBox);
+                box.size = cachedSize - cachedPadding;
+                box.pos = cachedPosition;
+                box.mask = maskingBox;
 
                 if (hudBoard.Color.A > 0)
                 {
-                    if (maskingBox != null)
-                        hudBoard.DrawCropped(cachedPosition, maskingBox.Value, ref ptw);
+                    if (box.mask != null)
+                        hudBoard.DrawCropped(ref box, ref ptw);
                     else
-                        hudBoard.Draw(cachedPosition, ref ptw);
+                        hudBoard.Draw(ref box, ref ptw);
                 }
 
+                box.size = cachedSize - cachedPadding;
+                box.pos = cachedPosition;
+
                 // Left align the tab
-                Vector2 tabPos = cachedPosition;
-                tabPos.X += (-hudBoard.Size.X + tabBoard.Size.X) * .5f;
+                Vector2 tabPos = box.pos,
+                    tabSize = new Vector2(4f * (LocalScale * parentScale), box.size.Y - cachedPadding.Y);
+                tabPos.X += (-box.size.X + tabSize.X) * .5f;
 
                 if (CanDrawTab && tabBoard.Color.A > 0)
                 {
-                    if (maskingBox != null)
-                        tabBoard.DrawCropped(tabPos, maskingBox.Value, ref ptw);
+                    box.size = tabSize;
+                    box.pos = tabPos;
+
+                    if (box.mask != null)
+                        tabBoard.DrawCropped(ref box, ref ptw);
                     else
-                        tabBoard.Draw(tabPos, ref ptw);
+                        tabBoard.Draw(ref box, ref ptw);
                 }
             }
         }

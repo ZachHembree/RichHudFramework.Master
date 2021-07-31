@@ -320,6 +320,8 @@ namespace RichHudFramework
                     offset += _textOffset * Scale;
 
                     IReadOnlyList<Line> lineList = lines.PooledLines;
+                    CroppedBox bb = default(CroppedBox);
+                    bb.mask = textMask;
 
                     // Draw glyphs
                     for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
@@ -329,10 +331,10 @@ namespace RichHudFramework
                         for (int ch = 0; ch < line.Count; ch++)
                         {
                             GlyphLocData locData = line.LocData[ch];
-                            Vector2 bbSize = locData.bbSize * Scale,
-                                bbPos = offset + locData.bbOffset * Scale;
+                            bb.size = locData.bbSize * Scale;
+                            bb.pos = offset + locData.bbOffset * Scale;
 
-                            line.GlyphBoards[ch].DrawCroppedTex(bbSize, bbPos, textMask, ref matrix);
+                            line.GlyphBoards[ch].DrawCroppedTex(ref bb, ref matrix);
                         }
                     }
 
@@ -341,11 +343,11 @@ namespace RichHudFramework
                     // Draw underlines
                     for (int n = 0; n < underlines.Count; n++)
                     {
-                        Vector2 bbPos = offset + underlines[n].offset * Scale;
-                        Vector2 bbSize = underlines[n].size * Scale;
+                        bb.size = underlines[n].size * Scale;
+                        bb.pos = offset + underlines[n].offset * Scale;
 
                         underlineBoard.bbColor = underlines[n].color;
-                        underlineBoard.DrawCropped(bbSize, bbPos, textMask, ref matrix);
+                        underlineBoard.DrawCropped(ref bb, ref matrix);
                     }
                 }
 
