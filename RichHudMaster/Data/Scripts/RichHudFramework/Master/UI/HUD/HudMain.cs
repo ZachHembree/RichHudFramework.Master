@@ -10,6 +10,7 @@ using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
+using IMyControllableEntity = Sandbox.Game.Entities.IMyControllableEntity;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 
@@ -244,6 +245,7 @@ namespace RichHudFramework
             private MatrixD lastViewMatrix;
             private IMyEntity lastCamController;
             private bool wasCursorEnabled;
+            private MyDefinitionId? lastEquippedTool;
 
             static HudMain()
             {
@@ -294,6 +296,7 @@ namespace RichHudFramework
             {
                 IMyPlayer ply = MyAPIGateway.Session?.Player;
                 IMyCharacter plyChar = ply?.Character;
+                var plyCon = plyChar as IMyControllableEntity;
 
                 if (plyChar != null)
                 {
@@ -308,7 +311,12 @@ namespace RichHudFramework
                         MySpectator.Static.SetViewMatrix(viewMatrix);
 
                         if (!wasCursorEnabled && plyChar.IsInFirstPersonView)
+                        {
+                            if (plyChar.EquippedTool != null)
+                                plyChar.EquippedTool.Visible = false;
+
                             plyChar.Visible = false;
+                        }
 
                         wasCursorEnabled = true;
                     }
@@ -320,13 +328,16 @@ namespace RichHudFramework
                         {
                             MyAPIGateway.Session.SetCameraController(MyCameraControllerEnum.Entity, lastCamController ?? plyChar);
                             plyChar.Visible = true;
-                        }
 
-                        wasCursorEnabled = false;
+                            if (plyChar.EquippedTool != null)
+                                plyChar.EquippedTool.Visible = true;
+
+                            wasCursorEnabled = false;
+                        }
                     }
 
                     RichHudMaster.FreezePlayer = EnableCursor;
-                    BindManager.SeMouseControlsBlacklisted = EnableCursor;
+                    BindManager.SeControlsBlacklisted = EnableCursor;
                 }
 
                 // Reset cursor
@@ -470,6 +481,8 @@ namespace RichHudFramework
 
                 public MatrixD PlaneToWorld { get; private set; }
 
+                public MatrixD[] PlaneToWorldRef { get; }
+
                 public Func<MatrixD> UpdateMatrixFunc { get; }
 
                 public Func<Vector3D> GetNodeOriginFunc { get; }
@@ -487,11 +500,13 @@ namespace RichHudFramework
 
                     GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorld);
                     GetNodeOriginFunc = () => PixelToWorld.Translation;
+                    PlaneToWorldRef = new MatrixD[1];
                 }
 
                 protected override void Layout()
                 {
                     PlaneToWorld = PixelToWorld;
+                    PlaneToWorldRef[0] = PixelToWorld;
                     CursorPos = new Vector3(Cursor.ScreenPos.X, Cursor.ScreenPos.Y, 0f);
                 }
             }

@@ -85,12 +85,10 @@ namespace RichHudFramework.UI
 
         protected override void Draw()
         {
-            var matrix = HudSpace.PlaneToWorld;
-
             if (maskingBox != null)
-                _textBoard.Draw(cachedPosition, maskingBox.Value, ref matrix);
+                _textBoard.Draw(cachedPosition, maskingBox.Value, ref HudSpace.PlaneToWorldRef[0]);
             else
-                _textBoard.Draw(cachedPosition, new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity), ref matrix);
+                _textBoard.Draw(cachedPosition, new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity), ref HudSpace.PlaneToWorldRef[0]);
         }
     }
 }

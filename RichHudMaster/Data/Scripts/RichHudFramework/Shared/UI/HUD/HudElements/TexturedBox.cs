@@ -40,13 +40,12 @@ namespace RichHudFramework.UI
         {
             if (hudBoard.Color.A > 0)
             {
-                var matrix = HudSpace.PlaneToWorld;
                 CroppedBox box = default(CroppedBox);
                 Vector2 halfSize = (cachedSize - cachedPadding) * .5f;
 
                 box.bounds = new BoundingBox2(cachedPosition - halfSize, cachedPosition + halfSize);
                 box.mask = maskingBox;
-                hudBoard.Draw(ref box, ref matrix);
+                hudBoard.Draw(ref box, ref HudSpace.PlaneToWorldRef[0]);
             }
         }
     }

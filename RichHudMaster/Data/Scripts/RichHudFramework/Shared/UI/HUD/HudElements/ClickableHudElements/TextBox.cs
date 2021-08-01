@@ -683,11 +683,10 @@ namespace RichHudFramework.UI
                         UpdateHighlight();
                     }
 
-                    var ptw = HudSpace.PlaneToWorld;
                     Vector2 tbOffset = text.TextOffset, bounds = new Vector2(-text.Size.X * .5f, text.Size.X * .5f);
 
                     for (int n = 0; n < highlightList.Count; n++)
-                        highlightList[n].Draw(highlightBoard, Origin, tbOffset, bounds, ref ptw);
+                        highlightList[n].Draw(highlightBoard, Origin, tbOffset, bounds, ref HudSpace.PlaneToWorldRef[0]);
                 }
             }
 

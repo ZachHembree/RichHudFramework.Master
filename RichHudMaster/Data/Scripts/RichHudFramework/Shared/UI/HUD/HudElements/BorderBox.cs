@@ -44,7 +44,6 @@ namespace RichHudFramework.UI
         {
             if (Color.A > 0)
             {
-                var matrix = HudSpace.PlaneToWorld;
                 CroppedBox box = default(CroppedBox);
                 box.mask = maskingBox;
 
@@ -57,25 +56,25 @@ namespace RichHudFramework.UI
                 halfSize = new Vector2(thickness, height) * .5f;
                 pos = cachedPosition + new Vector2((-width + thickness) * .5f, 0f);
                 box.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
-                hudBoard.Draw(ref box, ref matrix);
+                hudBoard.Draw(ref box, ref HudSpace.PlaneToWorldRef[0]);
 
                 // Top
                 halfSize = new Vector2(width, thickness) * .5f;
                 pos = cachedPosition + new Vector2(0f, (height - thickness) * .5f);
                 box.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
-                hudBoard.Draw(ref box, ref matrix);
+                hudBoard.Draw(ref box, ref HudSpace.PlaneToWorldRef[0]);
 
                 // Right
                 halfSize = new Vector2(thickness, height) * .5f;
                 pos = cachedPosition + new Vector2((width - thickness) * .5f, 0f);
                 box.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
-                hudBoard.Draw(ref box, ref matrix);
+                hudBoard.Draw(ref box, ref HudSpace.PlaneToWorldRef[0]);
 
                 // Bottom
                 halfSize = new Vector2(width, thickness) * .5f;
                 pos = cachedPosition + new Vector2(0f, (-height + thickness) * .5f);
                 box.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
-                hudBoard.Draw(ref box, ref matrix);
+                hudBoard.Draw(ref box, ref HudSpace.PlaneToWorldRef[0]);
             }
         }
     }

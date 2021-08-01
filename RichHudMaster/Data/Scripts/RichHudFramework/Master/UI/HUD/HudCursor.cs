@@ -201,7 +201,7 @@ namespace RichHudFramework
 
                     // Calculate position of the cursor in world space
                     MatrixD ptw = HudMain.PixelToWorld;
-                    PlaneToWorld = ptw;
+                    PlaneToWorldRef[0] = ptw;
 
                     Vector3D worldPos = new Vector3D(screenPos.X, screenPos.Y, 0d);
                     Vector3D.TransformNoProjection(ref worldPos, ref ptw, out worldPos);
