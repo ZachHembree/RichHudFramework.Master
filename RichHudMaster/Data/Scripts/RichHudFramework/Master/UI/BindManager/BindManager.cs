@@ -75,6 +75,16 @@ namespace RichHudFramework
                 }
             }
 
+            /// <summary>
+            /// Read-only list of all controls bound to a key
+            /// </summary>
+            public static IReadOnlyList<string> SeControlIDs { get { if (_instance == null) Init(); return _instance.seControlIDs; } }
+
+            /// <summary>
+            /// Read-only list of all controls bound to a mouse key
+            /// </summary>
+            public static IReadOnlyList<string> SeMouseControlIDs { get { if (_instance == null) Init(); return _instance.seMouseControlIDs; } }
+
             private static BindManager Instance
             {
                 get { Init(); return _instance; }
@@ -244,12 +254,12 @@ namespace RichHudFramework
                         controlIDs.Add(stringID);
                 }
 
-                foreach (MyKeys key in mouseButtons)
+                foreach (MyMouseButtonsEnum key in mouseButtons)
                 {
                     MyStringId? id = MyAPIGateway.Input.GetControl(key)?.GetGameControlEnum();
                     string stringID = id?.ToString();
 
-                    if (stringID != null && stringID.Length > 0)
+                    if (stringID != null && stringID.Length > 0 && stringID != "FORWARD") // WTH is FORWARD in there?
                         mouseControlIDs.Add(stringID);
                 }
 
