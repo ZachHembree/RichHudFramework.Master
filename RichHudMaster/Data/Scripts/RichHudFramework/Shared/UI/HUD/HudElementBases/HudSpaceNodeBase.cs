@@ -101,7 +101,8 @@ namespace RichHudFramework
                 IsInFront = Vector3D.Dot((nodeOrigin - camOrigin), camForward) > 0;
                 IsFacingCamera = IsInFront && Vector3D.Dot(nodeForward, camForward) > 0;
 
-                MatrixD worldToPlane = MatrixD.Invert(PlaneToWorldRef[0]);
+                MatrixD worldToPlane;
+                MatrixD.Invert(ref PlaneToWorldRef[0], out worldToPlane);
                 LineD cursorLine = HudMain.Cursor.WorldLine;
 
                 PlaneD plane = new PlaneD(PlaneToWorldRef[0].Translation, PlaneToWorldRef[0].Forward);

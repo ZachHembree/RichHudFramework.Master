@@ -16,6 +16,8 @@ namespace RichHudFramework
         {
             public struct CroppedBox
             {
+                public static readonly BoundingBox2 defaultMask = new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity);
+
                 public BoundingBox2 bounds;
                 public BoundingBox2? mask;
             }
@@ -174,27 +176,23 @@ namespace RichHudFramework
                         pos = box.bounds.Center;
                     box.bounds = box.bounds.Intersect(box.mask.Value);
 
-                    Vector2 clipSize = box.bounds.Size,
-                        clipDelta = size - clipSize;
+                    Vector2 clipSize = box.bounds.Size;
                     CroppedQuad crop = default(CroppedQuad);
                     crop.matBounds = texCoords;
 
-                    if (clipDelta.X > 1E-3 || clipDelta.Y > 1E-3)
-                    {
-                        // Normalized cropped size and offset
-                        Vector2 clipScale = clipSize / size,
-                            clipOffset = (box.bounds.Center - pos) / size,
-                            uvScale = crop.matBounds.Size,
-                            uvOffset = crop.matBounds.Center;
+                    // Normalized cropped size and offset
+                    Vector2 clipScale = clipSize / size,
+                        clipOffset = (box.bounds.Center - pos) / size,
+                        uvScale = crop.matBounds.Size,
+                        uvOffset = crop.matBounds.Center;
 
-                        pos += clipOffset * size; // Offset billboard to compensate for changes in size
-                        size = clipSize; // Use cropped billboard size
-                        clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
+                    pos += clipOffset * size; // Offset billboard to compensate for changes in size
+                    size = clipSize; // Use cropped billboard size
+                    clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
 
-                        // Recalculate texture coordinates to simulate clipping without affecting material alignment
-                        crop.matBounds.Min = ((crop.matBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
-                        crop.matBounds.Max = ((crop.matBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
-                    }
+                    // Recalculate texture coordinates to simulate clipping without affecting material alignment
+                    crop.matBounds.Min = ((crop.matBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
+                    crop.matBounds.Max = ((crop.matBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
 
                     Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
                     Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);

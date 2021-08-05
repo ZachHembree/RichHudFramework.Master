@@ -117,8 +117,8 @@ namespace RichHudFramework.UI
             if (HudSpace?.IsFacingCamera ?? false)
             {
                 Vector3 cursorPos = HudSpace.CursorPos;
-                Vector2 offset = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) * .5f;
-                BoundingBox2 box = new BoundingBox2(cachedPosition - offset, cachedPosition + offset);
+                Vector2 halfSize = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) * .5f;
+                BoundingBox2 box = new BoundingBox2(cachedPosition - halfSize, cachedPosition + halfSize);
                 bool mouseInBounds;
 
                 if (maskingBox == null)

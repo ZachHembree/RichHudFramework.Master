@@ -157,7 +157,7 @@ namespace RichHudFramework
                 public void Draw()
                 {
                     int drawTick = instance.drawTick;
-                    float resScale = instance._resScale;
+                    float resScale = ResScale;
 
                     mainClient.enableCursor = EnableCursor;
 

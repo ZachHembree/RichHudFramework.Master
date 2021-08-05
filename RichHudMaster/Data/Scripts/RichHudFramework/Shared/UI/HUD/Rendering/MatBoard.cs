@@ -85,21 +85,6 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Draws a billboard in world space facing the +Z direction of the matrix specified. Units in meters matrix
-                /// transform notwithstanding.
-                /// </summary>
-                public void Draw(Vector2 size, Vector3D origin, ref MatrixD matrix)
-                {
-                    if (updateMatFit && matFrame.Material != Material.Default)
-                    {
-                        minBoard.texCoords = matFrame.GetMaterialAlignment(size.X / size.Y);
-                        updateMatFit = false;
-                    }
-
-                    minBoard.Draw(size, origin, ref matrix);
-                }
-
-                /// <summary>
                 /// Draws a billboard in world space facing the +Z direction of the matrix given. Units in meters,
                 /// matrix transform notwithstanding. Dont forget to compensate for perspective scaling!
                 /// </summary

@@ -117,6 +117,7 @@ namespace RichHudFramework
 
                 private readonly Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
+                private readonly MatrixD[] matRef;
 
                 public TextBoard()
                 {
@@ -128,6 +129,7 @@ namespace RichHudFramework
                     Format = GlyphFormat.White;
                     _fixedSize = new Vector2(100f);
 
+                    matRef = new MatrixD[1];
                     underlines = new List<UnderlineBoard>();
                     eventTimer = new Stopwatch();
                     eventTimer.Start();
@@ -270,8 +272,10 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 origin)
                 {
-                    MatrixD pixelToWorld = HudMain.PixelToWorld;
-                    Draw(origin, new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity), ref pixelToWorld);
+                    Vector2 halfSize = _size * .5f;
+                    BoundingBox2 box = new BoundingBox2(origin - halfSize, origin + halfSize);
+
+                    Draw(box, CroppedBox.defaultMask, HudMain.PixelToWorldRef);
                 }
 
                 /// <summary>
@@ -280,7 +284,11 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, MatrixD matrix)
                 {
-                    Draw(offset, new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity), ref matrix);
+                    Vector2 halfSize = _size * .5f;
+                    BoundingBox2 box = new BoundingBox2(offset - halfSize, offset + halfSize);
+                    matRef[0] = matrix;
+
+                    Draw(box, CroppedBox.defaultMask, matRef);
                 }
 
                 /// <summary>
@@ -289,79 +297,94 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, ref MatrixD matrix)
                 {
-                    Draw(offset, new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity), ref matrix);
+                    Vector2 halfSize = _size * .5f;
+                    BoundingBox2 box = new BoundingBox2(offset - halfSize, offset + halfSize);
+                    matRef[0] = matrix;
+
+                    Draw(box, CroppedBox.defaultMask, matRef);
                 }
 
                 /// <summary>
                 /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
                 /// direction.
                 /// </summary>
-                public void Draw(Vector2 offset, BoundingBox2 mask, ref MatrixD matrix)
+                public void Draw(BoundingBox2 box, BoundingBox2 mask, ref MatrixD matrix)
                 {
-                    if (offsetsAreStale)
-                        UpdateOffsets();
-                    else if (lineRangeIsStale || (endLine == -1 && lines.Count > 0))
-                        UpdateLineRange();
+                    matRef[0] = matrix;
+                    Draw(box, mask, matRef);
+                }
 
-                    if (AutoResize)
-                        _textOffset = Vector2.Zero;
+                /// <summary>
+                /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
+                /// direction.
+                /// </summary>
+                public void Draw(BoundingBox2 box, BoundingBox2 mask, MatrixD[] matrix)
+                {
+                    ContainmentType containment;
+                    mask.Contains(ref box, out containment);
 
-                    if (updateEvent && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
+                    if (containment != ContainmentType.Disjoint)
                     {
-                        TextChanged?.Invoke();
-                        eventTimer.Restart();
-                        updateEvent = false;
-                    }
+                        if (offsetsAreStale)
+                            UpdateOffsets();
+                        else if (lineRangeIsStale || (endLine == -1 && lines.Count > 0))
+                            UpdateLineRange();
 
-                    BoundingBox2 textMask = new BoundingBox2(
-                        Vector2.Max(mask.Min, -_size * .5f * Scale + offset), 
-                        Vector2.Min(mask.Max, _size * .5f * Scale + offset)
-                    );
-                    offset += _textOffset * Scale;
+                        if (AutoResize)
+                            _textOffset = Vector2.Zero;
 
-                    IReadOnlyList<Line> lineList = lines.PooledLines;
-                    CroppedBox bb = default(CroppedBox);
-                    bb.mask = textMask;
-
-                    // Draw glyphs
-                    for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
-                    {
-                        Line line = lineList[ln];
-
-                        for (int ch = 0; ch < line.Count; ch++)
+                        if (updateEvent && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
                         {
-                            GlyphLocData locData = line.LocData[ch];
-                            Vector2 halfSize = locData.bbSize * Scale * .5f,
-                                pos = offset + locData.bbOffset * Scale;
-                            ContainmentType containment;
+                            TextChanged?.Invoke();
+                            eventTimer.Restart();
+                            updateEvent = false;
+                        }
+
+                        BoundingBox2 textMask = box.Intersect(mask);
+                        Vector2 offset = box.Center + _textOffset * Scale;
+
+                        IReadOnlyList<Line> lineList = lines.PooledLines;
+                        CroppedBox bb = default(CroppedBox);
+                        bb.mask = textMask;
+
+                        // Draw glyphs
+                        for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
+                        {
+                            Line line = lineList[ln];
+
+                            for (int ch = 0; ch < line.Count; ch++)
+                            {
+                                GlyphLocData locData = line.LocData[ch];
+                                Vector2 halfSize = locData.bbSize * Scale * .5f,
+                                    pos = offset + locData.bbOffset * Scale;
+
+                                bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                                bb.mask.Value.Contains(ref bb.bounds, out containment);
+
+                                if (containment == ContainmentType.Contains)
+                                    line.GlyphBoards[ch].Draw(ref bb, ref matrix[0]);
+                                else if (containment != ContainmentType.Disjoint)
+                                    line.GlyphBoards[ch].DrawCroppedTex(ref bb, ref matrix[0]);
+                            }
+                        }
+
+                        QuadBoard underlineBoard = QuadBoard.Default;
+
+                        // Draw underlines
+                        for (int n = 0; n < underlines.Count; n++)
+                        {
+                            Vector2 halfSize = underlines[n].size * Scale * .5f,
+                                pos = offset + underlines[n].offset * Scale;
 
                             bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
                             bb.mask.Value.Contains(ref bb.bounds, out containment);
+                            underlineBoard.bbColor = underlines[n].color;
 
                             if (containment == ContainmentType.Contains)
-                                line.GlyphBoards[ch].Draw(ref bb, ref matrix);
+                                underlineBoard.Draw(ref bb, ref matrix[0]);
                             else if (containment != ContainmentType.Disjoint)
-                                line.GlyphBoards[ch].DrawCroppedTex(ref bb, ref matrix);
+                                underlineBoard.DrawCropped(ref bb, ref matrix[0]);
                         }
-                    }
-
-                    QuadBoard underlineBoard = QuadBoard.Default;
-
-                    // Draw underlines
-                    for (int n = 0; n < underlines.Count; n++)
-                    {
-                        Vector2 halfSize = underlines[n].size * Scale * .5f,
-                            pos = offset + underlines[n].offset * Scale;
-                        ContainmentType containment;
-
-                        bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
-                        bb.mask.Value.Contains(ref bb.bounds, out containment);
-                        underlineBoard.bbColor = underlines[n].color;
-
-                        if (containment == ContainmentType.Contains)
-                            underlineBoard.Draw(ref bb, ref matrix);
-                        else if (containment != ContainmentType.Disjoint)
-                            underlineBoard.DrawCropped(ref bb, ref matrix);
                     }
                 }
 

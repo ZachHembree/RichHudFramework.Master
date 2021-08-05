@@ -31,7 +31,7 @@ namespace RichHudFramework
                 FitHorizontal = 2,
 
                 /// <summary>
-                /// Rescales the material so that such that it maintains it's aspect ratio while filling as much of the billboard
+                /// Rescales the material such that it maintains it's aspect ratio while filling as much of the billboard
                 /// as possible
                 /// </summary>
                 FitAuto = 3,

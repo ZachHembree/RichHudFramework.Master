@@ -85,10 +85,13 @@ namespace RichHudFramework.UI
 
         protected override void Draw()
         {
+            Vector2 halfSize = (cachedSize - cachedPadding) * .5f;
+            BoundingBox2 box = new BoundingBox2(cachedPosition - halfSize, cachedPosition + halfSize);
+
             if (maskingBox != null)
-                _textBoard.Draw(cachedPosition, maskingBox.Value, ref HudSpace.PlaneToWorldRef[0]);
+                _textBoard.Draw(box, maskingBox.Value, HudSpace.PlaneToWorldRef);
             else
-                _textBoard.Draw(cachedPosition, new BoundingBox2(-Vector2.PositiveInfinity, Vector2.PositiveInfinity), ref HudSpace.PlaneToWorldRef[0]);
+                _textBoard.Draw(box, CroppedBox.defaultMask, HudSpace.PlaneToWorldRef);
         }
     }
 }

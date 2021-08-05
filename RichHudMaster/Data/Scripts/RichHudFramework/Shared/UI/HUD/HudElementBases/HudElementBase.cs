@@ -218,8 +218,8 @@ namespace RichHudFramework
                 if (HudSpace?.IsFacingCamera ?? false)
                 {
                     Vector3 cursorPos = HudSpace.CursorPos;
-                    Vector2 offset = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) * .5f;
-                    BoundingBox2 box = new BoundingBox2(cachedPosition - offset, cachedPosition + offset);
+                    Vector2 halfSize = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) * .5f;
+                    BoundingBox2 box = new BoundingBox2(cachedPosition - halfSize, cachedPosition + halfSize);
                     bool mouseInBounds;
 
                     if (maskingBox == null)
@@ -382,10 +382,10 @@ namespace RichHudFramework
 
                     if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
                     {
-                        Vector2 parentOffset = .5f * _parentFull.cachedSize;
+                        Vector2 halfParent = .5f * _parentFull.cachedSize + Vector2.One;
                         parentBox = new BoundingBox2(
-                            -parentOffset + _parentFull.cachedPosition,
-                            parentOffset + _parentFull.cachedPosition
+                            -halfParent + _parentFull.cachedPosition,
+                            halfParent + _parentFull.cachedPosition
                         );
 
                         if (_parentFull.maskingBox != null)
@@ -396,10 +396,10 @@ namespace RichHudFramework
 
                     if ((State & HudElementStates.IsMasking) > 0)
                     {
-                        Vector2 offset = .5f * cachedSize;
+                        Vector2 halfSize = .5f * cachedSize + Vector2.One;
                         box = new BoundingBox2(
-                            -offset + cachedPosition,
-                            offset + cachedPosition
+                            -halfSize + cachedPosition,
+                            halfSize + cachedPosition
                         );
                     }
 

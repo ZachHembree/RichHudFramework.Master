@@ -100,115 +100,48 @@ namespace RichHudFramework
             /// Resolution scale normalized to 1080p for resolutions over 1080p. Returns a scale of 1f
             /// for lower resolutions.
             /// </summary>
-            public static float ResScale
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
-
-                    return instance._resScale;
-                }
-            }
+            public static float ResScale { get; private set; }
 
             /// <summary>
             /// Matrix used to convert from 2D pixel-value screen space coordinates to worldspace.
             /// </summary>
-            public static MatrixD PixelToWorld
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
+            public static MatrixD PixelToWorld => PixelToWorldRef[0];
 
-                    return instance._pixelToWorld;
-                }
-            }
+            /// <summary>
+            /// Matrix used to convert from 2D pixel-value screen space coordinates to worldspace.
+            /// </summary>
+            public static MatrixD[] PixelToWorldRef { get; }
 
             /// <summary>
             /// The current horizontal screen resolution in pixels.
             /// </summary>
-            public static float ScreenWidth
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
-
-                    return instance._screenWidth;
-                }
-            }
+            public static float ScreenWidth { get; private set; }
 
             /// <summary>
             /// The current vertical resolution in pixels.
             /// </summary>
-            public static float ScreenHeight
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
-
-                    return instance._screenHeight;
-                }
-            }
+            public static float ScreenHeight { get; private set; }
 
             /// <summary>
             /// The current field of view
             /// </summary>
-            public static float Fov
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
-
-                    return instance._fov;
-                }
-            }
+            public static float Fov { get; private set; }
 
             /// <summary>
             /// The current aspect ratio (ScreenWidth/ScreenHeight).
             /// </summary>
-            public static float AspectRatio
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
-
-                    return instance._aspectRatio;
-                }
-            }
+            public static float AspectRatio { get; private set; }
 
             /// <summary>
             /// Scaling used by MatBoards to compensate for changes in apparent size and position as a result
             /// of changes to Fov.
             /// </summary>
-            public static float FovScale
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
-
-                    return instance._fovScale;
-                }
-            }
+            public static float FovScale { get; private set; }
 
             /// <summary>
             /// The current opacity for the in-game menus as configured.
             /// </summary>
-            public static float UiBkOpacity
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
-
-                    return instance._uiBkOpacity;
-                }
-            }
+            public static float UiBkOpacity { get; private set; }
 
             /// <summary>
             /// If true then the cursor will be visible while chat is open
@@ -227,15 +160,6 @@ namespace RichHudFramework
             private readonly HudRoot _root;
 
             private RichText _clipBoard;
-            private float _resScale;
-            private float _uiBkOpacity;
-
-            private MatrixD _pixelToWorld;
-            private float _screenWidth;
-            private float _screenHeight;
-            private float _aspectRatio;
-            private float _fov;
-            private float _fovScale;
 
             private Action<byte> LoseFocusCallback;
             private Action LoseInputFocusCallback;
@@ -250,6 +174,7 @@ namespace RichHudFramework
             static HudMain()
             {
                 TreeRefreshRate = treeRefreshRate;
+                PixelToWorldRef = new MatrixD[1];
             }
 
             private HudMain() : base(false, true)
@@ -353,20 +278,20 @@ namespace RichHudFramework
                 if (drawTick % 60 == 0)
                 {
                     UpdateScreenScaling();
-                    _uiBkOpacity = MyAPIGateway.Session.Config.UIBkOpacity;
+                    UiBkOpacity = MyAPIGateway.Session.Config.UIBkOpacity;
                 }
 
                 // Update screen to world matrix transform
-                _pixelToWorld = new MatrixD
+                PixelToWorldRef[0] = new MatrixD
                 {
-                    M11 = (_fovScale / _screenHeight),
-                    M22 = (_fovScale / _screenHeight),
+                    M11 = (FovScale / ScreenHeight),
+                    M22 = (FovScale / ScreenHeight),
                     M33 = 1d,
                     M43 = -MyAPIGateway.Session.Camera.NearPlaneDistance,
                     M44 = 1d
                 };
 
-                _pixelToWorld *= MyAPIGateway.Session.Camera.WorldMatrix;
+                PixelToWorldRef[0] *= MyAPIGateway.Session.Camera.WorldMatrix;
             }
 
             /// <summary>
@@ -374,13 +299,13 @@ namespace RichHudFramework
             /// </summary>
             private void UpdateScreenScaling()
             {
-                _screenWidth = MyAPIGateway.Session.Camera.ViewportSize.X;
-                _screenHeight = MyAPIGateway.Session.Camera.ViewportSize.Y;
-                _aspectRatio = (_screenWidth / _screenHeight);
-                _resScale = (_screenHeight > 1080f) ? _screenHeight / 1080f : 1f;
+                ScreenWidth = MyAPIGateway.Session.Camera.ViewportSize.X;
+                ScreenHeight = MyAPIGateway.Session.Camera.ViewportSize.Y;
+                AspectRatio = (ScreenWidth / ScreenHeight);
+                ResScale = (ScreenHeight > 1080f) ? ScreenHeight / 1080f : 1f;
 
-                _fov = MyAPIGateway.Session.Camera.FovWithZoom;
-                _fovScale = (float)(0.1f * Math.Tan(_fov / 2d));
+                Fov = MyAPIGateway.Session.Camera.FovWithZoom;
+                FovScale = (float)(0.1f * Math.Tan(Fov / 2d));
             }
 
             /// <summary>
@@ -446,8 +371,8 @@ namespace RichHudFramework
 
                 return new Vector2
                 (
-                    (int)(scaledVec.X * instance._screenWidth),
-                    (int)(scaledVec.Y * instance._screenHeight)
+                    (int)(scaledVec.X * ScreenWidth),
+                    (int)(scaledVec.Y * ScreenHeight)
                 );
             }
 
@@ -461,8 +386,8 @@ namespace RichHudFramework
 
                 return new Vector2
                 (
-                    pixelVec.X / instance._screenWidth,
-                    pixelVec.Y / instance._screenHeight
+                    pixelVec.X / ScreenWidth,
+                    pixelVec.Y / ScreenHeight
                 );
             }
 
