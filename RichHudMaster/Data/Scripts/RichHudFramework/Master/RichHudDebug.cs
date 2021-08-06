@@ -120,7 +120,7 @@ namespace RichHudFramework.Server
                                         new TerminalCheckbox()
                                         {
                                             Name = "Blacklist All Input",
-                                            Value = BindManager.SeMouseControlsBlacklisted,
+                                            Value = BindManager.SeControlsBlacklisted,
                                             CustomValueGetter = () => BindManager.SeControlsBlacklisted,
                                             ControlChangedHandler = (obj, args) =>
                                             {

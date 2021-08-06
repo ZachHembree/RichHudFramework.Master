@@ -10,7 +10,7 @@ using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
-using IMyControllableEntity = Sandbox.Game.Entities.IMyControllableEntity;
+using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 
@@ -166,11 +166,6 @@ namespace RichHudFramework
             private byte unfocusedOffset;
             private int drawTick;
 
-            private MatrixD lastViewMatrix;
-            private IMyEntity lastCamController;
-            private bool wasCursorEnabled;
-            private MyDefinitionId? lastEquippedTool;
-
             static HudMain()
             {
                 TreeRefreshRate = treeRefreshRate;
@@ -199,6 +194,7 @@ namespace RichHudFramework
 
             public override void Close()
             {
+                EnableCursor = false;
                 instance = null;
                 treeManager = null;
             }
@@ -219,51 +215,12 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
-                IMyPlayer ply = MyAPIGateway.Session?.Player;
-                IMyCharacter plyChar = ply?.Character;
-                var plyCon = plyChar as IMyControllableEntity;
+                IMyControllableEntity conEnt = MyAPIGateway.Session.ControlledObject;
 
-                if (plyChar != null)
-                {
-                    if (EnableCursor)
-                    {
-                        var viewMatrix = lastViewMatrix;
+                if (conEnt != null && EnableCursor)
+                    conEnt.MoveAndRotate(conEnt.LastMotionIndicator, Vector2.Zero, 0f);
 
-                        var camController = MyAPIGateway.Session.CameraController ?? plyChar;
-                        lastCamController = camController?.Entity;
-
-                        MyAPIGateway.Session.SetCameraController(MyCameraControllerEnum.SpectatorFixed);
-                        MySpectator.Static.SetViewMatrix(viewMatrix);
-
-                        if (!wasCursorEnabled && plyChar.IsInFirstPersonView)
-                        {
-                            if (plyChar.EquippedTool != null)
-                                plyChar.EquippedTool.Visible = false;
-
-                            plyChar.Visible = false;
-                        }
-
-                        wasCursorEnabled = true;
-                    }
-                    else
-                    {
-                        lastViewMatrix = MyAPIGateway.Session.Camera.ViewMatrix;
-
-                        if (wasCursorEnabled)
-                        {
-                            MyAPIGateway.Session.SetCameraController(MyCameraControllerEnum.Entity, lastCamController ?? plyChar);
-                            plyChar.Visible = true;
-
-                            if (plyChar.EquippedTool != null)
-                                plyChar.EquippedTool.Visible = true;
-
-                            wasCursorEnabled = false;
-                        }
-                    }
-
-                    RichHudMaster.FreezePlayer = EnableCursor;
-                    BindManager.SeControlsBlacklisted = EnableCursor;
-                }
+                BindManager.SeMouseControlsBlacklisted = EnableCursor;
 
                 // Reset cursor
                 _cursor.Release();

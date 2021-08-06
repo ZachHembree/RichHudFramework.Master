@@ -27,7 +27,7 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         private const long modID = 1965654081, queueID = 1314086443;
-        private const int apiVID = 8, minApiVID = 7;
+        private const int apiVID = 9, minApiVID = 7;
         public static readonly Vector4I versionID = new Vector4I(1, 2, 0, 0); // Major, Minor, Rev, Hotfix
 
         /// <summary>
@@ -35,11 +35,9 @@ namespace RichHudFramework.Server
         /// </summary>
         public static IReadOnlyList<ModClient> Clients => Instance.clients;
 
-        public static bool FreezePlayer { get; set; }
-
         public static RichHudMaster Instance { get; private set; }
+
         private readonly List<ModClient> clients;
-        private MatrixD lastWorldMatrix;
 
         public RichHudMaster() : base(false, true)
         {
@@ -64,22 +62,6 @@ namespace RichHudFramework.Server
             FontManager.Init();
             BindManager.Init();
             MasterConfig.Load(true);
-        }
-
-        protected override void Update()
-        {
-            if (FreezePlayer)
-            {
-                IMyCharacter plyChar = MyAPIGateway.Session.Player?.Character;
-
-                if (plyChar != null)
-                {
-                    plyChar.WorldMatrix = lastWorldMatrix;
-                    plyChar.MoveAndRotate(Vector3.Zero, Vector2.Zero, 0);
-                }
-            }
-            else
-                lastWorldMatrix = MyAPIGateway.Session.Player?.Character?.WorldMatrix ?? default(MatrixD);
         }
 
         protected override void AfterInit()

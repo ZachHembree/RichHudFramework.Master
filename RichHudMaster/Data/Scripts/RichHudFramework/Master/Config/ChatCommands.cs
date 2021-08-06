@@ -52,7 +52,9 @@ Praesent eros est, blandit et ullamcorper nec, tempus a dui. Duis arcu arcu, dic
                 { "toggleCursor", x => HudMain.EnableCursor = !HudMain.EnableCursor },
                 { "crash", x => ThrowException()},
                 { "toggleDebug", x => RichHudDebug.EnableDebug = !RichHudDebug.EnableDebug },
-                { "textBench", TextBench, 2 }
+                { "textBench", TextBench, 2 },
+                { "printConIDs", x => ExceptionHandler.WriteToLog(StringListToString(BindManager.SeControlIDs)) },
+                { "printMouseConIDs", x => ExceptionHandler.WriteToLog(StringListToString(BindManager.SeMouseControlIDs)) }
             };
         }
 
@@ -110,6 +112,22 @@ Praesent eros est, blandit et ullamcorper nec, tempus a dui. Duis arcu arcu, dic
                 $"\tIsHighResolution: {Stopwatch.IsHighResolution}\n" +
                 $"\tIterations: {iterations}"
             );
+        }
+
+        private static string StringListToString(IReadOnlyList<string> strings)
+        {
+            StringBuilder listBuilder = new StringBuilder();
+            int len = strings.Count;
+
+            for (int i = 0; i < strings.Count; i++)
+                len += strings[i].Length;
+
+            listBuilder.EnsureCapacity(len);
+
+            for (int i = 0; i < strings.Count; i++)
+                listBuilder.AppendLine(strings[i]);
+
+            return listBuilder.ToString();
         }
     }
 }
