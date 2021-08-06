@@ -111,6 +111,7 @@ namespace RichHudFramework
                     warningBox = new LabelBox(this)
                     {
                         Height = 30f,
+                        CanIgnoreMasking = true,
                         AutoResize = false,
                         ParentAlignment = ParentAlignments.Bottom,
                         DimAlignment = DimAlignments.Width,

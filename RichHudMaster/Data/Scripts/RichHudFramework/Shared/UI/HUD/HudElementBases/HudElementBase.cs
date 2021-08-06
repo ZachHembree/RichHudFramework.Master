@@ -138,7 +138,7 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Is set to true, the hud element will act as a clipping mask for child elements.
+            /// If set to true, the hud element will act as a clipping mask for child elements.
             /// False by default. Masking parent elements can still affect non-masking children.
             /// </summary>
             public bool IsMasking
@@ -154,7 +154,7 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Is set to true, the hud element will treat its parent as a clipping mask, whether
+            /// If set to true, the hud element will treat its parent as a clipping mask, whether
             /// it's configured as a mask or not.
             /// </summary>
             public bool IsSelectivelyMasked
@@ -166,6 +166,22 @@ namespace RichHudFramework
                         State |= HudElementStates.IsSelectivelyMasked;
                     else
                         State &= ~HudElementStates.IsSelectivelyMasked;
+                }
+            }
+
+            /// <summary>
+            /// If set to true, then the element can ignore any bounding masks imposed by its parents.
+            /// Superceeds selective masking flag.
+            /// </summary>
+            public bool CanIgnoreMasking
+            {
+                get { return (State & HudElementStates.CanIgnoreMasking) > 0; }
+                set
+                {
+                    if (value)
+                        State |= HudElementStates.CanIgnoreMasking;
+                    else
+                        State &= ~HudElementStates.CanIgnoreMasking;
                 }
             }
 
@@ -370,7 +386,10 @@ namespace RichHudFramework
             /// </summary>
             private void UpdateMasking()
             {
-                if (_parentFull != null && (_parentFull.State & HudElementStates.IsMasked) > 0)
+                if (_parentFull != null && 
+                    (_parentFull.State & HudElementStates.IsMasked) > 0 && 
+                    (State & HudElementStates.CanIgnoreMasking) == 0
+                )
                     State |= HudElementStates.IsMasked;
                 else
                     State &= ~HudElementStates.IsMasked;
@@ -380,7 +399,11 @@ namespace RichHudFramework
                     State |= HudElementStates.IsMasked;
                     BoundingBox2? parentBox, box = null;
 
-                    if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
+                    if ((State & HudElementStates.CanIgnoreMasking) > 0)
+                    {
+                        parentBox = null;
+                    }
+                    else if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
                     {
                         Vector2 halfParent = .5f * _parentFull.cachedSize + Vector2.One;
                         parentBox = new BoundingBox2(
