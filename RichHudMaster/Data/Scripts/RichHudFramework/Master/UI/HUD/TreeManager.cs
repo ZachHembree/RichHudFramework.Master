@@ -76,6 +76,7 @@ namespace RichHudFramework
                 private List<Action> drawActions, drawActionBuffer;
                 private List<Action<bool>> layoutActions;
                 private float lastResScale;
+                private int sortTick;
 
                 private readonly List<TreeClient> clients;
                 private readonly TreeClient mainClient;
@@ -160,10 +161,6 @@ namespace RichHudFramework
                     float resScale = ResScale;
 
                     mainClient.enableCursor = EnableCursor;
-
-                    if (!UpdatingTree)
-                        UpdateAccessorLists();
-
                     instance._cursor.Visible = false;
 
                     for (int n = 0; n < clients.Count; n++)
@@ -176,7 +173,6 @@ namespace RichHudFramework
                         clients[n].Update(drawTick + (n % treeRefreshRate)); // Spread out client tree updates
 
                     treeTimes[drawTick] = treeTimer.ElapsedTicks;
-
                     drawTimer.Restart();
 
                     // Older clients (1.0.3-) node spaces require layout refreshes to function
@@ -197,6 +193,9 @@ namespace RichHudFramework
                         RefreshRequested = false;
 
                     lastResScale = resScale;
+
+                    if (!UpdatingTree)
+                        UpdateAccessorLists();
                 }
 
                 /// <summary>
@@ -221,28 +220,46 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateAccessorLists()
                 {
+                    UpdatingTree = true;
+
                     instance.EnqueueTask(() => 
                     {
                         treeTimer.Restart();
-                        UpdatingTree = true;
 
-                        RebuildUpdateLists();
-                        UpdateDistMap();
-                        UpdateIndexBuffer();
-                        ResetUpdateBuffers();
-                        BuildSortedUpdateLists();
+                        if (sortTick % 3 == 0)
+                        {
+                            RebuildUpdateLists();
+                            UpdateDistMap();
+                        }
+                        else if (sortTick % 3 == 1)
+                        {
+                            UpdateIndexBuffer();
+                            ResetUpdateBuffers();
+                        }
+                        else if (sortTick % 3 == 2)
+                        {
+                            BuildSortedUpdateLists();
+                        }
 
                         treeTimer.Stop();
-                        ElementRegistered = updateAccessors.Count;
+                        sortTick++;
 
-                        instance.EnqueueAction(() =>
+                        if (sortTick == 3)
+                            sortTick = 0;
+
+                        UpdatingTree = false;
+
+                        if (sortTick == 0)
                         {
-                            MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
-                            MyUtils.Swap(ref inputActionBuffer, ref inputActions);
-                            MyUtils.Swap(ref drawActionBuffer, ref drawActions);
+                            instance.EnqueueAction(() =>
+                            {
+                                ElementRegistered = updateAccessors.Count;
 
-                            UpdatingTree = false;
-                        });
+                                MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
+                                MyUtils.Swap(ref inputActionBuffer, ref inputActions);
+                                MyUtils.Swap(ref drawActionBuffer, ref drawActions);
+                            });
+                        }
                     });
                 }
 
