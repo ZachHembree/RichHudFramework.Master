@@ -1,13 +1,19 @@
 ﻿using Sandbox.ModAPI;
 using System;
+using System.Collections.Generic;
 using VRage;
 using VRage.Utils;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
+using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 
 namespace RichHudFramework
 {
+    using ToolTipMembers = MyTuple<
+        List<RichStringMembers>, // Text
+        Color? // BgColor
+    >;
     using CursorMembers = MyTuple<
         Func<HudSpaceDelegate, bool>, // IsCapturingSpace
         Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
@@ -50,12 +56,19 @@ namespace RichHudFramework
                 public bool IsCaptured => CapturedElement != null;
 
                 /// <summary>
+                /// Returns true if a tooltip has been registered
+                /// </summary>
+                public bool IsToolTipRegistered { get; private set; }
+
+                /// <summary>
                 /// Returns the object capturing the cursor
                 /// </summary>
                 public ApiMemberAccessor CapturedElement { get; private set; }
 
                 private float captureDepth;
+                private Func<ToolTipMembers> GetToolTipFunc;
                 private readonly TexturedBox cursorBox;
+                private readonly LabelBox toolTip;
 
                 public HudCursor(HudParentBase parent = null) : base(parent)
                 {
@@ -75,6 +88,16 @@ namespace RichHudFramework
                         Size = new Vector2(64f),
                         Offset = new Vector2(12f, -12f),
                         ZOffset = -1
+                    };
+
+                    toolTip = new LabelBox(cursorBox)
+                    {
+                        Visible = false,
+                        ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Right,
+                        ZOffset = -2,
+                        TextPadding = new Vector2(10f, 8f),
+                        BuilderMode = TextBuilderModes.Lined,
+                        AutoResize = true
                     };
                 }
 
@@ -150,6 +173,28 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
+                /// Registers a callback delegate to set the tooltip for the next frame. Tooltips are reset
+                /// every frame and must be reregistered on HandleInput() every tick.
+                /// </summary>
+                public void RegisterToolTip(ToolTip toolTip)
+                {
+                    if (GetToolTipFunc == null && toolTip.GetToolTipFunc != null)
+                    {
+                        GetToolTipFunc = toolTip.GetToolTipFunc;
+                        IsToolTipRegistered = true;
+                    }
+                }
+
+                private void RegisterToolTipInternal(Func<ToolTipMembers> toolTip)
+                {
+                    if (GetToolTipFunc == null && toolTip != null)
+                    {
+                        GetToolTipFunc = toolTip;
+                        IsToolTipRegistered = true;
+                    }
+                }
+
+                /// <summary>
                 /// Releases the cursor
                 /// </summary>
                 public void Release()
@@ -196,7 +241,38 @@ namespace RichHudFramework
                     layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
 
+                    UpdateToolTip();
                     base.Layout();
+                }
+
+                protected override void HandleInput(Vector2 cursorPos)
+                {
+                    IsToolTipRegistered = false;
+                    GetToolTipFunc = null;
+                }
+
+                private void UpdateToolTip()
+                {
+                    toolTip.Visible = IsToolTipRegistered;
+
+                    if (GetToolTipFunc != null)
+                    {
+                        ToolTipMembers data = GetToolTipFunc();
+
+                        if (data.Item1 != null)
+                        {
+                            toolTip.Visible = true;
+                            toolTip.Format = ToolTip.DefaultText;
+                            toolTip.TextBoard.SetText(data.Item1);
+
+                            if (data.Item2 != null)
+                                toolTip.Color = data.Item2.Value;
+                            else
+                                toolTip.Color = ToolTip.DefaultBG;
+                        }
+
+                        GetToolTipFunc = null;
+                    }
                 }
 
                 private object GetOrSetMember8(object data, int memberEnum)
@@ -232,6 +308,15 @@ namespace RichHudFramework
                             return WorldPos;
                         case HudCursorAccessors.WorldLine:
                             return WorldLine;
+                        case HudCursorAccessors.RegisterToolTip:
+                            {
+                                if (!IsToolTipRegistered)
+                                    RegisterToolTipInternal(data as Func<ToolTipMembers>);
+
+                                break;
+                            }
+                        case HudCursorAccessors.IsToolTipRegistered:
+                            return IsToolTipRegistered;
                     }
 
                     return null;

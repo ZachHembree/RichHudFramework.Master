@@ -50,7 +50,6 @@ namespace RichHudFramework
                 private readonly HudChain bodyChain;
                 private readonly TexturedBox topDivider, middleDivider, bottomDivider;
                 private readonly Button closeButton;
-                private readonly LabelBox warningBox;
                 private TerminalPageBase lastPage;
                 private static readonly Material closeButtonMat = new Material("RichHudCloseButton", new Vector2(32f));
 
@@ -106,25 +105,6 @@ namespace RichHudFramework
                         Size = new Vector2(30f),
                         Offset = new Vector2(-18f, -14f),
                         Color = new Color(173, 182, 189),
-                    };
-
-                    warningBox = new LabelBox(this)
-                    {
-                        Height = 30f,
-                        CanIgnoreMasking = true,
-                        AutoResize = false,
-                        ParentAlignment = ParentAlignments.Bottom,
-                        DimAlignment = DimAlignments.Width,
-                        TextPadding = new Vector2(30f, 0f),
-                        Color = new Color(200, 140, 0),
-                        Format = new GlyphFormat(Color.White, textSize: .8f),
-                        Text = "Text input disabled. Open chat to enable.",
-                    };
-
-                    var warningBorder = new BorderBox(warningBox)
-                    {
-                        DimAlignment = DimAlignments.Both,
-                        Color = new Color(255, 191, 0)
                     };
 
                     modList.SelectionChanged += HandleSelectionChange;
@@ -221,9 +201,6 @@ namespace RichHudFramework
                     // Update color opacity
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
-
-                    // Display warning if cursor is disabled
-                    warningBox.Visible = HudMain.InputMode == HudInputMode.CursorOnly;
                 }
 
                 private void HandleSelectionChange()

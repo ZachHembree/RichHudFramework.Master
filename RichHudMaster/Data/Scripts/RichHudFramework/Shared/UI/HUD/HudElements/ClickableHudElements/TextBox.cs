@@ -66,6 +66,7 @@ namespace RichHudFramework.UI
         private readonly TextInput textInput;
         private readonly TextCaret caret;
         private readonly SelectionBox selectionBox;
+        private readonly ToolTip warningToolTip;
         private bool canHighlight, allowInput;
         private Vector2 cursorStart;
 
@@ -76,6 +77,12 @@ namespace RichHudFramework.UI
 
             caret = new TextCaret(this) { Visible = false };
             selectionBox = new SelectionBox(caret, this) { Color = new Color(255, 255, 255, 140) };
+
+            warningToolTip = new ToolTip()
+            {
+                text = "Open Chat to Enable Text Editing",
+                bgColor = ToolTip.orangeWarningBG
+            };
 
             caret.CaretMoved += CaretMoved;
             MouseInput.GainedInputFocus += GainFocus;
@@ -158,6 +165,9 @@ namespace RichHudFramework.UI
         {
             // MouseInput is running behind this because its a child element
             bool useInput = allowInput || (MouseInput.HasFocus && HudMain.InputMode == HudInputMode.Full);
+
+            if (EnableEditing && IsMousedOver && HudMain.InputMode == HudInputMode.CursorOnly)
+                HudMain.Cursor.RegisterToolTip(warningToolTip);
 
             if (useInput && EnableEditing)
             {
