@@ -18,7 +18,7 @@ namespace RichHudFramework
         >;
 
         [Flags]
-        public enum HudElementStates : uint
+        public enum HudElementStates : ushort
         {
             None = 0x0,
             IsVisible = 0x1,

@@ -17,27 +17,9 @@ using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRa
 namespace RichHudFramework
 {
     using Server;
-    using TextBoardMembers = MyTuple<
-        // TextBuilderMembers
-        MyTuple<
-            MyTuple<Func<int, int, object>, Func<int>>, // GetLineMember, GetLineCount
-            Func<Vector2I, int, object>, // GetCharMember
-            ApiMemberAccessor, // GetOrSetMember
-            Action<IList<RichStringMembers>, Vector2I>, // Insert
-            Action<IList<RichStringMembers>>, // SetText
-            Action // Clear
-        >,
-        FloatProp, // Scale
-        Func<Vector2>, // Size
-        Func<Vector2>, // TextSize
-        Vec2Prop, // FixedSize
-        Action<Vector2, MatrixD> // Draw 
-    >;
 
     namespace UI.Server
     {
-        using Rendering.Server;
-
         public sealed partial class HudMain : RichHudParallelComponentBase
         {
             public const int tickResetInterval = 240;
@@ -149,6 +131,11 @@ namespace RichHudFramework
             public static bool EnableCursor;
 
             /// <summary>
+            /// Current input mode. Used to indicate whether UI elements should accept cursor or text input.
+            /// </summary>
+            public static HudInputMode InputMode { get; private set; }
+
+            /// <summary>
             /// Tick interval at which the UI tree updates. Lower is faster, higher is slower.
             /// </summary>
             public static int TreeRefreshRate { get; }
@@ -194,6 +181,7 @@ namespace RichHudFramework
 
             public override void Close()
             {
+                InputMode = HudInputMode.NoInput;
                 EnableCursor = false;
                 instance = null;
                 treeManager = null;
@@ -215,12 +203,25 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
-                IMyControllableEntity conEnt = MyAPIGateway.Session.ControlledObject;
+                if (instance._cursor.Visible)
+                {
+                    if (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible)
+                        InputMode = HudInputMode.Full;
+                    else
+                        InputMode = HudInputMode.CursorOnly;
+                }
+                else
+                    InputMode = HudInputMode.NoInput;
 
-                if (conEnt != null && EnableCursor)
-                    conEnt.MoveAndRotate(conEnt.LastMotionIndicator, Vector2.Zero, 0f);
+                if (InputMode == HudInputMode.CursorOnly)
+                {
+                    IMyControllableEntity conEnt = MyAPIGateway.Session.ControlledObject;
 
-                BindManager.SeMouseControlsBlacklisted = EnableCursor;
+                    if (conEnt != null && instance._cursor.Visible)
+                        conEnt.MoveAndRotate(conEnt.LastMotionIndicator, Vector2.Zero, 0f);
+                }
+
+                BindManager.SeMouseControlsBlacklisted = InputMode == HudInputMode.CursorOnly;
 
                 // Reset cursor
                 _cursor.Release();
@@ -264,12 +265,6 @@ namespace RichHudFramework
                 Fov = MyAPIGateway.Session.Camera.FovWithZoom;
                 FovScale = (float)(0.1f * Math.Tan(Fov / 2d));
             }
-
-            /// <summary>
-            /// Returns API accessors for a new TextBoard instance.
-            /// </summary>
-            public static TextBoardMembers GetTextBoardData() =>
-                new TextBoard().GetApiData();
 
             /// <summary>
             /// Returns the ZOffset for focusing a window and registers a callback

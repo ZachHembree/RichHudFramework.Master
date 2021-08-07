@@ -45,22 +45,6 @@ namespace RichHudFramework
                 public LineD WorldLine { get; private set; }
 
                 /// <summary>
-                /// Indicates whether the cursor is currently visible
-                /// </summary>
-                public override bool Visible 
-                { 
-                    get 
-                    { 
-                        return base.Visible && 
-                        (
-                            MyAPIGateway.Gui.ChatEntryVisible || 
-                            MyAPIGateway.Gui.IsCursorVisible || 
-                            BindManager.SeMouseControlsBlacklisted
-                        ); 
-                    } 
-                }
-
-                /// <summary>
                 /// Returns true if the cursor has been captured by a UI element
                 /// </summary>
                 public bool IsCaptured => CapturedElement != null;
@@ -215,6 +199,25 @@ namespace RichHudFramework
                     base.Layout();
                 }
 
+                private object GetOrSetMember8(object data, int memberEnum)
+                {
+                    switch ((HudCursorAccessors)memberEnum)
+                    {
+                        case HudCursorAccessors.Visible:
+                            return HudMain.InputMode == HudInputMode.Full;
+                        case HudCursorAccessors.IsCaptured:
+                            return IsCaptured;
+                        case HudCursorAccessors.ScreenPos:
+                            return ScreenPos;
+                        case HudCursorAccessors.WorldPos:
+                            return WorldPos;
+                        case HudCursorAccessors.WorldLine:
+                            return WorldLine;
+                    }
+
+                    return null;
+                }
+
                 private object GetOrSetMember(object data, int memberEnum)
                 {
                     switch ((HudCursorAccessors)memberEnum)
@@ -232,6 +235,22 @@ namespace RichHudFramework
                     }
 
                     return null;
+                }
+
+                /// <summary>
+                /// Returns cursor API interface members
+                /// </summary>
+                public CursorMembers GetApiData8()
+                {
+                    return new CursorMembers()
+                    {
+                        Item1 = IsCapturingSpace,
+                        Item2 = TryCaptureHudSpace,
+                        Item3 = IsCapturing,
+                        Item4 = TryCapture,
+                        Item5 = TryRelease,
+                        Item6 = GetOrSetMember8
+                    };
                 }
 
                 /// <summary>

@@ -157,7 +157,7 @@ namespace RichHudFramework.UI
         protected override void HandleInput(Vector2 cursorPos)
         {
             // MouseInput is running behind this because its a child element
-            bool useInput = allowInput || (MouseInput.HasFocus && HudMain.Cursor.Visible);
+            bool useInput = allowInput || (MouseInput.HasFocus && HudMain.InputMode == HudInputMode.Full);
 
             if (useInput && EnableEditing)
             {

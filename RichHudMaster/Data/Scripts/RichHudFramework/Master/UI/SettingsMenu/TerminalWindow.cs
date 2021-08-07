@@ -116,15 +116,15 @@ namespace RichHudFramework
                         ParentAlignment = ParentAlignments.Bottom,
                         DimAlignment = DimAlignments.Width,
                         TextPadding = new Vector2(30f, 0f),
-                        Color = new Color(126, 39, 44),
+                        Color = new Color(200, 140, 0),
                         Format = new GlyphFormat(Color.White, textSize: .8f),
-                        Text = "Input disabled. Open chat to enable cursor.",
+                        Text = "Text input disabled. Open chat to enable.",
                     };
 
                     var warningBorder = new BorderBox(warningBox)
                     {
                         DimAlignment = DimAlignments.Both,
-                        Color = new Color(156, 65, 74)
+                        Color = new Color(255, 191, 0)
                     };
 
                     modList.SelectionChanged += HandleSelectionChange;
@@ -223,7 +223,7 @@ namespace RichHudFramework
                     header.Color = BodyColor;
 
                     // Display warning if cursor is disabled
-                    warningBox.Visible = !HudMain.Cursor.Visible;
+                    warningBox.Visible = HudMain.InputMode == HudInputMode.CursorOnly;
                 }
 
                 private void HandleSelectionChange()

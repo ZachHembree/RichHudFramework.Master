@@ -100,7 +100,12 @@ namespace RichHudFramework.Server
                     case ApiModuleTypes.BindManager:
                         return bindClient.GetApiData();
                     case ApiModuleTypes.HudMain:
-                        return hudClient.GetApiData();
+                        {
+                            if (apiVersionID < 9)
+                                return hudClient.GetApiData8();
+                            else
+                                return hudClient.GetApiData();
+                        }
                     case ApiModuleTypes.FontManager:
                         return FontManager.GetApiData();
                     case ApiModuleTypes.SettingsMenu:

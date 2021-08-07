@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RichHudFramework.UI.Rendering.Server;
+using System;
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
@@ -18,195 +19,231 @@ namespace RichHudFramework
         Func<ApiMemberAccessor, bool>, // TryRelease
         ApiMemberAccessor // GetOrSetMember
     >;
-    using TextBoardMembers = MyTuple<
-        // TextBuilderMembers
-        MyTuple<
-            MyTuple<Func<int, int, object>, Func<int>>, // GetLineMember, GetLineCount
-            Func<Vector2I, int, object>, // GetCharMember
-            ApiMemberAccessor, // GetOrSetMember
-            Action<IList<RichStringMembers>, Vector2I>, // Insert
-            Action<IList<RichStringMembers>>, // SetText
-            Action // Clear
-        >,
-        FloatProp, // Scale
-        Func<Vector2>, // Size
-        Func<Vector2>, // TextSize
-        Vec2Prop, // FixedSize
-        Action<Vector2, MatrixD> // Draw 
+    using TextBuilderMembers = MyTuple<
+        MyTuple<Func<int, int, object>, Func<int>>, // GetLineMember, GetLineCount
+        Func<Vector2I, int, object>, // GetCharMember
+        ApiMemberAccessor, // GetOrSetMember
+        Action<IList<RichStringMembers>, Vector2I>, // Insert
+        Action<IList<RichStringMembers>>, // SetText
+        Action // Clear
     >;
 
-    namespace UI.Server
+    namespace UI
     {
-        using HudClientMembers = MyTuple<
-            CursorMembers, // Cursor
-            Func<TextBoardMembers>, // GetNewTextBoard
-            ApiMemberAccessor, // GetOrSetMembers
-            Action // Unregister
+        using TextBoardMembers = MyTuple<
+            TextBuilderMembers,
+            FloatProp, // Scale
+            Func<Vector2>, // Size
+            Func<Vector2>, // TextSize
+            Vec2Prop, // FixedSize
+            Action<BoundingBox2, BoundingBox2, MatrixD[]> // Draw 
         >;
-        using HudUpdateAccessors = MyTuple<
-            ApiMemberAccessor,
-            MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
-            Action, // DepthTest
-            Action, // HandleInput
-            Action<bool>, // BeforeLayout
-            Action // BeforeDraw
+        using TextBoardMembers8 = MyTuple<
+            TextBuilderMembers,
+            FloatProp, // Scale
+            Func<Vector2>, // Size
+            Func<Vector2>, // TextSize
+            Vec2Prop, // FixedSize
+            Action<Vector2, MatrixD> // Draw 
         >;
 
-        public sealed partial class HudMain
+        namespace Server
         {
-            public class TreeClient
+            using HudClientMembers = MyTuple<
+                CursorMembers, // Cursor
+                Func<TextBoardMembers>, // GetNewTextBoard
+                ApiMemberAccessor, // GetOrSetMembers
+                Action // Unregister
+            >;
+            using HudClientMembers8 = MyTuple<
+                CursorMembers, // Cursor
+                Func<TextBoardMembers8>, // GetNewTextBoard
+                ApiMemberAccessor, // GetOrSetMembers
+                Action // Unregister
+            >;
+            using HudUpdateAccessors = MyTuple<
+                ApiMemberAccessor,
+                MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
+                Action, // DepthTest
+                Action, // HandleInput
+                Action<bool>, // BeforeLayout
+                Action // BeforeDraw
+            >;
+
+            public sealed partial class HudMain
             {
-                /// <summary>
-                /// Delegate used to retrieve UI update delegates from clients
-                /// </summary>
-                public Action<List<HudUpdateAccessors>, byte> GetUpdateAccessors;
-
-                /// <summary>
-                /// Read only list of accessor list for UI elements registered to this client
-                /// </summary>
-                public IReadOnlyList<HudUpdateAccessors> UpdateAccessors => updateAccessors;
-
-                /// <summary>
-                /// Returns true if the client has been registered to the TreeManager
-                /// </summary>
-                public bool Registered { get; private set; }
-
-                /// <summary>
-                /// If true, then the client is requesting that the cursor be enabled
-                /// </summary>
-                public bool enableCursor;
-
-                /// <summary>
-                /// If true, then the client is requesting that the draw list be rebuilt
-                /// </summary>
-                public bool refreshDrawList;
-
-                private bool refreshRequested;
-                private readonly bool continuousRefresh;
-                private readonly List<HudUpdateAccessors> updateAccessors;
-
-                public TreeClient(bool continuousRefresh = true)
+                public class TreeClient
                 {
-                    this.continuousRefresh = continuousRefresh;
+                    /// <summary>
+                    /// Delegate used to retrieve UI update delegates from clients
+                    /// </summary>
+                    public Action<List<HudUpdateAccessors>, byte> GetUpdateAccessors;
 
-                    updateAccessors = new List<HudUpdateAccessors>();
-                    Registered = TreeManager.RegisterClient(this);
-                }
+                    /// <summary>
+                    /// Read only list of accessor list for UI elements registered to this client
+                    /// </summary>
+                    public IReadOnlyList<HudUpdateAccessors> UpdateAccessors => updateAccessors;
 
-                public void Update(int tick)
-                {
-                    if (refreshDrawList || continuousRefresh)
-                        refreshRequested = true;
+                    /// <summary>
+                    /// Returns true if the client has been registered to the TreeManager
+                    /// </summary>
+                    public bool Registered { get; private set; }
 
-                    if (!treeManager.UpdatingTree && refreshRequested && (tick % treeRefreshRate) == 0)
+                    /// <summary>
+                    /// If true, then the client is requesting that the cursor be enabled
+                    /// </summary>
+                    public bool enableCursor;
+
+                    /// <summary>
+                    /// If true, then the client is requesting that the draw list be rebuilt
+                    /// </summary>
+                    public bool refreshDrawList;
+
+                    private bool refreshRequested;
+                    private readonly bool continuousRefresh;
+                    private readonly List<HudUpdateAccessors> updateAccessors;
+
+                    public TreeClient(bool continuousRefresh = true)
                     {
-                        updateAccessors.Clear();
-                        GetUpdateAccessors?.Invoke(updateAccessors, 0);
+                        this.continuousRefresh = continuousRefresh;
 
-                        if (updateAccessors.Capacity > updateAccessors.Count * 2)
-                            updateAccessors.TrimExcess();
-
-                        refreshRequested = false;
-                        refreshDrawList = false;
-
-                        if (!continuousRefresh)
-                            TreeManager.RefreshRequested = true;
+                        updateAccessors = new List<HudUpdateAccessors>();
+                        Registered = TreeManager.RegisterClient(this);
                     }
-                }
 
-                /// <summary>
-                /// Unregisters the client from HudMain
-                /// </summary>
-                public void Unregister()
-                {
-                    Registered = !TreeManager.UnregisterClient(this);
-                }
-
-                /// <summary>
-                /// Retrieves API accessor delegates
-                /// </summary>
-                public HudClientMembers GetApiData()
-                {
-                    Init();
-
-                    return new HudClientMembers()
+                    public void Update(int tick)
                     {
-                        Item1 = instance._cursor.GetApiData(),
-                        Item2 = GetTextBoardData,
-                        Item3 = GetOrSetMember,
-                        Item4 = Unregister
-                    };
-                }
+                        if (refreshDrawList || continuousRefresh)
+                            refreshRequested = true;
 
-                /// <summary>
-                /// Provides access to HudMain properties via RHF API
-                /// </summary>
-                private object GetOrSetMember(object data, int memberEnum)
-                {
-                    switch ((HudMainAccessors)memberEnum)
+                        if (!treeManager.UpdatingTree && refreshRequested && (tick % treeRefreshRate) == 0)
+                        {
+                            updateAccessors.Clear();
+                            GetUpdateAccessors?.Invoke(updateAccessors, 0);
+
+                            if (updateAccessors.Capacity > updateAccessors.Count * 2)
+                                updateAccessors.TrimExcess();
+
+                            refreshRequested = false;
+                            refreshDrawList = false;
+
+                            if (!continuousRefresh)
+                                TreeManager.RefreshRequested = true;
+                        }
+                    }
+
+                    /// <summary>
+                    /// Unregisters the client from HudMain
+                    /// </summary>
+                    public void Unregister()
                     {
-                        case HudMainAccessors.ScreenWidth:
-                            return ScreenWidth;
-                        case HudMainAccessors.ScreenHeight:
-                            return ScreenHeight;
-                        case HudMainAccessors.AspectRatio:
-                            return AspectRatio;
-                        case HudMainAccessors.ResScale:
-                            return ResScale;
-                        case HudMainAccessors.Fov:
-                            return Fov;
-                        case HudMainAccessors.FovScale:
-                            return FovScale;
-                        case HudMainAccessors.PixelToWorldTransform:
-                            return PixelToWorld;
-                        case HudMainAccessors.UiBkOpacity:
-                            return UiBkOpacity;
-                        case HudMainAccessors.ClipBoard:
-                            {
-                                if (data == null)
-                                    return ClipBoard.apiData;
-                                else
-                                    ClipBoard = new RichText(data as List<RichStringMembers>);
-                                break;
-                            }
-                        case HudMainAccessors.EnableCursor:
-                            {
-                                if (data == null)
-                                    return enableCursor;
-                                else
-                                    enableCursor = (bool)data;
-                                break;
-                            }
-                        case HudMainAccessors.RefreshDrawList:
-                            {
-                                if (data == null)
-                                    return refreshDrawList;
-                                else
-                                    refreshDrawList = (bool)data;
-                                break;
-                            }
-                        case HudMainAccessors.GetUpdateAccessors:
-                            {
-                                if (data == null)
-                                    return GetUpdateAccessors;
-                                else
+                        Registered = !TreeManager.UnregisterClient(this);
+                    }
+
+                    /// <summary>
+                    /// Retrieves API accessor delegates
+                    /// </summary>
+                    public HudClientMembers8 GetApiData8()
+                    {
+                        Init();
+
+                        return new HudClientMembers8()
+                        {
+                            Item1 = instance._cursor.GetApiData8(),
+                            Item2 = () => new TextBoard().GetApiData8(),
+                            Item3 = GetOrSetMember,
+                            Item4 = Unregister
+                        };
+                    }
+
+                    /// <summary>
+                    /// Retrieves API accessor delegates
+                    /// </summary>
+                    public HudClientMembers GetApiData()
+                    {
+                        Init();
+
+                        return new HudClientMembers()
+                        {
+                            Item1 = instance._cursor.GetApiData(),
+                            Item2 = () => new TextBoard().GetApiData(),
+                            Item3 = GetOrSetMember,
+                            Item4 = Unregister
+                        };
+                    }
+
+                    /// <summary>
+                    /// Provides access to HudMain properties via RHF API
+                    /// </summary>
+                    private object GetOrSetMember(object data, int memberEnum)
+                    {
+                        switch ((HudMainAccessors)memberEnum)
+                        {
+                            case HudMainAccessors.ScreenWidth:
+                                return ScreenWidth;
+                            case HudMainAccessors.ScreenHeight:
+                                return ScreenHeight;
+                            case HudMainAccessors.AspectRatio:
+                                return AspectRatio;
+                            case HudMainAccessors.ResScale:
+                                return ResScale;
+                            case HudMainAccessors.Fov:
+                                return Fov;
+                            case HudMainAccessors.FovScale:
+                                return FovScale;
+                            case HudMainAccessors.PixelToWorldTransform:
+                                return PixelToWorld;
+                            case HudMainAccessors.UiBkOpacity:
+                                return UiBkOpacity;
+                            case HudMainAccessors.ClipBoard:
                                 {
-                                    GetUpdateAccessors = data as Action<List<HudUpdateAccessors>, byte>;
-                                    refreshDrawList = true;
+                                    if (data == null)
+                                        return ClipBoard.apiData;
+                                    else
+                                        ClipBoard = new RichText(data as List<RichStringMembers>);
+                                    break;
                                 }
-                                break;
-                            }
-                        case HudMainAccessors.GetFocusOffset:
-                            return GetFocusOffset(data as Action<byte>);
-                        case HudMainAccessors.GetPixelSpaceFunc:
-                            return instance._root.GetHudSpaceFunc;
-                        case HudMainAccessors.GetPixelSpaceOriginFunc:
-                            return instance._root.GetNodeOriginFunc;
-                        case HudMainAccessors.GetInputFocus:
-                            GetInputFocus(data as Action); break;
-                    }
+                            case HudMainAccessors.EnableCursor:
+                                {
+                                    if (data == null)
+                                        return enableCursor;
+                                    else
+                                        enableCursor = (bool)data;
+                                    break;
+                                }
+                            case HudMainAccessors.RefreshDrawList:
+                                {
+                                    if (data == null)
+                                        return refreshDrawList;
+                                    else
+                                        refreshDrawList = (bool)data;
+                                    break;
+                                }
+                            case HudMainAccessors.GetUpdateAccessors:
+                                {
+                                    if (data == null)
+                                        return GetUpdateAccessors;
+                                    else
+                                    {
+                                        GetUpdateAccessors = data as Action<List<HudUpdateAccessors>, byte>;
+                                        refreshDrawList = true;
+                                    }
+                                    break;
+                                }
+                            case HudMainAccessors.GetFocusOffset:
+                                return GetFocusOffset(data as Action<byte>);
+                            case HudMainAccessors.GetPixelSpaceFunc:
+                                return instance._root.GetHudSpaceFunc;
+                            case HudMainAccessors.GetPixelSpaceOriginFunc:
+                                return instance._root.GetNodeOriginFunc;
+                            case HudMainAccessors.GetInputFocus:
+                                GetInputFocus(data as Action); break;
+                            case HudMainAccessors.InputMode:
+                                return InputMode;
+                        }
 
-                    return null;
+                        return null;
+                    }
                 }
             }
         }

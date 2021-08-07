@@ -27,13 +27,21 @@ namespace RichHudFramework
 
         namespace Rendering.Server
         {
-            using TextBoardMembers = MyTuple<
+            using TextBoardMembers8 = MyTuple<
                 TextBuilderMembers,
                 FloatProp, // Scale
                 Func<Vector2>, // Size
                 Func<Vector2>, // TextSize
                 Vec2Prop, // FixedSize
                 Action<Vector2, MatrixD> // Draw 
+            >;
+            using TextBoardMembers = MyTuple<
+                TextBuilderMembers,
+                FloatProp, // Scale
+                Func<Vector2>, // Size
+                Func<Vector2>, // TextSize
+                Vec2Prop, // FixedSize
+                Action<BoundingBox2, BoundingBox2, MatrixD[]> // Draw 
             >;
 
             public class TextBoard : TextBuilder, ITextBoard
@@ -765,6 +773,22 @@ namespace RichHudFramework
                 public new TextBoardMembers GetApiData()
                 {
                     return new TextBoardMembers()
+                    {
+                        Item1 = base.GetApiData(),
+                        Item2 = new FloatProp(() => Scale, x => Scale = x),
+                        Item3 = () => Size,
+                        Item4 = () => TextSize,
+                        Item5 = new Vec2Prop(() => FixedSize, x => FixedSize = x),
+                        Item6 = Draw
+                    };
+                }
+
+                /// <summary>
+                /// Returns a collection of members needed to access this object via the HUD API as a tuple.
+                /// </summary>
+                public TextBoardMembers8 GetApiData8()
+                {
+                    return new TextBoardMembers8()
                     {
                         Item1 = base.GetApiData(),
                         Item2 = new FloatProp(() => Scale, x => Scale = x),
