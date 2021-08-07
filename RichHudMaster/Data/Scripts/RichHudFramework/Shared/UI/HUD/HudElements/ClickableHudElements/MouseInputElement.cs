@@ -114,7 +114,7 @@ namespace RichHudFramework.UI
         {
             State &= ~HudElementStates.IsMouseInBounds;
 
-            if (HudSpace?.IsFacingCamera ?? false)
+            if (HudMain.InputMode != HudInputMode.NoInput && (HudSpace?.IsFacingCamera ?? false))
             {
                 Vector3 cursorPos = HudSpace.CursorPos;
                 Vector2 halfSize = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) * .5f;
