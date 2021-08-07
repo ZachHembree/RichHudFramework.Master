@@ -139,9 +139,10 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
-                for (int n = 0; n < bindClients.Count; n++)
+                if (!RebindDialog.Open)
                 {
-                    bindClients[n].HandleInput();
+                    for (int n = 0; n < bindClients.Count; n++)
+                        bindClients[n].HandleInput();
                 }
             }
 

@@ -67,6 +67,7 @@ namespace RichHudFramework.Server
         protected override void AfterInit()
         {
             HudMain.Init();
+            RebindDialog.Init();
             RichHudDebug.Init();
             InitSettingsMenu();
 
