@@ -87,7 +87,7 @@ namespace RichHudFramework.Server
                 ExceptionHandler.WriteToLogAndConsole($"[RHF] Successfully registered {name} with the API.");
 
                 ClientSubtype = ClientSubtypes.Full;
-                VersionString = "1.0.3.0-";
+                VersionString = $"1.0.3.0- ({apiVersionID})";
             }
 
             /// <summary>
@@ -132,7 +132,7 @@ namespace RichHudFramework.Server
                     ClientSubtype = (ClientSubtypes)(GetOrSetMemberFunc(null, (int)ClientDataAccessors.GetSubtype) ?? ClientSubtypes.Full);
 
                     if (VersionID.X > 0)
-                        VersionString = $"{VersionID.X}.{VersionID.Y}.{VersionID.Z}.{VersionID.W}";
+                        VersionString = $"{VersionID.X}.{VersionID.Y}.{VersionID.Z}.{VersionID.W} ({apiVersionID})";
                 }
             }
 

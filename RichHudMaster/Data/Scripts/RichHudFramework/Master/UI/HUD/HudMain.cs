@@ -221,7 +221,10 @@ namespace RichHudFramework
                         conEnt.MoveAndRotate(conEnt.LastMotionIndicator, Vector2.Zero, 0f);
                 }
 
-                BindManager.SeMouseControlsBlacklisted = InputMode == HudInputMode.CursorOnly;
+                if (InputMode == HudInputMode.CursorOnly)
+                    BindManager.RequestBlacklistMode |= SeBlacklistModes.Mouse;
+                else
+                    BindManager.RequestBlacklistMode &= ~SeBlacklistModes.Mouse;
 
                 // Reset cursor
                 _cursor.Release();
@@ -284,7 +287,7 @@ namespace RichHudFramework
             /// </summary>
             public static void GetInputFocus(Action LoseFocusCallback)
             {
-                if (LoseFocusCallback != null)
+                if (LoseFocusCallback != null && (LoseFocusCallback != instance.LoseInputFocusCallback))
                 {
                     instance.LoseInputFocusCallback?.Invoke();
                     instance.LoseInputFocusCallback = LoseFocusCallback;
@@ -356,7 +359,7 @@ namespace RichHudFramework
 
                 public HudSpaceDelegate GetHudSpaceFunc { get; }
 
-                public MatrixD PlaneToWorld { get; private set; }
+                public MatrixD PlaneToWorld => PlaneToWorldRef[0];
 
                 public MatrixD[] PlaneToWorldRef { get; }
 
@@ -382,7 +385,6 @@ namespace RichHudFramework
 
                 protected override void Layout()
                 {
-                    PlaneToWorld = PixelToWorld;
                     PlaneToWorldRef[0] = PixelToWorld;
                     CursorPos = new Vector3(Cursor.ScreenPos.X, Cursor.ScreenPos.Y, 0f);
                 }

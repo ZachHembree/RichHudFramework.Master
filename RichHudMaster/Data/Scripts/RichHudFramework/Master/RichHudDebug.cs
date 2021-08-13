@@ -115,31 +115,6 @@ namespace RichHudFramework.Server
                                             }
                                         }
                                     },
-                                    new ControlTile()
-                                    {
-                                        new TerminalCheckbox()
-                                        {
-                                            Name = "Blacklist All Input",
-                                            Value = BindManager.SeControlsBlacklisted,
-                                            CustomValueGetter = () => BindManager.SeControlsBlacklisted,
-                                            ControlChangedHandler = (obj, args) =>
-                                            {
-                                                var element = obj as TerminalCheckbox;
-                                                BindManager.SeControlsBlacklisted = element.Value;
-                                            }
-                                        },
-                                        new TerminalCheckbox()
-                                        {
-                                            Name = "Blacklist Mouse Input",
-                                            Value = BindManager.SeMouseControlsBlacklisted,
-                                            CustomValueGetter = () => BindManager.SeMouseControlsBlacklisted,
-                                            ControlChangedHandler = (obj, args) =>
-                                            {
-                                                var element = obj as TerminalCheckbox;
-                                                BindManager.SeMouseControlsBlacklisted = element.Value;
-                                            }
-                                        },
-                                    }
                                 }
                             }
                         }
@@ -178,6 +153,7 @@ namespace RichHudFramework.Server
                 var vID = RichHudMaster.versionID;
                 statsBuilder.Append($"Rich HUD Master (v {vID.X}.{vID.Y}.{vID.Z}.{vID.W})\n");
                 statsBuilder.Append($"Summary:\n");
+                statsBuilder.Append($"\tSE Input Blacklist: {BindManager.CurrentBlacklistMode}\n");
                 statsBuilder.Append($"\tInput Mode: {HudMain.InputMode}\n");
                 statsBuilder.Append($"\tCursor Visible: {HudMain.Cursor.Visible}\n");
                 statsBuilder.Append($"\tClient Mods: {modClients.Count}\n");

@@ -35,45 +35,22 @@ namespace RichHudFramework
             /// </summary>
             public static Client MainClient => Instance.mainClient;
 
-            public static bool SeControlsBlacklisted 
+            /// <summary>
+            /// Specifies blacklist mode for SE controls
+            /// </summary>
+            public static SeBlacklistModes RequestBlacklistMode
             {
-                get { if (_instance == null) Init(); return _instance.controlsBlacklisted; }
+                get { if (_instance == null) Init(); return _instance.mainClient.RequestBlacklistMode; }
                 set 
                 {
                     if (_instance == null)
                         Init();
 
-                    if (_instance.controlsBlacklisted != value)
-                    {
-                        foreach (string control in _instance.seControlIDs)
-                            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
-
-                        _instance.mouseControlsBlacklisted = value;
-                    }
-                    else
-                        SeMouseControlsBlacklisted = value;
-
-                    _instance.controlsBlacklisted = value;
+                    _instance.mainClient.RequestBlacklistMode = value;
                 }
             }
 
-            public static bool SeMouseControlsBlacklisted
-            {
-                get { if (_instance == null) Init(); return _instance.mouseControlsBlacklisted; }
-                set
-                {
-                    if (_instance == null)
-                        Init();
-
-                    if (_instance.mouseControlsBlacklisted != value)
-                    {
-                        foreach (string control in _instance.seMouseControlIDs)
-                            MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
-                    }
-
-                    _instance.mouseControlsBlacklisted = value;
-                }
-            }
+            public static SeBlacklistModes CurrentBlacklistMode { get; private set; }
 
             /// <summary>
             /// Read-only list of all controls bound to a key
@@ -99,7 +76,7 @@ namespace RichHudFramework
             private readonly List<Client> bindClients;
 
             private Client mainClient;
-            private bool controlsBlacklisted, mouseControlsBlacklisted;
+            private bool areControlsBlacklisted, areMouseControlsBlacklisted, fullBlacklistRequested, mouseBlacklistRequested;
 
             private BindManager() : base(false, true)
             {
@@ -139,6 +116,50 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
+                fullBlacklistRequested = false;
+                mouseBlacklistRequested = false;
+                CurrentBlacklistMode = SeBlacklistModes.None;
+
+                for (int n = 0; n < bindClients.Count; n++)
+                {
+                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.Full) == SeBlacklistModes.Full)
+                        fullBlacklistRequested = true;
+
+                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.Mouse) == SeBlacklistModes.Mouse)
+                        mouseBlacklistRequested = true;
+                }
+
+                if (fullBlacklistRequested)
+                    CurrentBlacklistMode |= SeBlacklistModes.Full;
+
+                if (mouseBlacklistRequested)
+                    CurrentBlacklistMode |= SeBlacklistModes.Mouse;
+
+                if (fullBlacklistRequested)
+                {
+                    areControlsBlacklisted = true;
+                    SetBlacklist(seControlIDs, true);
+                }
+                else
+                {
+                    if (areControlsBlacklisted)
+                    {
+                        SetBlacklist(seControlIDs, false);
+                        areControlsBlacklisted = false;
+                    }
+
+                    if (mouseBlacklistRequested)
+                    {
+                        areMouseControlsBlacklisted = true;
+                        SetBlacklist(seMouseControlIDs, true);
+                    }
+                    else if (areMouseControlsBlacklisted)
+                    {
+                        SetBlacklist(seMouseControlIDs, false);
+                        areMouseControlsBlacklisted = false;
+                    }
+                }
+
                 if (!RebindDialog.Open)
                 {
                     for (int n = 0; n < bindClients.Count; n++)
@@ -146,10 +167,16 @@ namespace RichHudFramework
                 }
             }
 
+            private static void SetBlacklist(IReadOnlyList<string> IDs, bool value)
+            {
+                foreach (string control in IDs)
+                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
+            }
+
             public override void Close()
             {
-                SeControlsBlacklisted = false;
-                SeMouseControlsBlacklisted = false;
+                SetBlacklist(seControlIDs, false);
+                SetBlacklist(seMouseControlIDs, false);
                 bindClients.Clear();
                 mainClient = null;
 

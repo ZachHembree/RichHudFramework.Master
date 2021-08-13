@@ -72,7 +72,7 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         private void UpdateBindInternal(IBind bind, int bindPos, Action CallbackFunc = null)
         {
-            BindManager.SeControlsBlacklisted = true;
+            BindManager.RequestBlacklistMode = SeBlacklistModes.Full;
             HudMain.EnableCursor = true;
 
             stopwatch.Restart();
@@ -134,7 +134,7 @@ namespace RichHudFramework.UI.Server
         {
             if (Open)
             {
-                BindManager.SeControlsBlacklisted = false;
+                BindManager.RequestBlacklistMode = SeBlacklistModes.None;
                 HudMain.EnableCursor = false;
                 Open = false;
                 CallbackFunc?.Invoke();

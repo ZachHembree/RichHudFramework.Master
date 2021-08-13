@@ -33,6 +33,8 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<IControl> Controls => BindManager.Instance.controls;
 
+                public SeBlacklistModes RequestBlacklistMode { get; set; }
+
                 private readonly RichHudMaster.ModClient masterClient;
                 private readonly Action UpdateAction;
                 private readonly List<BindGroup> bindGroups;
@@ -137,6 +139,13 @@ namespace RichHudFramework
                             ClearBindGroups(); break;
                         case BindClientAccessors.Unload:
                             Unload(); break;
+                        case BindClientAccessors.RequestBlacklistMode:
+                            {
+                                if (data != null)
+                                    { RequestBlacklistMode = (SeBlacklistModes)data; break; }
+                                else
+                                    return RequestBlacklistMode;
+                            }
                     }
 
                     return null;
