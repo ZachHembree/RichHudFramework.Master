@@ -93,9 +93,8 @@ namespace RichHudFramework
                     toolTip = new LabelBox(cursorBox)
                     {
                         Visible = false,
-                        ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Right,
                         ZOffset = -2,
-                        TextPadding = new Vector2(10f, 8f),
+                        TextPadding = new Vector2(10f, 6f),
                         BuilderMode = TextBuilderModes.Lined,
                         AutoResize = true
                     };
@@ -272,6 +271,26 @@ namespace RichHudFramework
                         }
 
                         GetToolTipFunc = null;
+
+                        /* Position tooltip s.t. its placed below and to the right of the cursor while also bounding
+                         the position to keep it from going off screen. */
+                        Vector2 halfScreenSize = new Vector2(ScreenWidth, ScreenHeight) * .5f,
+                            halfTooltipSize = toolTip.Size * .5f;
+
+                        Vector2 toolTipPos = ScreenPos + new Vector2(24f, -24f);
+                        toolTipPos.X += halfTooltipSize.X;
+                        toolTipPos.Y -= halfTooltipSize.Y;
+
+                        BoundingBox2 toolBox = new BoundingBox2(toolTipPos - halfTooltipSize, toolTipPos + halfTooltipSize);
+                        BoundingBox2 screenBox = new BoundingBox2(-halfScreenSize, halfScreenSize),
+                            offsetBox = new BoundingBox2(ScreenPos - halfScreenSize, ScreenPos + halfScreenSize);
+
+                        offsetBox = offsetBox.Intersect(screenBox);
+                        toolBox = toolBox.Intersect(offsetBox);
+                        toolTipPos -= ScreenPos;
+
+                        Vector2 delta = (toolBox.Center - ScreenPos) - toolTipPos;
+                        toolTip.Offset = toolTipPos + 2f * delta;
                     }
                 }
 
