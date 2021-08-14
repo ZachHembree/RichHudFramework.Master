@@ -1,23 +1,12 @@
 using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
-using System.Collections.Generic;
 using VRage;
-using VRage.Game;
-using VRage.Game.ModAPI;
-using VRage.ModAPI;
 using VRageMath;
-using ApiMemberAccessor = System.Func<object, int, object>;
-using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
-using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
-using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
-using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 
 namespace RichHudFramework
 {
-    using Server;
-
     namespace UI.Server
     {
         public sealed partial class HudMain : RichHudParallelComponentBase
@@ -214,17 +203,9 @@ namespace RichHudFramework
                     InputMode = HudInputMode.NoInput;
 
                 if (InputMode == HudInputMode.CursorOnly)
-                {
-                    IMyControllableEntity conEnt = MyAPIGateway.Session.ControlledObject;
-
-                    if (conEnt != null && instance._cursor.Visible)
-                        conEnt.MoveAndRotate(conEnt.LastMotionIndicator, Vector2.Zero, 0f);
-                }
-
-                if (InputMode == HudInputMode.CursorOnly)
-                    BindManager.RequestBlacklistMode |= SeBlacklistModes.Mouse;
+                    BindManager.BlacklistMode |= SeBlacklistModes.MouseAndCam;
                 else
-                    BindManager.RequestBlacklistMode &= ~SeBlacklistModes.Mouse;
+                    BindManager.BlacklistMode &= ~SeBlacklistModes.MouseAndCam;
 
                 // Reset cursor
                 _cursor.Release();

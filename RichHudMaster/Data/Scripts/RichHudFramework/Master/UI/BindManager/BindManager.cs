@@ -1,10 +1,12 @@
 using RichHudFramework.Internal;
-using Sandbox.ModAPI;
 using Sandbox.Game;
+using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using VRage.Input;
 using VRage.Utils;
+using VRageMath;
+using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
 
 namespace RichHudFramework
 {
@@ -38,10 +40,10 @@ namespace RichHudFramework
             /// <summary>
             /// Specifies blacklist mode for SE controls
             /// </summary>
-            public static SeBlacklistModes RequestBlacklistMode
+            public static SeBlacklistModes BlacklistMode
             {
                 get { if (_instance == null) Init(); return _instance.mainClient.RequestBlacklistMode; }
-                set 
+                set
                 {
                     if (_instance == null)
                         Init();
@@ -76,7 +78,7 @@ namespace RichHudFramework
             private readonly List<Client> bindClients;
 
             private Client mainClient;
-            private bool areControlsBlacklisted, areMouseControlsBlacklisted, fullBlacklistRequested, mouseBlacklistRequested;
+            private bool areControlsBlacklisted, areMouseControlsBlacklisted;
 
             private BindManager() : base(false, true)
             {
@@ -116,50 +118,58 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
-                fullBlacklistRequested = false;
-                mouseBlacklistRequested = false;
                 CurrentBlacklistMode = SeBlacklistModes.None;
 
                 for (int n = 0; n < bindClients.Count; n++)
                 {
-                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.Full) == SeBlacklistModes.Full)
-                        fullBlacklistRequested = true;
+                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.AllKeys) == SeBlacklistModes.AllKeys)
+                        CurrentBlacklistMode |= SeBlacklistModes.AllKeys;
 
                     if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.Mouse) == SeBlacklistModes.Mouse)
-                        mouseBlacklistRequested = true;
+                        CurrentBlacklistMode |= SeBlacklistModes.Mouse;
+
+                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.CameraRot) > 0)
+                        CurrentBlacklistMode |= SeBlacklistModes.CameraRot;
                 }
 
-                if (fullBlacklistRequested)
-                    CurrentBlacklistMode |= SeBlacklistModes.Full;
+                // Block/allow camera rotation due to user input
+                if ((CurrentBlacklistMode & SeBlacklistModes.CameraRot) > 0)
+                {
+                    IMyControllableEntity conEnt = MyAPIGateway.Session.ControlledObject;
 
-                if (mouseBlacklistRequested)
-                    CurrentBlacklistMode |= SeBlacklistModes.Mouse;
+                    if (conEnt != null)
+                        conEnt.MoveAndRotate(conEnt.LastMotionIndicator, Vector2.Zero, 0f);
+                }
 
-                if (fullBlacklistRequested)
+                // Set control blacklist according to flag configuration
+                if ((CurrentBlacklistMode & SeBlacklistModes.AllKeys) == SeBlacklistModes.AllKeys)
                 {
                     areControlsBlacklisted = true;
-                    SetBlacklist(seControlIDs, true);
+                    areMouseControlsBlacklisted = true;
+                    SetBlacklist(seControlIDs, true); // Enable full blacklist
                 }
                 else
                 {
                     if (areControlsBlacklisted)
                     {
-                        SetBlacklist(seControlIDs, false);
+                        SetBlacklist(seControlIDs, false); // Disable full blacklist
                         areControlsBlacklisted = false;
+                        areMouseControlsBlacklisted = true;
                     }
 
-                    if (mouseBlacklistRequested)
+                    if ((CurrentBlacklistMode & SeBlacklistModes.Mouse) == SeBlacklistModes.AllKeys)
                     {
                         areMouseControlsBlacklisted = true;
-                        SetBlacklist(seMouseControlIDs, true);
+                        SetBlacklist(seMouseControlIDs, true); // Enable mouse button blacklist
                     }
                     else if (areMouseControlsBlacklisted)
                     {
-                        SetBlacklist(seMouseControlIDs, false);
+                        SetBlacklist(seMouseControlIDs, false); // Disable mouse button blacklist
                         areMouseControlsBlacklisted = false;
                     }
                 }
 
+                // Update client input
                 if (!RebindDialog.Open)
                 {
                     for (int n = 0; n < bindClients.Count; n++)
