@@ -1,4 +1,4 @@
-﻿using VRageMath;
+using VRageMath;
 using VRage;
 using System;
 using System.Collections.Generic;
@@ -153,6 +153,9 @@ namespace RichHudFramework.UI
         /// </summary>
         public Color SliderHighlight { get { return ScrollBar.slide.SliderHighlight; } set { ScrollBar.slide.SliderHighlight = value; } }
 
+        /// <summary>
+        /// If enabled scrolling using the scrollbar and mousewheel will be allowed
+        /// </summary>
         public bool EnableScrolling { get; set; }
 
         public override bool AlignVertical
@@ -230,6 +233,8 @@ namespace RichHudFramework.UI
 
         protected override void HandleInput(Vector2 cursorPos)
         {
+            ScrollBar.MouseInput.Enabled = EnableScrolling;
+
             if (hudCollectionList.Count > 0 && EnableScrolling && (IsMousedOver || ScrollBar.IsMousedOver))
             {
                 if (SharedBinds.MousewheelUp.IsPressed)
