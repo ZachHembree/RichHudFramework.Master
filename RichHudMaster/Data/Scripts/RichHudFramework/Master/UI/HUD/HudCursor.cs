@@ -277,7 +277,7 @@ namespace RichHudFramework
                         Vector2 halfScreenSize = new Vector2(ScreenWidth, ScreenHeight) * .5f,
                             halfTooltipSize = toolTip.Size * .5f;
 
-                        Vector2 toolTipPos = ScreenPos + new Vector2(24f, -24f);
+                        Vector2 toolTipPos = ScreenPos + new Vector2(24f, -24f) * LocalScale;
                         toolTipPos.X += halfTooltipSize.X;
                         toolTipPos.Y -= halfTooltipSize.Y;
 
