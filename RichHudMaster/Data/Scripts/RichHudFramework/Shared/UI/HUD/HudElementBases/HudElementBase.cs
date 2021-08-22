@@ -17,6 +17,18 @@ namespace RichHudFramework
         public abstract class HudElementBase : HudNodeBase, IReadOnlyHudElement
         {
             protected const float minMouseBounds = 8f;
+            protected const HudElementStates elementNotVisible = ~(HudElementStates.IsVisible | HudElementStates.IsMousedOver | HudElementStates.IsMouseInBounds);
+
+            public override bool Visible
+            {
+                set
+                {
+                    if (value)
+                        State |= HudElementStates.IsVisible;
+                    else
+                        State &= elementNotVisible;
+                }
+            }
 
             /// <summary>
             /// Parent object of the node.
