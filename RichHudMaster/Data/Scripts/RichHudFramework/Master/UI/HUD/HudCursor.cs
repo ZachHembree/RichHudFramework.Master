@@ -226,14 +226,15 @@ namespace RichHudFramework
                     screenPos += new Vector2(-ScreenWidth * .5f, ScreenHeight * .5f);
 
                     // Calculate position of the cursor in world space
-                    PlaneToWorldRef[0] = HudMain.PixelToWorld;
+                    MatrixD ptw = HudMain.PixelToWorld;
+                    PlaneToWorldRef[0] = MatrixD.CreateScale(ResScale, ResScale, 1d) * ptw;
 
                     Vector3D worldPos = new Vector3D(screenPos.X, screenPos.Y, 0d);
-                    Vector3D.TransformNoProjection(ref worldPos, ref PlaneToWorldRef[0], out worldPos);
+                    Vector3D.TransformNoProjection(ref worldPos, ref ptw, out worldPos);
 
                     WorldPos = worldPos;
                     ScreenPos = screenPos;
-                    cursorBox.Offset = screenPos;
+                    cursorBox.Offset = screenPos / ResScale;
 
                     layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;

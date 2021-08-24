@@ -245,8 +245,7 @@ namespace RichHudFramework.Server
 
             if (EnableDebug && enableOverlay)
             {
-                var screenRes = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight);
-                var offset = HudMain.GetPixelVector(overlayPos);
+                var offset = HudMain.GetPixelVector(overlayPos) / HudMain.ResScale;
 
                 if (offset.X < 0f)
                     offset.X += overlay.Size.X * .5f;
@@ -258,8 +257,7 @@ namespace RichHudFramework.Server
                 else
                     offset.Y -= overlay.Size.Y * .5f;
 
-                overlay.Scale = 0.8f * HudMain.ResScale;
-                overlay.Draw(offset, HudMain.PixelToWorld);
+                overlay.Draw(offset, MatrixD.CreateScale(HudMain.ResScale, HudMain.ResScale, 1d) * HudMain.PixelToWorld);
             }
         }
 

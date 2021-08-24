@@ -57,7 +57,7 @@ namespace RichHudFramework
 
                 private RichHudTerminal() : base(false, true)
                 {
-                    settingsMenu = new TerminalWindow(HudMain.Root);
+                    settingsMenu = new TerminalWindow(HudMain.HighDpiRoot);
                     root = settingsMenu.AddModRoot("Rich HUD Master");
                     MyAPIGateway.Utilities.MessageEntered += MessageHandler;
                 }

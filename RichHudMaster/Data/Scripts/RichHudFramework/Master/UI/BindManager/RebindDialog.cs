@@ -39,7 +39,7 @@ namespace RichHudFramework.UI.Server
         private RebindDialog() : base(false, true)
         {
             stopwatch = new Stopwatch();
-            menu = new RebindHud(HudMain.Root) { Visible = false };
+            menu = new RebindHud(HudMain.HighDpiRoot) { Visible = false };
 
             blacklist = new List<int>
             {

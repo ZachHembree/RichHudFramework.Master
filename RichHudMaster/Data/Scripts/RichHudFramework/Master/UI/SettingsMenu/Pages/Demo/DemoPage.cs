@@ -129,7 +129,7 @@ namespace RichHudFramework
                     };
 
                     Padding = new Vector2(40f, 8f);
-                    demoRoot = new HudCollection(HudMain.Root);
+                    demoRoot = new HudCollection(HudMain.HighDpiRoot);
                 }
 
                 protected override void Layout()

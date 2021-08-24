@@ -152,7 +152,7 @@ namespace RichHudFramework.UI.Server
             private readonly Action DragUpdateAction;
             private Vector2 alignment, _absolutePosition;
 
-            public DragWindow(Action UpdateAction) : base(HudMain.Root)
+            public DragWindow(Action UpdateAction) : base(HudMain.HighDpiRoot)
             {
                 DragUpdateAction = UpdateAction;
                 MinimumSize = new Vector2(100f);

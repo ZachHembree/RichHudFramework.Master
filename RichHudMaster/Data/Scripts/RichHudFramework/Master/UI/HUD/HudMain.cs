@@ -18,30 +18,18 @@ namespace RichHudFramework
             /// <summary>
             /// Root parent for all HUD elements.
             /// </summary>
-            public static HudParentBase Root
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
+            public static HudParentBase Root => instance._root;
 
-                    return instance._root;
-                }
-            }
+            /// <summary>
+            /// Root node for high DPI scaling at > 1080p. Draw matrix automatically rescales to comensate
+            /// for decrease in apparent size due to high DPI displays.
+            /// </summary>
+            public static HudParentBase HighDpiRoot => instance._highDpiRoot;
 
             /// <summary>
             /// Cursor shared between mods.
             /// </summary>
-            public static ICursor Cursor
-            {
-                get
-                {
-                    if (instance == null)
-                        Init();
-
-                    return instance._cursor;
-                }
-            }
+            public static ICursor Cursor => instance._cursor;
 
             /// <summary>
             /// Shared clipboard.
@@ -134,6 +122,7 @@ namespace RichHudFramework
 
             private readonly HudCursor _cursor;
             private readonly HudRoot _root;
+            private readonly ScaledSpaceNode _highDpiRoot;
 
             private RichText _clipBoard;
 
@@ -156,6 +145,7 @@ namespace RichHudFramework
                     throw new Exception("Only one instance of HudMain can exist at any given time.");
 
                 _root = new HudRoot();
+                _highDpiRoot = new ScaledSpaceNode(_root) { UpdateScaleFunc = () => ResScale };
                 _cursor = new HudCursor(_root);
 
                 UpdateScreenScaling();
