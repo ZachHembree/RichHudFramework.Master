@@ -370,7 +370,7 @@ namespace RichHudFramework.UI
 
                 // Left align the tab
                 Vector2 tabPos = cachedPosition,
-                    tabSize = new Vector2(4f * (LocalScale * parentScale), size.Y - cachedPadding.Y);
+                    tabSize = new Vector2(4f, size.Y - cachedPadding.Y);
                 tabPos.X += (-size.X + tabSize.X) * .5f;
                 tabSize *= .5f;
 

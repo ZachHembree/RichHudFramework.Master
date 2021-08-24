@@ -180,8 +180,6 @@ namespace RichHudFramework
                     if (MyAPIGateway.Gui.IsCursorVisible)
                         CloseMenu();
 
-                    LocalScale = HudMain.ResScale;
-
                     base.Layout();
 
                     // Update sizing
@@ -192,7 +190,7 @@ namespace RichHudFramework
                     }
 
                     bodyChain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
-                    modList.Width = 270f * Scale;
+                    modList.Width = 270f;
 
                     // Bound window offset to keep it from being moved off screen
                     Vector2 min = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / -2f, max = -min;

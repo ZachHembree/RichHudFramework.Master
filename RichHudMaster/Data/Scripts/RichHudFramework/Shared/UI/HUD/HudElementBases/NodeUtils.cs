@@ -14,7 +14,7 @@ namespace RichHudFramework
         public abstract partial class HudNodeBase
         {
             /// <summary>
-            /// Collection of utilities used internally to manage bulk element registration/unregistration
+            /// Collection of utilities used internally to manage HUD nodes
             /// </summary>
             protected static class NodeUtils
             {
@@ -61,7 +61,6 @@ namespace RichHudFramework
                             node.Parent = newParent;
                             node.State |= HudElementStates.IsRegistered;
                             node.layerData.parentZOffset = newParent.ZOffset;
-                            node.parentScale = newParent.Scale;
                             node.ParentVisible = newParent.Visible;
                         }
 
@@ -127,7 +126,6 @@ namespace RichHudFramework
                             node.Parent = newParent;
                             node.State |= HudElementStates.IsRegistered;
                             node.layerData.parentZOffset = newParent.ZOffset;
-                            node.parentScale = newParent.Scale;
                             node.ParentVisible = newParent.Visible;
                         }
 

@@ -205,8 +205,6 @@ namespace RichHudFramework
 
                 protected override void Layout()
                 {
-                    LocalScale = HudMain.ResScale;
-
                     // Reverse scaling due to differences between rendering resolution and
                     // desktop resolution when running the game in windowed mode
                     Vector2 desktopSize = MyAPIGateway.Input.GetMouseAreaSize();
@@ -277,7 +275,7 @@ namespace RichHudFramework
                         Vector2 halfScreenSize = new Vector2(ScreenWidth, ScreenHeight) * .5f,
                             halfTooltipSize = toolTip.Size * .5f;
 
-                        Vector2 toolTipPos = ScreenPos + new Vector2(24f, -24f) * LocalScale;
+                        Vector2 toolTipPos = ScreenPos + new Vector2(24f, -24f);
                         toolTipPos.X += halfTooltipSize.X;
                         toolTipPos.Y -= halfTooltipSize.Y;
 

@@ -136,12 +136,6 @@ namespace RichHudFramework
             bool Visible { get; }
 
             /// <summary>
-            /// Scales the size and offset of an element. Any offset or size set at a given
-            /// be increased or decreased with scale. Defaults to 1f.
-            /// </summary>
-            float Scale { get; }
-
-            /// <summary>
             /// Used to change the draw order of the UI element. Lower offsets place the element
             /// further in the background. Higher offsets draw later and on top.
             /// </summary>

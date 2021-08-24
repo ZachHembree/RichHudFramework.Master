@@ -221,7 +221,7 @@ namespace RichHudFramework
                     SliderBar slider = scrollBox.ScrollBar.slide;
                     slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
 
-                    scrollBox.Height = cachedSize.Y - (layout.Height - scrollBox.Height);
+                    scrollBox.Height = _size.Y - (layout.Height - scrollBox.Height);
                 }
 
                 /// <summary>

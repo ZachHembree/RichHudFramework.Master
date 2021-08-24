@@ -207,7 +207,6 @@ namespace RichHudFramework.UI.Server
 
             protected override void Layout()
             {
-                LocalScale = HudMain.ResScale;
                 background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity * .95f);
             }
         }
