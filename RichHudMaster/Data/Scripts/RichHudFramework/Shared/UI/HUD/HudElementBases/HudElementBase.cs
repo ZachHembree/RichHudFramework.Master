@@ -315,7 +315,6 @@ namespace RichHudFramework
                         else
                         {
                             ParentVisible = _parent.Visible;
-                            layerData.parentZOffset = _parent.ZOffset;
                         }
 
                         if (Visible || refresh)

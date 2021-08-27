@@ -48,7 +48,7 @@ namespace RichHudFramework
             /// <summary>
             /// Determines whether the UI element will be drawn in the Back, Mid or Foreground
             /// </summary>
-            public virtual sbyte ZOffset
+            public sbyte ZOffset
             {
                 get { return layerData.zOffset; }
                 set { layerData.zOffset = value; }

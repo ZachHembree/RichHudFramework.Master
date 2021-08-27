@@ -45,15 +45,6 @@ namespace RichHudFramework
             public override bool Visible => (State & nodeVisible) == nodeVisible;
 
             /// <summary>
-            /// Determines whether the UI element will be drawn in the Back, Mid or Foreground
-            /// </summary>
-            public sealed override sbyte ZOffset
-            {
-                get { return (sbyte)(layerData.zOffset + layerData.parentZOffset); }
-                set { layerData.zOffset = (sbyte)(value - layerData.parentZOffset); }
-            }
-
-            /// <summary>
             /// Indicates whether or not the element has been registered to a parent.
             /// </summary>
             public bool Registered => (State & HudElementStates.IsRegistered) > 0;
@@ -99,7 +90,6 @@ namespace RichHudFramework
                         else
                         {
                             ParentVisible = _parent.Visible;
-                            layerData.parentZOffset = _parent.ZOffset;
                         }
 
                         if (Visible || refresh)
@@ -193,7 +183,6 @@ namespace RichHudFramework
                         }
                         else
                         {
-                            layerData.parentZOffset = _parent.ZOffset;
                             ParentVisible = _parent.Visible;
                             State &= ~HudElementStates.WasFastUnregistered;
                         }
@@ -243,7 +232,6 @@ namespace RichHudFramework
                         State |= HudElementStates.WasFastUnregistered;
                     }
 
-                    layerData.parentZOffset = 0;
                     State &= ~HudElementStates.WasParentVisible;
                 }
 
