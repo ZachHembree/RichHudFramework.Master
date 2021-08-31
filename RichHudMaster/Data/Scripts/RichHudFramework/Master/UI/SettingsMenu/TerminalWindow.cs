@@ -68,7 +68,7 @@ namespace RichHudFramework
                         Height = 1f,
                     };
 
-                    modList = new ModList() 
+                    modList = new ModList()
                     {
                         Width = 270f
                     };
@@ -121,7 +121,7 @@ namespace RichHudFramework
                     Size = new Vector2(1044f, 850f);
                     Vector2 normScreenSize = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / HudMain.ResScale;
 
-                    if (normScreenSize.Y < 1080 || HudMain.AspectRatio < (16f/9f))
+                    if (normScreenSize.Y < 1080 || HudMain.AspectRatio < (16f / 9f))
                         Height = MinimumSize.Y;
 
                     Offset = (normScreenSize - Size) * .5f - new Vector2(40f);
@@ -193,7 +193,7 @@ namespace RichHudFramework
                     modList.Width = 270f;
 
                     // Bound window offset to keep it from being moved off screen
-                    Vector2 min = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / -2f, max = -min;
+                    Vector2 min = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / (HudMain.ResScale * -2f), max = -min;
                     Offset = Vector2.Clamp(Offset, min, max);
 
                     // Update color opacity
@@ -344,7 +344,7 @@ namespace RichHudFramework
                         listSize.X -= scrollBox.ScrollBar.Width;
                         listPos.X -= scrollBox.ScrollBar.Width;
 
-                        listInput.ListRange = new Vector2I(scrollBox.Start, scrollBox.End);
+                        listInput.ListRange = scrollBox.ClipRange;
                         listInput.ListPos = listPos;
                         listInput.ListSize = listSize;
 

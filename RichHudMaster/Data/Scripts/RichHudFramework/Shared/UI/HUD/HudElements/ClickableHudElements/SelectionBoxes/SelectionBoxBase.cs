@@ -45,7 +45,7 @@ namespace RichHudFramework.UI
     }
 
     /// <summary>
-    /// Abstract generic list of selectable UI elements of arbitrary size size.
+    /// Abstract generic list of selectable UI elements of arbitrary size.
     /// </summary>
     /// <typeparam name="TContainer">Container element type wrapping the UI element</typeparam>
     /// <typeparam name="TElement">UI element in the list</typeparam>

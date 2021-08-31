@@ -112,6 +112,12 @@ namespace RichHudFramework.UI
         }
 
         /// <summary>
+        /// Range of elements including elements immediately before and after the logical visible
+        /// range to allow for clipping.
+        /// </summary>
+        public Vector2I ClipRange => new Vector2I(_start, _end);
+
+        /// <summary>
         /// Position of the first visible element as it appears in the UI. Does not correspond to actual index.
         /// </summary>
         public int VisStart { get; private set; }
