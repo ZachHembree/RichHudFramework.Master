@@ -273,22 +273,23 @@ namespace RichHudFramework
 
                         /* Position tooltip s.t. its placed below and to the right of the cursor while also bounding
                          the position to keep it from going off screen. */
-                        Vector2 halfScreenSize = new Vector2(ScreenWidth, ScreenHeight) * .5f,
+                        Vector2 halfScreenSize = new Vector2(ScreenWidth, ScreenHeight) * .5f / ResScale,
                             halfTooltipSize = toolTip.Size * .5f;
 
-                        Vector2 toolTipPos = ScreenPos + new Vector2(24f, -24f);
+                        Vector2 screenPos = ScreenPos / ResScale, 
+                            toolTipPos = screenPos + new Vector2(24f, -24f);
                         toolTipPos.X += halfTooltipSize.X;
                         toolTipPos.Y -= halfTooltipSize.Y;
 
                         BoundingBox2 toolBox = new BoundingBox2(toolTipPos - halfTooltipSize, toolTipPos + halfTooltipSize);
                         BoundingBox2 screenBox = new BoundingBox2(-halfScreenSize, halfScreenSize),
-                            offsetBox = new BoundingBox2(ScreenPos - halfScreenSize, ScreenPos + halfScreenSize);
+                            offsetBox = new BoundingBox2(screenPos - halfScreenSize, screenPos + halfScreenSize);
 
                         offsetBox = offsetBox.Intersect(screenBox);
                         toolBox = toolBox.Intersect(offsetBox);
-                        toolTipPos -= ScreenPos;
+                        toolTipPos -= screenPos;
 
-                        Vector2 delta = (toolBox.Center - ScreenPos) - toolTipPos;
+                        Vector2 delta = (toolBox.Center - screenPos) - toolTipPos;
                         toolTip.Offset = toolTipPos + 2f * delta;
                     }
                 }
