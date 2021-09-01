@@ -72,6 +72,11 @@ namespace RichHudFramework.UI.Server
             openButton.MouseInput.LeftClicked += Open;
             window.Confirmed += ConfirmPosition;
         }
+        public override void Update()
+        {
+            if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && openButton.MouseInput.IsMousedOver)
+                HudMain.Cursor.RegisterToolTip(ToolTip);
+        }
 
         private void Open(object sender, EventArgs args)
         {

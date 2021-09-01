@@ -44,6 +44,12 @@ namespace RichHudFramework.UI.Server
             SetElement(subtype);
         }
 
+        public override void Update()
+        {
+            if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && subtype.dropdown.Display.IsMousedOver)
+                HudMain.Cursor.RegisterToolTip(ToolTip);
+        }
+
         protected override object GetOrSetMember(object data, int memberEnum)
         {
             if (memberEnum < 16)

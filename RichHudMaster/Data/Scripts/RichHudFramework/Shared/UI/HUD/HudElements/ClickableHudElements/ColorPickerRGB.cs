@@ -184,6 +184,9 @@ namespace RichHudFramework.UI.Server
 
             Size = new Vector2(318f, 163f);
             valueBuilder = new StringBuilder();
+
+            UseCursor = true;
+            ShareCursor = true;
         }
 
         public ColorPickerRGB() : this(null)
