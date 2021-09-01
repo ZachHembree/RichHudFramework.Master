@@ -132,8 +132,9 @@ namespace RichHudFramework.UI
                 ZOffset = sbyte.MaxValue,
                 Padding = new Vector2(16f),
                 DimAlignment = DimAlignments.Both,
+                CanIgnoreMasking = true
             };
-
+            
             inputInner = new MouseInputElement(resizeInput)
             {
                 DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
