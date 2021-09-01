@@ -185,8 +185,11 @@ namespace RichHudFramework.UI
                 {
                     if (!HudMain.ClipBoard.Equals(default(RichText)))
                     {
+                        Vector2I insertIndex = caret.Index + new Vector2I(0, 1);
+                        insertIndex.X = MathHelper.Clamp(insertIndex.X, 0, TextBoard.Count);
+
                         DeleteSelection();
-                        TextBoard.Insert(HudMain.ClipBoard, caret.Index + new Vector2I(0, 1));
+                        TextBoard.Insert(HudMain.ClipBoard, insertIndex);
                         int length = GetRichTextMinLength(HudMain.ClipBoard);
 
                         if (caret.Index.Y == -1)
