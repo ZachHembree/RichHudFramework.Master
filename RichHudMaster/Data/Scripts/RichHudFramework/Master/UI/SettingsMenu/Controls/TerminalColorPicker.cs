@@ -31,6 +31,8 @@ namespace RichHudFramework.UI.Server
 
         public override void Update()
         {
+            base.Update();
+
             if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && colorPicker.IsMousedOver)
                 HudMain.Cursor.RegisterToolTip(ToolTip);
         }

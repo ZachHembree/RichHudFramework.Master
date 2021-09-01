@@ -29,6 +29,8 @@ namespace RichHudFramework.UI.Server
 
         public override void Update()
         {
+            base.Update();
+
             if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && checkBox.MouseInput.IsMousedOver)
                 HudMain.Cursor.RegisterToolTip(ToolTip);
         }
