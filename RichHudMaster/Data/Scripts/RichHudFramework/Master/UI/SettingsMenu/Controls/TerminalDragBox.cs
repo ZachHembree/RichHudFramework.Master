@@ -182,11 +182,14 @@ namespace RichHudFramework.UI.Server
 
             protected override void Layout()
             {
-                Offset = HudMain.GetPixelVector(_absolutePosition) - Origin - alignment;
+                Offset = HudMain.GetPixelVector(_absolutePosition) / HudMain.ResScale - Origin - alignment;
 
                 base.Layout();
 
-                _absolutePosition = HudMain.GetAbsoluteVector(Position + alignment);
+                _absolutePosition = HudMain.GetAbsoluteVector((Position + alignment) * HudMain.ResScale);
+                _absolutePosition.X = (float)Math.Round(_absolutePosition.X, 4);
+                _absolutePosition.Y = (float)Math.Round(_absolutePosition.Y, 4);
+
                 UpdateAlignment();
             }
 
