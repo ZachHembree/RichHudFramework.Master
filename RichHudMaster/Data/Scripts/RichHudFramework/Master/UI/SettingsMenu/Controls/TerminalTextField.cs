@@ -52,7 +52,7 @@ namespace RichHudFramework.UI.Server
             if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && textElement.textField.IsMousedOver)
                 HudMain.Cursor.RegisterToolTip(ToolTip);
 
-            if (!textElement.FieldOpen)
+            if (!textElement.FieldOpen || !textElement.Visible)
                 base.Update();
         }
 
