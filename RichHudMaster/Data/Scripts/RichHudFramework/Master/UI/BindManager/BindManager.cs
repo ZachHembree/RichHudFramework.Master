@@ -125,7 +125,7 @@ namespace RichHudFramework
                     if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.AllKeys) == SeBlacklistModes.AllKeys)
                         CurrentBlacklistMode |= SeBlacklistModes.AllKeys;
 
-                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.Mouse) == SeBlacklistModes.Mouse)
+                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.Mouse) > 0)
                         CurrentBlacklistMode |= SeBlacklistModes.Mouse;
 
                     if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.CameraRot) > 0)
@@ -154,10 +154,10 @@ namespace RichHudFramework
                     {
                         SetBlacklist(seControlIDs, false); // Disable full blacklist
                         areControlsBlacklisted = false;
-                        areMouseControlsBlacklisted = true;
+                        areMouseControlsBlacklisted = false;
                     }
 
-                    if ((CurrentBlacklistMode & SeBlacklistModes.Mouse) == SeBlacklistModes.AllKeys)
+                    if ((CurrentBlacklistMode & SeBlacklistModes.Mouse) > 0)
                     {
                         areMouseControlsBlacklisted = true;
                         SetBlacklist(seMouseControlIDs, true); // Enable mouse button blacklist
