@@ -110,8 +110,7 @@ namespace RichHudFramework
                     modList.SelectionChanged += HandleSelectionChange;
                     closeButton.MouseInput.LeftClicked += (sender, args) => CloseMenu();
                     SharedBinds.Escape.NewPressed += CloseMenu;
-
-                    MasterBinds.ToggleTerminal.NewPressed += () => { if(MyAPIGateway.Gui.ChatEntryVisible) ToggleMenu(); };
+                    MasterBinds.ToggleTerminalOld.NewPressed += () => { if(MyAPIGateway.Gui.ChatEntryVisible) ToggleMenu(); };
                     MasterBinds.ToggleTerminal.NewPressed += ToggleMenu;
 
                     BodyColor = new Color(37, 46, 53);

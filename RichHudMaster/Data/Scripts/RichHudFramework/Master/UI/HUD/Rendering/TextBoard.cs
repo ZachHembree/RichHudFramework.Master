@@ -280,7 +280,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 origin)
                 {
-                    Vector2 halfSize = _size * .5f;
+                    Vector2 halfSize = _size * .5f * Scale;
                     BoundingBox2 box = new BoundingBox2(origin - halfSize, origin + halfSize);
 
                     Draw(box, CroppedBox.defaultMask, HudMain.PixelToWorldRef);
@@ -292,7 +292,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, MatrixD matrix)
                 {
-                    Vector2 halfSize = _size * .5f;
+                    Vector2 halfSize = _size * .5f * Scale;
                     BoundingBox2 box = new BoundingBox2(offset - halfSize, offset + halfSize);
                     matRef[0] = matrix;
 
@@ -305,7 +305,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, ref MatrixD matrix)
                 {
-                    Vector2 halfSize = _size * .5f;
+                    Vector2 halfSize = _size * .5f * Scale;
                     BoundingBox2 box = new BoundingBox2(offset - halfSize, offset + halfSize);
                     matRef[0] = matrix;
 
