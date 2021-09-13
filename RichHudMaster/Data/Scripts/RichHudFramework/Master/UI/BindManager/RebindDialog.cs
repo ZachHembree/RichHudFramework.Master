@@ -11,16 +11,14 @@ namespace RichHudFramework.UI.Server
     /// </summary>
     public sealed class RebindDialog : RichHudComponentBase
     {
-        private static RebindDialog Instance
-        {
-            get { Init(); return instance; }
-            set { instance = value; }
-        }
-
-        private bool Open 
+        public static bool Open 
         { 
-            get { return menu.Visible; } 
-            set { menu.Visible = value; } 
+            get { return instance.open; } 
+            private set 
+            { 
+                instance.menu.Visible = value;
+                instance.open = value;
+            } 
         }
 
         private static RebindDialog instance;
@@ -36,11 +34,12 @@ namespace RichHudFramework.UI.Server
 
         private Action CallbackFunc;
         private int controlIndex;
+        private bool open;
 
         private RebindDialog() : base(false, true)
         {
             stopwatch = new Stopwatch();
-            menu = new RebindHud(HudMain.Root);
+            menu = new RebindHud(HudMain.HighDpiRoot) { Visible = false };
 
             blacklist = new List<int>
             {
@@ -50,7 +49,7 @@ namespace RichHudFramework.UI.Server
             SharedBinds.Escape.NewPressed += Exit;
         }
 
-        private static void Init()
+        public static void Init()
         {
             if (instance == null)
                 instance = new RebindDialog();
@@ -66,13 +65,16 @@ namespace RichHudFramework.UI.Server
         /// Opens the rebind dialog for the control at the specified position.
         /// </summary>
         public static void UpdateBind(IBind bind, int bindPos, Action CallbackFunc = null) =>
-            Instance.UpdateBindInternal(bind, bindPos, CallbackFunc);
+            instance.UpdateBindInternal(bind, bindPos, CallbackFunc);
 
         /// <summary>
         /// Opens the rebind dialog for the control at the specified position.
         /// </summary>
         private void UpdateBindInternal(IBind bind, int bindPos, Action CallbackFunc = null)
         {
+            BindManager.BlacklistMode = SeBlacklistModes.AllKeys;
+            HudMain.EnableCursor = true;
+
             stopwatch.Restart();
             Open = true;
             newControl = null;
@@ -132,6 +134,8 @@ namespace RichHudFramework.UI.Server
         {
             if (Open)
             {
+                BindManager.BlacklistMode = SeBlacklistModes.None;
+                HudMain.EnableCursor = false;
                 Open = false;
                 CallbackFunc?.Invoke();
                 CallbackFunc = null;
@@ -203,7 +207,6 @@ namespace RichHudFramework.UI.Server
 
             protected override void Layout()
             {
-                LocalScale = HudMain.ResScale;
                 background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity * .95f);
             }
         }

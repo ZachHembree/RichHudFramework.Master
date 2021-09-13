@@ -2,7 +2,10 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Sandbox.ModAPI;
 using VRage;
+using VRage.Game;
+using VRage.Game.ModAPI;
 using VRageMath;
 
 namespace RichHudFramework.Server
@@ -52,7 +55,7 @@ namespace RichHudFramework.Server
 
             stats = new UpdateStats();
 
-            overlayPos = new Vector2(-0.5f, 0.5f);
+            overlayPos = new Vector2(0.5f, 0.5f);
             enableOverlay = false;
             EnableDebug = false;
 
@@ -111,7 +114,7 @@ namespace RichHudFramework.Server
                                                 overlayPos = element.Value;
                                             }
                                         }
-                                    }
+                                    },
                                 }
                             }
                         }
@@ -137,7 +140,7 @@ namespace RichHudFramework.Server
         {
             pageCategory.Enabled = EnableDebug;
 
-            if (EnableDebug && updateTimer.ElapsedMilliseconds > 100)
+            if (EnableDebug && (statsText.Element.Visible || enableOverlay) && updateTimer.ElapsedMilliseconds > 100)
             {
                 IReadOnlyList<RichHudMaster.ModClient> modClients = RichHudMaster.Clients;
                 IReadOnlyList<IFont> fonts = FontManager.Fonts;
@@ -148,8 +151,10 @@ namespace RichHudFramework.Server
                 statsBuilder.Clear();
 
                 var vID = RichHudMaster.versionID;
-                statsBuilder.Append($"Rich HUD Master (v{vID.X}.{vID.Y}.{vID.Z}.{vID.W})\n");
+                statsBuilder.Append($"Rich HUD Master (v {vID.X}.{vID.Y}.{vID.Z}.{vID.W})\n");
                 statsBuilder.Append($"Summary:\n");
+                statsBuilder.Append($"\tSE Input Blacklist: {BindManager.CurrentBlacklistMode}\n");
+                statsBuilder.Append($"\tInput Mode: {HudMain.InputMode}\n");
                 statsBuilder.Append($"\tCursor Visible: {HudMain.Cursor.Visible}\n");
                 statsBuilder.Append($"\tClient Mods: {modClients.Count}\n");
 
@@ -165,99 +170,101 @@ namespace RichHudFramework.Server
                 AddGrid(statsBuilder, new string[,]
                 {
                     { "Name",   "Avg",                          "50th",                     "99th" },
-                    { "Tree",   $"{stats.AvgTreeTime:F2}ms",    $"{stats.Tree50th:F2}ms",   $"{stats.Tree99th:F2}ms" },
                     { "Draw",   $"{stats.AvgDrawTime:F2}ms",    $"{stats.Draw50th:F2}ms",   $"{stats.Draw99th:F2}ms" },
                     { "Input",  $"{stats.AvgInputTime:F2}ms",   $"{stats.Input50th:F2}ms",  $"{stats.Input99th:F2}ms" },
                     { "Total",  $"{stats.AvgTotalTime:F2}ms",   $"{stats.Total50th:F2}ms",  $"{stats.Total99th:F2}ms" },
+                    { "Tree*",  $"{stats.AvgTreeTime:F2}ms",    $"{stats.Tree50th:F2}ms",   $"{stats.Tree99th:F2}ms" },
                 }, 3, 4);
 
                 overlay.SetText(statsBuilder);
-                
-                var cursor = HudMain.Cursor as HudMain.HudCursor;
 
-                statsBuilder.Append($"\n\tCursor:\n");
-                statsBuilder.Append($"\t\tVisible: {cursor.Visible}\n");
-                statsBuilder.Append($"\t\tCaptured: {cursor.IsCaptured}\n");
-
-                if (cursor.IsCaptured)
+                if (statsText.Element.Visible)
                 {
-                    statsBuilder.Append($"\t\tPosition: {cursor.ScreenPos}\n");
+                    var cursor = HudMain.Cursor as HudMain.HudCursor;
 
-                    var modName = cursor.CapturedElement(null, (int)HudElementAccessors.ModName) as string ?? "None";
-                    var type = cursor.CapturedElement(null, (int)HudElementAccessors.GetType) as Type;
-                    var ZOffset = (sbyte)cursor.CapturedElement(null, (int)HudElementAccessors.ZOffset);
-                    var fullZOffset = (ushort)cursor.CapturedElement(null, (int)HudElementAccessors.FullZOffset);
-                    var pos = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Position);
-                    var size = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Size);
+                    statsBuilder.Append($"\n\tCursor:\n");
+                    statsBuilder.Append($"\t\tVisible: {cursor.Visible}\n");
+                    statsBuilder.Append($"\t\tCaptured: {cursor.IsCaptured}\n");
 
-                    statsBuilder.Append($"\t\t\tMod: {modName}\n");
-                    statsBuilder.Append($"\t\t\tType: {type}\n");
-                    statsBuilder.Append($"\t\t\tZOffset: {ZOffset}\n");
-                    statsBuilder.Append($"\t\t\tFullZOffset: {fullZOffset}\n");
-                    statsBuilder.Append($"\t\t\tPosition: {pos}\n");
-                    statsBuilder.Append($"\t\t\tSize: {size}\n");
+                    if (cursor.IsCaptured)
+                    {
+                        statsBuilder.Append($"\t\tPosition: {cursor.ScreenPos}\n");
+
+                        var modName = cursor.CapturedElement(null, (int)HudElementAccessors.ModName) as string ?? "None";
+                        var type = cursor.CapturedElement(null, (int)HudElementAccessors.GetType) as Type;
+                        var ZOffset = (sbyte)cursor.CapturedElement(null, (int)HudElementAccessors.ZOffset);
+                        var fullZOffset = (ushort)cursor.CapturedElement(null, (int)HudElementAccessors.FullZOffset);
+                        var pos = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Position);
+                        var size = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Size);
+
+                        statsBuilder.Append($"\t\t\tMod: {modName}\n");
+                        statsBuilder.Append($"\t\t\tType: {type}\n");
+                        statsBuilder.Append($"\t\t\tZOffset: {ZOffset}\n");
+                        statsBuilder.Append($"\t\t\tFullZOffset: {fullZOffset}\n");
+                        statsBuilder.Append($"\t\t\tPosition: {pos}\n");
+                        statsBuilder.Append($"\t\t\tSize: {size}\n");
+                    }
+
+                    statsBuilder.Append($"\n\tBindManager:\n");
+                    statsBuilder.Append($"\t\tControls Registered: {BindManager.Controls.Count}\n");
+                    statsBuilder.Append($"\t\tClients Registered: {BindManager.Clients.Count}\n\n");
+
+                    statsBuilder.Append($"\tFontManager:\n");
+                    statsBuilder.Append($"\t\tFonts Registered: {fonts.Count}\n\n");
+
+                    foreach (IFont font in fonts)
+                    {
+                        FontStyles supportedStyles = FontStyles.Italic | FontStyles.Underline;
+
+                        if (font.IsStyleDefined(FontStyles.Bold))
+                            supportedStyles |= FontStyles.Bold;
+
+                        statsBuilder.Append($"\t\t{font.Name}\n");
+                        statsBuilder.Append($"\t\t\tAtlas PtSize: {font.PtSize}\n");
+                        statsBuilder.Append($"\t\t\tStyles: Regular, {supportedStyles}\n\n");
+                    }
+
+                    statsBuilder.Append($"Details:\n");
+                    statsBuilder.Append($"\tMaster:\n");
+
+                    GetHudStats(masterHud, statsBuilder);
+                    GetBindStats(masterInput, statsBuilder);
+
+                    foreach (RichHudMaster.ModClient modClient in modClients)
+                    {
+                        statsBuilder.Append($"\n\t{modClient.name}:\n");
+                        GetHudStats(modClient.hudClient, statsBuilder);
+                        GetBindStats(modClient.bindClient, statsBuilder);
+                    }
+
+                    statsText.Text = statsBuilder;
                 }
 
-                statsBuilder.Append($"\n\tBindManager:\n");
-                statsBuilder.Append($"\t\tControls Registered: {BindManager.Controls.Count}\n");
-                statsBuilder.Append($"\t\tClients Registered: {BindManager.Clients.Count}\n\n");
-
-                statsBuilder.Append($"\tFontManager:\n");
-                statsBuilder.Append($"\t\tFonts Registered: {fonts.Count}\n\n");
-
-                foreach (IFont font in fonts)
-                {
-                    FontStyles supportedStyles = FontStyles.Italic | FontStyles.Underline;
-
-                    if (font.IsStyleDefined(FontStyles.Bold))
-                        supportedStyles |= FontStyles.Bold;
-
-                    statsBuilder.Append($"\t\t{font.Name}\n");
-                    statsBuilder.Append($"\t\t\tAtlas PtSize: {font.PtSize}\n");
-                    statsBuilder.Append($"\t\t\tStyles: Regular, {supportedStyles}\n\n");
-                }
-
-                statsBuilder.Append($"Details:\n");
-                statsBuilder.Append($"\tMaster:\n");
-
-                GetHudStats(masterHud, statsBuilder);
-                GetBindStats(masterInput, statsBuilder);
-
-                foreach (RichHudMaster.ModClient modClient in modClients)
-                {
-                    statsBuilder.Append($"\n\t{modClient.name}:\n");
-                    GetHudStats(modClient.hudClient, statsBuilder);
-                    GetBindStats(modClient.bindClient, statsBuilder);
-                }
-
-                statsText.Text = statsBuilder;
                 updateTimer.Restart();
             }
 
             if (EnableDebug && enableOverlay)
             {
-                var screenRes = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight);
-                var offset = HudMain.GetPixelVector(overlayPos);
+                var offset = HudMain.GetPixelVector(overlayPos) / HudMain.ResScale;
 
                 if (offset.X < 0f)
-                    offset.X += overlay.Size.X / 2f;
+                    offset.X += overlay.Size.X * .5f;
                 else
-                    offset.X -= overlay.Size.X / 2f;
+                    offset.X -= overlay.Size.X * .5f;
 
                 if (offset.Y < 0f)
-                    offset.Y += overlay.Size.Y / 2f;
+                    offset.Y += overlay.Size.Y * .5f;
                 else
-                    offset.Y -= overlay.Size.Y / 2f;
+                    offset.Y -= overlay.Size.Y * .5f;
 
-                overlay.Scale = 0.8f * HudMain.ResScale;
-                overlay.Draw(offset, HudMain.PixelToWorld);
+                overlay.Draw(offset, MatrixD.CreateScale(HudMain.ResScale, HudMain.ResScale, 1d) * HudMain.PixelToWorld);
             }
         }
 
         private static void GetHudStats(HudMain.TreeClient client, StringBuilder statsBuilder)
         {
             statsBuilder.Append($"\t\tHudMain:\n");
-            statsBuilder.Append($"\t\t\tEnable Cursor: {client.enableCursor}\n");
+            statsBuilder.Append($"\t\t\tEnable Cursor: {client.EnableCursor}\n");
             statsBuilder.Append($"\t\t\tElements Updating: {client.UpdateAccessors.Count}\n\n");
         }
 
@@ -329,11 +336,11 @@ namespace RichHudFramework.Server
             public double Input99th => inputStats.Pct99th;
 
 
-            public double AvgTotalTime => treeStats.AvgTime + drawStats.AvgTime + inputStats.AvgTime;
+            public double AvgTotalTime => drawStats.AvgTime + inputStats.AvgTime;
 
-            public double Total50th => treeStats.Pct50th + drawStats.Pct50th + inputStats.Pct50th;
+            public double Total50th => drawStats.Pct50th + inputStats.Pct50th;
 
-            public double Total99th => treeStats.Pct99th + drawStats.Pct99th + inputStats.Pct99th;
+            public double Total99th => drawStats.Pct99th + inputStats.Pct99th;
 
             private readonly TickStats drawStats, inputStats, treeStats;
             private readonly List<long> tickBuffer;

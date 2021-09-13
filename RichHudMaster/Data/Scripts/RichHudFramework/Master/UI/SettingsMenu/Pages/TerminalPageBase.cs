@@ -40,6 +40,7 @@ namespace RichHudFramework
             {
                 SetElement(new Label());
                 AssocMember = assocMember;
+                assocMember.IsMasking = true;
 
                 Name = "NewPage";
                 Enabled = true;

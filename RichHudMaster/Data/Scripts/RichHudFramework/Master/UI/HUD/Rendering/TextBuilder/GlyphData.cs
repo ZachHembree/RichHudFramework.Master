@@ -38,12 +38,6 @@ namespace RichHudFramework
                         this.chSize = chSize;
                         this.bbOffset = bbOffset;
                     }
-
-                    public GlyphLocData SetOffset(Vector2 offset) =>
-                        new GlyphLocData(bbSize, chSize, offset);
-
-                    public GlyphLocData Rescale(float scale) =>
-                        new GlyphLocData(bbSize * scale, chSize * scale, bbOffset * scale);
                 }
 
                 protected struct FormattedGlyph

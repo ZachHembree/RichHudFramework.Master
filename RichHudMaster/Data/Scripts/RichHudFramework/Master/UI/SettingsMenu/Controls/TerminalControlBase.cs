@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 using VRage;
+using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
+using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 
 namespace RichHudFramework.UI.Server
 {
@@ -11,7 +13,10 @@ namespace RichHudFramework.UI.Server
         ApiMemberAccessor, // GetOrSetMember
         object // ID
     >;
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
+    using ToolTipMembers = MyTuple<
+        List<RichStringMembers>, // Text
+        Color? // BgColor
+    >;
 
     /// <summary>
     /// Base type for all controls in the Rich Hud Terminal.
@@ -19,7 +24,7 @@ namespace RichHudFramework.UI.Server
     public class TerminalControlBase : ScrollBoxEntry, ITerminalControl
     {
         /// <summary>
-        /// Invoked whenver a change occurs to a control that requires a response, like a change
+        /// Invoked whenever a change occurs to a control that requires a response, like a change
         /// to a value.
         /// </summary>
         public virtual event EventHandler ControlChanged;
@@ -28,6 +33,8 @@ namespace RichHudFramework.UI.Server
         /// The name of the control as it appears in the terminal.
         /// </summary>
         public virtual string Name { get; set; }
+
+        public virtual ToolTip ToolTip { get; set; }
 
         /// <summary>
         /// Unique identifer.
@@ -91,6 +98,15 @@ namespace RichHudFramework.UI.Server
                             return Name;
                         else
                             Name = data as string;
+
+                        break;
+                    }
+                case TerminalControlAccessors.ToolTip:
+                    {
+                        if (data != null)
+                            ToolTip = new ToolTip(data as Func<ToolTipMembers>);
+                        else
+                            ToolTip = null;
 
                         break;
                     }

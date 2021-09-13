@@ -9,6 +9,8 @@ using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
+    using Server;
+    using Internal;
     namespace UI.Server
     {
         using HudUpdateAccessors = MyTuple<
@@ -32,7 +34,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Number of UI elements registered from all clients
                 /// </summary>
-                public static int ElementRegistered => treeManager.updateAccessors.Count;
+                public static int ElementRegistered { get; private set; }
 
                 /// <summary>
                 /// Read-only list of registered tree clients
@@ -63,6 +65,8 @@ namespace RichHudFramework
 
                 public static bool RefreshRequested;
 
+                public bool UpdatingTree { get; private set; }
+
                 private readonly List<HudUpdateAccessors> updateAccessors;
                 private readonly Dictionary<Func<Vector3D>, ushort> distMap;
                 private readonly HashSet<Func<Vector3D>> uniqueOriginFuncs;
@@ -73,6 +77,7 @@ namespace RichHudFramework
                 private List<Action> drawActions, drawActionBuffer;
                 private List<Action<bool>> layoutActions;
                 private float lastResScale;
+                private int sortTick;
 
                 private readonly List<TreeClient> clients;
                 private readonly TreeClient mainClient;
@@ -154,26 +159,21 @@ namespace RichHudFramework
                 public void Draw()
                 {
                     int drawTick = instance.drawTick;
-                    float resScale = instance._resScale;
+                    float resScale = ResScale;
 
-                    treeTimer.Restart();
-                    mainClient.enableCursor = EnableCursor;
-
-                    UpdateAccessorLists(drawTick);
+                    mainClient.EnableCursor = EnableCursor;
                     instance._cursor.Visible = false;
 
                     for (int n = 0; n < clients.Count; n++)
                     {
-                        if (clients[n].enableCursor)
+                        if (clients[n].EnableCursor)
                             instance._cursor.Visible = true;
                     }
 
                     for (int n = 0; n < clients.Count; n++)
                         clients[n].Update(drawTick + (n % treeRefreshRate)); // Spread out client tree updates
 
-                    treeTimer.Stop();
                     treeTimes[drawTick] = treeTimer.ElapsedTicks;
-
                     drawTimer.Restart();
 
                     // Older clients (1.0.3-) node spaces require layout refreshes to function
@@ -194,6 +194,9 @@ namespace RichHudFramework
                         RefreshRequested = false;
 
                     lastResScale = resScale;
+
+                    if (!UpdatingTree)
+                        UpdateAccessorLists();
                 }
 
                 /// <summary>
@@ -216,28 +219,49 @@ namespace RichHudFramework
                 /// <summary>
                 /// Updates tree accessor delegate lists, spreading out updates over 5 ticks
                 /// </summary>
-                private void UpdateAccessorLists(int tick)
+                private void UpdateAccessorLists()
                 {
-                    if (tick % treeRefreshRate == 0)
+                    UpdatingTree = true;
+
+                    instance.EnqueueTask(() => 
                     {
-                        RebuildUpdateLists();
-                    }
-                    else if (tick % treeRefreshRate == 1)
-                    {
-                        UpdateDistMap();
-                    }
-                    else if (tick % treeRefreshRate == 2)
-                    {
-                        UpdateIndexBuffer();
-                    }
-                    else if (tick % treeRefreshRate == 3)
-                    {
-                        ResetUpdateBuffers();
-                    }
-                    else if (tick % treeRefreshRate == 4)
-                    {
-                        BuildSortedUpdateLists();
-                    }
+                        treeTimer.Restart();
+
+                        if (sortTick % 3 == 0)
+                        {
+                            RebuildUpdateLists();
+                            UpdateDistMap();
+                        }
+                        else if (sortTick % 3 == 1)
+                        {
+                            UpdateIndexBuffer();
+                            ResetUpdateBuffers();
+                        }
+                        else if (sortTick % 3 == 2)
+                        {
+                            BuildSortedUpdateLists();
+                        }
+
+                        treeTimer.Stop();
+                        sortTick++;
+
+                        if (sortTick == 3)
+                            sortTick = 0;
+
+                        UpdatingTree = false;
+
+                        if (sortTick == 0)
+                        {
+                            instance.EnqueueAction(() =>
+                            {
+                                ElementRegistered = updateAccessors.Count;
+
+                                MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
+                                MyUtils.Swap(ref inputActionBuffer, ref inputActions);
+                                MyUtils.Swap(ref drawActionBuffer, ref drawActions);
+                            });
+                        }
+                    });
                 }
 
                 /// <summary>
@@ -381,10 +405,6 @@ namespace RichHudFramework
                         inputActionBuffer.TrimExcess();
                         drawActionBuffer.TrimExcess();
                     }
-
-                    MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
-                    MyUtils.Swap(ref inputActionBuffer, ref inputActions);
-                    MyUtils.Swap(ref drawActionBuffer, ref drawActions);
                 }
             }
         }

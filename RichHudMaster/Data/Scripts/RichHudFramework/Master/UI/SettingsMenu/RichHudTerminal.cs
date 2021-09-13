@@ -57,7 +57,7 @@ namespace RichHudFramework
 
                 private RichHudTerminal() : base(false, true)
                 {
-                    settingsMenu = new TerminalWindow(HudMain.Root);
+                    settingsMenu = new TerminalWindow(HudMain.HighDpiRoot);
                     root = settingsMenu.AddModRoot("Rich HUD Master");
                     MyAPIGateway.Utilities.MessageEntered += MessageHandler;
                 }
@@ -126,6 +126,25 @@ namespace RichHudFramework
 
                 public override void Close()
                 {
+                    // Update page controls one more time before closing
+                    foreach (ModControlRoot root in settingsMenu.ModRoots)
+                    {
+                        foreach (TerminalPageBase page in root)
+                        {
+                            if (page is ControlPage)
+                            {
+                                foreach (ControlCategory cat in (page as ControlPage).Categories)
+                                {
+                                    foreach (ControlTile tile in cat)
+                                    {
+                                        foreach (TerminalControlBase control in tile)
+                                            control.Update();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     MyAPIGateway.Utilities.MessageEntered -= MessageHandler;
                     _instance = null;
                 }

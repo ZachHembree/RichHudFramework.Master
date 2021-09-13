@@ -26,16 +26,17 @@ namespace RichHudFramework.Server
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation, 0)]
     public sealed partial class RichHudMaster : ModBase
     {
-        private const long modID = 1965654081, queueID = 1314086443;
-        private const int apiVID = 8, minApiVID = 7;
-        public static readonly Vector4I versionID = new Vector4I(1, 1, 1, 0); // Major, Minor, Rev, Hotfix
+        public const long modID = 1965654081, queueID = 1314086443;
+        public const int apiVID = 9, minApiVID = 7;
+        public static readonly Vector4I versionID = new Vector4I(1, 2, 0, 0); // Major, Minor, Rev, Hotfix
 
         /// <summary>
         /// Read-only list of currently registered clients
         /// </summary>
         public static IReadOnlyList<ModClient> Clients => Instance.clients;
 
-        private static RichHudMaster Instance { get; set; }
+        public static RichHudMaster Instance { get; private set; }
+
         private readonly List<ModClient> clients;
 
         public RichHudMaster() : base(false, true)
@@ -66,6 +67,7 @@ namespace RichHudFramework.Server
         protected override void AfterInit()
         {
             HudMain.Init();
+            RebindDialog.Init();
             RichHudDebug.Init();
             InitSettingsMenu();
 

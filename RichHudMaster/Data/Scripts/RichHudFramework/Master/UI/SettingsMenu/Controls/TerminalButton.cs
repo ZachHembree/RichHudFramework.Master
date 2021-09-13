@@ -38,5 +38,13 @@ namespace RichHudFramework.UI.Server
 
             MouseInput.LeftClicked += (sender, args) => ControlChanged?.Invoke(sender, args);          
         }
+
+        public override void Update()
+        {
+            base.Update();
+
+            if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && button.MouseInput.IsMousedOver)
+                HudMain.Cursor.RegisterToolTip(ToolTip);
+        }
     }
 }

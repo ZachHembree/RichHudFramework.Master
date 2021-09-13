@@ -83,6 +83,14 @@ namespace RichHudFramework.UI.Server
             SetElement(sliderBox);
         }
 
+        public override void Update()
+        {
+            base.Update();
+
+            if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && sliderBox.IsMousedOver)
+                HudMain.Cursor.RegisterToolTip(ToolTip);
+        }
+
         protected override object GetOrSetMember(object data, int memberEnum)
         {
             if (memberEnum < 16)

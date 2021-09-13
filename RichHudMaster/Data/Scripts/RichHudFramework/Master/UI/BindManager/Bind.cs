@@ -166,6 +166,17 @@ namespace RichHudFramework
                         if (combo == null)
                             combo = new IControl[0];
 
+                        for (int i = 0; i < combo.Count; i++)
+                        {
+                            if (combo[i] == null)
+                            {
+                                if (!silent)
+                                    ExceptionHandler.SendChatMessage($"Invalid bind for {group.Name}.{Name}. Control supplied at index {i} does not exist.");
+
+                                return false;
+                            }
+                        }
+
                         if (combo.Count <= maxBindLength && (!strict || combo.Count > 0))
                         {
                             if (!strict || !group.DoesComboConflict(combo, this))

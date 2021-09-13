@@ -72,6 +72,13 @@ namespace RichHudFramework.UI.Server
             openButton.MouseInput.LeftClicked += Open;
             window.Confirmed += ConfirmPosition;
         }
+        public override void Update()
+        {
+            base.Update();
+
+            if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && openButton.MouseInput.IsMousedOver)
+                HudMain.Cursor.RegisterToolTip(ToolTip);
+        }
 
         private void Open(object sender, EventArgs args)
         {
@@ -137,7 +144,7 @@ namespace RichHudFramework.UI.Server
                 get { return _absolutePosition; } 
                 set 
                 {
-                    value = Vector2.Clamp(value, -Vector2.One / 2f, Vector2.One / 2f);
+                    value = Vector2.Clamp(value, -Vector2.One * .5f, Vector2.One * .5f);
                     _absolutePosition = value; 
                 } 
             }
@@ -152,7 +159,7 @@ namespace RichHudFramework.UI.Server
             private readonly Action DragUpdateAction;
             private Vector2 alignment, _absolutePosition;
 
-            public DragWindow(Action UpdateAction) : base(HudMain.Root)
+            public DragWindow(Action UpdateAction) : base(HudMain.HighDpiRoot)
             {
                 DragUpdateAction = UpdateAction;
                 MinimumSize = new Vector2(100f);
@@ -175,12 +182,14 @@ namespace RichHudFramework.UI.Server
 
             protected override void Layout()
             {
-                LocalScale = HudMain.ResScale;
-                Offset = HudMain.GetPixelVector(_absolutePosition) - Origin - alignment;
+                Offset = HudMain.GetPixelVector(_absolutePosition) / HudMain.ResScale - Origin - alignment;
 
                 base.Layout();
 
-                _absolutePosition = HudMain.GetAbsoluteVector(Position + alignment);
+                _absolutePosition = HudMain.GetAbsoluteVector((Position + alignment) * HudMain.ResScale);
+                _absolutePosition.X = (float)Math.Round(_absolutePosition.X, 4);
+                _absolutePosition.Y = (float)Math.Round(_absolutePosition.Y, 4);
+
                 UpdateAlignment();
             }
 
@@ -191,14 +200,14 @@ namespace RichHudFramework.UI.Server
                 if (AlignToEdge)
                 {
                     if (cachedPosition.X > 0f)
-                        alignment.X = Width / 2f;
+                        alignment.X = Width * .5f;
                     else
-                        alignment.X = -Width / 2f;
+                        alignment.X = -Width * .5f;
 
                     if (cachedPosition.Y > 0f)
-                        alignment.Y = Height / 2f;
+                        alignment.Y = Height * .5f;
                     else
-                        alignment.Y = -Height / 2f;
+                        alignment.Y = -Height * .5f;
                 }
             }
 

@@ -50,7 +50,6 @@ namespace RichHudFramework
                 private readonly HudChain bodyChain;
                 private readonly TexturedBox topDivider, middleDivider, bottomDivider;
                 private readonly Button closeButton;
-                private readonly LabelBox warningBox;
                 private TerminalPageBase lastPage;
                 private static readonly Material closeButtonMat = new Material("RichHudCloseButton", new Vector2(32f));
 
@@ -69,7 +68,7 @@ namespace RichHudFramework
                         Height = 1f,
                     };
 
-                    modList = new ModList() 
+                    modList = new ModList()
                     {
                         Width = 270f
                     };
@@ -108,27 +107,11 @@ namespace RichHudFramework
                         Color = new Color(173, 182, 189),
                     };
 
-                    warningBox = new LabelBox(this)
-                    {
-                        Height = 30f,
-                        AutoResize = false,
-                        ParentAlignment = ParentAlignments.Bottom,
-                        DimAlignment = DimAlignments.Width,
-                        TextPadding = new Vector2(30f, 0f),
-                        Color = new Color(126, 39, 44),
-                        Format = new GlyphFormat(Color.White, textSize: .8f),
-                        Text = "Input disabled. Open chat to enable cursor.",
-                    };
-
-                    var warningBorder = new BorderBox(warningBox)
-                    {
-                        DimAlignment = DimAlignments.Both,
-                        Color = new Color(156, 65, 74)
-                    };
-
                     modList.SelectionChanged += HandleSelectionChange;
                     closeButton.MouseInput.LeftClicked += (sender, args) => CloseMenu();
                     SharedBinds.Escape.NewPressed += CloseMenu;
+
+                    MasterBinds.ToggleTerminal.NewPressed += () => { if(MyAPIGateway.Gui.ChatEntryVisible) ToggleMenu(); };
                     MasterBinds.ToggleTerminal.NewPressed += ToggleMenu;
 
                     BodyColor = new Color(37, 46, 53);
@@ -140,10 +123,10 @@ namespace RichHudFramework
                     Size = new Vector2(1044f, 850f);
                     Vector2 normScreenSize = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / HudMain.ResScale;
 
-                    if (normScreenSize.Y < 1080 || HudMain.AspectRatio < (16f/9f))
+                    if (normScreenSize.Y < 1080 || HudMain.AspectRatio < (16f / 9f))
                         Height = MinimumSize.Y;
 
-                    Offset = (normScreenSize - Size) / 2f - new Vector2(40f);
+                    Offset = (normScreenSize - Size) * .5f - new Vector2(40f);
                 }
 
                 /// <summary>
@@ -199,8 +182,6 @@ namespace RichHudFramework
                     if (MyAPIGateway.Gui.IsCursorVisible)
                         CloseMenu();
 
-                    LocalScale = HudMain.ResScale;
-
                     base.Layout();
 
                     // Update sizing
@@ -211,18 +192,15 @@ namespace RichHudFramework
                     }
 
                     bodyChain.Height = Height - header.Height - topDivider.Height - Padding.Y - bottomDivider.Height;
-                    modList.Width = 270f * Scale;
+                    modList.Width = 270f;
 
                     // Bound window offset to keep it from being moved off screen
-                    Vector2 min = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / -2f, max = -min;
+                    Vector2 min = new Vector2(HudMain.ScreenWidth, HudMain.ScreenHeight) / (HudMain.ResScale * -2f), max = -min;
                     Offset = Vector2.Clamp(Offset, min, max);
 
                     // Update color opacity
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
                     header.Color = BodyColor;
-
-                    // Display warning if cursor is disabled
-                    warningBox.Visible = !HudMain.Cursor.Visible;
                 }
 
                 private void HandleSelectionChange()
@@ -368,7 +346,7 @@ namespace RichHudFramework
                         listSize.X -= scrollBox.ScrollBar.Width;
                         listPos.X -= scrollBox.ScrollBar.Width;
 
-                        listInput.ListRange = new Vector2I(scrollBox.Start, scrollBox.End);
+                        listInput.ListRange = scrollBox.ClipRange;
                         listInput.ListPos = listPos;
                         listInput.ListSize = listSize;
 

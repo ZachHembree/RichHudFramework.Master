@@ -1,8 +1,12 @@
 using RichHudFramework.Internal;
+using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using VRage.Input;
+using VRage.Utils;
+using VRageMath;
+using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
 
 namespace RichHudFramework
 {
@@ -33,6 +37,33 @@ namespace RichHudFramework
             /// </summary>
             public static Client MainClient => Instance.mainClient;
 
+            /// <summary>
+            /// Specifies blacklist mode for SE controls
+            /// </summary>
+            public static SeBlacklistModes BlacklistMode
+            {
+                get { if (_instance == null) Init(); return _instance.mainClient.RequestBlacklistMode; }
+                set
+                {
+                    if (_instance == null)
+                        Init();
+
+                    _instance.mainClient.RequestBlacklistMode = value;
+                }
+            }
+
+            public static SeBlacklistModes CurrentBlacklistMode { get; private set; }
+
+            /// <summary>
+            /// Read-only list of all controls bound to a key
+            /// </summary>
+            public static IReadOnlyList<string> SeControlIDs { get { if (_instance == null) Init(); return _instance.seControlIDs; } }
+
+            /// <summary>
+            /// Read-only list of all controls bound to a mouse key
+            /// </summary>
+            public static IReadOnlyList<string> SeMouseControlIDs { get { if (_instance == null) Init(); return _instance.seMouseControlIDs; } }
+
             private static BindManager Instance
             {
                 get { Init(); return _instance; }
@@ -41,11 +72,13 @@ namespace RichHudFramework
             private static BindManager _instance;
 
             private readonly Control[] controls;
+            private readonly string[] seControlIDs, seMouseControlIDs;
             private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
             private readonly HashSet<MyKeys> controlBlacklist;
             private readonly List<Client> bindClients;
 
             private Client mainClient;
+            private bool areControlsBlacklisted, areMouseControlsBlacklisted;
 
             private BindManager() : base(false, true)
             {
@@ -65,7 +98,10 @@ namespace RichHudFramework
                 controlDict = new Dictionary<string, IControl>(300);
                 controlDictFriendly = new Dictionary<string, IControl>(300);
 
-                controls = GenerateControls();
+                var keys = Enum.GetValues(typeof(MyKeys)) as MyKeys[];
+                controls = GenerateControls(keys);
+                GetControlStringIDs(keys, out seControlIDs, out seMouseControlIDs);
+
                 bindClients = new List<Client>();
             }
 
@@ -82,14 +118,75 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
+                CurrentBlacklistMode = SeBlacklistModes.None;
+
                 for (int n = 0; n < bindClients.Count; n++)
                 {
-                    bindClients[n].HandleInput();
+                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.AllKeys) == SeBlacklistModes.AllKeys)
+                        CurrentBlacklistMode |= SeBlacklistModes.AllKeys;
+
+                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.Mouse) > 0)
+                        CurrentBlacklistMode |= SeBlacklistModes.Mouse;
+
+                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.CameraRot) > 0)
+                        CurrentBlacklistMode |= SeBlacklistModes.CameraRot;
                 }
+
+                // Block/allow camera rotation due to user input
+                if ((CurrentBlacklistMode & SeBlacklistModes.CameraRot) > 0)
+                {
+                    IMyControllableEntity conEnt = MyAPIGateway.Session.ControlledObject;
+
+                    if (conEnt != null)
+                        conEnt.MoveAndRotate(conEnt.LastMotionIndicator, Vector2.Zero, 0f);
+                }
+
+                // Set control blacklist according to flag configuration
+                if ((CurrentBlacklistMode & SeBlacklistModes.AllKeys) == SeBlacklistModes.AllKeys)
+                {
+                    areControlsBlacklisted = true;
+                    areMouseControlsBlacklisted = true;
+                    SetBlacklist(seControlIDs, true); // Enable full blacklist
+                }
+                else
+                {
+                    if (areControlsBlacklisted)
+                    {
+                        SetBlacklist(seControlIDs, false); // Disable full blacklist
+                        areControlsBlacklisted = false;
+                        areMouseControlsBlacklisted = false;
+                    }
+
+                    if ((CurrentBlacklistMode & SeBlacklistModes.Mouse) > 0)
+                    {
+                        areMouseControlsBlacklisted = true;
+                        SetBlacklist(seMouseControlIDs, true); // Enable mouse button blacklist
+                    }
+                    else if (areMouseControlsBlacklisted)
+                    {
+                        SetBlacklist(seMouseControlIDs, false); // Disable mouse button blacklist
+                        areMouseControlsBlacklisted = false;
+                    }
+                }
+
+                // Update client input
+                if (!RebindDialog.Open)
+                {
+                    for (int n = 0; n < bindClients.Count; n++)
+                        bindClients[n].HandleInput();
+                }
+            }
+
+            private static void SetBlacklist(IReadOnlyList<string> IDs, bool value)
+            {
+                foreach (string control in IDs)
+                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
             }
 
             public override void Close()
             {
+                SetBlacklist(seControlIDs, false);
+                SetBlacklist(seMouseControlIDs, false);
                 bindClients.Clear();
                 mainClient = null;
 
@@ -140,9 +237,8 @@ namespace RichHudFramework
             /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
             /// </summary>
-            private Control[] GenerateControls()
+            private Control[] GenerateControls(MyKeys[] keys)
             {
-                var keys = Enum.GetValues(typeof(MyKeys)) as MyKeys[];
                 Control[] controls = new Control[258];
 
                 for (int n = 0; n < keys.Length; n++)
@@ -179,6 +275,34 @@ namespace RichHudFramework
                 controlDictFriendly.Add("mwdn", controls[257]);
 
                 return controls;
+            }
+
+            private void GetControlStringIDs(MyKeys[] keys, out string[] allControls, out string[] mouseControls)
+            {
+                var mouseButtons = Enum.GetValues(typeof(MyMouseButtonsEnum)) as MyMouseButtonsEnum[];
+                List<string> controlIDs = new List<string>(keys.Length),
+                    mouseControlIDs = new List<string>(mouseButtons.Length);
+
+                foreach (MyKeys key in keys)
+                {
+                    MyStringId? id = MyAPIGateway.Input.GetControl(key)?.GetGameControlEnum();
+                    string stringID = id?.ToString();
+
+                    if (stringID != null && stringID.Length > 0)
+                        controlIDs.Add(stringID);
+                }
+
+                foreach (MyMouseButtonsEnum key in mouseButtons)
+                {
+                    MyStringId? id = MyAPIGateway.Input.GetControl(key)?.GetGameControlEnum();
+                    string stringID = id?.ToString();
+
+                    if (stringID != null && stringID.Length > 0 && stringID != "FORWARD") // WTH is FORWARD in there?
+                        mouseControlIDs.Add(stringID);
+                }
+
+                allControls = controlIDs.ToArray();
+                mouseControls = mouseControlIDs.ToArray();
             }
 
             /// <summary>

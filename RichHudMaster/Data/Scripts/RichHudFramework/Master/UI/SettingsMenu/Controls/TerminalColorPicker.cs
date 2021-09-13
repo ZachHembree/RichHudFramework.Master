@@ -28,5 +28,13 @@ namespace RichHudFramework.UI.Server
             colorPicker = new ColorPickerRGB();
             SetElement(colorPicker);
         }
+
+        public override void Update()
+        {
+            base.Update();
+
+            if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && colorPicker.IsMousedOver)
+                HudMain.Cursor.RegisterToolTip(ToolTip);
+        }
     }
 }

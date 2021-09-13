@@ -49,7 +49,10 @@ namespace RichHudFramework.UI.Server
 
         public override void Update()
         {
-            if (!textElement.FieldOpen)
+            if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && textElement.textField.IsMousedOver)
+                HudMain.Cursor.RegisterToolTip(ToolTip);
+
+            if (!textElement.FieldOpen || !textElement.Visible)
                 base.Update();
         }
 
@@ -111,8 +114,8 @@ namespace RichHudFramework.UI.Server
 
             public bool FieldOpen { get { return textField.InputOpen; } }
 
-            private readonly Label name;
-            private readonly TextField textField;
+            public readonly Label name;
+            public readonly TextField textField;
 
             public NamedTextField(HudParentBase parent = null) : base(parent)
             {

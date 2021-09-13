@@ -20,7 +20,7 @@ namespace RichHudFramework
                 public readonly float advanceWidth, leftSideBearing;
 
                 private readonly MaterialFrame matFrame;
-                private readonly FlatQuad matAlignment;
+                private readonly BoundingBox2 texCoords;
 
                 public Glyph(Material atlas, Vector2 size, Vector2 origin, float aw, float lsb)
                 {
@@ -34,19 +34,19 @@ namespace RichHudFramework
                     };
 
                     Vector2 bbSize = matFrame.Material.size;
-                    matAlignment = matFrame.GetMaterialAlignment(bbSize.X / bbSize.Y);
+                    texCoords = matFrame.GetMaterialAlignment(bbSize.X / bbSize.Y);
                     MatFrame = matFrame;
                 }
 
-                public QuadBoard GetQuadBoard(GlyphFormat format)
+                public QuadBoard GetQuadBoard(GlyphFormat format, Vector4 bbColor)
                 {
                     return new QuadBoard
-                    (
-                        matFrame.Material.TextureID,
-                        matAlignment,
-                        format.Data.Item4,
-                        ((FontStyles)format.Data.Item3.Y & FontStyles.Italic) > 0 ? .4f : 0f
-                    );
+                    {
+                        textureID = matFrame.Material.TextureID,
+                        texCoords = texCoords,
+                        bbColor = bbColor,
+                        skewRatio = ((FontStyles)format.Data.Item3.Y & FontStyles.Italic) > 0 ? .4f : 0f
+                    };
                 }
             }
         }

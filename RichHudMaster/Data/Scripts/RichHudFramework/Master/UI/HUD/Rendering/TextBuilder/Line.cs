@@ -128,12 +128,14 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormatting(int start, int end, GlyphFormat format, bool onlyChangeColor)
                     {
+                        Vector4 bbColor = QuadBoard.GetQuadBoardColor(format.Data.Item4);
+
                         for (int n = start; n <= end; n++)
                         {
                             if (onlyChangeColor)
                             {
                                 var quadBoard = glyphBoards[n];
-                                quadBoard.bbColor = QuadBoard.GetQuadBoardColor(format.Color);
+                                quadBoard.bbColor = bbColor;
 
                                 glyphBoards[n] = quadBoard;
                                 formattedGlyphs[n] = new FormattedGlyph(formattedGlyphs[n].glyph, format);
@@ -147,7 +149,7 @@ namespace RichHudFramework
 
                                 formattedGlyphs[n] = new FormattedGlyph(glyph, format);
                                 locData[n] = new GlyphLocData(glyph.MatFrame.Material.size * scale, glyphSize);
-                                glyphBoards[n] = glyph.GetQuadBoard(format);
+                                glyphBoards[n] = glyph.GetQuadBoard(format, bbColor);
                             }
                         }
                     }
@@ -216,8 +218,8 @@ namespace RichHudFramework
                     /// <summary>
                     /// Adds a new character to the end of the line with the given format
                     /// </summary>
-                    public void AddNew(char ch, GlyphFormat format) =>
-                        InsertNew(chars.Count, ch, format);
+                    public void AddNew(char ch, GlyphFormat format, Vector4 color) =>
+                        InsertNew(chars.Count, ch, format, color);
 
                     /// <summary>
                     /// Adds the characters in the line given to the end of this line.
@@ -228,7 +230,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Inserts a new character at the index specified with the given format
                     /// </summary>
-                    public void InsertNew(int index, char ch, GlyphFormat format)
+                    public void InsertNew(int index, char ch, GlyphFormat format, Vector4 color)
                     {
                         IFontStyle fontStyle = FontManager.GetFontStyle(format.StyleIndex);
                         float scale = format.Data.Item2 * fontStyle.FontScale;
@@ -238,7 +240,7 @@ namespace RichHudFramework
                         chars.Insert(index, ch);
                         formattedGlyphs.Insert(index, new FormattedGlyph(glyph, format));
                         locData.Insert(index, new GlyphLocData(glyph.MatFrame.Material.size * scale, glyphSize));
-                        glyphBoards.Insert(index, glyph.GetQuadBoard(format));
+                        glyphBoards.Insert(index, glyph.GetQuadBoard(format, color));
 
                         TrimExcess();
                     }

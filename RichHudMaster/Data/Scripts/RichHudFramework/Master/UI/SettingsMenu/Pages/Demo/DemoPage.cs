@@ -129,19 +129,19 @@ namespace RichHudFramework
                     };
 
                     Padding = new Vector2(40f, 8f);
-                    demoRoot = new HudCollection(HudMain.Root);
+                    demoRoot = new HudCollection(HudMain.HighDpiRoot);
                 }
 
                 protected override void Layout()
                 {
                     // Adjust height of the top row to make room for the bottom row
                     Vector2 size = cachedSize - cachedPadding;
-                    float colWidth = (size.X - spawnControls.Padding.X - spawnControls.Spacing) / 2f,
+                    float colWidth = (size.X - spawnControls.Padding.X - spawnControls.Spacing) * .5f,
                         listHeight = (size.Y - spawnControls.Padding.Y - createButton.Height - typeColumn.Spacing - transformControls.Height);
 
                     typeColumn.Width = colWidth;
                     instanceColumn.Width = colWidth;
-                    instanceButtonRow.MemberMaxSize = new Vector2((colWidth - instanceButtonRow.Spacing) / 2f, removeButton.Height);
+                    instanceButtonRow.MemberMaxSize = new Vector2((colWidth - instanceButtonRow.Spacing) * .5f, removeButton.Height);
 
                     typeList.Height = listHeight;
                     instanceList.Height = listHeight;

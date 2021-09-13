@@ -23,6 +23,8 @@ namespace RichHudFramework
 
                     public int Capacity => lines.Capacity;
 
+                    public IReadOnlyList<Line> PooledLines => lines;
+
                     private readonly List<Line> lines;
                     private readonly TextBuilder builder;
 

@@ -27,13 +27,21 @@ namespace RichHudFramework
 
         namespace Rendering.Server
         {
-            using TextBoardMembers = MyTuple<
+            using TextBoardMembers8 = MyTuple<
                 TextBuilderMembers,
                 FloatProp, // Scale
                 Func<Vector2>, // Size
                 Func<Vector2>, // TextSize
                 Vec2Prop, // FixedSize
                 Action<Vector2, MatrixD> // Draw 
+            >;
+            using TextBoardMembers = MyTuple<
+                TextBuilderMembers,
+                FloatProp, // Scale
+                Func<Vector2>, // Size
+                Func<Vector2>, // TextSize
+                Vec2Prop, // FixedSize
+                Action<BoundingBox2, BoundingBox2, MatrixD[]> // Draw 
             >;
 
             public class TextBoard : TextBuilder, ITextBoard
@@ -117,6 +125,7 @@ namespace RichHudFramework
 
                 private readonly Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
+                private readonly MatrixD[] matRef;
 
                 public TextBoard()
                 {
@@ -128,6 +137,7 @@ namespace RichHudFramework
                     Format = GlyphFormat.White;
                     _fixedSize = new Vector2(100f);
 
+                    matRef = new MatrixD[1];
                     underlines = new List<UnderlineBoard>();
                     eventTimer = new Stopwatch();
                     eventTimer.Start();
@@ -171,13 +181,13 @@ namespace RichHudFramework
                     if (index > endLine) // Scroll down
                     {
                         _textOffset.Y = -line._verticalOffset;
-                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y / 2f : _fixedSize.Y / 2f;
+                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y * .5f : _fixedSize.Y * .5f;
                         _textOffset.Y -= (_fixedSize.Y - line.UnscaledSize.Y);
                     }
                     else if (index < startLine) // Scroll up
                     {
                         _textOffset.Y = -line._verticalOffset;
-                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y / 2f : _fixedSize.Y / 2f;
+                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y * .5f : _fixedSize.Y * .5f;
                     }
                 }
 
@@ -196,7 +206,7 @@ namespace RichHudFramework
                         {
                             GlyphLocData locData = line.LocData[index.Y];
 
-                            float minOffset = -locData.bbOffset.X + locData.chSize.X / 2f - _fixedSize.X / 2f,
+                            float minOffset = -locData.bbOffset.X + locData.chSize.X * .5f - _fixedSize.X * .5f,
                                 maxOffset = minOffset - locData.chSize.X + _fixedSize.X;
 
                             offset = MathHelper.Clamp(offset, minOffset, maxOffset);
@@ -215,7 +225,7 @@ namespace RichHudFramework
                 {
                     int line = 0, ch = 0;
                     charOffset /= Scale;
-                    charOffset = Vector2.Clamp(charOffset, -_size / 2f, _size / 2f);
+                    charOffset = Vector2.Clamp(charOffset, -_size * .5f, _size * .5f);
                     charOffset -= _textOffset;
 
                     if (lines.Count > 0)
@@ -270,8 +280,10 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 origin)
                 {
-                    MatrixD pixelToWorld = HudMain.PixelToWorld;
-                    Draw(origin, ref pixelToWorld);
+                    Vector2 halfSize = _size * .5f;
+                    BoundingBox2 box = new BoundingBox2(origin - halfSize, origin + halfSize);
+
+                    Draw(box, CroppedBox.defaultMask, HudMain.PixelToWorldRef);
                 }
 
                 /// <summary>
@@ -280,7 +292,11 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, MatrixD matrix)
                 {
-                    Draw(offset, ref matrix);
+                    Vector2 halfSize = _size * .5f;
+                    BoundingBox2 box = new BoundingBox2(offset - halfSize, offset + halfSize);
+                    matRef[0] = matrix;
+
+                    Draw(box, CroppedBox.defaultMask, matRef);
                 }
 
                 /// <summary>
@@ -289,66 +305,94 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(Vector2 offset, ref MatrixD matrix)
                 {
-                    if (offsetsAreStale)
-                        UpdateOffsets();
-                    else if (lineRangeIsStale || (endLine == -1 && lines.Count > 0))
-                        UpdateLineRange();
+                    Vector2 halfSize = _size * .5f;
+                    BoundingBox2 box = new BoundingBox2(offset - halfSize, offset + halfSize);
+                    matRef[0] = matrix;
 
-                    if (AutoResize)
-                        _textOffset = Vector2.Zero;
+                    Draw(box, CroppedBox.defaultMask, matRef);
+                }
 
-                    if (updateEvent && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
+                /// <summary>
+                /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
+                /// direction.
+                /// </summary>
+                public void Draw(BoundingBox2 box, BoundingBox2 mask, ref MatrixD matrix)
+                {
+                    matRef[0] = matrix;
+                    Draw(box, mask, matRef);
+                }
+
+                /// <summary>
+                /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
+                /// direction.
+                /// </summary>
+                public void Draw(BoundingBox2 box, BoundingBox2 mask, MatrixD[] matrix)
+                {
+                    ContainmentType containment;
+                    mask.Contains(ref box, out containment);
+
+                    if (containment != ContainmentType.Disjoint)
                     {
-                        TextChanged?.Invoke();
-                        eventTimer.Restart();
-                        updateEvent = false;
-                    }
+                        if (offsetsAreStale)
+                            UpdateOffsets();
+                        else if (lineRangeIsStale || (endLine == -1 && lines.Count > 0))
+                            UpdateLineRange();
 
-                    Vector2 glyphOffset = offset + _textOffset * Scale;
+                        if (AutoResize)
+                            _textOffset = Vector2.Zero;
 
-                    float min = -_size.X / 2f - 2f, max = -min;
-
-                    // Draw glyphs
-                    for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
-                    {
-                        Line line = lines[ln];
-
-                        for (int ch = 0; ch < line.Count; ch++)
+                        if (updateEvent && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
                         {
-                            GlyphLocData locData = line.LocData[ch];
-                            QuadBoard glyphBoard = line.GlyphBoards[ch];
+                            TextChanged?.Invoke();
+                            eventTimer.Restart();
+                            updateEvent = false;
+                        }
 
-                            float
-                                xPos = locData.bbOffset.X + _textOffset.X,
-                                edge = locData.chSize.X / 2f;
+                        BoundingBox2 textMask = box.Intersect(mask);
+                        Vector2 offset = box.Center + _textOffset * Scale;
 
-                            if ((xPos - edge) >= min && (xPos + edge) <= max)
+                        IReadOnlyList<Line> lineList = lines.PooledLines;
+                        CroppedBox bb = default(CroppedBox);
+                        bb.mask = textMask;
+
+                        // Draw glyphs
+                        for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
+                        {
+                            Line line = lineList[ln];
+
+                            for (int ch = 0; ch < line.Count; ch++)
                             {
-                                Vector2 glyphPos = glyphOffset + locData.bbOffset * Scale;
+                                GlyphLocData locData = line.LocData[ch];
+                                Vector2 halfSize = locData.bbSize * Scale * .5f,
+                                    pos = offset + locData.bbOffset * Scale;
 
-                                glyphBoard.Draw((locData.bbSize * Scale), glyphPos, ref matrix);
+                                bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                                bb.mask.Value.Contains(ref bb.bounds, out containment);
+
+                                if (containment == ContainmentType.Contains)
+                                    line.GlyphBoards[ch].Draw(ref bb, ref matrix[0]);
+                                else if (containment != ContainmentType.Disjoint)
+                                    line.GlyphBoards[ch].DrawCroppedTex(ref bb, ref matrix[0]);
                             }
                         }
-                    }
 
-                    QuadBoard underlineBoard = QuadBoard.Default;
+                        QuadBoard underlineBoard = QuadBoard.Default;
 
-                    // Draw underlines
-                    for (int n = 0; n < underlines.Count; n++)
-                    {
-                        Vector2 bbPos = _textOffset + underlines[n].offset;
-                        Vector2 bbSize = underlines[n].size;
+                        // Draw underlines
+                        for (int n = 0; n < underlines.Count; n++)
+                        {
+                            Vector2 halfSize = underlines[n].size * Scale * .5f,
+                                pos = offset + underlines[n].offset * Scale;
 
-                        // Calculate the position of the left and rightmost bounds of the box
-                        float leftBound = Math.Max(bbPos.X - bbSize.X / 2f, min),
-                            rightBound = Math.Min(bbPos.X + bbSize.X / 2f, max);
+                            bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                            bb.mask.Value.Contains(ref bb.bounds, out containment);
+                            underlineBoard.bbColor = underlines[n].color;
 
-                        // Adjust size and offset to simulate clipping
-                        bbSize.X = Math.Max(0, rightBound - leftBound);
-                        bbPos.X = (rightBound + leftBound) / 2f;
-
-                        underlineBoard.bbColor = underlines[n].color;
-                        underlineBoard.Draw(bbSize * Scale, offset + bbPos * Scale, ref matrix);
+                            if (containment == ContainmentType.Contains)
+                                underlineBoard.Draw(ref bb, ref matrix[0]);
+                            else if (containment != ContainmentType.Disjoint)
+                                underlineBoard.DrawCropped(ref bb, ref matrix[0]);
+                        }
                     }
                 }
 
@@ -455,7 +499,7 @@ namespace RichHudFramework
                         if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
                             tSize.Y -= lastLine.UnscaledSize.Y;
 
-                        float vAlign = (VertCenterText || AutoResize) ? tSize.Y / 2f : _fixedSize.Y / 2f;
+                        float vAlign = ((VertCenterText || AutoResize) ? tSize.Y : _fixedSize.Y) * .5f;
 
                         for (int line = 0; line < lines.Count; line++)
                             lines[line]._verticalOffset += vAlign;
@@ -474,20 +518,22 @@ namespace RichHudFramework
                         float height = _textOffset.Y;
 
                         if (VertCenterText)
-                            height += MathHelper.Max(0f, _textSize.Y - _size.Y) / 2f;
+                            height += MathHelper.Max(0f, _textSize.Y - _size.Y) * .5f;
 
                         int start = 0, end = -1;
 
                         for (int line = 0; line < lines.Count; line++)
                         {
-                            if (height <= 2f)
+                            float lineHeight = lines[line].UnscaledSize.Y;
+
+                            if (height <= lineHeight)
                             {
                                 if (end == -1)
                                 {
                                     start = line;
                                     end = line;
                                 }
-                                else if (height > (-_fixedSize.Y + lines[line].UnscaledSize.Y - 2f))
+                                else if (height > -_fixedSize.Y)
                                 {
                                     end = line;
                                 }
@@ -495,7 +541,7 @@ namespace RichHudFramework
                                     break;
                             }
 
-                            height -= lines[line].UnscaledSize.Y;
+                            height -= lineHeight;
                         }
 
                         return new Vector2I(start, end);
@@ -530,11 +576,11 @@ namespace RichHudFramework
                     TextAlignment alignment = line[ch].Format.Alignment;
 
                     if (alignment == TextAlignment.Left)
-                        offset = -_size.X / 2f;
+                        offset = -_size.X * .5f;
                     else if (alignment == TextAlignment.Center)
-                        offset = (MathHelper.Max(0f, _textSize.X - _size.X) - line.UnscaledSize.X) / 2f;
+                        offset = (MathHelper.Max(0f, _textSize.X - _size.X) - line.UnscaledSize.X) * .5f;
                     else if (alignment == TextAlignment.Right)
-                        offset = MathHelper.Max(_size.X, _textSize.X) - (_size.X / 2f) - line.UnscaledSize.X;
+                        offset = MathHelper.Max(_size.X, _textSize.X) - (_size.X * .5f) - line.UnscaledSize.X;
 
                     return offset;
                 }
@@ -553,7 +599,7 @@ namespace RichHudFramework
                             GlyphFormat format = lines[line].FormattedGlyphs[ch].format;
                             IFontStyle fontStyle = FontManager.Fonts[format.StyleIndex.X][format.StyleIndex.Y];
 
-                            baseline = (fontStyle.BaseLine - (fontStyle.Height - fontStyle.BaseLine) / 2f) * (format.TextSize * fontStyle.FontScale);
+                            baseline = (fontStyle.BaseLine - (fontStyle.Height - fontStyle.BaseLine) * .5f) * (format.TextSize * fontStyle.FontScale);
                             break;
                         }
                     }
@@ -588,8 +634,8 @@ namespace RichHudFramework
 
                     line.SetOffsetAt(right, new Vector2()
                     {
-                        X = pos.X + locData.bbSize.X / 2f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
-                        Y = pos.Y - (locData.bbSize.Y / 2f) + (fontStyle.BaseLine * formatScale) + cjkOffset
+                        X = pos.X + locData.bbSize.X * .5f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
+                        Y = pos.Y - (locData.bbSize.Y * .5f) + (fontStyle.BaseLine * formatScale) + cjkOffset
                     });
 
                     return pos.X + locData.chSize.X;
@@ -633,13 +679,13 @@ namespace RichHudFramework
                                         GlyphLocData start = line.LocData[startCh], end = line.LocData[ch];
                                         Vector2 pos = new Vector2
                                         (
-                                            (start.bbOffset.X + end.bbOffset.X) / 2f,
-                                            end.bbOffset.Y - (end.chSize.Y / 2f - (1f * formatData.Value.Item2))
+                                            (start.bbOffset.X + end.bbOffset.X) * .5f,
+                                            end.bbOffset.Y - (end.chSize.Y * .5f - (1f * formatData.Value.Item2))
                                         );
 
                                         Vector2 size = new Vector2
                                         (
-                                            (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) / 2f,
+                                            (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) * .5f,
                                             Math.Max((int)formatData.Value.Item2, 1)
                                         );
 
@@ -727,6 +773,22 @@ namespace RichHudFramework
                 public new TextBoardMembers GetApiData()
                 {
                     return new TextBoardMembers()
+                    {
+                        Item1 = base.GetApiData(),
+                        Item2 = new FloatProp(() => Scale, x => Scale = x),
+                        Item3 = () => Size,
+                        Item4 = () => TextSize,
+                        Item5 = new Vec2Prop(() => FixedSize, x => FixedSize = x),
+                        Item6 = Draw
+                    };
+                }
+
+                /// <summary>
+                /// Returns a collection of members needed to access this object via the HUD API as a tuple.
+                /// </summary>
+                public TextBoardMembers8 GetApiData8()
+                {
+                    return new TextBoardMembers8()
                     {
                         Item1 = base.GetApiData(),
                         Item2 = new FloatProp(() => Scale, x => Scale = x),

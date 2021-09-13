@@ -77,7 +77,7 @@ namespace RichHudFramework.Server
                 ReloadAction = data.Item3;
                 apiVersionID = data.Item4;
 
-                hudClient = new HudMain.TreeClient(apiVersionID > 7);
+                hudClient = new HudMain.TreeClient(apiVersionID);
                 bindClient = new BindManager.Client(this);
                 menuData = RichHudTerminal.GetClientData(name);
 
@@ -87,7 +87,7 @@ namespace RichHudFramework.Server
                 ExceptionHandler.WriteToLogAndConsole($"[RHF] Successfully registered {name} with the API.");
 
                 ClientSubtype = ClientSubtypes.Full;
-                VersionString = "1.0.3.0-";
+                VersionString = $"1.0.3.0- ({apiVersionID})";
             }
 
             /// <summary>
@@ -100,7 +100,12 @@ namespace RichHudFramework.Server
                     case ApiModuleTypes.BindManager:
                         return bindClient.GetApiData();
                     case ApiModuleTypes.HudMain:
-                        return hudClient.GetApiData();
+                        {
+                            if (apiVersionID < 9)
+                                return hudClient.GetApiData8();
+                            else
+                                return hudClient.GetApiData();
+                        }
                     case ApiModuleTypes.FontManager:
                         return FontManager.GetApiData();
                     case ApiModuleTypes.SettingsMenu:
@@ -127,7 +132,7 @@ namespace RichHudFramework.Server
                     ClientSubtype = (ClientSubtypes)(GetOrSetMemberFunc(null, (int)ClientDataAccessors.GetSubtype) ?? ClientSubtypes.Full);
 
                     if (VersionID.X > 0)
-                        VersionString = $"{VersionID.X}.{VersionID.Y}.{VersionID.Z}.{VersionID.W}";
+                        VersionString = $"{VersionID.X}.{VersionID.Y}.{VersionID.Z}.{VersionID.W} ({apiVersionID})";
                 }
             }
 
