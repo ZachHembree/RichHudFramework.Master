@@ -26,8 +26,8 @@ namespace RichHudFramework.Server
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation, 0)]
     public sealed partial class RichHudMaster : ModBase
     {
-        private const long modID = 1965654081, queueID = 1314086443;
-        private const int apiVID = 9, minApiVID = 7;
+        public const long modID = 1965654081, queueID = 1314086443;
+        public const int apiVID = 9, minApiVID = 7;
         public static readonly Vector4I versionID = new Vector4I(1, 2, 0, 0); // Major, Minor, Rev, Hotfix
 
         /// <summary>

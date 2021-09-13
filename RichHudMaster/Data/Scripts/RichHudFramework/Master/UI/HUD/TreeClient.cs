@@ -11,6 +11,7 @@ using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRa
 
 namespace RichHudFramework
 {
+    using Server;
     using CursorMembers = MyTuple<
         Func<HudSpaceDelegate, bool>, // IsCapturingSpace
         Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
@@ -92,20 +93,20 @@ namespace RichHudFramework
                     /// <summary>
                     /// If true, then the client is requesting that the cursor be enabled
                     /// </summary>
-                    public bool enableCursor;
+                    public bool EnableCursor { get { return _enableCursor && apiVersion > 8; } set { _enableCursor = value; } }
 
                     /// <summary>
                     /// If true, then the client is requesting that the draw list be rebuilt
                     /// </summary>
-                    public bool refreshDrawList;
+                    public bool RefreshDrawList => _refreshDrawList;
 
-                    private bool refreshRequested;
-                    private readonly bool continuousRefresh;
+                    private bool _refreshDrawList, _enableCursor, refreshRequested;
+                    private readonly int apiVersion;
                     private readonly List<HudUpdateAccessors> updateAccessors;
 
-                    public TreeClient(bool continuousRefresh = true)
+                    public TreeClient(int apiVersion = RichHudMaster.apiVID)
                     {
-                        this.continuousRefresh = continuousRefresh;
+                        this.apiVersion = apiVersion;
 
                         updateAccessors = new List<HudUpdateAccessors>();
                         Registered = TreeManager.RegisterClient(this);
@@ -113,7 +114,7 @@ namespace RichHudFramework
 
                     public void Update(int tick)
                     {
-                        if (refreshDrawList || continuousRefresh)
+                        if (RefreshDrawList || apiVersion > 7)
                             refreshRequested = true;
 
                         if (!treeManager.UpdatingTree && refreshRequested && (tick % treeRefreshRate) == 0)
@@ -125,9 +126,9 @@ namespace RichHudFramework
                                 updateAccessors.TrimExcess();
 
                             refreshRequested = false;
-                            refreshDrawList = false;
+                            _refreshDrawList = false;
 
-                            if (!continuousRefresh)
+                            if (apiVersion <= 7)
                                 TreeManager.RefreshRequested = true;
                         }
                     }
@@ -206,17 +207,17 @@ namespace RichHudFramework
                             case HudMainAccessors.EnableCursor:
                                 {
                                     if (data == null)
-                                        return enableCursor;
+                                        return _enableCursor;
                                     else
-                                        enableCursor = (bool)data;
+                                        _enableCursor = (bool)data;
                                     break;
                                 }
                             case HudMainAccessors.RefreshDrawList:
                                 {
                                     if (data == null)
-                                        return refreshDrawList;
+                                        return RefreshDrawList;
                                     else
-                                        refreshDrawList = (bool)data;
+                                        _refreshDrawList = (bool)data;
                                     break;
                                 }
                             case HudMainAccessors.GetUpdateAccessors:
@@ -226,7 +227,7 @@ namespace RichHudFramework
                                     else
                                     {
                                         GetUpdateAccessors = data as Action<List<HudUpdateAccessors>, byte>;
-                                        refreshDrawList = true;
+                                        _refreshDrawList = true;
                                     }
                                     break;
                                 }

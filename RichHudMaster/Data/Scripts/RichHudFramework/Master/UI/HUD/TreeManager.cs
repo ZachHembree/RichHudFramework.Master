@@ -9,6 +9,7 @@ using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
+    using Server;
     using Internal;
     namespace UI.Server
     {
@@ -160,12 +161,12 @@ namespace RichHudFramework
                     int drawTick = instance.drawTick;
                     float resScale = ResScale;
 
-                    mainClient.enableCursor = EnableCursor;
+                    mainClient.EnableCursor = EnableCursor;
                     instance._cursor.Visible = false;
 
                     for (int n = 0; n < clients.Count; n++)
                     {
-                        if (clients[n].enableCursor)
+                        if (clients[n].EnableCursor)
                             instance._cursor.Visible = true;
                     }
 

@@ -264,7 +264,7 @@ namespace RichHudFramework.Server
         private static void GetHudStats(HudMain.TreeClient client, StringBuilder statsBuilder)
         {
             statsBuilder.Append($"\t\tHudMain:\n");
-            statsBuilder.Append($"\t\t\tEnable Cursor: {client.enableCursor}\n");
+            statsBuilder.Append($"\t\t\tEnable Cursor: {client.EnableCursor}\n");
             statsBuilder.Append($"\t\t\tElements Updating: {client.UpdateAccessors.Count}\n\n");
         }
 

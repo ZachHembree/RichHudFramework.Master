@@ -77,7 +77,7 @@ namespace RichHudFramework.Server
                 ReloadAction = data.Item3;
                 apiVersionID = data.Item4;
 
-                hudClient = new HudMain.TreeClient(apiVersionID > 7);
+                hudClient = new HudMain.TreeClient(apiVersionID);
                 bindClient = new BindManager.Client(this);
                 menuData = RichHudTerminal.GetClientData(name);
 
