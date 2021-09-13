@@ -14,16 +14,19 @@ namespace RichHudFramework.Server
             set { Instance.bindGroup.TryLoadBindData(value.bindData); }
         }
 
-        public static IBind ToggleTerminal { get { return BindGroup[0]; } }
+        public static IBind ToggleTerminalOld { get { Init(); return _instance.bindGroup[0]; } }
+
+        public static IBind ToggleTerminal { get { Init(); return _instance.bindGroup[1]; } }
+
         public static IBindGroup BindGroup { get { return Instance.bindGroup; } }
 
         private static MasterBinds Instance
         {
-            get { Init(); return instance; }
-            set { instance = value; }
+            get { Init(); return _instance; }
+            set { _instance = value; }
         }
-        private static MasterBinds instance;
-        private static readonly string[] bindNames = new string[] { "ToggleTerminal" };
+        private static MasterBinds _instance;
+        private static readonly string[] bindNames = new string[] { "ToggleTerminalOld", "ToggleTerminal" };
 
         private readonly IBindGroup bindGroup;
 
@@ -35,13 +38,13 @@ namespace RichHudFramework.Server
 
         private static void Init()
         {
-            if (instance == null)
+            if (_instance == null)
             {
-                instance = new MasterBinds();
+                _instance = new MasterBinds();
                 Cfg = MasterConfig.Current.binds;
 
-                MasterConfig.OnConfigSave += instance.UpdateConfig;
-                MasterConfig.OnConfigLoad += instance.UpdateBinds;
+                MasterConfig.OnConfigSave += _instance.UpdateConfig;
+                MasterConfig.OnConfigLoad += _instance.UpdateBinds;
             }
         }
 
