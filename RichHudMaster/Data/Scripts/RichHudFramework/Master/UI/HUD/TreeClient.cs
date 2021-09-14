@@ -1,6 +1,7 @@
 ﻿using RichHudFramework.UI.Rendering.Server;
 using System;
 using System.Collections.Generic;
+using Sandbox.ModAPI;
 using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
@@ -93,7 +94,11 @@ namespace RichHudFramework
                     /// <summary>
                     /// If true, then the client is requesting that the cursor be enabled
                     /// </summary>
-                    public bool EnableCursor { get { return _enableCursor && apiVersion > 8; } set { _enableCursor = value; } }
+                    public bool EnableCursor 
+                    { 
+                        get { return _enableCursor && (apiVersion > 8 || MyAPIGateway.Gui.ChatEntryVisible); } 
+                        set { _enableCursor = value; } 
+                    }
 
                     /// <summary>
                     /// If true, then the client is requesting that the draw list be rebuilt
