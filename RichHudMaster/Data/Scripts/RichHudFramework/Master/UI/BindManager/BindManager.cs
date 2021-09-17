@@ -144,9 +144,12 @@ namespace RichHudFramework
                 // Set control blacklist according to flag configuration
                 if ((CurrentBlacklistMode & SeBlacklistModes.AllKeys) == SeBlacklistModes.AllKeys)
                 {
-                    areControlsBlacklisted = true;
-                    areMouseControlsBlacklisted = true;
-                    SetBlacklist(seControlIDs, true); // Enable full blacklist
+                    if (!areControlsBlacklisted)
+                    {
+                        areControlsBlacklisted = true;
+                        areMouseControlsBlacklisted = true;
+                        SetBlacklist(seControlIDs, true); // Enable full blacklist
+                    }
                 }
                 else
                 {
@@ -159,8 +162,11 @@ namespace RichHudFramework
 
                     if ((CurrentBlacklistMode & SeBlacklistModes.Mouse) > 0)
                     {
-                        areMouseControlsBlacklisted = true;
-                        SetBlacklist(seMouseControlIDs, true); // Enable mouse button blacklist
+                        if (!areMouseControlsBlacklisted)
+                        {
+                            areMouseControlsBlacklisted = true;
+                            SetBlacklist(seMouseControlIDs, true); // Enable mouse button blacklist
+                        }
                     }
                     else if (areMouseControlsBlacklisted)
                     {
@@ -179,19 +185,23 @@ namespace RichHudFramework
 
             private static void SetBlacklist(IReadOnlyList<string> IDs, bool value)
             {
-                foreach (string control in IDs)
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
+                if (MyAPIGateway.Session?.Player != null)
+                {
+                    foreach (string control in IDs)
+                        MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
+                }
             }
 
             public override void Close()
             {
-                SetBlacklist(seControlIDs, false);
-                SetBlacklist(seMouseControlIDs, false);
                 bindClients.Clear();
                 mainClient = null;
 
                 if (ExceptionHandler.Unloading)
                     _instance = null;
+
+                SetBlacklist(seControlIDs, false);
+                SetBlacklist(seMouseControlIDs, false);
             }
 
             /// <summary>

@@ -26,14 +26,16 @@ namespace RichHudFramework.Server
             set { _instance = value; }
         }
         private static MasterBinds _instance;
-        private static readonly string[] bindNames = new string[] { "ToggleTerminalOld", "ToggleTerminal" };
-
         private readonly IBindGroup bindGroup;
 
         private MasterBinds() : base(false, true)
         {
             bindGroup = BindManager.GetOrCreateGroup("Main");
-            bindGroup.RegisterBinds(bindNames);
+            bindGroup.RegisterBinds(new BindGroupInitializer() 
+            {
+                { "ToggleTerminalOld", MyKeys.F1 },
+                { "ToggleTerminal", MyKeys.F2 }
+            });
         }
 
         private static void Init()
