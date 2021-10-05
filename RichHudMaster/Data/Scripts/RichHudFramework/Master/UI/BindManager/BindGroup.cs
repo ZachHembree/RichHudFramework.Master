@@ -88,8 +88,19 @@ namespace RichHudFramework
                             if (bindsPressed > 1)
                                 DisambiguatePresses();
 
+                            int bindControlsPressed = 0;
+
                             foreach (Bind bind in keyBinds)
-                                bind.UpdatePress(bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased);
+                            { 
+                                if (bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased)
+                                    bindControlsPressed += bind.length;
+                            }
+
+                            if (bindControlsPressed >= _instance.pressedKeys.Count)
+                            {
+                                foreach (Bind bind in keyBinds)
+                                    bind.UpdatePress(bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased);
+                            }
                         }
                         else
                         {
