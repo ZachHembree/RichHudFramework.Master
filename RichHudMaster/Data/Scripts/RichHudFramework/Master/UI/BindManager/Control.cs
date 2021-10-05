@@ -28,7 +28,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Returns true if the control is being pressed
                 /// </summary>
-                public bool IsPressed { get { return IsPressedFunc(); } }
+                public bool IsPressed { get; private set; }
 
                 /// <summary>
                 /// Returns true if the control doesn't represent a boolean value. For example, MwUp/Dn
@@ -64,6 +64,11 @@ namespace RichHudFramework
                     Index = index;
                     IsPressedFunc = IsPressed;
                     Analog = analog;
+                }
+
+                public void Update()
+                {
+                    IsPressed = IsPressedFunc();
                 }
             }
         }
