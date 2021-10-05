@@ -75,6 +75,7 @@ namespace RichHudFramework
             private readonly string[] seControlIDs, seMouseControlIDs;
             private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
             private readonly HashSet<MyKeys> controlBlacklist;
+            private readonly List<MyKeys> pressedKeys;
             private readonly List<Client> bindClients;
 
             private Client mainClient;
@@ -102,6 +103,7 @@ namespace RichHudFramework
                 controls = GenerateControls(keys);
                 GetControlStringIDs(keys, out seControlIDs, out seMouseControlIDs);
 
+                pressedKeys = new List<MyKeys>();
                 bindClients = new List<Client>();
             }
 
@@ -118,6 +120,11 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
+                // Get pressed keys
+                pressedKeys.Clear();
+                MyAPIGateway.Input.GetPressedKeys(pressedKeys);
+
+                // Update blacklist
                 CurrentBlacklistMode = SeBlacklistModes.None;
 
                 for (int n = 0; n < bindClients.Count; n++)

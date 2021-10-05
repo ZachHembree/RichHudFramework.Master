@@ -79,22 +79,33 @@ namespace RichHudFramework
                 {
                     if (keyBinds.Count > 0)
                     {
-                        int bindsPressed = GetPressedBinds();
+                        int controlsPressed = GetPressedControls();
 
-                        if (bindsPressed > 1)
-                            DisambiguatePresses();
+                        if (controlsPressed >= _instance.pressedKeys.Count)
+                        {
+                            int bindsPressed = GetPressedBinds();
 
-                        foreach (Bind bind in keyBinds)
-                            bind.UpdatePress(bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased);
+                            if (bindsPressed > 1)
+                                DisambiguatePresses();
+
+                            foreach (Bind bind in keyBinds)
+                                bind.UpdatePress(bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased);
+                        }
+                        else
+                        {
+                            foreach (Bind bind in keyBinds)
+                                bind.UpdatePress(false);
+                        }
                     }
                 }
 
                 /// <summary>
-                /// Finds and counts number of pressed key binds.
+                /// Gets number of controls pressed within the group and updates the hit counter
+                /// for each bind as appropriate.
                 /// </summary>
-                private int GetPressedBinds()
+                private int GetPressedControls()
                 {
-                    int bindsPressed = 0;
+                    int controlsPressed = 0;
 
                     foreach (Bind bind in keyBinds)
                         bind.bindHits = 0;
@@ -105,8 +116,20 @@ namespace RichHudFramework
                         {
                             foreach (Bind bind in controlMap[con.Index])
                                 bind.bindHits++;
+
+                            controlsPressed++;
                         }
                     }
+
+                    return controlsPressed;
+                }
+
+                /// <summary>
+                /// Finds and counts number of pressed key binds.
+                /// </summary>
+                private int GetPressedBinds()
+                {
+                    int bindsPressed = 0;
 
                     // Partial presses on previously pressed binds count as full presses.
                     foreach (Bind bind in keyBinds)
@@ -363,8 +386,8 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                    /// Replaces current bind combos with combos based on the given <see cref="BindDefinition"/>[]. Does not register new binds.
-                    /// </summary>
+                /// Replaces current bind combos with combos based on the given <see cref="BindDefinition"/>[]. Does not register new binds.
+                /// </summary>
                 public bool TryLoadBindData(IReadOnlyList<BindDefinition> bindData)
                 {
                     List<IControl> oldUsedControls;
