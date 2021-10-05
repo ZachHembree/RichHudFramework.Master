@@ -130,7 +130,7 @@ namespace RichHudFramework
                                 combo.Add(con);
                         }
 
-                        combo.Sort((a, b) => a.Index.CompareTo(b.Index));
+                        combo.Sort((a, b) => b.Index.CompareTo(a.Index));
                         return combo;
                     }
 
@@ -144,7 +144,7 @@ namespace RichHudFramework
                                 combo.Add(con.Index);
                         }
 
-                        combo.Sort();
+                        combo.Sort((a, b) => b.CompareTo(a));
                         return combo;
                     }
 
