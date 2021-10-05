@@ -198,7 +198,7 @@ namespace RichHudFramework.UI
                         caret.Move(new Vector2I(0, length));
                     }
                 }
-            } 
+            }
 
             InputOpen = useInput && (EnableHighlighting || EnableEditing);
             caret.Visible = InputOpen;
@@ -354,7 +354,7 @@ namespace RichHudFramework.UI
                     dir.Y = 0;
 
                 bool moveLeft = dir.Y < 0, moveRight = dir.Y > 0,
-                    prepending = Index.Y == -1, 
+                    prepending = Index.Y == -1,
                     startPrepend = moveLeft && Index.Y == 0;
 
                 if (startPrepend || (dir.Y == 0 && prepending))
@@ -444,7 +444,7 @@ namespace RichHudFramework.UI
                 {
                     IRichChar ch;
                     Height = text[Index.X].Size.Y - 2f;
-                    
+
                     if (Index.Y == -1)
                     {
                         ch = text[Index + new Vector2I(0, 1)];
@@ -516,7 +516,7 @@ namespace RichHudFramework.UI
 
                     Index = ClampIndex(newIndex);
                     caretOffset = GetOffsetFromIndex(Index);
-                    lastCursorPos = cursorPos;         
+                    lastCursorPos = cursorPos;
 
                     blink = true;
                     blinkTimer.Restart();
