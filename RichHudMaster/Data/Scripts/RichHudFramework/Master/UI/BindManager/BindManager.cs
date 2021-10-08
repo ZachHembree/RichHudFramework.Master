@@ -2,6 +2,7 @@ using RichHudFramework.Internal;
 using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using VRage.Input;
 using VRage.Utils;
@@ -76,10 +77,12 @@ namespace RichHudFramework
             private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
             private readonly HashSet<MyKeys> controlBlacklist;
             private readonly List<Client> bindClients;
-            private int pressedControlsCount;
 
             private Client mainClient;
             private bool areControlsBlacklisted, areMouseControlsBlacklisted;
+
+            private readonly HashSet<int> candidateSequence;
+            private readonly Stopwatch candidateBindTimer;
 
             private BindManager() : base(false, true)
             {
@@ -104,6 +107,10 @@ namespace RichHudFramework
                 GetControlStringIDs(keys, out seControlIDs, out seMouseControlIDs);
 
                 bindClients = new List<Client>();
+
+                candidateSequence = new HashSet<int>();
+                candidateBindTimer = new Stopwatch();
+                candidateBindTimer.Start();
             }
 
             public static void Init()
@@ -119,21 +126,42 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
-                // Get pressed keys
-                pressedControlsCount = 0;
-                
+                UpdateControls();
+                UpdateBlacklist();
+
+                // Update client input
+                if (!RebindDialog.Open)
+                {
+                    for (int n = 0; n < bindClients.Count; n++)
+                        bindClients[n].HandleInput();
+                }
+            }
+
+            private void UpdateControls()
+            {
+                if (candidateBindTimer.ElapsedMilliseconds > 1000L)
+                    candidateSequence.Clear();
+
+                if (candidateSequence.Count == 0)
+                    candidateBindTimer.Restart();
+
                 foreach (Control control in controls)
                 {
                     if (control != null && control != Control.Default)
                     {
                         control.Update();
 
-                        if (control.IsPressed)
-                            pressedControlsCount++;
+                        if (control.IsNewPressed && !candidateSequence.Contains(control.Index))
+                        {
+                            candidateSequence.Add(control.Index);
+                            candidateBindTimer.Restart();
+                        }
                     }
                 }
+            }
 
-                // Update blacklist
+            private void UpdateBlacklist()
+            {
                 CurrentBlacklistMode = SeBlacklistModes.None;
 
                 for (int n = 0; n < bindClients.Count; n++)
@@ -189,13 +217,6 @@ namespace RichHudFramework
                         SetBlacklist(seMouseControlIDs, false); // Disable mouse button blacklist
                         areMouseControlsBlacklisted = false;
                     }
-                }
-
-                // Update client input
-                if (!RebindDialog.Open)
-                {
-                    for (int n = 0; n < bindClients.Count; n++)
-                        bindClients[n].HandleInput();
                 }
             }
 

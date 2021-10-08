@@ -31,6 +31,16 @@ namespace RichHudFramework
                 public bool IsPressed { get; private set; }
 
                 /// <summary>
+                /// Returns true if the control was just pressed
+                /// </summary>
+                public bool IsNewPressed { get; private set; }
+
+                /// <summary>
+                /// Returns true if the control was just released
+                /// </summary>
+                public bool IsReleased { get; private set; }
+
+                /// <summary>
                 /// Returns true if the control doesn't represent a boolean value. For example, MwUp/Dn
                 /// represent scroll wheel movement, but don't return an exact position/displacement.
                 /// </summary>
@@ -42,6 +52,7 @@ namespace RichHudFramework
                 public int Index { get; }
 
                 private readonly Func<bool> IsPressedFunc;
+                private bool wasPressed;
 
                 public Control(MyKeys seKey, int index, bool analog = false)
                 {
@@ -68,7 +79,9 @@ namespace RichHudFramework
 
                 public void Update()
                 {
+                    wasPressed = IsPressed;
                     IsPressed = IsPressedFunc();
+                    IsNewPressed = IsPressed && (!wasPressed || Analog);
                 }
             }
         }

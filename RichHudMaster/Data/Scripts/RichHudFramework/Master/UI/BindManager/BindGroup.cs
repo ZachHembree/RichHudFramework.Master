@@ -81,7 +81,7 @@ namespace RichHudFramework
                     {
                         int controlsPressed = GetPressedControls();
 
-                        if (controlsPressed >= _instance.pressedControlsCount)
+                        if (controlsPressed >= _instance.candidateSequence.Count)
                         {
                             int bindsPressed = GetPressedBinds();
 
@@ -96,7 +96,7 @@ namespace RichHudFramework
                                     bindControlsPressed += bind.length;
                             }
 
-                            if (bindControlsPressed >= _instance.pressedControlsCount)
+                            if (bindControlsPressed >= _instance.candidateSequence.Count)
                             {
                                 foreach (Bind bind in keyBinds)
                                     bind.UpdatePress(bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased);
