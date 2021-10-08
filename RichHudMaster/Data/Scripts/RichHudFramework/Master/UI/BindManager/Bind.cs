@@ -66,6 +66,10 @@ namespace RichHudFramework
                     /// </summary>
                     public bool IsReleased { get { return !IsPressed && wasPressed; } }
 
+                    /// <summary>
+                    /// Used for for bind input disambiguation. Binds in the process of being released are
+                    /// counted as full presses for one tick, but only for bind disambiguation.
+                    /// </summary>
                     public bool beingReleased;
                     public int length, bindHits;
 
