@@ -239,22 +239,18 @@ namespace RichHudFramework
                     // Update custom hud space and tooltips
                     HudSpaceData? hudSpaceData = GetCapturedHudSpaceFunc?.Invoke();
                     bool useCapturedHudSpace = hudSpaceData != null && hudSpaceData.Value.Item1;
-                    bool boundTooltips = false;
+                    bool boundTooltips = false, useScreenSpace = true;
                     float tooltipScale = 1f;
 
                     if (useCapturedHudSpace)
                     {
                         PlaneToWorldRef[0] = hudSpaceData.Value.Item3;
-
-                        if (PlaneToWorldRef[0].EqualsFast(ref HighDpiRoot.HudSpace.PlaneToWorldRef[0]))
-                        {
-                            tooltipScale = ResScale;
-                            boundTooltips = true;
-                        }
-                        else if (PlaneToWorldRef[0].EqualsFast(ref Root.HudSpace.PlaneToWorldRef[0]))
-                            boundTooltips = true;
+                        useScreenSpace = 
+                            PlaneToWorldRef[0].EqualsFast(ref HighDpiRoot.HudSpace.PlaneToWorldRef[0]) ||
+                            PlaneToWorldRef[0].EqualsFast(ref Root.HudSpace.PlaneToWorldRef[0]);
                     }
-                    else
+                    
+                    if (useScreenSpace)
                     {
                         PlaneToWorldRef[0] = HighDpiRoot.HudSpace.PlaneToWorldRef[0];
                         boundTooltips = true;
