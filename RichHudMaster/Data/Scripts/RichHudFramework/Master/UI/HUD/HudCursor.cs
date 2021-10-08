@@ -5,27 +5,28 @@ using VRage;
 using VRage.Utils;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
+using HudSpaceData = VRage.MyTuple<bool, float, VRageMath.MatrixD>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 
 namespace RichHudFramework
 {
+    using HudSpaceDelegate = Func<HudSpaceData>;
     using ToolTipMembers = MyTuple<
         List<RichStringMembers>, // Text
         Color? // BgColor
-    >;
-    using CursorMembers = MyTuple<
-        Func<HudSpaceDelegate, bool>, // IsCapturingSpace
-        Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
-        Func<ApiMemberAccessor, bool>, // IsCapturing
-        Func<ApiMemberAccessor, bool>, // TryCapture
-        Func<ApiMemberAccessor, bool>, // TryRelease
-        ApiMemberAccessor // GetOrSetMember
     >;
 
     namespace UI.Server
     {
         using Rendering;
+        using CursorMembers = MyTuple<
+            Func<HudSpaceDelegate, bool>, // IsCapturingSpace
+            Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
+            Func<ApiMemberAccessor, bool>, // IsCapturing
+            Func<ApiMemberAccessor, bool>, // TryCapture
+            Func<ApiMemberAccessor, bool>, // TryRelease
+            ApiMemberAccessor // GetOrSetMember
+        >;
 
         public sealed partial class HudMain
         {
@@ -67,6 +68,7 @@ namespace RichHudFramework
 
                 private float captureDepth;
                 private Func<ToolTipMembers> GetToolTipFunc;
+                private HudSpaceDelegate GetCapturedHudSpaceFunc;
                 private readonly TexturedBox cursorBox;
                 private readonly LabelBox toolTip;
 
@@ -119,10 +121,10 @@ namespace RichHudFramework
                 /// </summary>
                 public bool TryCaptureHudSpace(float depthSquared, HudSpaceDelegate GetHudSpaceFunc)
                 {
-                    if (this.GetHudSpaceFunc == null || depthSquared <= captureDepth)
+                    if (GetCapturedHudSpaceFunc == null || depthSquared <= captureDepth)
                     {
                         captureDepth = depthSquared;
-                        this.GetHudSpaceFunc = GetHudSpaceFunc;
+                        GetCapturedHudSpaceFunc = GetHudSpaceFunc;
 
                         return true;
                     }
@@ -227,20 +229,43 @@ namespace RichHudFramework
 
                     // Calculate position of the cursor in world space
                     MatrixD ptw = HudMain.PixelToWorld;
-                    PlaneToWorldRef[0] = MatrixD.CreateScale(ResScale, ResScale, 1d) * ptw;
-
                     Vector3D worldPos = new Vector3D(screenPos.X, screenPos.Y, 0d);
                     Vector3D.TransformNoProjection(ref worldPos, ref ptw, out worldPos);
 
                     WorldPos = worldPos;
                     ScreenPos = screenPos;
-                    cursorBox.Offset = screenPos / ResScale;
 
-                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+                    // Update custom hud space and tooltips
+                    HudSpaceData? hudSpaceData = GetCapturedHudSpaceFunc?.Invoke();
+                    bool useCapturedHudSpace = hudSpaceData != null && hudSpaceData.Value.Item1;
+                    bool boundTooltips = false;
+                    float tooltipScale = 1f;
+
+                    if (useCapturedHudSpace)
+                    {
+                        PlaneToWorldRef[0] = hudSpaceData.Value.Item3;
+
+                        if (PlaneToWorldRef[0].EqualsFast(ref HighDpiRoot.HudSpace.PlaneToWorldRef[0]))
+                        {
+                            tooltipScale = ResScale;
+                            boundTooltips = true;
+                        }
+                        else if (PlaneToWorldRef[0].EqualsFast(ref Root.HudSpace.PlaneToWorldRef[0]))
+                            boundTooltips = true;
+                    }
+                    else
+                    {
+                        PlaneToWorldRef[0] = HighDpiRoot.HudSpace.PlaneToWorldRef[0];
+                        boundTooltips = true;
+                        tooltipScale = ResScale;
+                    }
+
                     cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
-
-                    UpdateToolTip();
+                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     base.Layout();
+
+                    UpdateToolTip(boundTooltips, tooltipScale);
+                    cursorBox.Offset = new Vector2(CursorPos.X, CursorPos.Y);
                 }
 
                 protected override void HandleInput(Vector2 cursorPos)
@@ -249,7 +274,7 @@ namespace RichHudFramework
                     GetToolTipFunc = null;
                 }
 
-                private void UpdateToolTip()
+                private void UpdateToolTip(bool boundTooltip, float scale)
                 {
                     toolTip.Visible = IsToolTipRegistered;
 
@@ -273,23 +298,28 @@ namespace RichHudFramework
 
                         /* Position tooltip s.t. its placed below and to the right of the cursor while also bounding
                          the position to keep it from going off screen. */
-                        Vector2 halfScreenSize = new Vector2(ScreenWidth, ScreenHeight) * .5f / ResScale,
-                            halfTooltipSize = toolTip.Size * .5f;
+                        Vector2 halfTooltipSize = toolTip.Size * .5f,
+                            cursorPos = new Vector2(CursorPos.X, CursorPos.Y), 
+                            toolTipPos = cursorPos + new Vector2(24f, -24f);
 
-                        Vector2 screenPos = ScreenPos / ResScale, 
-                            toolTipPos = screenPos + new Vector2(24f, -24f);
                         toolTipPos.X += halfTooltipSize.X;
                         toolTipPos.Y -= halfTooltipSize.Y;
 
                         BoundingBox2 toolBox = new BoundingBox2(toolTipPos - halfTooltipSize, toolTipPos + halfTooltipSize);
-                        BoundingBox2 screenBox = new BoundingBox2(-halfScreenSize, halfScreenSize),
-                            offsetBox = new BoundingBox2(screenPos - halfScreenSize, screenPos + halfScreenSize);
 
-                        offsetBox = offsetBox.Intersect(screenBox);
-                        toolBox = toolBox.Intersect(offsetBox);
-                        toolTipPos -= screenPos;
+                        if (boundTooltip)
+                        {
+                            Vector2 halfScreenSize = new Vector2(ScreenWidth, ScreenHeight) * .5f / scale;
+                            BoundingBox2 screenBox = new BoundingBox2(-halfScreenSize, halfScreenSize),
+                                offsetBox = new BoundingBox2(cursorPos - halfScreenSize, cursorPos + halfScreenSize);
 
-                        Vector2 delta = (toolBox.Center - screenPos) - toolTipPos;
+                            offsetBox = offsetBox.Intersect(screenBox);
+                            toolBox = toolBox.Intersect(offsetBox);
+                        }
+
+                        toolTipPos -= cursorPos;
+
+                        Vector2 delta = (toolBox.Center - cursorPos) - toolTipPos;
                         toolTip.Offset = toolTipPos + 2f * delta;
                     }
                 }
