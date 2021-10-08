@@ -71,7 +71,7 @@ namespace RichHudFramework
                 set { _instance = value; }
             }
             private static BindManager _instance;
-
+            private const long maxCandidateBindTime = 1500L;
             private static readonly HashSet<MyKeys> controlBlacklist = new HashSet<MyKeys>()
             {
                 MyKeys.None,
@@ -84,7 +84,6 @@ namespace RichHudFramework
                 MyKeys.LeftWindows,
                 MyKeys.RightWindows
             };
-
             private static readonly Dictionary<MyKeys, MyKeys[]> controlAliases = new Dictionary<MyKeys, MyKeys[]>()
             {
                 { MyKeys.Alt, new MyKeys[] { MyKeys.LeftAlt, MyKeys.RightAlt } },
@@ -145,25 +144,44 @@ namespace RichHudFramework
 
             private void UpdateControls()
             {
-                if (candidateBindTimer.ElapsedMilliseconds > 1000L)
-                    candidateSequence.Clear();
-
                 if (candidateSequence.Count == 0)
                     candidateBindTimer.Restart();
 
                 foreach (Control control in controls)
                 {
-                    if (control != null && control != Control.Default)
+                    if (control != Control.Default)
                     {
                         control.Update();
 
-                        if (control.IsNewPressed && !candidateSequence.Contains(control.Index))
+                        if (control.IsNewPressed)
                         {
-                            candidateSequence.Add(control.Index);
-                            candidateBindTimer.Restart();
+                            // If a new key is pressed after the max time has elapsed, assume a new
+                            // sequence has started.
+                            if (candidateBindTimer.ElapsedMilliseconds > maxCandidateBindTime)
+                                candidateSequence.Clear();
+
+                            if (!candidateSequence.Contains(control.Index))
+                            {
+                                candidateSequence.Add(control.Index);
+                                candidateBindTimer.Restart();
+                            }
                         }
                     }
                 }
+
+                // If no controls in the candidate bind are pressed, clear the sequence
+                bool anyCandidatePressed = false;
+
+                foreach (int conIndex in candidateSequence)
+                {
+                    Control control = controls[conIndex];
+
+                    if (control.IsPressed)
+                        anyCandidatePressed = true;
+                }
+
+                if (!anyCandidatePressed)
+                    candidateSequence.Clear();
             }
 
             private void UpdateBlacklist()
