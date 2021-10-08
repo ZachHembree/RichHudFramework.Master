@@ -72,10 +72,29 @@ namespace RichHudFramework
             }
             private static BindManager _instance;
 
+            private static readonly HashSet<MyKeys> controlBlacklist = new HashSet<MyKeys>()
+            {
+                MyKeys.None,
+                MyKeys.LeftAlt,
+                MyKeys.RightAlt,
+                MyKeys.LeftShift,
+                MyKeys.RightShift,
+                MyKeys.LeftControl,
+                MyKeys.RightControl,
+                MyKeys.LeftWindows,
+                MyKeys.RightWindows
+            };
+
+            private static readonly Dictionary<MyKeys, MyKeys[]> controlAliases = new Dictionary<MyKeys, MyKeys[]>()
+            {
+                { MyKeys.Alt, new MyKeys[] { MyKeys.LeftAlt, MyKeys.RightAlt } },
+                { MyKeys.Shift, new MyKeys[] { MyKeys.LeftShift, MyKeys.RightShift } },
+                { MyKeys.Control, new MyKeys[] { MyKeys.LeftControl, MyKeys.RightControl } }
+            };
+
             private readonly Control[] controls;
             private readonly string[] seControlIDs, seMouseControlIDs;
             private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
-            private readonly HashSet<MyKeys> controlBlacklist;
             private readonly List<Client> bindClients;
 
             private Client mainClient;
@@ -86,19 +105,6 @@ namespace RichHudFramework
 
             private BindManager() : base(false, true)
             {
-                controlBlacklist = new HashSet<MyKeys>()
-                {
-                    MyKeys.None,
-                    MyKeys.LeftAlt,
-                    MyKeys.RightAlt,
-                    MyKeys.LeftShift,
-                    MyKeys.RightShift,
-                    MyKeys.LeftControl,
-                    MyKeys.RightControl,
-                    MyKeys.LeftWindows,
-                    MyKeys.RightWindows
-                };
-
                 controlDict = new Dictionary<string, IControl>(300);
                 controlDictFriendly = new Dictionary<string, IControl>(300);
 
@@ -288,10 +294,15 @@ namespace RichHudFramework
             {
                 Control[] controls = new Control[258];
 
-                for (int n = 0; n < keys.Length; n++)
+                // Initialize control list to default
+                for (int i = 0; i < controls.Length; i++)
+                    controls[i] = Control.Default;
+                    
+                // Add controls
+                for (int i = 0; i < keys.Length; i++)
                 {
-                    var index = (int)keys[n];
-                    var seKey = keys[n];
+                    var index = (int)keys[i];
+                    var seKey = keys[i];
 
                     if (!controlBlacklist.Contains(seKey))
                     {
@@ -314,6 +325,15 @@ namespace RichHudFramework
 
                 controls[257] = new Control("MousewheelDown", "MwDn", 257,
                     () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() < 0, true);
+
+                // Map control aliases to appropriate controls
+                foreach (KeyValuePair<MyKeys, MyKeys[]> controlAliasPair in controlAliases)
+                {
+                    Control con = controls[(int)controlAliasPair.Key];
+
+                    foreach (MyKeys key in controlAliasPair.Value)
+                        controls[(int)key] = con;
+                }
 
                 controlDict.Add("mousewheelup", controls[256]);
                 controlDict.Add("mousewheeldown", controls[257]);
