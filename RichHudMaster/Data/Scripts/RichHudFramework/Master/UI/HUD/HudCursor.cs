@@ -74,6 +74,7 @@ namespace RichHudFramework
 
                 public HudCursor(HudParentBase parent = null) : base(parent)
                 {
+                    GetHudSpaceFunc = () => new HudSpaceData(DrawCursorInHudSpace, 1f, PlaneToWorldRef[0]);
                     ZOffset = sbyte.MaxValue;
                     layerData.zOffsetInner = byte.MaxValue;
 
@@ -106,7 +107,7 @@ namespace RichHudFramework
                 /// Returns true if the given HUD space is being captured by the cursor
                 /// </summary>
                 public bool IsCapturingSpace(HudSpaceDelegate GetHudSpaceFunc) =>
-                    Visible && this.GetHudSpaceFunc == GetHudSpaceFunc;
+                    Visible && GetCapturedHudSpaceFunc == GetHudSpaceFunc;
 
                 /// <summary>
                 /// Attempts to capture the cursor at the given depth with the given HUD space. If drawInHudSpace
@@ -202,7 +203,7 @@ namespace RichHudFramework
                 {
                     CapturedElement = null;
                     captureDepth = 0f;
-                    GetHudSpaceFunc = null;
+                    GetCapturedHudSpaceFunc = null;
                 }
 
                 protected override void Layout()
@@ -260,12 +261,12 @@ namespace RichHudFramework
                         tooltipScale = ResScale;
                     }
 
-                    cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
-                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     base.Layout();
 
-                    UpdateToolTip(boundTooltips, tooltipScale);
+                    cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
+                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     cursorBox.Offset = new Vector2(CursorPos.X, CursorPos.Y);
+                    UpdateToolTip(boundTooltips, tooltipScale);
                 }
 
                 protected override void HandleInput(Vector2 cursorPos)
