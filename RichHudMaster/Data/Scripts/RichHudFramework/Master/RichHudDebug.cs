@@ -207,9 +207,21 @@ namespace RichHudFramework.Server
 
                     statsBuilder.Append($"\n\tBindManager:\n");
                     statsBuilder.Append($"\t\tControls Registered: {BindManager.Controls.Count}\n");
-                    statsBuilder.Append($"\t\tClients Registered: {BindManager.Clients.Count}\n\n");
+                    statsBuilder.Append($"\t\tClients Registered: {BindManager.Clients.Count}\n");
+                    statsBuilder.Append($"\t\tCandidate Bind: ");
 
-                    statsBuilder.Append($"\tFontManager:\n");
+                    int i = 0, bindLength = BindManager.CandidateBindSet.Count;
+
+                    foreach (int conIndex in BindManager.CandidateBindSet)
+                    {
+                        statsBuilder.Append(BindManager.Controls[conIndex].DisplayName);
+                        i++;
+
+                        if (i != bindLength)
+                            statsBuilder.Append(", ");
+                    }
+
+                    statsBuilder.Append($"\n\n\tFontManager:\n");
                     statsBuilder.Append($"\t\tFonts Registered: {fonts.Count}\n\n");
 
                     foreach (IFont font in fonts)
@@ -273,6 +285,7 @@ namespace RichHudFramework.Server
             IReadOnlyList<IBindGroup> bindGroups = client.Groups;
 
             statsBuilder.Append($"\t\tBindManager:\n");
+            statsBuilder.Append($"\t\t\tBlacklist Mode: {client.RequestBlacklistMode}\n");
             statsBuilder.Append($"\t\t\tGroups: {client.Groups.Count}\n");
 
             var groupGrid = new string[bindGroups.Count + 1, 2];

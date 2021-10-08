@@ -65,13 +65,21 @@ namespace RichHudFramework
             /// </summary>
             public static IReadOnlyList<string> SeMouseControlIDs { get { if (_instance == null) Init(); return _instance.seMouseControlIDs; } }
 
+            /// <summary>
+            /// Set of control indices identified by the Bind Manager as being at least a subset of a pressed
+            /// keybind
+            /// </summary>
+            public static IReadOnlyCollection<int> CandidateBindSet => _instance.candidateBindSet;
+
             private static BindManager Instance
             {
                 get { Init(); return _instance; }
                 set { _instance = value; }
             }
             private static BindManager _instance;
-            private const long maxCandidateBindTime = 1500L;
+
+            private const long maxCandidateBindTime = 1000L;
+
             private static readonly HashSet<MyKeys> controlBlacklist = new HashSet<MyKeys>()
             {
                 MyKeys.None,
@@ -84,6 +92,7 @@ namespace RichHudFramework
                 MyKeys.LeftWindows,
                 MyKeys.RightWindows
             };
+
             private static readonly Dictionary<MyKeys, MyKeys[]> controlAliases = new Dictionary<MyKeys, MyKeys[]>()
             {
                 { MyKeys.Alt, new MyKeys[] { MyKeys.LeftAlt, MyKeys.RightAlt } },
@@ -99,7 +108,7 @@ namespace RichHudFramework
             private Client mainClient;
             private bool areControlsBlacklisted, areMouseControlsBlacklisted;
 
-            private readonly HashSet<int> candidateSequence;
+            private readonly HashSet<int> candidateBindSet;
             private readonly Stopwatch candidateBindTimer;
 
             private BindManager() : base(false, true)
@@ -113,7 +122,7 @@ namespace RichHudFramework
 
                 bindClients = new List<Client>();
 
-                candidateSequence = new HashSet<int>();
+                candidateBindSet = new HashSet<int>();
                 candidateBindTimer = new Stopwatch();
                 candidateBindTimer.Start();
             }
@@ -144,7 +153,7 @@ namespace RichHudFramework
 
             private void UpdateControls()
             {
-                if (candidateSequence.Count == 0)
+                if (candidateBindSet.Count == 0)
                     candidateBindTimer.Restart();
 
                 foreach (Control control in controls)
@@ -155,33 +164,32 @@ namespace RichHudFramework
 
                         if (control.IsNewPressed)
                         {
-                            // If a new key is pressed after the max time has elapsed, assume a new
-                            // sequence has started.
-                            if (candidateBindTimer.ElapsedMilliseconds > maxCandidateBindTime)
-                                candidateSequence.Clear();
-
-                            if (!candidateSequence.Contains(control.Index))
+                            if (!candidateBindSet.Contains(control.Index))
                             {
-                                candidateSequence.Add(control.Index);
+                                candidateBindSet.Add(control.Index);
                                 candidateBindTimer.Restart();
                             }
                         }
                     }
                 }
 
-                // If no controls in the candidate bind are pressed, clear the sequence
-                bool anyCandidatePressed = false;
+                // Check the number of controls still pressed in the candidate sequence
+                int pressCount = 0;
 
-                foreach (int conIndex in candidateSequence)
+                foreach (int conIndex in candidateBindSet)
                 {
                     Control control = controls[conIndex];
 
                     if (control.IsPressed)
-                        anyCandidatePressed = true;
+                        pressCount++;
                 }
 
-                if (!anyCandidatePressed)
-                    candidateSequence.Clear();
+                // If the full sequence isn't pressed and the timer has elapsed, clear the sequence
+                if ( pressCount == 0 || 
+                    (pressCount < candidateBindSet.Count && (candidateBindTimer.ElapsedMilliseconds > maxCandidateBindTime)) )
+                {
+                    candidateBindSet.Clear();
+                }
             }
 
             private void UpdateBlacklist()
