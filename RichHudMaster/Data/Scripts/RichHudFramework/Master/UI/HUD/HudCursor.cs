@@ -36,6 +36,13 @@ namespace RichHudFramework
             public sealed class HudCursor : HudSpaceNodeBase, ICursor
             {
                 /// <summary>
+                /// Returns true if the cursor is drawing
+                /// </summary>
+                public bool DrawCursor { get; set; }
+
+                bool ICursor.Visible => DrawCursor;
+
+                /// <summary>
                 /// The position of the cursor in pixels in screen space
                 /// </summary>
                 public Vector2 ScreenPos { get; private set; }
@@ -259,7 +266,7 @@ namespace RichHudFramework
 
                     base.Layout();
 
-                    cursorBox.Visible = !MyAPIGateway.Gui.IsCursorVisible;
+                    cursorBox.Visible = DrawCursor && !MyAPIGateway.Gui.IsCursorVisible;
                     layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     cursorBox.Offset = new Vector2(CursorPos.X, CursorPos.Y);
                     UpdateToolTip(boundTooltips, tooltipScale);
@@ -345,7 +352,7 @@ namespace RichHudFramework
                     switch ((HudCursorAccessors)memberEnum)
                     {
                         case HudCursorAccessors.Visible:
-                            return Visible;
+                            return DrawCursor;
                         case HudCursorAccessors.IsCaptured:
                             return IsCaptured;
                         case HudCursorAccessors.ScreenPos:

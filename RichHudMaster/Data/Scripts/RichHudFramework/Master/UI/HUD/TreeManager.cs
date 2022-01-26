@@ -162,12 +162,12 @@ namespace RichHudFramework
                     float resScale = ResScale;
 
                     mainClient.EnableCursor = EnableCursor;
-                    instance._cursor.Visible = false;
+                    instance._cursor.DrawCursor = false;
 
                     for (int n = 0; n < clients.Count; n++)
                     {
                         if (clients[n].EnableCursor)
-                            instance._cursor.Visible = true;
+                            instance._cursor.DrawCursor = true;
                     }
 
                     for (int n = 0; n < clients.Count; n++)

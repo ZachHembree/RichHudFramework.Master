@@ -182,7 +182,7 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
-                if (instance._cursor.Visible)
+                if (instance._cursor.DrawCursor)
                 {
                     if (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible)
                         InputMode = HudInputMode.Full;
