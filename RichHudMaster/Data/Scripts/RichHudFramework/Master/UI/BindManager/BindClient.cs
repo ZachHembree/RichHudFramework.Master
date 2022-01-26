@@ -33,12 +33,17 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<IControl> Controls => BindManager.Instance.controls;
 
-                public SeBlacklistModes RequestBlacklistMode { get; set; }
+                public SeBlacklistModes RequestBlacklistMode 
+                { 
+                    get { return _requestBlacklistMode | tmpBlacklist; } 
+                    set { lastBlacklist = value; _requestBlacklistMode = value; } 
+                }
 
                 private readonly RichHudMaster.ModClient masterClient;
                 private readonly Action UpdateAction;
                 private readonly List<BindGroup> bindGroups;
                 private readonly int index;
+                private SeBlacklistModes _requestBlacklistMode, lastBlacklist, tmpBlacklist;
 
                 public Client(RichHudMaster.ModClient masterClient = null)
                 {
@@ -55,6 +60,9 @@ namespace RichHudFramework
                 /// </summary>
                 public void HandleInput()
                 {
+                    tmpBlacklist = SeBlacklistModes.None;
+                    _requestBlacklistMode = lastBlacklist;
+
                     if (masterClient?.RunOnExceptionHandler != null)
                         masterClient.RunOnExceptionHandler(UpdateAction);
                     else
@@ -65,6 +73,15 @@ namespace RichHudFramework
                 {
                     for(int n = 0; n < bindGroups.Count; n++)
                         bindGroups[n].HandleInput();
+                }
+
+                /// <summary>
+                /// Sets a temporary control blacklist cleared after every frame. Blacklists set via
+                /// property will persist regardless.
+                /// </summary>
+                public void RequestTempBlacklist(SeBlacklistModes mode)
+                {
+                    tmpBlacklist |= mode;
                 }
 
                 /// <summary>

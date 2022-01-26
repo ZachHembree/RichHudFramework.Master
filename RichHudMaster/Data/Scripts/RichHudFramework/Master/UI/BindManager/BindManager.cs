@@ -272,6 +272,15 @@ namespace RichHudFramework
             }
 
             /// <summary>
+            /// Sets a temporary control blacklist cleared after every frame. Blacklists set via
+            /// property will persist regardless.
+            /// </summary>
+            public static void RequestTempBlacklist(SeBlacklistModes mode)
+            {
+                Instance.mainClient.RequestTempBlacklist(mode);
+            }
+
+            /// <summary>
             /// Returns the bind group with the given name and/or creates one with the name given
             /// if one doesn't exist.
             /// </summary>
