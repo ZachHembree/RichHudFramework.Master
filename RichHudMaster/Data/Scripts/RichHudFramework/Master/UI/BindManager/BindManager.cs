@@ -78,7 +78,7 @@ namespace RichHudFramework
             }
             private static BindManager _instance;
 
-            private const long maxCandidateBindTime = 1000L;
+            private const long maxCandidateBindTime = 750L;
 
             private static readonly HashSet<MyKeys> controlBlacklist = new HashSet<MyKeys>()
             {
@@ -184,9 +184,7 @@ namespace RichHudFramework
                         pressCount++;
                 }
 
-                // If the full sequence isn't pressed and the timer has elapsed, clear the sequence
-                if ( pressCount == 0 || 
-                    (pressCount < candidateBindSet.Count && (candidateBindTimer.ElapsedMilliseconds > maxCandidateBindTime)) )
+                if ( pressCount == 0 || (candidateBindTimer.ElapsedMilliseconds > maxCandidateBindTime) )
                 {
                     candidateBindSet.Clear();
                 }
