@@ -157,7 +157,7 @@ namespace RichHudFramework.UI.Rendering.Server
                     if (formatData.Item4 != lastColor)
                     {
                         lastColor = formatData.Item4;
-                        bbColor = QuadBoard.GetQuadBoardColor(formatData.Item4);
+                        bbColor = BillBoardUtils.GetBillBoardBoardColor(formatData.Item4);
                     }
 
                     if (text[n] >= ' ' || allowSpecialChars && (text[n] == '\n' || text[n] == '\t'))

@@ -128,14 +128,14 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormatting(int start, int end, GlyphFormat format, bool onlyChangeColor)
                     {
-                        Vector4 bbColor = QuadBoard.GetQuadBoardColor(format.Data.Item4);
+                        Vector4 bbColor = BillBoardUtils.GetBillBoardBoardColor(format.Data.Item4);
 
                         for (int n = start; n <= end; n++)
                         {
                             if (onlyChangeColor)
                             {
                                 var quadBoard = glyphBoards[n];
-                                quadBoard.bbColor = bbColor;
+                                quadBoard.materialData.bbColor = bbColor;
 
                                 glyphBoards[n] = quadBoard;
                                 formattedGlyphs[n] = new FormattedGlyph(formattedGlyphs[n].glyph, format);

@@ -386,7 +386,7 @@ namespace RichHudFramework
 
                             bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
                             bb.mask.Value.Contains(ref bb.bounds, out containment);
-                            underlineBoard.bbColor = underlines[n].color;
+                            underlineBoard.materialData.bbColor = underlines[n].color;
 
                             if (containment == ContainmentType.Contains)
                                 underlineBoard.Draw(ref bb, ref matrix[0]);
@@ -689,7 +689,7 @@ namespace RichHudFramework
                                             Math.Max((int)formatData.Value.Item2, 1)
                                         );
 
-                                        Vector4 color = QuadBoard.GetQuadBoardColor(formatData.Value.Item4) * .9f;
+                                        Vector4 color = BillBoardUtils.GetBillBoardBoardColor(formatData.Value.Item4) * .9f;
                                         underlines.Add(new UnderlineBoard(size, pos, color));
                                     }
 
