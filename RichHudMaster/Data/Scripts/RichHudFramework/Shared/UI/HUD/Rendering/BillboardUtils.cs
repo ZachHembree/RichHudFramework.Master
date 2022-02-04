@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System;
+using System.Threading;
 using VRage.Game;
 using VRage;
 using VRage.Utils;
@@ -21,19 +22,24 @@ namespace RichHudFramework
                 private const int statsWindowSize = 240, sampleRateDiv = 5;
 
                 private readonly List<MyBillboard> billboardBuffer;
-                private readonly List<MyTriangleBillboard> triBillboardPool;
+                private List<MyTriangleBillboard> triBillboardBack, triBillboardFront;
+
                 private readonly int[] billboardUsage, billboardAlloc;
                 private readonly List<int> billboardUsageStats, billboardAllocStats;
                 private int sampleTick, tick;
 
+                static BillBoardUtils()
+                {
+                    MyTransparentGeometry.ApplyActionOnPersistentBillboards(Render);
+                }
+
                 private BillBoardUtils() : base(false, true)
                 {
-                    if (instance == null)
-                        instance = this;
-                    else
+                    if (instance != null)
                         throw new Exception($"Only one instance of {GetType().Name} can exist at once.");
 
-                    triBillboardPool = new List<MyTriangleBillboard>(1000);
+                    triBillboardBack = new List<MyTriangleBillboard>(1000);
+                    triBillboardFront = new List<MyTriangleBillboard>(1000);
                     billboardBuffer = new List<MyBillboard>(100);
 
                     billboardUsage = new int[statsWindowSize];
@@ -47,7 +53,7 @@ namespace RichHudFramework
                 {
                     if (instance == null)
                     {
-                        new BillBoardUtils();
+                        instance = new BillBoardUtils();
                     }
                 }
 
@@ -74,6 +80,17 @@ namespace RichHudFramework
                 }
 
                 public override void Draw()
+                { }
+
+                private static void Render()
+                {
+                    if (instance != null)
+                    {
+                        
+                    }
+                }
+
+                public override void HandleInput()
                 {
                     if (tick == 0)
                     {
@@ -82,7 +99,7 @@ namespace RichHudFramework
                         billboardUsageStats.AddRange(billboardUsage);
                         billboardUsageStats.Sort();
 
-                        billboardAlloc[sampleTick] = triBillboardPool.Count;
+                        billboardAlloc[sampleTick] = triBillboardBack.Count;
                         billboardAllocStats.Clear();
                         billboardAllocStats.AddRange(billboardAlloc);
                         billboardAllocStats.Sort();
@@ -94,6 +111,7 @@ namespace RichHudFramework
                     tick++;
                     tick %= sampleRateDiv;
 
+                    MyUtils.Swap(ref instance.triBillboardBack, ref instance.triBillboardFront);
                     triBillboardCount = 0;
                 }
 
@@ -108,7 +126,7 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangles(List<int> indices, List<Vector3D> vertices, ref PolyMaterial mat)
                 {
-                    var bbPool = instance.triBillboardPool;
+                    var bbPool = instance.triBillboardBack;
                     var bbBuf = instance.billboardBuffer;
 
                     int triangleCount = indices.Count / 3,
@@ -121,11 +139,11 @@ namespace RichHudFramework
                         bbPool.Add(new MyTriangleBillboard());
 
                     for (int i = triBillboardCount; i < triangleCount + triBillboardCount; i++)
-                        bbBuf.Add(instance.triBillboardPool[i]);
+                        bbBuf.Add(instance.triBillboardBack[i]);
 
                     for (int i = 0; i < indices.Count; i += 3)
                     {
-                        MyTriangleBillboard bb = instance.triBillboardPool[triBillboardCount];
+                        MyTriangleBillboard bb = instance.triBillboardBack[triBillboardCount];
                         triBillboardCount++;
 
                         bb.BlendType = BlendTypeEnum.PostPP;
@@ -150,7 +168,7 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangleRange(Vector2I range, List<int> indices, List<Vector3D> vertices, ref PolyMaterial mat)
                 {
-                    var bbPool = instance.triBillboardPool;
+                    var bbPool = instance.triBillboardBack;
                     var bbBuf = instance.billboardBuffer;
 
                     int triangleCount = (range.Y - range.X) / 3,
@@ -163,11 +181,11 @@ namespace RichHudFramework
                         bbPool.Add(new MyTriangleBillboard());
 
                     for (int i = triBillboardCount; i < triangleCount + triBillboardCount; i++)
-                        bbBuf.Add(instance.triBillboardPool[i]);
+                        bbBuf.Add(instance.triBillboardBack[i]);
 
                     for (int i = range.X; i <= range.Y; i += 3)
                     {
-                        MyTriangleBillboard bb = instance.triBillboardPool[triBillboardCount];
+                        MyTriangleBillboard bb = instance.triBillboardBack[triBillboardCount];
                         triBillboardCount++;
 
                         bb.BlendType = BlendTypeEnum.PostPP;
@@ -193,7 +211,7 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangles(List<int> indices, List<Vector3D> vertices, ref TriMaterial mat)
                 {
-                    var bbPool = instance.triBillboardPool;
+                    var bbPool = instance.triBillboardBack;
                     var bbBuf = instance.billboardBuffer;
 
                     int triangleCount = indices.Count / 3, 
@@ -206,11 +224,11 @@ namespace RichHudFramework
                         bbPool.Add(new MyTriangleBillboard());
 
                     for (int i = triBillboardCount; i < triangleCount + triBillboardCount; i++)
-                        bbBuf.Add(instance.triBillboardPool[i]);
+                        bbBuf.Add(instance.triBillboardBack[i]);
 
                     for (int i = 0; i < indices.Count; i += 3)
                     {
-                        MyTriangleBillboard bb = instance.triBillboardPool[triBillboardCount];
+                        MyTriangleBillboard bb = instance.triBillboardBack[triBillboardCount];
                         triBillboardCount++;
 
                         bb.BlendType = BlendTypeEnum.PostPP;
@@ -238,12 +256,12 @@ namespace RichHudFramework
                     MyTriangleBillboard bb;
                     triBillboardCount++;
 
-                    if (triBillboardCount < instance.triBillboardPool.Count)
-                        bb = instance.triBillboardPool[triBillboardCount];
+                    if (triBillboardCount < instance.triBillboardBack.Count)
+                        bb = instance.triBillboardBack[triBillboardCount];
                     else
                     {
                         bb = new MyTriangleBillboard();
-                        instance.triBillboardPool.Add(bb);
+                        instance.triBillboardBack.Add(bb);
                     }
 
                     bb.BlendType = BlendTypeEnum.PostPP;
@@ -266,12 +284,12 @@ namespace RichHudFramework
                     MyTriangleBillboard bb;
                     triBillboardCount++;
 
-                    if (triBillboardCount < instance.triBillboardPool.Count)
-                        bb = instance.triBillboardPool[triBillboardCount];
+                    if (triBillboardCount < instance.triBillboardBack.Count)
+                        bb = instance.triBillboardBack[triBillboardCount];
                     else
                     {
                         bb = new MyTriangleBillboard();
-                        instance.triBillboardPool.Add(bb);
+                        instance.triBillboardBack.Add(bb);
                     }
 
                     bb.BlendType = BlendTypeEnum.PostPP;
@@ -294,22 +312,22 @@ namespace RichHudFramework
                     MyTriangleBillboard bbL, bbR;
                     triBillboardCount++;
 
-                    if (triBillboardCount < instance.triBillboardPool.Count)
-                        bbL = instance.triBillboardPool[triBillboardCount];
+                    if (triBillboardCount < instance.triBillboardBack.Count)
+                        bbL = instance.triBillboardBack[triBillboardCount];
                     else
                     {
                         bbL = new MyTriangleBillboard();
-                        instance.triBillboardPool.Add(bbL);
+                        instance.triBillboardBack.Add(bbL);
                     }
 
                     triBillboardCount++;
 
-                    if (triBillboardCount < instance.triBillboardPool.Count)
-                        bbR = instance.triBillboardPool[triBillboardCount];
+                    if (triBillboardCount < instance.triBillboardBack.Count)
+                        bbR = instance.triBillboardBack[triBillboardCount];
                     else
                     {
                         bbR = new MyTriangleBillboard();
-                        instance.triBillboardPool.Add(bbR);
+                        instance.triBillboardBack.Add(bbR);
                     }
 
                     bbL.BlendType = BlendTypeEnum.PostPP;
@@ -345,22 +363,22 @@ namespace RichHudFramework
                     MyTriangleBillboard bbL, bbR;
                     triBillboardCount++;
 
-                    if (triBillboardCount < instance.triBillboardPool.Count)
-                        bbL = instance.triBillboardPool[triBillboardCount];
+                    if (triBillboardCount < instance.triBillboardBack.Count)
+                        bbL = instance.triBillboardBack[triBillboardCount];
                     else
                     {
                         bbL = new MyTriangleBillboard();
-                        instance.triBillboardPool.Add(bbL);
+                        instance.triBillboardBack.Add(bbL);
                     }
 
                     triBillboardCount++;
 
-                    if (triBillboardCount < instance.triBillboardPool.Count)
-                        bbR = instance.triBillboardPool[triBillboardCount];
+                    if (triBillboardCount < instance.triBillboardBack.Count)
+                        bbR = instance.triBillboardBack[triBillboardCount];
                     else
                     {
                         bbR = new MyTriangleBillboard();
-                        instance.triBillboardPool.Add(bbR);
+                        instance.triBillboardBack.Add(bbR);
                     }
 
                     bbL.BlendType = BlendTypeEnum.PostPP;
