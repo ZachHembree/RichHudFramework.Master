@@ -65,20 +65,12 @@ namespace RichHudFramework
             /// </summary>
             public static IReadOnlyList<string> SeMouseControlIDs { get { if (_instance == null) Init(); return _instance.seMouseControlIDs; } }
 
-            /// <summary>
-            /// Set of control indices identified by the Bind Manager as being at least a subset of a pressed
-            /// keybind
-            /// </summary>
-            public static IReadOnlyCollection<int> CandidateBindSet => _instance.candidateBindSet;
-
             private static BindManager Instance
             {
                 get { Init(); return _instance; }
                 set { _instance = value; }
             }
             private static BindManager _instance;
-
-            private const long maxCandidateBindTime = 750L;
 
             private static readonly HashSet<MyKeys> controlBlacklist = new HashSet<MyKeys>()
             {
@@ -108,9 +100,6 @@ namespace RichHudFramework
             private Client mainClient;
             private bool areControlsBlacklisted, areMouseControlsBlacklisted;
 
-            private readonly HashSet<int> candidateBindSet;
-            private readonly Stopwatch candidateBindTimer;
-
             private BindManager() : base(false, true)
             {
                 controlDict = new Dictionary<string, IControl>(300);
@@ -121,10 +110,6 @@ namespace RichHudFramework
                 GetControlStringIDs(keys, out seControlIDs, out seMouseControlIDs);
 
                 bindClients = new List<Client>();
-
-                candidateBindSet = new HashSet<int>();
-                candidateBindTimer = new Stopwatch();
-                candidateBindTimer.Start();
             }
 
             public static void Init()
@@ -135,7 +120,9 @@ namespace RichHudFramework
                     _instance.RegisterComponent(RichHudCore.Instance);
 
                 if (_instance.mainClient == null)
+                {
                     _instance.mainClient = new Client();
+                }
             }
 
             public override void HandleInput()
@@ -153,40 +140,12 @@ namespace RichHudFramework
 
             private void UpdateControls()
             {
-                if (candidateBindSet.Count == 0)
-                    candidateBindTimer.Restart();
-
                 foreach (Control control in controls)
                 {
                     if (control != Control.Default)
                     {
                         control.Update();
-
-                        if (control.IsNewPressed)
-                        {
-                            if (!candidateBindSet.Contains(control.Index))
-                            {
-                                candidateBindSet.Add(control.Index);
-                                candidateBindTimer.Restart();
-                            }
-                        }
                     }
-                }
-
-                // Check the number of controls still pressed in the candidate sequence
-                int pressCount = 0;
-
-                foreach (int conIndex in candidateBindSet)
-                {
-                    Control control = controls[conIndex];
-
-                    if (control.IsPressed)
-                        pressCount++;
-                }
-
-                if ( pressCount == 0 || (candidateBindTimer.ElapsedMilliseconds > maxCandidateBindTime) )
-                {
-                    candidateBindSet.Clear();
                 }
             }
 

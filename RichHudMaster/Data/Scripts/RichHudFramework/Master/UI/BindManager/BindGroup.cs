@@ -80,9 +80,9 @@ namespace RichHudFramework
                     if (keyBinds.Count > 0)
                     {
                         int controlsPressed = GetPressedControls();
-                        bool canUpdateBinds;
+                        bool canUpdateBinds = true;
 
-                        if (controlsPressed > 0 && controlsPressed >= _instance.candidateBindSet.Count)
+                        if (controlsPressed > 0)
                         {
                             int bindsPressed = GetPressedBinds();
 
@@ -96,8 +96,6 @@ namespace RichHudFramework
                                 if (bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased)
                                     bindControlsPressed += bind.length;
                             }
-
-                            canUpdateBinds = bindControlsPressed >= _instance.candidateBindSet.Count;
                         }
                         else
                             canUpdateBinds = false;

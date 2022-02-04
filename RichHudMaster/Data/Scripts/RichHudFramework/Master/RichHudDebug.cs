@@ -208,18 +208,6 @@ namespace RichHudFramework.Server
                     statsBuilder.Append($"\n\tBindManager:\n");
                     statsBuilder.Append($"\t\tControls Registered: {BindManager.Controls.Count}\n");
                     statsBuilder.Append($"\t\tClients Registered: {BindManager.Clients.Count}\n");
-                    statsBuilder.Append($"\t\tCandidate Bind: ");
-
-                    int i = 0, bindLength = BindManager.CandidateBindSet.Count;
-
-                    foreach (int conIndex in BindManager.CandidateBindSet)
-                    {
-                        statsBuilder.Append(BindManager.Controls[conIndex].DisplayName);
-                        i++;
-
-                        if (i != bindLength)
-                            statsBuilder.Append(", ");
-                    }
 
                     statsBuilder.Append($"\n\n\tFontManager:\n");
                     statsBuilder.Append($"\t\tFonts Registered: {fonts.Count}\n\n");

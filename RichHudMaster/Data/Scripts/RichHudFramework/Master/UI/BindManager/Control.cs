@@ -83,6 +83,13 @@ namespace RichHudFramework
                     IsPressed = IsPressedFunc();
                     IsNewPressed = IsPressed && (!wasPressed || Analog);
                 }
+
+                public void Reset()
+                {
+                    wasPressed = false;
+                    IsPressed = false;
+                    IsNewPressed = false;
+                }
             }
         }
     }
