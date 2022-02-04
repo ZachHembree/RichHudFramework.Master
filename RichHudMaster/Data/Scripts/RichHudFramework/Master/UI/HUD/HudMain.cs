@@ -1,4 +1,5 @@
 using RichHudFramework.Internal;
+using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
 using VRage;
@@ -154,6 +155,8 @@ namespace RichHudFramework
 
             public static void Init()
             {
+                BillBoardUtils.Init();   
+
                 if (instance == null)
                     new HudMain();
             }
