@@ -3,6 +3,7 @@ using System;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
+using VRageRender;
 using BlendTypeEnum = VRageRender.MyBillboard.BlendTypeEnum;
 
 namespace RichHudFramework
@@ -168,78 +169,40 @@ namespace RichHudFramework
                     box.bounds = box.bounds.Intersect(box.mask.Value);
 
                     Vector2 clipSize = box.bounds.Size;
-                    CroppedQuad crop = default(CroppedQuad);
-                    crop.matBounds = materialData.texBounds;
+                    BoundedQuadMaterial cropMat = materialData;
 
                     // Normalized cropped size and offset
                     Vector2 clipScale = clipSize / size,
                         clipOffset = (box.bounds.Center - pos) / size,
-                        uvScale = crop.matBounds.Size,
-                        uvOffset = crop.matBounds.Center;
+                        uvScale = cropMat.texBounds.Size,
+                        uvOffset = cropMat.texBounds.Center;
 
                     pos += clipOffset * size; // Offset billboard to compensate for changes in size
                     size = clipSize; // Use cropped billboard size
                     clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
 
                     // Recalculate texture coordinates to simulate clipping without affecting material alignment
-                    crop.matBounds.Min = ((crop.matBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
-                    crop.matBounds.Max = ((crop.matBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
+                    cropMat.texBounds.Min = ((cropMat.texBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
+                    cropMat.texBounds.Max = ((cropMat.texBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
 
                     Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
+                    MyQuadD quad;
+
                     Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out crop.quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
+                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
 
                     if (skewRatio != 0f)
                     {
-                        Vector3D start = crop.quad.Point0, end = crop.quad.Point3,
+                        Vector3D start = quad.Point0, end = quad.Point3,
                             offset = (end - start) * skewRatio * .5;
 
-                        crop.quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                        crop.quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
-                        crop.quad.Point1 -= offset;
-                        crop.quad.Point2 -= offset;
+                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
+                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
+                        quad.Point1 -= offset;
+                        quad.Point2 -= offset;
                     }
 
-                    AddBillboard(ref materialData, ref crop);
-                }
-
-                private static void AddBillboard(ref BoundedQuadMaterial matData, ref CroppedQuad crop)
-                {
-                    MyTransparentGeometry.AddTriangleBillboard
-                    (
-                        crop.quad.Point0,
-                        crop.quad.Point1,
-                        crop.quad.Point2,
-                        Vector3.Zero, Vector3.Zero, Vector3.Zero,
-                        crop.matBounds.Min,
-                        (crop.matBounds.Min + new Vector2(0f, crop.matBounds.Size.Y)),
-                        crop.matBounds.Max,
-                        matData.textureID, 0,
-                        Vector3D.Zero,
-                        matData.bbColor,
-                        BlendTypeEnum.PostPP
-                    );
-
-                    MyTransparentGeometry.AddTriangleBillboard
-                    (
-                        crop.quad.Point0,
-                        crop.quad.Point2,
-                        crop.quad.Point3,
-                        Vector3.Zero, Vector3.Zero, Vector3.Zero,
-                        crop.matBounds.Min,
-                        crop.matBounds.Max,
-                        (crop.matBounds.Min + new Vector2(crop.matBounds.Size.X, 0f)),
-                        matData.textureID, 0,
-                        Vector3D.Zero,
-                        matData.bbColor,
-                        BlendTypeEnum.PostPP
-                    );
-                }
-
-                private struct CroppedQuad
-                {
-                    public BoundingBox2 matBounds;
-                    public MyQuadD quad;
+                    BillBoardUtils.AddQuad(ref cropMat, ref quad);
                 }
             }
         }

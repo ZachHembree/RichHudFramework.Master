@@ -146,6 +146,14 @@ namespace RichHudFramework.Server
                 IReadOnlyList<IFont> fonts = FontManager.Fonts;
                 HudMain.TreeClient masterHud = HudMain.TreeManager.MainClient;
                 BindManager.Client masterInput = BindManager.MainClient;
+                int bbUsage30 = BillBoardUtils.GetUsagePercentile(.30f),
+                    bbUsage50 = BillBoardUtils.GetUsagePercentile(.50f),
+                    bbUsage70 = BillBoardUtils.GetUsagePercentile(.70f),
+                    bbUsage99 = BillBoardUtils.GetUsagePercentile(.99f),
+                    bbAlloc30 = BillBoardUtils.GetAllocPercentile(.30f),
+                    bbAlloc50 = BillBoardUtils.GetAllocPercentile(.50f),
+                    bbAlloc70 = BillBoardUtils.GetAllocPercentile(.70f),
+                    bbAlloc99 = BillBoardUtils.GetAllocPercentile(.99f);
 
                 stats.Update();
                 statsBuilder.Clear();
@@ -165,6 +173,15 @@ namespace RichHudFramework.Server
                 statsBuilder.Append($"\t\tHUD Spaces Updating: {HudMain.TreeManager.HudSpacesRegistered}\n");
                 statsBuilder.Append($"\t\tElements Updating: {HudMain.TreeManager.ElementRegistered}\n");
                 statsBuilder.Append($"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n");
+
+                statsBuilder.Append($"\t\tBillboard Usage\n");
+                AddGrid(statsBuilder, new string[,]
+                {
+                    { "",   "30th",          "50th",     "70th",         "99th" },
+                    { "Use",   $"{bbUsage30}",    $"{bbUsage50}",    $"{bbUsage70}",   $"{bbUsage99}" },
+                    { "Alloc",   $"{bbAlloc30}",    $"{bbAlloc50}",    $"{bbAlloc70}",   $"{bbAlloc99}" },
+
+                }, 3, 4);
 
                 statsBuilder.Append($"\t\tUpdate Timers  (IsHighResolution: {Stopwatch.IsHighResolution}):\n");
                 AddGrid(statsBuilder, new string[,]
