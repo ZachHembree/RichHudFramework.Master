@@ -101,7 +101,7 @@ namespace RichHudFramework
                         billboardUsageStats.AddRange(billboardUsage);
                         billboardUsageStats.Sort();
 
-                        billboardAlloc[sampleTick] = bbPool.Count;
+                        billboardAlloc[sampleTick] = bbDataBack.Capacity;
                         billboardAllocStats.Clear();
                         billboardAllocStats.AddRange(billboardAlloc);
                         billboardAllocStats.Sort();
