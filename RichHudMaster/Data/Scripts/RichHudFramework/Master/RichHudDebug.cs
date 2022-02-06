@@ -30,7 +30,7 @@ namespace RichHudFramework.Server
 
         private readonly Stopwatch updateTimer;
         private readonly UpdateStats stats;
-        private readonly TextBoard overlay;
+        private readonly Label overlay;
         private bool enableOverlay;
         private Vector2 overlayPos;
 
@@ -59,12 +59,13 @@ namespace RichHudFramework.Server
             enableOverlay = false;
             EnableDebug = false;
 
-            overlay = new TextBoard() 
+            overlay = new Label(HudMain.HighDpiRoot) 
             {
+                ZOffset = 2,
+                Visible = false,
                 AutoResize = true,
                 BuilderMode = TextBuilderModes.Lined,
-                Scale = 0.8f,
-                Format = new GlyphFormat(new Color(255, 191, 0))
+                Format = new GlyphFormat(new Color(255, 191, 0), textSize: 0.8f)
             };
 
             pageCategory = new TerminalPageCategory() 
@@ -139,6 +140,7 @@ namespace RichHudFramework.Server
         public override void Draw()
         {
             pageCategory.Enabled = EnableDebug;
+            overlay.Visible = EnableDebug && enableOverlay;
 
             if (EnableDebug && (statsText.Element.Visible || enableOverlay) && updateTimer.ElapsedMilliseconds > 100)
             {
@@ -193,7 +195,7 @@ namespace RichHudFramework.Server
                     { "Tree*",  $"{stats.AvgTreeTime:F2}ms",    $"{stats.Tree50th:F2}ms",   $"{stats.Tree99th:F2}ms" },
                 }, 3, 4);
 
-                overlay.SetText(statsBuilder);
+                overlay.TextBoard.SetText(statsBuilder);
 
                 if (statsText.Element.Visible)
                 {
@@ -274,7 +276,7 @@ namespace RichHudFramework.Server
                 else
                     offset.Y -= overlay.Size.Y * .5f;
 
-                overlay.Draw(offset, MatrixD.CreateScale(HudMain.ResScale, HudMain.ResScale, 1d) * HudMain.PixelToWorld);
+                overlay.Offset = offset;
             }
         }
 

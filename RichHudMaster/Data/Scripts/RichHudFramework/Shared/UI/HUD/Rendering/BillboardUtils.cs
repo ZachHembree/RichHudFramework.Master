@@ -31,13 +31,15 @@ namespace RichHudFramework
                 private const int statsWindowSize = 240, sampleRateDiv = 5;
 
                 private readonly List<MyTriangleBillboard> bbBuf;
-                private readonly List<MyTriangleBillboard> bbPool;
+                private readonly List<MyTriangleBillboard>[] bbSwapPools;
+                private List<MyTriangleBillboard> bbPoolBack;
+                private int currentPool;
 
-                private List<TriangleBillboardData> bbDataBack, bbDataFront;
+                private List<TriangleBillboardData> bbDataList;
 
                 private readonly int[] billboardUsage, billboardAlloc;
                 private readonly List<int> billboardUsageStats, billboardAllocStats;
-                private readonly Action RenderCallback;
+                private readonly Action UpdateBillboardsCallback;
                 private int sampleTick, tick;
 
                 private BillBoardUtils() : base(false, true)
@@ -45,11 +47,15 @@ namespace RichHudFramework
                     if (instance != null)
                         throw new Exception($"Only one instance of {GetType().Name} can exist at once.");
 
-                    bbPool = new List<MyTriangleBillboard>(1000);
+                    bbSwapPools = new List<MyTriangleBillboard>[3]
+                    {
+                        new List<MyTriangleBillboard>(1000),
+                        new List<MyTriangleBillboard>(1000),
+                        new List<MyTriangleBillboard>(1000)
+                    };
                     bbBuf = new List<MyTriangleBillboard>(100);
 
-                    bbDataBack = new List<TriangleBillboardData>(1000);
-                    bbDataFront = new List<TriangleBillboardData>(1000);
+                    bbDataList = new List<TriangleBillboardData>(1000);
 
                     billboardUsage = new int[statsWindowSize];
                     billboardAlloc = new int[statsWindowSize];
@@ -57,7 +63,7 @@ namespace RichHudFramework
                     billboardUsageStats = new List<int>(statsWindowSize);
                     billboardAllocStats = new List<int>(statsWindowSize);
 
-                    RenderCallback = Render;
+                    UpdateBillboardsCallback = UpdateBillboards;
                 }
 
                 public static void Init()
@@ -90,18 +96,37 @@ namespace RichHudFramework
                         throw new Exception($"{typeof(BillBoardUtils).Name} not initialized!");
                 }
 
-                public override void Draw()
+                public static void BeginDraw()
                 {
-                    MyTransparentGeometry.ApplyActionOnPersistentBillboards(RenderCallback);
+                    if (instance != null)
+                    {
+                        instance.BeginDrawInternal();
+                    }
+                }
 
+                public static void FinishDraw()
+                {
+                    if (instance != null)
+                    {
+                        instance.FinishDrawInternal();
+                    }
+                }
+
+                private void BeginDrawInternal()
+                {
+                    bbPoolBack = bbSwapPools[currentPool];                    
+                }
+
+                private void FinishDrawInternal()
+                {
                     if (tick == 0)
                     {
-                        billboardUsage[sampleTick] = bbDataBack.Count;
+                        billboardUsage[sampleTick] = bbDataList.Count;
                         billboardUsageStats.Clear();
                         billboardUsageStats.AddRange(billboardUsage);
                         billboardUsageStats.Sort();
 
-                        billboardAlloc[sampleTick] = bbDataBack.Capacity;
+                        billboardAlloc[sampleTick] = bbDataList.Capacity;
                         billboardAllocStats.Clear();
                         billboardAllocStats.AddRange(billboardAlloc);
                         billboardAllocStats.Sort();
@@ -113,45 +138,27 @@ namespace RichHudFramework
                     tick++;
                     tick %= sampleRateDiv;
 
-                    if (Monitor.IsEntered(bbDataBack))
-                        Monitor.Exit(bbDataBack);
+                    MyTransparentGeometry.ApplyActionOnPersistentBillboards(UpdateBillboardsCallback);
+                    currentPool = (currentPool + 1) % bbSwapPools.Length;
+                    bbDataList.Clear();
+                }
 
-                    Monitor.Enter(bbDataFront);
-                    MyUtils.Swap(ref bbDataBack, ref bbDataFront);
-
-                    bbDataBack.Clear();
-                }   
-
-                private void Render()
+                private void UpdateBillboards()
                 {
-                    try
+                    for (int i = 0; i < bbDataList.Count; i++)
                     {
-                        Monitor.Enter(bbDataFront);
+                        MyTriangleBillboard bb = bbPoolBack[i];
+                        TriangleBillboardData bbData = bbDataList[i];
 
-                        for (int i = 0; i < bbDataFront.Count; i++)
-                        {
-                            MyTriangleBillboard bb = bbPool[i];
-                            TriangleBillboardData bbData = bbDataFront[i];
-
-                            bb.BlendType = bbData.blendType;
-                            bb.Position0 = bbData.positions.Point0;
-                            bb.Position1 = bbData.positions.Point1;
-                            bb.Position2 = bbData.positions.Point2;
-                            bb.UV0 = bbData.texCoords.Point0;
-                            bb.UV1 = bbData.texCoords.Point1;
-                            bb.UV2 = bbData.texCoords.Point2;
-                            bb.Material = bbData.material;
-                            bb.Color = bbData.color;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        ExceptionHandler.ReportException(e);
-                    }
-                    finally
-                    {
-                        if (Monitor.IsEntered(bbDataFront))
-                            Monitor.Exit(bbDataFront);
+                        bb.BlendType = bbData.blendType;
+                        bb.Position0 = bbData.positions.Point0;
+                        bb.Position1 = bbData.positions.Point1;
+                        bb.Position2 = bbData.positions.Point2;
+                        bb.UV0 = bbData.texCoords.Point0;
+                        bb.UV1 = bbData.texCoords.Point1;
+                        bb.UV2 = bbData.texCoords.Point2;
+                        bb.Material = bbData.material;
+                        bb.Color = bbData.color;
                     }
                 }
 
@@ -166,8 +173,8 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangles(List<int> indices, List<Vector3D> vertices, ref PolyMaterial mat)
                 {
-                    var bbPool = instance.bbPool;
-                    var bbDataBack = instance.bbDataBack;
+                    var bbPool = instance.bbPoolBack;
+                    var bbDataBack = instance.bbDataList;
                     var bbBuf = instance.bbBuf;
 
                     int triangleCount = indices.Count / 3,
@@ -181,7 +188,7 @@ namespace RichHudFramework
                         bbPool.Add(GetNewBB());
 
                     for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
-                        bbBuf.Add(instance.bbPool[i]);
+                        bbBuf.Add(instance.bbPoolBack[i]);
 
                     for (int i = 0; i < indices.Count; i += 3)
                     {
@@ -215,8 +222,8 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangleRange(Vector2I range, List<int> indices, List<Vector3D> vertices, ref PolyMaterial mat)
                 {
-                    var bbPool = instance.bbPool;
-                    var bbDataBack = instance.bbDataBack;
+                    var bbPool = instance.bbPoolBack;
+                    var bbDataBack = instance.bbDataList;
                     var bbBuf = instance.bbBuf;
 
                     int triangleCount = indices.Count / 3,
@@ -230,7 +237,7 @@ namespace RichHudFramework
                         bbPool.Add(GetNewBB());
 
                     for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
-                        bbBuf.Add(instance.bbPool[i]);
+                        bbBuf.Add(instance.bbPoolBack[i]);
 
                     for (int i = range.X; i <= range.Y; i += 3)
                     {
@@ -265,8 +272,8 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangles(List<int> indices, List<Vector3D> vertices, ref TriMaterial mat)
                 {
-                    var bbPool = instance.bbPool;
-                    var bbDataBack = instance.bbDataBack;
+                    var bbPool = instance.bbPoolBack;
+                    var bbDataBack = instance.bbDataList;
                     var bbBuf = instance.bbBuf;
 
                     int triangleCount = indices.Count / 3, 
@@ -280,7 +287,7 @@ namespace RichHudFramework
                         bbPool.Add(GetNewBB());
 
                     for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
-                        bbBuf.Add(instance.bbPool[i]);
+                        bbBuf.Add(instance.bbPoolBack[i]);
 
                     for (int i = 0; i < indices.Count; i += 3)
                     {
@@ -309,8 +316,8 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangle(int start, List<int> indices, List<Vector3D> vertices, ref TriMaterial mat)
                 {
-                    var bbPool = instance.bbPool;
-                    var bbDataBack = instance.bbDataBack;
+                    var bbPool = instance.bbPoolBack;
+                    var bbDataBack = instance.bbDataList;
                     int index = bbDataBack.Count;
 
                     var bb = new TriangleBillboardData
@@ -336,8 +343,8 @@ namespace RichHudFramework
 
                 public static void AddTriangle(ref TriMaterial mat, ref TriangleD triangle)
                 {
-                    var bbPool = instance.bbPool;
-                    var bbDataBack = instance.bbDataBack;
+                    var bbPool = instance.bbPoolBack;
+                    var bbDataBack = instance.bbDataList;
                     int index = bbDataBack.Count;
 
                     var bb = new TriangleBillboardData
@@ -358,8 +365,8 @@ namespace RichHudFramework
 
                 public static void AddQuad(ref QuadMaterial mat, ref MyQuadD quad)
                 {
-                    var bbPool = instance.bbPool;
-                    var bbDataBack = instance.bbDataBack;
+                    var bbPool = instance.bbPoolBack;
+                    var bbDataBack = instance.bbDataList;
                     int indexL = bbDataBack.Count,
                         indexR = bbDataBack.Count + 1;
 
@@ -414,8 +421,8 @@ namespace RichHudFramework
 
                 public static void AddQuad(ref BoundedQuadMaterial mat, ref MyQuadD quad)
                 {
-                    var bbPool = instance.bbPool;
-                    var bbDataBack = instance.bbDataBack;
+                    var bbPool = instance.bbPoolBack;
+                    var bbDataBack = instance.bbDataList;
                     int indexL = bbDataBack.Count,
                         indexR = bbDataBack.Count + 1;
 
@@ -480,6 +487,7 @@ namespace RichHudFramework
                     bb.UV2 = Vector2.Zero;
                     bb.Material = Material.Default.TextureID;
                     bb.Color = Vector4.One;
+                    bb.DistanceSquared = float.PositiveInfinity;
                     bb.ColorIntensity = 1f;
                     bb.CustomViewProjection = -1;
 

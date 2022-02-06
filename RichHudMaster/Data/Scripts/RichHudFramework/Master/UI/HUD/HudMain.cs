@@ -174,6 +174,8 @@ namespace RichHudFramework
             /// </summary>
             public override void Draw()
             {
+                BillBoardUtils.BeginDraw();
+
                 UpdateCache();
                 treeManager.Draw();
 
@@ -181,6 +183,8 @@ namespace RichHudFramework
 
                 if (drawTick == tickResetInterval)
                     drawTick = 0;
+
+                BillBoardUtils.FinishDraw();
             }
 
             public override void HandleInput()
@@ -225,7 +229,7 @@ namespace RichHudFramework
                     M43 = -MyAPIGateway.Session.Camera.NearPlaneDistance,
                     M44 = 1d
                 };
-
+                
                 PixelToWorldRef[0] *= MyAPIGateway.Session.Camera.WorldMatrix;
             }
 
@@ -283,7 +287,6 @@ namespace RichHudFramework
                         unfocusedOffset = WindowBaseOffset;
 
                     this.LoseFocusCallback = LoseFocusCallback;
-
                     return WindowMaxOffset;
                 }
                 else
