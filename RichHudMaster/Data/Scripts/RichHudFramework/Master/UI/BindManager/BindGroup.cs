@@ -29,6 +29,11 @@ namespace RichHudFramework
                 public IBind this[int index] => keyBinds[index];
 
                 /// <summary>
+                /// Retrieves the bind with the given name
+                /// </summary>
+                public IBind this[string name] => GetBind(name);
+
+                /// <summary>
                 /// Returns the number of binds in the group
                 /// </summary>
                 public int Count => keyBinds.Count;

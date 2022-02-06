@@ -52,7 +52,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Retrieves default font for Space Engineers with regular styling.
                 /// </summary>
-                public static IFontStyle Default => Instance.fonts[0][0];
+                public static Vector2I Default => Vector2I.Zero;
 
                 /// <summary>
                 /// Read-only collection of all registered fonts.
