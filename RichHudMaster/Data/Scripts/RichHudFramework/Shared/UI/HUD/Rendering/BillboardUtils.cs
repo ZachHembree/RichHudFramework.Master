@@ -184,8 +184,7 @@ namespace RichHudFramework
                     bbPool.EnsureCapacity(bbDataBack.Count + triangleCount);
                     bbBuf.Clear();
 
-                    for (int i = 0; i < bbToAdd; i++)
-                        bbPool.Add(GetNewBB());
+                    instance.AddNewBB(bbToAdd);
 
                     for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
                         bbBuf.Add(instance.bbPoolBack[i]);
@@ -233,8 +232,7 @@ namespace RichHudFramework
                     bbPool.EnsureCapacity(bbDataBack.Count + triangleCount);
                     bbBuf.Clear();
 
-                    for (int i = 0; i < bbToAdd; i++)
-                        bbPool.Add(GetNewBB());
+                    instance.AddNewBB(bbToAdd);
 
                     for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
                         bbBuf.Add(instance.bbPoolBack[i]);
@@ -283,8 +281,7 @@ namespace RichHudFramework
                     bbPool.EnsureCapacity(bbDataBack.Count + triangleCount);
                     bbBuf.Clear();
 
-                    for (int i = 0; i < bbToAdd; i++)
-                        bbPool.Add(GetNewBB());
+                    instance.AddNewBB(bbToAdd);
 
                     for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
                         bbBuf.Add(instance.bbPoolBack[i]);
@@ -336,7 +333,7 @@ namespace RichHudFramework
                     bbDataBack.Add(bb);
 
                     if (index >= bbPool.Count)
-                        bbPool.Add(GetNewBB());
+                        instance.AddNewBB(index - (bbPool.Count - 1));
 
                     MyTransparentGeometry.AddBillboard(bbPool[index], false);
                 }
@@ -358,7 +355,7 @@ namespace RichHudFramework
                     bbDataBack.Add(bb);
 
                     if (index >= bbPool.Count)
-                        bbPool.Add(GetNewBB());
+                        instance.AddNewBB(index - (bbPool.Count - 1));
 
                     MyTransparentGeometry.AddBillboard(bbPool[index], false);
                 }
@@ -410,10 +407,8 @@ namespace RichHudFramework
                     bbDataBack.Add(bbL);
                     bbDataBack.Add(bbR);
 
-                    if (indexL >= bbPool.Count)
-                        bbPool.Add(GetNewBB());
                     if (indexR >= bbPool.Count)
-                        bbPool.Add(GetNewBB());
+                        instance.AddNewBB(indexR - (bbPool.Count - 1));
 
                     MyTransparentGeometry.AddBillboard(bbPool[indexL], false);
                     MyTransparentGeometry.AddBillboard(bbPool[indexR], false);
@@ -466,32 +461,33 @@ namespace RichHudFramework
                     bbDataBack.Add(bbL);
                     bbDataBack.Add(bbR);
 
-                    if (indexL >= bbPool.Count)
-                        bbPool.Add(GetNewBB());
                     if (indexR >= bbPool.Count)
-                        bbPool.Add(GetNewBB());
+                        instance.AddNewBB(indexR - (bbPool.Count - 1));
 
                     MyTransparentGeometry.AddBillboard(bbPool[indexL], false);
                     MyTransparentGeometry.AddBillboard(bbPool[indexR], false);
                 }
 
-                private static MyTriangleBillboard GetNewBB()
+                private void AddNewBB(int count)
                 {
-                    var bb = new MyTriangleBillboard();
-                    bb.BlendType = BlendTypeEnum.PostPP;
-                    bb.Position0 = Vector3D.Zero;
-                    bb.Position1 = Vector3D.Zero;
-                    bb.Position2 = Vector3D.Zero;
-                    bb.UV0 = Vector2.Zero;
-                    bb.UV1 = Vector2.Zero;
-                    bb.UV2 = Vector2.Zero;
-                    bb.Material = Material.Default.TextureID;
-                    bb.Color = Vector4.One;
-                    bb.DistanceSquared = float.PositiveInfinity;
-                    bb.ColorIntensity = 1f;
-                    bb.CustomViewProjection = -1;
-
-                    return bb;
+                    for (int i = 0; i < count; i++)
+                    {
+                        bbPoolBack.Add(new MyTriangleBillboard
+                        {
+                            BlendType = BlendTypeEnum.PostPP,
+                            Position0 = Vector3D.Zero,
+                            Position1 = Vector3D.Zero,
+                            Position2 = Vector3D.Zero,
+                            UV0 = Vector2.Zero,
+                            UV1 = Vector2.Zero,
+                            UV2 = Vector2.Zero,
+                            Material = Material.Default.TextureID,
+                            Color = Vector4.One,
+                            DistanceSquared = float.PositiveInfinity,
+                            ColorIntensity = 1f,
+                            CustomViewProjection = -1
+                        });
+                    }
                 }
 
                 /// <summary>
