@@ -145,10 +145,13 @@ namespace RichHudFramework
                 /// </summary>
                 public void ToggleMenu()
                 {
-                    if (!Visible)
-                        OpenMenu();
-                    else
-                        CloseMenu();
+                    if (!SharedBinds.Alt.IsPressed)
+                    {
+                        if (!Visible)
+                            OpenMenu();
+                        else
+                            CloseMenu();
+                    }
                 }
 
                 /// <summary>
