@@ -56,6 +56,11 @@ namespace RichHudFramework
             public static SeBlacklistModes CurrentBlacklistMode { get; private set; }
 
             /// <summary>
+            /// MyAPIGateway.Gui.ChatEntryVisible, but actually usable for input polling
+            /// </summary>
+            public static bool IsChatOpen { get; private set; }
+
+            /// <summary>
             /// Read-only list of all controls bound to a key
             /// </summary>
             public static IReadOnlyList<string> SeControlIDs { get { if (_instance == null) Init(); return _instance.seControlIDs; } }
@@ -99,6 +104,7 @@ namespace RichHudFramework
 
             private Client mainClient;
             private bool areControlsBlacklisted, areMouseControlsBlacklisted;
+            private int chatInputTick;
 
             private BindManager() : base(false, true)
             {
@@ -136,6 +142,21 @@ namespace RichHudFramework
                     for (int n = 0; n < bindClients.Count; n++)
                         bindClients[n].HandleInput();
                 }
+
+                if (SharedBinds.Enter.IsNewPressed)
+                {
+                    IsChatOpen = !IsChatOpen;
+                    chatInputTick = 0;
+                }
+
+                // Synchronize with actual value every second or so
+                if (chatInputTick == 60)
+                {
+                    IsChatOpen = MyAPIGateway.Gui.ChatEntryVisible;
+                }
+
+                chatInputTick++;
+                chatInputTick %= 60;
             }
 
             private void UpdateControls()

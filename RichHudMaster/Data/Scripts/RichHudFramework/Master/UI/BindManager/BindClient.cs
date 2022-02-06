@@ -163,6 +163,8 @@ namespace RichHudFramework
                                 else
                                     return RequestBlacklistMode;
                             }
+                        case BindClientAccessors.IsChatOpen:
+                            return IsChatOpen;
                     }
 
                     return null;
