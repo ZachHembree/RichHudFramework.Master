@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Threading;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRage;
 using VRage.Utils;
@@ -15,38 +16,48 @@ namespace RichHudFramework
     {
         namespace Rendering
         {
+            public struct TriangleBillboardData
+            {
+                public BlendTypeEnum blendType;
+                public MyStringId material;
+                public Vector4 color;
+                public Triangle texCoords;
+                public TriangleD positions;
+            }
+
             public sealed class BillBoardUtils : RichHudComponentBase
             {
                 private static BillBoardUtils instance;
-                private static int triBillboardCount;
                 private const int statsWindowSize = 240, sampleRateDiv = 5;
 
-                private readonly List<MyBillboard> billboardBuffer;
-                private List<MyTriangleBillboard> triBillboardBack, triBillboardFront;
+                private readonly List<MyTriangleBillboard> bbBuf;
+                private readonly List<MyTriangleBillboard> bbPool;
+
+                private List<TriangleBillboardData> bbDataBack, bbDataFront;
 
                 private readonly int[] billboardUsage, billboardAlloc;
                 private readonly List<int> billboardUsageStats, billboardAllocStats;
+                private readonly Action RenderCallback;
                 private int sampleTick, tick;
-
-                static BillBoardUtils()
-                {
-                    MyTransparentGeometry.ApplyActionOnPersistentBillboards(Render);
-                }
 
                 private BillBoardUtils() : base(false, true)
                 {
                     if (instance != null)
                         throw new Exception($"Only one instance of {GetType().Name} can exist at once.");
 
-                    triBillboardBack = new List<MyTriangleBillboard>(1000);
-                    triBillboardFront = new List<MyTriangleBillboard>(1000);
-                    billboardBuffer = new List<MyBillboard>(100);
+                    bbPool = new List<MyTriangleBillboard>(1000);
+                    bbBuf = new List<MyTriangleBillboard>(100);
+
+                    bbDataBack = new List<TriangleBillboardData>(1000);
+                    bbDataFront = new List<TriangleBillboardData>(1000);
 
                     billboardUsage = new int[statsWindowSize];
                     billboardAlloc = new int[statsWindowSize];
 
                     billboardUsageStats = new List<int>(statsWindowSize);
                     billboardAllocStats = new List<int>(statsWindowSize);
+
+                    RenderCallback = Render;
                 }
 
                 public static void Init()
@@ -80,26 +91,17 @@ namespace RichHudFramework
                 }
 
                 public override void Draw()
-                { }
-
-                private static void Render()
                 {
-                    if (instance != null)
-                    {
-                        
-                    }
-                }
+                    MyTransparentGeometry.ApplyActionOnPersistentBillboards(RenderCallback);
 
-                public override void HandleInput()
-                {
                     if (tick == 0)
                     {
-                        billboardUsage[sampleTick] = triBillboardCount;
+                        billboardUsage[sampleTick] = bbDataBack.Count;
                         billboardUsageStats.Clear();
                         billboardUsageStats.AddRange(billboardUsage);
                         billboardUsageStats.Sort();
 
-                        billboardAlloc[sampleTick] = triBillboardBack.Count;
+                        billboardAlloc[sampleTick] = bbPool.Count;
                         billboardAllocStats.Clear();
                         billboardAllocStats.AddRange(billboardAlloc);
                         billboardAllocStats.Sort();
@@ -111,8 +113,46 @@ namespace RichHudFramework
                     tick++;
                     tick %= sampleRateDiv;
 
-                    MyUtils.Swap(ref instance.triBillboardBack, ref instance.triBillboardFront);
-                    triBillboardCount = 0;
+                    if (Monitor.IsEntered(bbDataBack))
+                        Monitor.Exit(bbDataBack);
+
+                    Monitor.Enter(bbDataFront);
+                    MyUtils.Swap(ref bbDataBack, ref bbDataFront);
+
+                    bbDataBack.Clear();
+                }   
+
+                private void Render()
+                {
+                    try
+                    {
+                        Monitor.Enter(bbDataFront);
+
+                        for (int i = 0; i < bbDataFront.Count; i++)
+                        {
+                            MyTriangleBillboard bb = bbPool[i];
+                            TriangleBillboardData bbData = bbDataFront[i];
+
+                            bb.BlendType = bbData.blendType;
+                            bb.Position0 = bbData.positions.Point0;
+                            bb.Position1 = bbData.positions.Point1;
+                            bb.Position2 = bbData.positions.Point2;
+                            bb.UV0 = bbData.texCoords.Point0;
+                            bb.UV1 = bbData.texCoords.Point1;
+                            bb.UV2 = bbData.texCoords.Point2;
+                            bb.Material = bbData.material;
+                            bb.Color = bbData.color;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        ExceptionHandler.ReportException(e);
+                    }
+                    finally
+                    {
+                        if (Monitor.IsEntered(bbDataFront))
+                            Monitor.Exit(bbDataFront);
+                    }
                 }
 
                 public override void Close()
@@ -126,37 +166,44 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangles(List<int> indices, List<Vector3D> vertices, ref PolyMaterial mat)
                 {
-                    var bbPool = instance.triBillboardBack;
-                    var bbBuf = instance.billboardBuffer;
+                    var bbPool = instance.bbPool;
+                    var bbDataBack = instance.bbDataBack;
+                    var bbBuf = instance.bbBuf;
 
                     int triangleCount = indices.Count / 3,
-                        bbRemaining = bbPool.Count - triBillboardCount,
+                        bbRemaining = bbPool.Count - bbDataBack.Count,
                         bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
 
-                    bbPool.EnsureCapacity(triBillboardCount + triangleCount);
+                    bbPool.EnsureCapacity(bbDataBack.Count + triangleCount);
+                    bbBuf.Clear();
 
                     for (int i = 0; i < bbToAdd; i++)
-                        bbPool.Add(new MyTriangleBillboard());
+                        bbPool.Add(GetNewBB());
 
-                    for (int i = triBillboardCount; i < triangleCount + triBillboardCount; i++)
-                        bbBuf.Add(instance.triBillboardBack[i]);
+                    for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
+                        bbBuf.Add(instance.bbPool[i]);
 
                     for (int i = 0; i < indices.Count; i += 3)
                     {
-                        MyTriangleBillboard bb = instance.triBillboardBack[triBillboardCount];
-                        triBillboardCount++;
-
-                        bb.BlendType = BlendTypeEnum.PostPP;
-                        bb.Position0 = vertices[indices[i]];
-                        bb.Position1 = vertices[indices[i + 1]];
-                        bb.Position2 = vertices[indices[i + 2]];
-                        bb.UV0 = mat.texCoords[indices[i]];
-                        bb.UV1 = mat.texCoords[indices[i + 1]];
-                        bb.UV2 = mat.texCoords[indices[i + 2]];
-                        bb.Material = mat.textureID;
-                        bb.Color = mat.bbColor;
-                        bb.ColorIntensity = 1f;
-                        bb.CustomViewProjection = -1;
+                        var bb = new TriangleBillboardData
+                        {
+                            blendType = BlendTypeEnum.PostPP,
+                            positions = new TriangleD
+                            {
+                                Point0 = vertices[indices[i]],
+                                Point1 = vertices[indices[i + 1]],
+                                Point2 = vertices[indices[i + 2]],
+                            },
+                            texCoords = new Triangle
+                            {
+                                Point0 = mat.texCoords[indices[i]],
+                                Point1 = mat.texCoords[indices[i + 1]],
+                                Point2 = mat.texCoords[indices[i + 2]],
+                            },
+                            material = mat.textureID,
+                            color = mat.bbColor,
+                        };
+                        bbDataBack.Add(bb);
                     }
 
                     MyTransparentGeometry.AddBillboards(bbBuf, false);
@@ -168,37 +215,44 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangleRange(Vector2I range, List<int> indices, List<Vector3D> vertices, ref PolyMaterial mat)
                 {
-                    var bbPool = instance.triBillboardBack;
-                    var bbBuf = instance.billboardBuffer;
+                    var bbPool = instance.bbPool;
+                    var bbDataBack = instance.bbDataBack;
+                    var bbBuf = instance.bbBuf;
 
-                    int triangleCount = (range.Y - range.X) / 3,
-                        bbRemaining = bbPool.Count - triBillboardCount,
+                    int triangleCount = indices.Count / 3,
+                        bbRemaining = bbPool.Count - bbDataBack.Count,
                         bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
 
-                    bbPool.EnsureCapacity(triBillboardCount + triangleCount);
+                    bbPool.EnsureCapacity(bbDataBack.Count + triangleCount);
+                    bbBuf.Clear();
 
                     for (int i = 0; i < bbToAdd; i++)
-                        bbPool.Add(new MyTriangleBillboard());
+                        bbPool.Add(GetNewBB());
 
-                    for (int i = triBillboardCount; i < triangleCount + triBillboardCount; i++)
-                        bbBuf.Add(instance.triBillboardBack[i]);
+                    for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
+                        bbBuf.Add(instance.bbPool[i]);
 
                     for (int i = range.X; i <= range.Y; i += 3)
                     {
-                        MyTriangleBillboard bb = instance.triBillboardBack[triBillboardCount];
-                        triBillboardCount++;
-
-                        bb.BlendType = BlendTypeEnum.PostPP;
-                        bb.Position0 = vertices[indices[i]];
-                        bb.Position1 = vertices[indices[i + 1]];
-                        bb.Position2 = vertices[indices[i + 2]];
-                        bb.UV0 = mat.texCoords[indices[i]];
-                        bb.UV1 = mat.texCoords[indices[i + 1]];
-                        bb.UV2 = mat.texCoords[indices[i + 2]];
-                        bb.Material = mat.textureID;
-                        bb.Color = mat.bbColor;
-                        bb.ColorIntensity = 1f;
-                        bb.CustomViewProjection = -1;
+                        var bb = new TriangleBillboardData
+                        {
+                            blendType = BlendTypeEnum.PostPP,
+                            positions = new TriangleD
+                            {
+                                Point0 = vertices[indices[i]],
+                                Point1 = vertices[indices[i + 1]],
+                                Point2 = vertices[indices[i + 2]],
+                            },
+                            texCoords = new Triangle
+                            {
+                                Point0 = mat.texCoords[indices[i]],
+                                Point1 = mat.texCoords[indices[i + 1]],
+                                Point2 = mat.texCoords[indices[i + 2]],
+                            },
+                            material = mat.textureID,
+                            color = mat.bbColor,
+                        };
+                        bbDataBack.Add(bb);
                     }
 
                     MyTransparentGeometry.AddBillboards(bbBuf, false);
@@ -211,37 +265,39 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangles(List<int> indices, List<Vector3D> vertices, ref TriMaterial mat)
                 {
-                    var bbPool = instance.triBillboardBack;
-                    var bbBuf = instance.billboardBuffer;
+                    var bbPool = instance.bbPool;
+                    var bbDataBack = instance.bbDataBack;
+                    var bbBuf = instance.bbBuf;
 
                     int triangleCount = indices.Count / 3, 
-                        bbRemaining = bbPool.Count - triBillboardCount,
+                        bbRemaining = bbPool.Count - bbDataBack.Count,
                         bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
 
-                    bbPool.EnsureCapacity(triBillboardCount + triangleCount);
+                    bbPool.EnsureCapacity(bbDataBack.Count + triangleCount);
+                    bbBuf.Clear();
 
                     for (int i = 0; i < bbToAdd; i++)
-                        bbPool.Add(new MyTriangleBillboard());
+                        bbPool.Add(GetNewBB());
 
-                    for (int i = triBillboardCount; i < triangleCount + triBillboardCount; i++)
-                        bbBuf.Add(instance.triBillboardBack[i]);
+                    for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
+                        bbBuf.Add(instance.bbPool[i]);
 
                     for (int i = 0; i < indices.Count; i += 3)
                     {
-                        MyTriangleBillboard bb = instance.triBillboardBack[triBillboardCount];
-                        triBillboardCount++;
-
-                        bb.BlendType = BlendTypeEnum.PostPP;
-                        bb.Position0 = vertices[indices[i]];
-                        bb.Position1 = vertices[indices[i + 1]];
-                        bb.Position2 = vertices[indices[i + 2]];
-                        bb.UV0 = mat.texCoords.Point0;
-                        bb.UV1 = mat.texCoords.Point1;
-                        bb.UV2 = mat.texCoords.Point2;
-                        bb.Material = mat.textureID;
-                        bb.Color = mat.bbColor;
-                        bb.ColorIntensity = 1f;
-                        bb.CustomViewProjection = -1;
+                        var bb = new TriangleBillboardData
+                        {
+                            blendType = BlendTypeEnum.PostPP,
+                            positions = new TriangleD
+                            {
+                                Point0 = vertices[indices[i]],
+                                Point1 = vertices[indices[i + 1]],
+                                Point2 = vertices[indices[i + 2]],
+                            },
+                            texCoords = mat.texCoords,
+                            material = mat.textureID,
+                            color = mat.bbColor,
+                        };
+                        bbDataBack.Add(bb);
                     }
 
                     MyTransparentGeometry.AddBillboards(bbBuf, false);
@@ -253,160 +309,181 @@ namespace RichHudFramework
                 /// </summary>
                 public static void AddTriangle(int start, List<int> indices, List<Vector3D> vertices, ref TriMaterial mat)
                 {
-                    MyTriangleBillboard bb;
-                    triBillboardCount++;
+                    var bbPool = instance.bbPool;
+                    var bbDataBack = instance.bbDataBack;
+                    int index = bbDataBack.Count;
 
-                    if (triBillboardCount < instance.triBillboardBack.Count)
-                        bb = instance.triBillboardBack[triBillboardCount];
-                    else
+                    var bb = new TriangleBillboardData
                     {
-                        bb = new MyTriangleBillboard();
-                        instance.triBillboardBack.Add(bb);
-                    }
+                        blendType = BlendTypeEnum.PostPP,
+                        positions = new TriangleD
+                        {
+                            Point0 = vertices[indices[start]],
+                            Point1 = vertices[indices[start + 1]],
+                            Point2 = vertices[indices[start + 2]],
+                        },
+                        texCoords = mat.texCoords,
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                    };
+                    bbDataBack.Add(bb);
 
-                    bb.BlendType = BlendTypeEnum.PostPP;
-                    bb.Position0 = vertices[indices[start]];
-                    bb.Position1 = vertices[indices[start + 1]];
-                    bb.Position2 = vertices[indices[start + 2]];
-                    bb.UV0 = mat.texCoords.Point0;
-                    bb.UV1 = mat.texCoords.Point1;
-                    bb.UV2 = mat.texCoords.Point2;
-                    bb.Material = mat.textureID;
-                    bb.Color = mat.bbColor;
-                    bb.ColorIntensity = 1f;
-                    bb.CustomViewProjection = -1;
+                    if (index >= bbPool.Count)
+                        bbPool.Add(GetNewBB());
 
-                    MyTransparentGeometry.AddBillboard(bb, false);
+                    MyTransparentGeometry.AddBillboard(bbPool[index], false);
                 }
 
                 public static void AddTriangle(ref TriMaterial mat, ref TriangleD triangle)
                 {
-                    MyTriangleBillboard bb;
-                    triBillboardCount++;
+                    var bbPool = instance.bbPool;
+                    var bbDataBack = instance.bbDataBack;
+                    int index = bbDataBack.Count;
 
-                    if (triBillboardCount < instance.triBillboardBack.Count)
-                        bb = instance.triBillboardBack[triBillboardCount];
-                    else
+                    var bb = new TriangleBillboardData
                     {
-                        bb = new MyTriangleBillboard();
-                        instance.triBillboardBack.Add(bb);
-                    }
+                        blendType = BlendTypeEnum.PostPP,
+                        positions = triangle,
+                        texCoords = mat.texCoords,
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                    };
+                    bbDataBack.Add(bb);
 
-                    bb.BlendType = BlendTypeEnum.PostPP;
-                    bb.Position0 = triangle.Point0;
-                    bb.Position1 = triangle.Point1;
-                    bb.Position2 = triangle.Point2;
-                    bb.UV0 = mat.texCoords.Point0;
-                    bb.UV1 = mat.texCoords.Point1;
-                    bb.UV2 = mat.texCoords.Point2;
-                    bb.Material = mat.textureID;
-                    bb.Color = mat.bbColor;
-                    bb.ColorIntensity = 1f;
-                    bb.CustomViewProjection = -1;
+                    if (index >= bbPool.Count)
+                        bbPool.Add(GetNewBB());
 
-                    MyTransparentGeometry.AddBillboard(bb, false);
+                    MyTransparentGeometry.AddBillboard(bbPool[index], false);
                 }
 
                 public static void AddQuad(ref QuadMaterial mat, ref MyQuadD quad)
                 {
-                    MyTriangleBillboard bbL, bbR;
-                    triBillboardCount++;
+                    var bbPool = instance.bbPool;
+                    var bbDataBack = instance.bbDataBack;
+                    int indexL = bbDataBack.Count,
+                        indexR = bbDataBack.Count + 1;
 
-                    if (triBillboardCount < instance.triBillboardBack.Count)
-                        bbL = instance.triBillboardBack[triBillboardCount];
-                    else
+                    var bbL = new TriangleBillboardData
                     {
-                        bbL = new MyTriangleBillboard();
-                        instance.triBillboardBack.Add(bbL);
-                    }
-
-                    triBillboardCount++;
-
-                    if (triBillboardCount < instance.triBillboardBack.Count)
-                        bbR = instance.triBillboardBack[triBillboardCount];
-                    else
+                        blendType = BlendTypeEnum.PostPP,
+                        positions = new TriangleD
+                        {
+                            Point0 = quad.Point0,
+                            Point1 = quad.Point1,
+                            Point2 = quad.Point2,
+                        },
+                        texCoords = new Triangle
+                        {
+                            Point0 = mat.texCoords.Point0,
+                            Point1 = mat.texCoords.Point1,
+                            Point2 = mat.texCoords.Point2,
+                        },
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                    };
+                    var bbR = new TriangleBillboardData
                     {
-                        bbR = new MyTriangleBillboard();
-                        instance.triBillboardBack.Add(bbR);
-                    }
+                        blendType = BlendTypeEnum.PostPP,
+                        positions = new TriangleD
+                        {
+                            Point0 = quad.Point0,
+                            Point1 = quad.Point2,
+                            Point2 = quad.Point3,
+                        },
+                        texCoords = new Triangle
+                        {
+                            Point0 = mat.texCoords.Point0,
+                            Point1 = mat.texCoords.Point2,
+                            Point2 = mat.texCoords.Point3,
+                        },
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                    };
 
-                    bbL.BlendType = BlendTypeEnum.PostPP;
-                    bbL.Position0 = quad.Point0;
-                    bbL.Position1 = quad.Point1;
-                    bbL.Position2 = quad.Point2;
-                    bbL.UV0 = mat.texCoords.Point0;
-                    bbL.UV1 = mat.texCoords.Point1;
-                    bbL.UV2 = mat.texCoords.Point2;
-                    bbL.Material = mat.textureID;
-                    bbL.Color = mat.bbColor;
-                    bbL.ColorIntensity = 1f;
-                    bbL.CustomViewProjection = -1;
+                    bbDataBack.Add(bbL);
+                    bbDataBack.Add(bbR);
 
-                    bbR.BlendType = BlendTypeEnum.PostPP;
-                    bbR.Position0 = quad.Point0;
-                    bbR.Position1 = quad.Point2;
-                    bbR.Position2 = quad.Point3;
-                    bbR.UV0 = mat.texCoords.Point0;
-                    bbR.UV1 = mat.texCoords.Point2;
-                    bbR.UV2 = mat.texCoords.Point3;
-                    bbR.Material = mat.textureID;
-                    bbR.Color = mat.bbColor;
-                    bbR.ColorIntensity = 1f;
-                    bbR.CustomViewProjection = -1;
+                    if (indexL >= bbPool.Count)
+                        bbPool.Add(GetNewBB());
+                    if (indexR >= bbPool.Count)
+                        bbPool.Add(GetNewBB());
 
-                    MyTransparentGeometry.AddBillboard(bbL, false);
-                    MyTransparentGeometry.AddBillboard(bbR, false);
+                    MyTransparentGeometry.AddBillboard(bbPool[indexL], false);
+                    MyTransparentGeometry.AddBillboard(bbPool[indexR], false);
                 }
 
                 public static void AddQuad(ref BoundedQuadMaterial mat, ref MyQuadD quad)
                 {
-                    MyTriangleBillboard bbL, bbR;
-                    triBillboardCount++;
+                    var bbPool = instance.bbPool;
+                    var bbDataBack = instance.bbDataBack;
+                    int indexL = bbDataBack.Count,
+                        indexR = bbDataBack.Count + 1;
 
-                    if (triBillboardCount < instance.triBillboardBack.Count)
-                        bbL = instance.triBillboardBack[triBillboardCount];
-                    else
+                    var bbL = new TriangleBillboardData
                     {
-                        bbL = new MyTriangleBillboard();
-                        instance.triBillboardBack.Add(bbL);
-                    }
-
-                    triBillboardCount++;
-
-                    if (triBillboardCount < instance.triBillboardBack.Count)
-                        bbR = instance.triBillboardBack[triBillboardCount];
-                    else
+                        blendType = BlendTypeEnum.PostPP,
+                        positions = new TriangleD
+                        {
+                            Point0 = quad.Point0,
+                            Point1 = quad.Point1,
+                            Point2 = quad.Point2,
+                        },
+                        texCoords = new Triangle
+                        {
+                            Point0 = mat.texBounds.Min,
+                            Point1 = mat.texBounds.Min + new Vector2(0f, mat.texBounds.Size.Y),
+                            Point2 = mat.texBounds.Max,
+                        },
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                    };
+                    var bbR = new TriangleBillboardData
                     {
-                        bbR = new MyTriangleBillboard();
-                        instance.triBillboardBack.Add(bbR);
-                    }
+                        blendType = BlendTypeEnum.PostPP,
+                        positions = new TriangleD
+                        {
+                            Point0 = quad.Point0,
+                            Point1 = quad.Point2,
+                            Point2 = quad.Point3,
+                        },
+                        texCoords = new Triangle
+                        {
+                            Point0 = mat.texBounds.Min,
+                            Point1 = mat.texBounds.Max,
+                            Point2 = mat.texBounds.Min + new Vector2(mat.texBounds.Size.X, 0f),
+                        },
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                    };
+   
+                    bbDataBack.Add(bbL);
+                    bbDataBack.Add(bbR);
 
-                    bbL.BlendType = BlendTypeEnum.PostPP;
-                    bbL.Position0 = quad.Point0;
-                    bbL.Position1 = quad.Point1;
-                    bbL.Position2 = quad.Point2;
-                    bbL.UV0 = mat.texBounds.Min;
-                    bbL.UV1 = mat.texBounds.Min + new Vector2(0f, mat.texBounds.Size.Y);
-                    bbL.UV2 = mat.texBounds.Max;
-                    bbL.Material = mat.textureID;
-                    bbL.Color = mat.bbColor;
-                    bbL.ColorIntensity = 1f;
-                    bbL.CustomViewProjection = -1;
+                    if (indexL >= bbPool.Count)
+                        bbPool.Add(GetNewBB());
+                    if (indexR >= bbPool.Count)
+                        bbPool.Add(GetNewBB());
 
-                    bbR.BlendType = BlendTypeEnum.PostPP;
-                    bbR.Position0 = quad.Point0;
-                    bbR.Position1 = quad.Point2;
-                    bbR.Position2 = quad.Point3;
-                    bbR.UV0 = mat.texBounds.Min;
-                    bbR.UV1 = mat.texBounds.Max;
-                    bbR.UV2 = mat.texBounds.Min + new Vector2(mat.texBounds.Size.X, 0f);
-                    bbR.Material = mat.textureID;
-                    bbR.Color = mat.bbColor;
-                    bbR.ColorIntensity = 1f;
-                    bbR.CustomViewProjection = -1;
+                    MyTransparentGeometry.AddBillboard(bbPool[indexL], false);
+                    MyTransparentGeometry.AddBillboard(bbPool[indexR], false);
+                }
 
-                    MyTransparentGeometry.AddBillboard(bbL, false);
-                    MyTransparentGeometry.AddBillboard(bbR, false);
+                private static MyTriangleBillboard GetNewBB()
+                {
+                    var bb = new MyTriangleBillboard();
+                    bb.BlendType = BlendTypeEnum.PostPP;
+                    bb.Position0 = Vector3D.Zero;
+                    bb.Position1 = Vector3D.Zero;
+                    bb.Position2 = Vector3D.Zero;
+                    bb.UV0 = Vector2.Zero;
+                    bb.UV1 = Vector2.Zero;
+                    bb.UV2 = Vector2.Zero;
+                    bb.Material = Material.Default.TextureID;
+                    bb.Color = Vector4.One;
+                    bb.ColorIntensity = 1f;
+                    bb.CustomViewProjection = -1;
+
+                    return bb;
                 }
 
                 /// <summary>
