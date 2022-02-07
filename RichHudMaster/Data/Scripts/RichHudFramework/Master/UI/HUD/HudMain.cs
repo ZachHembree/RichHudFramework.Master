@@ -8,6 +8,8 @@ using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.Matrix
 
 namespace RichHudFramework
 {
+    using Server;
+
     namespace UI.Server
     {
         public sealed partial class HudMain : RichHudParallelComponentBase
@@ -174,8 +176,6 @@ namespace RichHudFramework
             /// </summary>
             public override void Draw()
             {
-                BillBoardUtils.BeginDraw();
-
                 UpdateCache();
                 treeManager.Draw();
 
@@ -183,8 +183,6 @@ namespace RichHudFramework
 
                 if (drawTick == tickResetInterval)
                     drawTick = 0;
-
-                BillBoardUtils.FinishDraw();
             }
 
             public override void HandleInput()

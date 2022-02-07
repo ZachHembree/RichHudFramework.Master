@@ -1,23 +1,17 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Sandbox.ModAPI;
+using System.Text;
 using VRage;
-using VRage.Game;
-using VRage.Game.ModAPI;
 using VRageMath;
 
 namespace RichHudFramework.Server
 {
     using Internal;
     using UI;
+    using UI.Rendering;
     using UI.Rendering.Server;
     using UI.Server;
-    using UI.Rendering;
-    using ApiMemberAccessor = System.Func<object, int, object>;
-    using ClientData = MyTuple<string, Action<int, object>, Action, int>;
-    using ServerData = MyTuple<Action, Func<int, object>, int>;
 
     public sealed class RichHudDebug : RichHudComponentBase
     {
@@ -30,7 +24,7 @@ namespace RichHudFramework.Server
 
         private readonly Stopwatch updateTimer;
         private readonly UpdateStats stats;
-        private readonly Label overlay;
+        private readonly TextBoard overlay;
         private bool enableOverlay;
         private Vector2 overlayPos;
 
@@ -59,38 +53,37 @@ namespace RichHudFramework.Server
             enableOverlay = false;
             EnableDebug = false;
 
-            overlay = new Label(HudMain.HighDpiRoot) 
+            overlay = new TextBoard()
             {
-                ZOffset = 2,
-                Visible = false,
                 AutoResize = true,
                 BuilderMode = TextBuilderModes.Lined,
-                Format = new GlyphFormat(new Color(255, 191, 0), textSize: 0.8f)
+                Scale = 0.8f,
+                Format = new GlyphFormat(new Color(255, 191, 0))
             };
 
-            pageCategory = new TerminalPageCategory() 
+            pageCategory = new TerminalPageCategory()
             {
                 Name = "Debug",
                 Enabled = false,
-                PageContainer = 
+                PageContainer =
                 {
                     new DemoPage()
                     {
                         Name = "Demo",
-                    }, 
+                    },
 
                     statsText,
 
                     new ControlPage()
                     {
                         Name = "Settings",
-                        CategoryContainer = 
+                        CategoryContainer =
                         {
                             new ControlCategory()
                             {
                                 HeaderText = "Debug Settings",
                                 SubheaderText = "",
-                                TileContainer = 
+                                TileContainer =
                                 {
                                     new ControlTile()
                                     {
@@ -137,10 +130,14 @@ namespace RichHudFramework.Server
             instance = null;
         }
 
-        public override void Draw()
+        public static void UpdateDisplay()
+        {
+            instance.UpdateDisplayInternal();
+        }
+
+        private void UpdateDisplayInternal()
         {
             pageCategory.Enabled = EnableDebug;
-            overlay.Visible = EnableDebug && enableOverlay;
 
             if (EnableDebug && (statsText.Element.Visible || enableOverlay) && updateTimer.ElapsedMilliseconds > 100)
             {
@@ -195,7 +192,7 @@ namespace RichHudFramework.Server
                     { "Tree*",  $"{stats.AvgTreeTime:F2}ms",    $"{stats.Tree50th:F2}ms",   $"{stats.Tree99th:F2}ms" },
                 }, 3, 4);
 
-                overlay.TextBoard.SetText(statsBuilder);
+                overlay.SetText(statsBuilder);
 
                 if (statsText.Element.Visible)
                 {
@@ -276,7 +273,7 @@ namespace RichHudFramework.Server
                 else
                     offset.Y -= overlay.Size.Y * .5f;
 
-                overlay.Offset = offset;
+                overlay.Draw(offset, MatrixD.CreateScale(HudMain.ResScale, HudMain.ResScale, 1d) * HudMain.PixelToWorld);
             }
         }
 

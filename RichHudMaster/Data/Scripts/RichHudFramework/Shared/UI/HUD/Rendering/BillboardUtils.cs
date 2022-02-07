@@ -27,6 +27,11 @@ namespace RichHudFramework
 
             public sealed class BillBoardUtils : RichHudComponentBase
             {
+                /// <summary>
+                /// Shared buffer list for quads.
+                /// </summary>
+                public static List<QuadBoardData> PostQuadBuffer;
+
                 private static BillBoardUtils instance;
                 private const int statsWindowSize = 240, sampleRateDiv = 5;
 
@@ -35,7 +40,7 @@ namespace RichHudFramework
                 private List<MyTriangleBillboard> bbPoolBack;
                 private int currentPool;
 
-                private List<TriangleBillboardData> bbDataList;
+                private readonly List<TriangleBillboardData> bbDataList;
 
                 private readonly int[] billboardUsage, billboardAlloc;
                 private readonly List<int> billboardUsageStats, billboardAllocStats;
@@ -64,6 +69,8 @@ namespace RichHudFramework
                     billboardAllocStats = new List<int>(statsWindowSize);
 
                     UpdateBillboardsCallback = UpdateBillboards;
+
+                    PostQuadBuffer = new List<QuadBoardData>(1000);
                 }
 
                 public static void Init()
@@ -72,6 +79,12 @@ namespace RichHudFramework
                     {
                         instance = new BillBoardUtils();
                     }
+                }
+
+                public override void Close()
+                {
+                    instance = null;
+                    PostQuadBuffer = null;
                 }
 
                 /// <summary>
@@ -145,7 +158,7 @@ namespace RichHudFramework
 
                 private void UpdateBillboards()
                 {
-                    for (int i = 0; i < bbDataList.Count; i++)
+                    for (int i = 0; (i < bbDataList.Count && i < bbPoolBack.Count); i++)
                     {
                         MyTriangleBillboard bb = bbPoolBack[i];
                         TriangleBillboardData bbData = bbDataList[i];
@@ -162,11 +175,6 @@ namespace RichHudFramework
                     }
                 }
 
-                public override void Close()
-                {
-                    instance = null;
-                }
-
                 /// <summary>
                 /// Renders a polygon from a given set of unique vertex coordinates. Triangles are defined by their
                 /// indices and the tex coords are parallel to the vertex list.
@@ -181,13 +189,15 @@ namespace RichHudFramework
                         bbRemaining = bbPool.Count - bbDataBack.Count,
                         bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
 
-                    bbPool.EnsureCapacity(bbDataBack.Count + triangleCount);
-                    bbBuf.Clear();
-
                     instance.AddNewBB(bbToAdd);
 
                     for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
-                        bbBuf.Add(instance.bbPoolBack[i]);
+                        bbBuf.Add(bbPool[i]);
+
+                    MyTransparentGeometry.AddBillboards(bbBuf, false);
+                    bbBuf.Clear();
+
+                    bbDataBack.EnsureCapacity(bbDataBack.Count + triangleCount);
 
                     for (int i = 0; i < indices.Count; i += 3)
                     {
@@ -211,9 +221,6 @@ namespace RichHudFramework
                         };
                         bbDataBack.Add(bb);
                     }
-
-                    MyTransparentGeometry.AddBillboards(bbBuf, false);
-                    bbBuf.Clear();
                 }
 
                 /// <summary>
@@ -229,13 +236,15 @@ namespace RichHudFramework
                         bbRemaining = bbPool.Count - bbDataBack.Count,
                         bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
 
-                    bbPool.EnsureCapacity(bbDataBack.Count + triangleCount);
-                    bbBuf.Clear();
-
                     instance.AddNewBB(bbToAdd);
 
                     for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
-                        bbBuf.Add(instance.bbPoolBack[i]);
+                        bbBuf.Add(bbPool[i]);
+
+                    MyTransparentGeometry.AddBillboards(bbBuf, false);
+                    bbBuf.Clear();
+
+                    bbDataBack.EnsureCapacity(bbDataBack.Count + triangleCount);
 
                     for (int i = range.X; i <= range.Y; i += 3)
                     {
@@ -259,9 +268,6 @@ namespace RichHudFramework
                         };
                         bbDataBack.Add(bb);
                     }
-
-                    MyTransparentGeometry.AddBillboards(bbBuf, false);
-                    bbBuf.Clear();
                 }
 
                 /// <summary>
@@ -278,13 +284,15 @@ namespace RichHudFramework
                         bbRemaining = bbPool.Count - bbDataBack.Count,
                         bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
 
-                    bbPool.EnsureCapacity(bbDataBack.Count + triangleCount);
-                    bbBuf.Clear();
-
                     instance.AddNewBB(bbToAdd);
 
                     for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
-                        bbBuf.Add(instance.bbPoolBack[i]);
+                        bbBuf.Add(bbPool[i]);
+
+                    MyTransparentGeometry.AddBillboards(bbBuf, false);
+                    bbBuf.Clear();
+
+                    bbDataBack.EnsureCapacity(bbDataBack.Count + triangleCount);
 
                     for (int i = 0; i < indices.Count; i += 3)
                     {
@@ -303,9 +311,77 @@ namespace RichHudFramework
                         };
                         bbDataBack.Add(bb);
                     }
+                }
+
+                /// <summary>
+                /// Adds a list of textured quads in one batch using QuadBoard data
+                /// </summary>
+                public static void AddQuads(List<QuadBoardData> quads)
+                {
+                    var bbPool = instance.bbPoolBack;
+                    var bbDataBack = instance.bbDataList;
+                    var bbBuf = instance.bbBuf;
+
+                    int triangleCount = quads.Count * 2,
+                        bbRemaining = bbPool.Count - bbDataBack.Count,
+                        bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
+
+                    instance.AddNewBB(bbToAdd);
+
+                    for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
+                        bbBuf.Add(bbPool[i]);
 
                     MyTransparentGeometry.AddBillboards(bbBuf, false);
                     bbBuf.Clear();
+
+                    bbDataBack.EnsureCapacity(bbDataBack.Count + triangleCount);
+
+                    for (int i = 0; i < quads.Count; i++)
+                    {
+                        QuadBoardData quadBoard = quads[i];
+                        MyQuadD quad = quadBoard.positions;
+                        BoundedQuadMaterial mat = quadBoard.material;
+
+                        var bbL = new TriangleBillboardData
+                        {
+                            blendType = BlendTypeEnum.PostPP,
+                            positions = new TriangleD
+                            {
+                                Point0 = quad.Point0,
+                                Point1 = quad.Point1,
+                                Point2 = quad.Point2,
+                            },
+                            texCoords = new Triangle
+                            {
+                                Point0 = mat.texBounds.Min,
+                                Point1 = mat.texBounds.Min + new Vector2(0f, mat.texBounds.Size.Y),
+                                Point2 = mat.texBounds.Max,
+                            },
+                            material = mat.textureID,
+                            color = mat.bbColor,
+                        };
+                        var bbR = new TriangleBillboardData
+                        {
+                            blendType = BlendTypeEnum.PostPP,
+                            positions = new TriangleD
+                            {
+                                Point0 = quad.Point0,
+                                Point1 = quad.Point2,
+                                Point2 = quad.Point3,
+                            },
+                            texCoords = new Triangle
+                            {
+                                Point0 = mat.texBounds.Min,
+                                Point1 = mat.texBounds.Max,
+                                Point2 = mat.texBounds.Min + new Vector2(mat.texBounds.Size.X, 0f),
+                            },
+                            material = mat.textureID,
+                            color = mat.bbColor,
+                        };
+
+                        bbDataBack.Add(bbL);
+                        bbDataBack.Add(bbR);
+                    }
                 }
 
                 /// <summary>
@@ -470,6 +546,8 @@ namespace RichHudFramework
 
                 private void AddNewBB(int count)
                 {
+                    bbPoolBack.EnsureCapacity(bbPoolBack.Count + count);
+
                     for (int i = 0; i < count; i++)
                     {
                         bbPoolBack.Add(new MyTriangleBillboard

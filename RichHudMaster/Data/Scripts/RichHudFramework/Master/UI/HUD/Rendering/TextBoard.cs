@@ -351,48 +351,64 @@ namespace RichHudFramework
                         BoundingBox2 textMask = box.Intersect(mask);
                         Vector2 offset = box.Center + _textOffset * Scale;
 
-                        IReadOnlyList<Line> lineList = lines.PooledLines;
-                        CroppedBox bb = default(CroppedBox);
-                        bb.mask = textMask;
+                        var quadBuf = BillBoardUtils.PostQuadBuffer;
+                        quadBuf.Clear();
 
-                        // Draw glyphs
-                        for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
+                        DrawCharacters(quadBuf, textMask, offset, ref matrix[0]);
+                        DrawUnderlines(quadBuf, textMask, offset, ref matrix[0]);
+                        BillBoardUtils.AddQuads(quadBuf);
+                    }
+                }
+
+                private void DrawCharacters(List<QuadBoardData> quadBuf, BoundingBox2 mask, Vector2 offset, ref MatrixD matrix)
+                {
+                    ContainmentType containment;
+                    IReadOnlyList<Line> lineList = lines.PooledLines;
+                    CroppedBox bb = default(CroppedBox);
+                    bb.mask = mask;
+
+                    // Draw glyphs
+                    for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
+                    {
+                        Line line = lineList[ln];
+
+                        for (int ch = 0; ch < line.Count; ch++)
                         {
-                            Line line = lineList[ln];
-
-                            for (int ch = 0; ch < line.Count; ch++)
-                            {
-                                GlyphLocData locData = line.LocData[ch];
-                                Vector2 halfSize = locData.bbSize * Scale * .5f,
-                                    pos = offset + locData.bbOffset * Scale;
-
-                                bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
-                                bb.mask.Value.Contains(ref bb.bounds, out containment);
-
-                                if (containment == ContainmentType.Contains)
-                                    line.GlyphBoards[ch].Draw(ref bb, ref matrix[0]);
-                                else if (containment != ContainmentType.Disjoint)
-                                    line.GlyphBoards[ch].DrawCroppedTex(ref bb, ref matrix[0]);
-                            }
-                        }
-
-                        QuadBoard underlineBoard = QuadBoard.Default;
-
-                        // Draw underlines
-                        for (int n = 0; n < underlines.Count; n++)
-                        {
-                            Vector2 halfSize = underlines[n].size * Scale * .5f,
-                                pos = offset + underlines[n].offset * Scale;
+                            GlyphLocData locData = line.LocData[ch];
+                            Vector2 halfSize = locData.bbSize * Scale * .5f,
+                                pos = offset + locData.bbOffset * Scale;
 
                             bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
                             bb.mask.Value.Contains(ref bb.bounds, out containment);
-                            underlineBoard.materialData.bbColor = underlines[n].color;
 
                             if (containment == ContainmentType.Contains)
-                                underlineBoard.Draw(ref bb, ref matrix[0]);
+                                quadBuf.Add(line.GlyphBoards[ch].GetQuadData(ref bb, ref matrix));
                             else if (containment != ContainmentType.Disjoint)
-                                underlineBoard.DrawCropped(ref bb, ref matrix[0]);
+                                quadBuf.Add(line.GlyphBoards[ch].GetCroppedTexData(ref bb, ref matrix));
                         }
+                    }
+                }
+
+                private void DrawUnderlines(List<QuadBoardData> quadBuf, BoundingBox2 mask, Vector2 offset, ref MatrixD matrix)
+                {
+                    ContainmentType containment;
+                    QuadBoard underlineBoard = QuadBoard.Default;
+                    CroppedBox bb = default(CroppedBox);
+                    bb.mask = mask;
+
+                    for (int n = 0; n < underlines.Count; n++)
+                    {
+                        Vector2 halfSize = underlines[n].size * Scale * .5f,
+                            pos = offset + underlines[n].offset * Scale;
+
+                        bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                        bb.mask.Value.Contains(ref bb.bounds, out containment);
+                        underlineBoard.materialData.bbColor = underlines[n].color;
+
+                        if (containment == ContainmentType.Contains)
+                            quadBuf.Add(underlineBoard.GetQuadData(ref bb, ref matrix));
+                        else if (containment != ContainmentType.Disjoint)
+                            quadBuf.Add(underlineBoard.GetCroppedData(ref bb, ref matrix));
                     }
                 }
 
