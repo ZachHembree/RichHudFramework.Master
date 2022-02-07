@@ -33,7 +33,8 @@ namespace RichHudFramework
                 public static List<QuadBoardData> PostQuadBuffer;
 
                 private static BillBoardUtils instance;
-                private const int statsWindowSize = 240, sampleRateDiv = 5;
+                private const int statsWindowSize = 240, sampleRateDiv = 5,
+                    bufMinResizeThreshold = 4000;
 
                 private readonly List<MyTriangleBillboard> bbBuf;
                 private readonly List<MyTriangleBillboard>[] bbSwapPools;
@@ -52,14 +53,14 @@ namespace RichHudFramework
                     if (instance != null)
                         throw new Exception($"Only one instance of {GetType().Name} can exist at once.");
 
+                    PostQuadBuffer = new List<QuadBoardData>(1000);
                     bbSwapPools = new List<MyTriangleBillboard>[3]
                     {
                         new List<MyTriangleBillboard>(1000),
                         new List<MyTriangleBillboard>(1000),
                         new List<MyTriangleBillboard>(1000)
                     };
-                    bbBuf = new List<MyTriangleBillboard>(100);
-
+                    bbBuf = new List<MyTriangleBillboard>(1000);
                     bbDataList = new List<TriangleBillboardData>(1000);
 
                     billboardUsage = new int[statsWindowSize];
@@ -69,8 +70,6 @@ namespace RichHudFramework
                     billboardAllocStats = new List<int>(statsWindowSize);
 
                     UpdateBillboardsCallback = UpdateBillboards;
-
-                    PostQuadBuffer = new List<QuadBoardData>(1000);
                 }
 
                 public static void Init()
@@ -132,6 +131,9 @@ namespace RichHudFramework
 
                 private void FinishDrawInternal()
                 {
+                    MyTransparentGeometry.ApplyActionOnPersistentBillboards(UpdateBillboardsCallback);
+                    currentPool = (currentPool + 1) % bbSwapPools.Length;
+
                     if (tick == 0)
                     {
                         billboardUsage[sampleTick] = bbDataList.Count;
@@ -146,14 +148,35 @@ namespace RichHudFramework
 
                         sampleTick++;
                         sampleTick %= statsWindowSize;
+
+                        int usage99 = GetUsagePercentile(.99f),
+                            alloc0 = GetAllocPercentile(0f);
+
+                        if (bbDataList.Capacity > bufMinResizeThreshold
+                            && bbDataList.Capacity > 3 * bbDataList.Count
+                            && bbDataList.Capacity > 3 * usage99
+                            && alloc0 > 3 * usage99)
+                        {
+                            int max = Math.Max(2 * bbDataList.Count, bufMinResizeThreshold);
+                            bbDataList.ClearAndTrim(max);
+                            bbBuf.ClearAndTrim(max);
+                            PostQuadBuffer.ClearAndTrim(max);
+
+                            foreach (List<MyTriangleBillboard> bb in bbSwapPools)
+                            {
+                                int remStart = Math.Min(max, bb.Count - 1),
+                                    remCount = Math.Max(bb.Count - remStart, 0);
+
+                                bb.RemoveRange(remStart, remCount);
+                                bb.TrimExcess();
+                            }
+                        }
                     }
+
+                    bbDataList.Clear();
 
                     tick++;
                     tick %= sampleRateDiv;
-
-                    MyTransparentGeometry.ApplyActionOnPersistentBillboards(UpdateBillboardsCallback);
-                    currentPool = (currentPool + 1) % bbSwapPools.Length;
-                    bbDataList.Clear();
                 }
 
                 private void UpdateBillboards()
