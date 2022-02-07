@@ -15,6 +15,9 @@ namespace RichHudFramework
 
         namespace Rendering
         {
+            /// <summary>
+            /// Bounding box paired with another as a mask for clipping billboards
+            /// </summary>
             public struct CroppedBox
             {
                 public static readonly BoundingBox2 defaultMask =
@@ -25,7 +28,7 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// 3D quad and associated material generated from QuadBoard
+            /// Final 3D quad for <see cref="QuadBoard"/> generated prior to rendering
             /// </summary>
             public struct QuadBoardData
             {
@@ -34,8 +37,16 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Defines a rectangular billboard drawn on the HUD using a material with texture coordinates
-            /// accessible for each vertex using a FlatQuad.
+            /// <see cref="QuadBoard"/> with bounding
+            /// </summary>
+            public struct BoundedQuadBoard
+            {
+                public BoundingBox2 bounds;
+                public QuadBoard quadBoard;
+            }
+
+            /// <summary>
+            /// Defines a rectangular billboard
             /// </summary>
             public struct QuadBoard
             {

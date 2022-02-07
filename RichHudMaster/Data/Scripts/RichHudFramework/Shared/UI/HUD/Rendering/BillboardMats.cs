@@ -84,7 +84,7 @@ namespace RichHudFramework
                 {
                     textureID = Material.Default.TextureID,
                     bbColor = Vector4.One,
-                    texBounds = new BoundingBox2(new Vector2(0f, 0f), new Vector2(1f, 1f))
+                    texBounds = new BoundingBox2(Vector2.Zero, Vector2.One)
                 };
 
                 /// <summary>
