@@ -366,30 +366,11 @@ namespace RichHudFramework
                 /// </summary>
                 private void DrawCharacters(List<QuadBoardData> quadBuf, BoundingBox2 mask, Vector2 offset, ref MatrixD matrix)
                 {
-                    ContainmentType containment;
                     IReadOnlyList<Line> lineList = lines.PooledLines;
-                    CroppedBox bb = default(CroppedBox);
-                    bb.mask = mask;
 
-                    // Draw glyphs
                     for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
                     {
-                        Line line = lineList[ln];
-
-                        for (int ch = 0; ch < line.Count; ch++)
-                        {
-                            var qb = line.GlyphBoards[ch];
-                            Vector2 halfSize = qb.bounds.Size * Scale * .5f,
-                                pos = offset + qb.bounds.Center * Scale;
-
-                            bb.bounds = BoundingBox2.CreateFromHalfExtent(pos, halfSize);
-                            bb.mask.Value.Contains(ref bb.bounds, out containment);
-
-                            if (containment == ContainmentType.Contains)
-                                quadBuf.Add(qb.quadBoard.GetQuadData(ref bb, ref matrix));
-                            else if (containment != ContainmentType.Disjoint)
-                                quadBuf.Add(qb.quadBoard.GetCroppedTexData(ref bb, ref matrix));
-                        }
+                        QuadBoard.AddQuadData(quadBuf, lineList[ln].GlyphBoards, ref matrix, mask, offset, Scale);
                     }
                 }
                 
