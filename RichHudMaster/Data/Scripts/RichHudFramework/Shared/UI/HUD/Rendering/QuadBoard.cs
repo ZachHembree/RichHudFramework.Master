@@ -1,5 +1,6 @@
 ﻿using Sandbox.ModAPI;
 using System;
+using System.Collections.Generic;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
@@ -46,7 +47,7 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Defines a rectangular billboard
+            /// Defines a rectangular billboard with texture coordinates defined by a bounding box
             /// </summary>
             public struct QuadBoard
             {
@@ -337,6 +338,74 @@ namespace RichHudFramework
                         material = cropMat,
                         positions = quad,
                     };
+                }
+
+                /// <summary>
+                /// Generates final <see cref="QuadBoardData"/> in a single batch and adds it to the given buffer list.
+                /// </summary>
+                public static void AddQuadData(List<QuadBoardData> qbData, IReadOnlyList<BoundedQuadBoard> quadBoards,
+                    ref MatrixD matrix, BoundingBox2? mask, Vector2 offset = default(Vector2), float scale = 1f)
+                {
+                    foreach (BoundedQuadBoard boundedQB in quadBoards)
+                    {
+                        QuadBoard qb = boundedQB.quadBoard;
+                        BoundingBox2 bounds = boundedQB.bounds;
+                        BoundedQuadMaterial cropMat = qb.materialData;
+                        float skewRatio = qb.skewRatio;
+
+                        Vector2 size = bounds.Size * scale,
+                            pos = offset + bounds.Center * scale;
+                        ContainmentType containment;
+
+                        bounds = BoundingBox2.CreateFromHalfExtent(pos, .5f * size);
+                        mask.Value.Contains(ref bounds, out containment);
+
+                        if (containment != ContainmentType.Disjoint)
+                        {
+                            if (containment == ContainmentType.Intersects)
+                            {
+                                bounds = bounds.Intersect(mask.Value);
+                                Vector2 clipSize = bounds.Size;
+
+                                // Normalized cropped size and offset
+                                Vector2 clipScale = clipSize / size,
+                                    clipOffset = (bounds.Center - pos) / size,
+                                    uvScale = cropMat.texBounds.Size,
+                                    uvOffset = cropMat.texBounds.Center;
+
+                                pos += clipOffset * size; // Offset billboard to compensate for changes in size
+                                size = clipSize; // Use cropped billboard size
+                                clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
+
+                                // Recalculate texture coordinates to simulate clipping without affecting material alignment
+                                cropMat.texBounds.Min = ((cropMat.texBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
+                                cropMat.texBounds.Max = ((cropMat.texBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
+                            }
+
+                            Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
+                            MyQuadD quad;
+
+                            Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
+                            MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
+
+                            if (skewRatio != 0f)
+                            {
+                                Vector3D start = quad.Point0, end = quad.Point3,
+                                    skew = (end - start) * skewRatio * .5;
+
+                                quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - skew;
+                                quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - skew;
+                                quad.Point1 -= skew;
+                                quad.Point2 -= skew;
+                            }
+
+                            qbData.Add(new QuadBoardData
+                            {
+                                material = cropMat,
+                                positions = quad,
+                            });
+                        }
+                    }
                 }
             }
         }
