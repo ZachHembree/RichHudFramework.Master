@@ -13,7 +13,7 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private class WrappedText : FormattedTextBase
         {
-            public WrappedText(LinePool lines) : base(lines)
+            public WrappedText(LinePool lines) : base(lines, true)
             {
                 Rewrap();
             }
@@ -45,7 +45,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 int insertStart = GetInsertStart(start);
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, true);
+                    GetRichChars(text[n], charBuffer, AllowSpecialChars);
 
                 InsertChars(insertStart, start);
             }
@@ -187,7 +187,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                     for (int n = start; n <= end; n++)
                     {
-                        if (spaceRemaining < charBuffer.LocData[n].chSize.X || wrapWord)
+                        if (spaceRemaining < charBuffer.FormattedGlyphs[n].chSize.X || wrapWord)
                         {
                             spaceRemaining = MaxLineWidth;
                             currentLine = lines.GetNewLine(estLineLength);
@@ -197,7 +197,7 @@ namespace RichHudFramework.UI.Rendering.Server
                         }
 
                         currentLine.AddCharFromLine(n, charBuffer);
-                        spaceRemaining -= charBuffer.LocData[n].chSize.X;
+                        spaceRemaining -= charBuffer.FormattedGlyphs[n].chSize.X;
                     }
                 }
 
@@ -268,7 +268,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 float width = 0f;
 
                 for (int n = 0; n < charBuffer.Count; n++)
-                    width += charBuffer.LocData[n].chSize.X;
+                    width += charBuffer.FormattedGlyphs[n].chSize.X;
 
                 return width;
             }
@@ -293,11 +293,11 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <param name="end">Somewhere to the right of or equal to the start.</param>
             private bool TryGetWordEnd(Vector2I start, out Vector2I end, ref float spaceRemaining)
             {
-                spaceRemaining -= lines[start.X].LocData[start.Y].chSize.X;
+                spaceRemaining -= lines[start.X].FormattedGlyphs[start.Y].chSize.X;
 
                 while (lines.TryGetNextIndex(start, out end) && spaceRemaining > 0f && !(lines[end.X].Chars[end.Y] == '\n' || IsWordBreak(start, end)))
                 {
-                    spaceRemaining -= lines[end.X].LocData[end.Y].chSize.X;
+                    spaceRemaining -= lines[end.X].FormattedGlyphs[end.Y].chSize.X;
                     start = end;
                 }
 
@@ -315,7 +315,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 for (int n = start; n < charBuffer.Count; n++)
                 {
-                    width += charBuffer.LocData[n].chSize.X;
+                    width += charBuffer.FormattedGlyphs[n].chSize.X;
 
                     if (n == (charBuffer.Count - 1) || charBuffer.Chars[n + 1] == '\n' || IsWordBreak(n, n + 1))
                     {

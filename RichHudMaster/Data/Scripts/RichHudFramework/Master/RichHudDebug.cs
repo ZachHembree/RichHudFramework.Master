@@ -1,23 +1,17 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Sandbox.ModAPI;
+using System.Text;
 using VRage;
-using VRage.Game;
-using VRage.Game.ModAPI;
 using VRageMath;
 
 namespace RichHudFramework.Server
 {
     using Internal;
     using UI;
+    using UI.Rendering;
     using UI.Rendering.Server;
     using UI.Server;
-    using UI.Rendering;
-    using ApiMemberAccessor = System.Func<object, int, object>;
-    using ClientData = MyTuple<string, Action<int, object>, Action, int>;
-    using ServerData = MyTuple<Action, Func<int, object>, int>;
 
     public sealed class RichHudDebug : RichHudComponentBase
     {
@@ -59,7 +53,7 @@ namespace RichHudFramework.Server
             enableOverlay = false;
             EnableDebug = false;
 
-            overlay = new TextBoard() 
+            overlay = new TextBoard()
             {
                 AutoResize = true,
                 BuilderMode = TextBuilderModes.Lined,
@@ -67,29 +61,29 @@ namespace RichHudFramework.Server
                 Format = new GlyphFormat(new Color(255, 191, 0))
             };
 
-            pageCategory = new TerminalPageCategory() 
+            pageCategory = new TerminalPageCategory()
             {
                 Name = "Debug",
                 Enabled = false,
-                PageContainer = 
+                PageContainer =
                 {
                     new DemoPage()
                     {
                         Name = "Demo",
-                    }, 
+                    },
 
                     statsText,
 
                     new ControlPage()
                     {
                         Name = "Settings",
-                        CategoryContainer = 
+                        CategoryContainer =
                         {
                             new ControlCategory()
                             {
                                 HeaderText = "Debug Settings",
                                 SubheaderText = "",
-                                TileContainer = 
+                                TileContainer =
                                 {
                                     new ControlTile()
                                     {
@@ -136,7 +130,12 @@ namespace RichHudFramework.Server
             instance = null;
         }
 
-        public override void Draw()
+        public static void UpdateDisplay()
+        {
+            instance.UpdateDisplayInternal();
+        }
+
+        private void UpdateDisplayInternal()
         {
             pageCategory.Enabled = EnableDebug;
 
@@ -146,6 +145,14 @@ namespace RichHudFramework.Server
                 IReadOnlyList<IFont> fonts = FontManager.Fonts;
                 HudMain.TreeClient masterHud = HudMain.TreeManager.MainClient;
                 BindManager.Client masterInput = BindManager.MainClient;
+                int bbUsage30 = BillBoardUtils.GetUsagePercentile(.30f),
+                    bbUsage50 = BillBoardUtils.GetUsagePercentile(.50f),
+                    bbUsage70 = BillBoardUtils.GetUsagePercentile(.70f),
+                    bbUsage99 = BillBoardUtils.GetUsagePercentile(.99f),
+                    bbAlloc30 = BillBoardUtils.GetAllocPercentile(.30f),
+                    bbAlloc50 = BillBoardUtils.GetAllocPercentile(.50f),
+                    bbAlloc70 = BillBoardUtils.GetAllocPercentile(.70f),
+                    bbAlloc99 = BillBoardUtils.GetAllocPercentile(.99f);
 
                 stats.Update();
                 statsBuilder.Clear();
@@ -165,6 +172,15 @@ namespace RichHudFramework.Server
                 statsBuilder.Append($"\t\tHUD Spaces Updating: {HudMain.TreeManager.HudSpacesRegistered}\n");
                 statsBuilder.Append($"\t\tElements Updating: {HudMain.TreeManager.ElementRegistered}\n");
                 statsBuilder.Append($"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n");
+
+                statsBuilder.Append($"\t\tBillboard Usage\n");
+                AddGrid(statsBuilder, new string[,]
+                {
+                    { "",   "30th",          "50th",     "70th",         "99th" },
+                    { "Use",   $"{bbUsage30}",    $"{bbUsage50}",    $"{bbUsage70}",   $"{bbUsage99}" },
+                    { "Alloc",   $"{bbAlloc30}",    $"{bbAlloc50}",    $"{bbAlloc70}",   $"{bbAlloc99}" },
+
+                }, 3, 4);
 
                 statsBuilder.Append($"\t\tUpdate Timers  (IsHighResolution: {Stopwatch.IsHighResolution}):\n");
                 AddGrid(statsBuilder, new string[,]

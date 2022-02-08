@@ -1,4 +1,5 @@
 using RichHudFramework.Internal;
+using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
 using VRage;
@@ -7,6 +8,8 @@ using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.Matrix
 
 namespace RichHudFramework
 {
+    using Server;
+
     namespace UI.Server
     {
         public sealed partial class HudMain : RichHudParallelComponentBase
@@ -154,6 +157,8 @@ namespace RichHudFramework
 
             public static void Init()
             {
+                BillBoardUtils.Init();   
+
                 if (instance == null)
                     new HudMain();
             }
@@ -222,7 +227,7 @@ namespace RichHudFramework
                     M43 = -MyAPIGateway.Session.Camera.NearPlaneDistance,
                     M44 = 1d
                 };
-
+                
                 PixelToWorldRef[0] *= MyAPIGateway.Session.Camera.WorldMatrix;
             }
 
@@ -280,7 +285,6 @@ namespace RichHudFramework
                         unfocusedOffset = WindowBaseOffset;
 
                     this.LoseFocusCallback = LoseFocusCallback;
-
                     return WindowMaxOffset;
                 }
                 else

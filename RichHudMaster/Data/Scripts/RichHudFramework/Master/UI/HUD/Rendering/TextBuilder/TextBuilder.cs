@@ -486,24 +486,27 @@ namespace RichHudFramework
 
                             for (int y = 0; y < newChars.Length; y++)
                             {
-                                // Compare formatting
-                                GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
+                                if (formatter.AllowSpecialChars || newChars[y] >= ' ')
+                                {
+                                    // Compare formatting
+                                    GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
 
-                                bool formatEqual = currentFormat.Data.Item1 == newFormat.Item1
-                                    && currentFormat.Data.Item2 == newFormat.Item2
-                                    && currentFormat.Data.Item3 == newFormat.Item3
-                                    && currentFormat.Data.Item4 == newFormat.Item4;
+                                    bool formatEqual = currentFormat.Data.Item1 == newFormat.Item1
+                                        && currentFormat.Data.Item2 == newFormat.Item2
+                                        && currentFormat.Data.Item3 == newFormat.Item3
+                                        && currentFormat.Data.Item4 == newFormat.Item4;
 
-                                if (!formatEqual)
-                                    return false;
+                                    if (!formatEqual)
+                                        return false;
 
-                                // Compare text
-                                char ch = lines[i.X].Chars[i.Y];
+                                    // Compare text
+                                    char ch = lines[i.X].Chars[i.Y];
 
-                                if (ch != newChars[y])
-                                    return false;
+                                    if (ch != newChars[y])
+                                        return false;
 
-                                lines.TryGetNextIndex(i, out i);
+                                    lines.TryGetNextIndex(i, out i);
+                                }
                             }
                         }
 
@@ -521,8 +524,21 @@ namespace RichHudFramework
                 {
                     int newTextLength = 0, currentLength = 0;
 
-                    for (int n = 0; n < text.Count; n++)
-                        newTextLength += text[n].Item1.Length;
+                    for (int i = 0; i < text.Count; i++)
+                    {
+                        if (formatter.AllowSpecialChars)
+                            newTextLength += text[i].Item1.Length;
+                        else
+                        {
+                            for (int j = 0; j < text[i].Item1.Length; j++)
+                            {
+                                char ch = text[i].Item1[j];
+
+                                if (ch >= ' ')
+                                    newTextLength++;
+                            }
+                        }
+                    }
 
                     for (int n = 0; n < lines.Count; n++)
                         currentLength += lines[n].Chars.Count;
@@ -621,9 +637,9 @@ namespace RichHudFramework
                         case RichCharAccessors.Format:
                             return lines[i.X].FormattedGlyphs[i.Y].format.Data;
                         case RichCharAccessors.Offset:
-                            return lines[i.X].LocData[i.Y].bbOffset * Scale;
+                            return lines[i.X].GlyphBoards[i.Y].bounds.Center * Scale;
                         case RichCharAccessors.Size:
-                            return lines[i.X].LocData[i.Y].chSize * Scale;
+                            return lines[i.X].GlyphBoards[i.Y].bounds.Size * Scale;
                     }
 
                     return null;

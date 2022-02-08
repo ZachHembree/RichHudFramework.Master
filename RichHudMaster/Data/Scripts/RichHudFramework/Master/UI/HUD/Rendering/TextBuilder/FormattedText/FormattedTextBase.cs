@@ -14,15 +14,20 @@ namespace RichHudFramework.UI.Rendering.Server
         private abstract class FormattedTextBase : IIndexedCollection<Line>
         {
             public Line this[int index] => lines[index];
+
             public virtual int Count => lines.Count;
+
             public virtual float MaxLineWidth { get; protected set; }
+
+            public bool AllowSpecialChars { get; }
 
             protected readonly LinePool lines;
             protected readonly Line charBuffer;
 
-            protected FormattedTextBase(LinePool lines)
+            protected FormattedTextBase(LinePool lines, bool allowSpecialChars)
             {
                 this.lines = lines;
+                AllowSpecialChars = allowSpecialChars;
                 MaxLineWidth = 0f;
                 charBuffer = lines.GetNewLine();
             }

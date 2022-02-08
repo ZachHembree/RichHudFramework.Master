@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using VRage.Utils;
+using RichHudFramework.UI.Rendering;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
@@ -158,6 +159,8 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw()
                 {
+                    BillBoardUtils.BeginDraw();
+
                     int drawTick = instance.drawTick;
                     float resScale = ResScale;
 
@@ -186,6 +189,12 @@ namespace RichHudFramework
                     // Draw UI elements
                     for (int n = 0; n < drawActions.Count; n++)
                         drawActions[n]();
+
+                    drawTimer.Stop();
+                    RichHudDebug.UpdateDisplay();
+
+                    drawTimer.Start();
+                    BillBoardUtils.FinishDraw();
 
                     drawTimer.Stop();
                     drawTimes[drawTick] = drawTimer.ElapsedTicks;
