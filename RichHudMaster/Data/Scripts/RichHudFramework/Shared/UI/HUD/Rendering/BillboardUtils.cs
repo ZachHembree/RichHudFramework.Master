@@ -150,17 +150,17 @@ namespace RichHudFramework
                         sampleTick %= statsWindowSize;
 
                         int usage99 = GetUsagePercentile(.99f),
-                            alloc0 = GetAllocPercentile(0f);
+                            alloc01 = GetAllocPercentile(0.01f);
 
                         if (bbDataList.Capacity > bufMinResizeThreshold
                             && bbDataList.Capacity > 3 * bbDataList.Count
                             && bbDataList.Capacity > 3 * usage99
-                            && alloc0 > 3 * usage99)
+                            && alloc01 > 3 * usage99)
                         {
                             int max = Math.Max(2 * bbDataList.Count, bufMinResizeThreshold);
                             bbDataList.ClearAndTrim(max);
                             bbBuf.ClearAndTrim(max);
-                            PostQuadBuffer.ClearAndTrim(max);
+                            PostQuadBuffer.ClearAndTrim(Math.Min(PostQuadBuffer.Capacity, max));
 
                             foreach (List<MyTriangleBillboard> bb in bbSwapPools)
                             {
@@ -202,7 +202,7 @@ namespace RichHudFramework
                 /// Renders a polygon from a given set of unique vertex coordinates. Triangles are defined by their
                 /// indices and the tex coords are parallel to the vertex list.
                 /// </summary>
-                public static void AddTriangles(List<int> indices, List<Vector3D> vertices, ref PolyMaterial mat)
+                public static void AddTriangles(IReadOnlyList<int> indices, IReadOnlyList<Vector3D> vertices, ref PolyMaterial mat)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
@@ -249,7 +249,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Adds a triangles in the given starting index range
                 /// </summary>
-                public static void AddTriangleRange(Vector2I range, List<int> indices, List<Vector3D> vertices, ref PolyMaterial mat)
+                public static void AddTriangleRange(Vector2I range, IReadOnlyList<int> indices, IReadOnlyList<Vector3D> vertices, ref PolyMaterial mat)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
@@ -297,7 +297,7 @@ namespace RichHudFramework
                 /// Renders a polygon from a given set of unique vertex coordinates. Triangles are defined by their
                 /// indices.
                 /// </summary>
-                public static void AddTriangles(List<int> indices, List<Vector3D> vertices, ref TriMaterial mat)
+                public static void AddTriangles(IReadOnlyList<int> indices, IReadOnlyList<Vector3D> vertices, ref TriMaterial mat)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
@@ -339,7 +339,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Adds a list of textured quads in one batch using QuadBoard data
                 /// </summary>
-                public static void AddQuads(List<QuadBoardData> quads)
+                public static void AddQuads(IReadOnlyList<QuadBoardData> quads)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
@@ -410,7 +410,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Adds a triangle starting at the given index.
                 /// </summary>
-                public static void AddTriangle(int start, List<int> indices, List<Vector3D> vertices, ref TriMaterial mat)
+                public static void AddTriangle(int start, IReadOnlyList<int> indices, IReadOnlyList<Vector3D> vertices, ref TriMaterial mat)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
@@ -437,6 +437,9 @@ namespace RichHudFramework
                     MyTransparentGeometry.AddBillboard(bbPool[index], false);
                 }
 
+                /// <summary>
+                /// Queues a single triangle billboard for rendering
+                /// </summary>
                 public static void AddTriangle(ref TriMaterial mat, ref TriangleD triangle)
                 {
                     var bbPool = instance.bbPoolBack;
@@ -459,6 +462,9 @@ namespace RichHudFramework
                     MyTransparentGeometry.AddBillboard(bbPool[index], false);
                 }
 
+                /// <summary>
+                /// Queues a quad billboard for rendering
+                /// </summary>
                 public static void AddQuad(ref QuadMaterial mat, ref MyQuadD quad)
                 {
                     var bbPool = instance.bbPoolBack;
@@ -513,6 +519,9 @@ namespace RichHudFramework
                     MyTransparentGeometry.AddBillboard(bbPool[indexR], false);
                 }
 
+                /// <summary>
+                /// Queues a quad billboard for rendering
+                /// </summary>
                 public static void AddQuad(ref BoundedQuadMaterial mat, ref MyQuadD quad)
                 {
                     var bbPool = instance.bbPoolBack;
@@ -567,6 +576,9 @@ namespace RichHudFramework
                     MyTransparentGeometry.AddBillboard(bbPool[indexR], false);
                 }
 
+                /// <summary>
+                /// Adds the given number of <see cref="MyTriangleBillboard"/>s to the pool
+                /// </summary>
                 private void AddNewBB(int count)
                 {
                     bbPoolBack.EnsureCapacity(bbPoolBack.Count + count);
