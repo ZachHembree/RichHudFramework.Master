@@ -13,7 +13,7 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private class WrappedText : FormattedTextBase
         {
-            public WrappedText(LinePool lines) : base(lines)
+            public WrappedText(LinePool lines) : base(lines, true)
             {
                 Rewrap();
             }
@@ -45,7 +45,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 int insertStart = GetInsertStart(start);
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, true);
+                    GetRichChars(text[n], charBuffer, AllowSpecialChars);
 
                 InsertChars(insertStart, start);
             }

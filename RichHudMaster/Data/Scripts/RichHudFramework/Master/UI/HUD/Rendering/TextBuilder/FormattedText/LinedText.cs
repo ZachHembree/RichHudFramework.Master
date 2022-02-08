@@ -12,7 +12,7 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private class LinedText : FormattedTextBase
         {
-            public LinedText(LinePool lines) : base(lines)
+            public LinedText(LinePool lines) : base(lines, true)
             { }
 
             /// <summary>
@@ -25,7 +25,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 charBuffer.Clear();
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, true);
+                    GetRichChars(text[n], charBuffer, AllowSpecialChars);
 
                 InsertChars(start);
             }
