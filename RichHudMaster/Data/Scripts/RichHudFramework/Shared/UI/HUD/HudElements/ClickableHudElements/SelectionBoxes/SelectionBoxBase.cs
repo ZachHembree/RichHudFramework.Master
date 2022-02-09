@@ -355,7 +355,7 @@ namespace RichHudFramework.UI
 
         protected virtual void UpdateSelectionFormatting()
         {
-            if (lastSelection.Item1 != null && lastSelection.Item1 != Selection)
+            if (lastSelection.Item1 != null)
             {
                 ITextBoard textBoard = lastSelection.Item1.Element.TextBoard;
                 textBoard.SetFormatting(lastSelection.Item2);
@@ -401,12 +401,8 @@ namespace RichHudFramework.UI
         {
             var selection = hudChain[index];
             ITextBoard textBoard = selection.Element.TextBoard;
-
-            if (lastSelection.Item1 != selection)
-            {
-                lastSelection.Item1 = selection;
-                lastSelection.Item2 = textBoard.Format;
-            }
+            lastSelection.Item1 = selection;
+            lastSelection.Item2 = textBoard.Format;
 
             textBoard.SetFormatting(textBoard.Format.WithColor(FocusTextColor));
         }
