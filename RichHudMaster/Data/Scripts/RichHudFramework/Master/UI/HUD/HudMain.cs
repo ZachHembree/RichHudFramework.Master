@@ -8,8 +8,6 @@ using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.Matrix
 
 namespace RichHudFramework
 {
-    using Server;
-
     namespace UI.Server
     {
         public sealed partial class HudMain : RichHudParallelComponentBase

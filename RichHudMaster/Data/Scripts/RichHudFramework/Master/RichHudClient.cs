@@ -7,6 +7,7 @@ namespace RichHudFramework.Server
     using UI;
     using UI.Server;
     using UI.Rendering.Server;
+    using UI.Rendering;
     using Internal;
     using ClientData = MyTuple<string, Action<int, object>, Action, int>;
     using ServerData = MyTuple<Action, Func<int, object>, int>;
@@ -110,6 +111,8 @@ namespace RichHudFramework.Server
                         return FontManager.GetApiData();
                     case ApiModuleTypes.SettingsMenu:
                         return menuData.Item1;
+                    case ApiModuleTypes.BillBoardUtils:
+                        return BillBoardUtils.GetApiData();
                 }
 
                 return null;
