@@ -88,9 +88,10 @@ namespace RichHudFramework
                 /// <summary>
                 /// Draws a billboard in world space using the quad specified.
                 /// </summary>
-                [Obsolete]
                 public void Draw(ref MyQuadD quad)
-                { }
+                {
+                    BillBoardUtils.AddQuad(ref materialData, ref quad);
+                }
 
                 /// <summary>
                 /// Draws a billboard in world space facing the +Z direction of the matrix specified. Units in meters, matrix

@@ -164,6 +164,7 @@ namespace RichHudFramework.Server
                 statsBuilder.Append($"\tSE Input Blacklist: {BindManager.CurrentBlacklistMode}\n");
                 statsBuilder.Append($"\tInput Mode: {HudMain.InputMode}\n");
                 statsBuilder.Append($"\tCursor Visible: {HudMain.Cursor.Visible}\n");
+                statsBuilder.Append($"\tChat Open: {BindManager.IsChatOpen}\n");
                 statsBuilder.Append($"\tClient Mods: {modClients.Count}\n");
 
                 foreach (RichHudMaster.ModClient client in modClients)

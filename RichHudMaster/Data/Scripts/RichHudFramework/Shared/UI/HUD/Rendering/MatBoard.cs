@@ -80,7 +80,6 @@ namespace RichHudFramework
                 /// <summary>
                 /// Draws a billboard in world space using the quad specified.
                 /// </summary>
-                [Obsolete]
                 public void Draw(ref MyQuadD quad)
                 {
                     minBoard.Draw(ref quad);
