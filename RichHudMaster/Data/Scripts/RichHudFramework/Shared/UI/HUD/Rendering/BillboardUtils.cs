@@ -25,6 +25,17 @@ namespace RichHudFramework
                 public TriangleD positions;
             }
 
+            public struct FlatTriangleBillboardData
+            {
+                public int matrixID;
+                public BlendTypeEnum blendType;
+                public MyStringId material;
+                public BoundingBox2? mask;
+                public Vector4 color;
+                public Triangle texCoords;
+                public Triangle positions;
+            }
+
             public sealed class BillBoardUtils : RichHudComponentBase
             {
                 /// <summary>
@@ -41,7 +52,9 @@ namespace RichHudFramework
                 private List<MyTriangleBillboard> bbPoolBack;
                 private int currentPool;
 
-                private readonly List<TriangleBillboardData> bbDataList;
+                private readonly List<FlatTriangleBillboardData> bbDataList;
+                private readonly List<MatrixD> matrixBuf;
+                private readonly Dictionary<MatrixD[], int> matrixTable;
 
                 private readonly int[] billboardUsage, billboardAlloc;
                 private readonly List<int> billboardUsageStats, billboardAllocStats;
@@ -61,7 +74,10 @@ namespace RichHudFramework
                         new List<MyTriangleBillboard>(1000)
                     };
                     bbBuf = new List<MyTriangleBillboard>(1000);
-                    bbDataList = new List<TriangleBillboardData>(1000);
+
+                    bbDataList = new List<FlatTriangleBillboardData>(1000);
+                    matrixBuf = new List<MatrixD>();
+                    matrixTable = new Dictionary<MatrixD[], int>();
 
                     billboardUsage = new int[statsWindowSize];
                     billboardAlloc = new int[statsWindowSize];
@@ -174,6 +190,8 @@ namespace RichHudFramework
                     }
 
                     bbDataList.Clear();
+                    matrixBuf.Clear();
+                    matrixTable.Clear();
 
                     tick++;
                     tick %= sampleRateDiv;
@@ -181,33 +199,55 @@ namespace RichHudFramework
 
                 private void UpdateBillboards()
                 {
-                    for (int i = 0; (i < bbDataList.Count && i < bbPoolBack.Count); i++)
+                    MyAPIGateway.Parallel.For(0, Math.Min(bbDataList.Count, bbPoolBack.Count), i => 
                     {
                         MyTriangleBillboard bb = bbPoolBack[i];
-                        TriangleBillboardData bbData = bbDataList[i];
+                        FlatTriangleBillboardData bbData = bbDataList[i];
+                        MatrixD matrix = matrixBuf[bbData.matrixID];
+                        Triangle planePos = bbData.positions;
+                        TriangleD worldPos = new TriangleD
+                        {
+                            Point0 = matrix.Translation + (planePos.Point0.X * matrix.Right) + (planePos.Point0.Y * matrix.Up),
+                            Point1 = matrix.Translation + (planePos.Point1.X * matrix.Right) + (planePos.Point1.Y * matrix.Up),
+                            Point2 = matrix.Translation + (planePos.Point2.X * matrix.Right) + (planePos.Point2.Y * matrix.Up)
+                        };
 
                         bb.BlendType = bbData.blendType;
-                        bb.Position0 = bbData.positions.Point0;
-                        bb.Position1 = bbData.positions.Point1;
-                        bb.Position2 = bbData.positions.Point2;
+                        bb.Position0 = worldPos.Point0;
+                        bb.Position1 = worldPos.Point1;
+                        bb.Position2 = worldPos.Point2;
                         bb.UV0 = bbData.texCoords.Point0;
                         bb.UV1 = bbData.texCoords.Point1;
                         bb.UV2 = bbData.texCoords.Point2;
                         bb.Material = bbData.material;
                         bb.Color = bbData.color;
-                    }
+                    });
                 }
 
                 /// <summary>
                 /// Renders a polygon from a given set of unique vertex coordinates. Triangles are defined by their
                 /// indices and the tex coords are parallel to the vertex list.
                 /// </summary>
-                public static void AddTriangles(IReadOnlyList<int> indices, IReadOnlyList<Vector3D> vertices, ref PolyMaterial mat)
+                public static void AddTriangles(IReadOnlyList<int> indices, IReadOnlyList<Vector2> vertices, ref PolyMaterial mat, MatrixD[] matrixRef)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
                     var bbBuf = instance.bbBuf;
+                    var matList = instance.matrixBuf;
+                    var matTable = instance.matrixTable;
 
+                    // Find matrix index in table or add it
+                    int matrixID;
+
+                    if (!matTable.TryGetValue(matrixRef, out matrixID))
+                    {
+                        matrixID = matList.Count;
+                        matList.Add(matrixRef[0]);
+                        matTable.Add(matrixRef, matrixID);
+                    }
+
+                    // Get triangle count, ensure enough billboards are in the pool and add them to the
+                    // render queue before writing QB data to buffer
                     int triangleCount = indices.Count / 3,
                         bbRemaining = bbPool.Count - bbDataBack.Count,
                         bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
@@ -224,10 +264,14 @@ namespace RichHudFramework
 
                     for (int i = 0; i < indices.Count; i += 3)
                     {
-                        var bb = new TriangleBillboardData
+                        var bb = new FlatTriangleBillboardData
                         {
                             blendType = BlendTypeEnum.PostPP,
-                            positions = new TriangleD
+                            matrixID = matrixID,
+                            mask = null,
+                            material = mat.textureID,
+                            color = mat.bbColor,
+                            positions = new Triangle
                             {
                                 Point0 = vertices[indices[i]],
                                 Point1 = vertices[indices[i + 1]],
@@ -239,8 +283,6 @@ namespace RichHudFramework
                                 Point1 = mat.texCoords[indices[i + 1]],
                                 Point2 = mat.texCoords[indices[i + 2]],
                             },
-                            material = mat.textureID,
-                            color = mat.bbColor,
                         };
                         bbDataBack.Add(bb);
                     }
@@ -249,12 +291,26 @@ namespace RichHudFramework
                 /// <summary>
                 /// Adds a triangles in the given starting index range
                 /// </summary>
-                public static void AddTriangleRange(Vector2I range, IReadOnlyList<int> indices, IReadOnlyList<Vector3D> vertices, ref PolyMaterial mat)
+                public static void AddTriangleRange(Vector2I range, IReadOnlyList<int> indices, IReadOnlyList<Vector2> vertices, ref PolyMaterial mat, MatrixD[] matrixRef)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
                     var bbBuf = instance.bbBuf;
+                    var matList = instance.matrixBuf;
+                    var matTable = instance.matrixTable;
 
+                    // Find matrix index in table or add it
+                    int matrixID;
+
+                    if (!matTable.TryGetValue(matrixRef, out matrixID))
+                    {
+                        matrixID = matList.Count;
+                        matList.Add(matrixRef[0]);
+                        matTable.Add(matrixRef, matrixID);
+                    }
+
+                    // Get triangle count, ensure enough billboards are in the pool and add them to the
+                    // render queue before writing QB data to buffer
                     int triangleCount = indices.Count / 3,
                         bbRemaining = bbPool.Count - bbDataBack.Count,
                         bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
@@ -271,10 +327,14 @@ namespace RichHudFramework
 
                     for (int i = range.X; i <= range.Y; i += 3)
                     {
-                        var bb = new TriangleBillboardData
+                        var bb = new FlatTriangleBillboardData
                         {
                             blendType = BlendTypeEnum.PostPP,
-                            positions = new TriangleD
+                            matrixID = matrixID,
+                            mask = null,
+                            material = mat.textureID,
+                            color = mat.bbColor,
+                            positions = new Triangle
                             {
                                 Point0 = vertices[indices[i]],
                                 Point1 = vertices[indices[i + 1]],
@@ -285,52 +345,7 @@ namespace RichHudFramework
                                 Point0 = mat.texCoords[indices[i]],
                                 Point1 = mat.texCoords[indices[i + 1]],
                                 Point2 = mat.texCoords[indices[i + 2]],
-                            },
-                            material = mat.textureID,
-                            color = mat.bbColor,
-                        };
-                        bbDataBack.Add(bb);
-                    }
-                }
-
-                /// <summary>
-                /// Renders a polygon from a given set of unique vertex coordinates. Triangles are defined by their
-                /// indices.
-                /// </summary>
-                public static void AddTriangles(IReadOnlyList<int> indices, IReadOnlyList<Vector3D> vertices, ref TriMaterial mat)
-                {
-                    var bbPool = instance.bbPoolBack;
-                    var bbDataBack = instance.bbDataList;
-                    var bbBuf = instance.bbBuf;
-
-                    int triangleCount = indices.Count / 3, 
-                        bbRemaining = bbPool.Count - bbDataBack.Count,
-                        bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
-
-                    instance.AddNewBB(bbToAdd);
-
-                    for (int i = bbDataBack.Count; i < triangleCount + bbDataBack.Count; i++)
-                        bbBuf.Add(bbPool[i]);
-
-                    MyTransparentGeometry.AddBillboards(bbBuf, false);
-                    bbBuf.Clear();
-
-                    bbDataBack.EnsureCapacity(bbDataBack.Count + triangleCount);
-
-                    for (int i = 0; i < indices.Count; i += 3)
-                    {
-                        var bb = new TriangleBillboardData
-                        {
-                            blendType = BlendTypeEnum.PostPP,
-                            positions = new TriangleD
-                            {
-                                Point0 = vertices[indices[i]],
-                                Point1 = vertices[indices[i + 1]],
-                                Point2 = vertices[indices[i + 2]],
-                            },
-                            texCoords = mat.texCoords,
-                            material = mat.textureID,
-                            color = mat.bbColor,
+                            }
                         };
                         bbDataBack.Add(bb);
                     }
@@ -339,12 +354,27 @@ namespace RichHudFramework
                 /// <summary>
                 /// Adds a list of textured quads in one batch using QuadBoard data
                 /// </summary>
-                public static void AddQuads(IReadOnlyList<QuadBoardData> quads)
+                public static void AddQuads(IReadOnlyList<BoundedQuadBoard> quads, MatrixD[] matrixRef, BoundingBox2? mask, 
+                    Vector2 offset = default(Vector2), float scale = 1f)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
                     var bbBuf = instance.bbBuf;
+                    var matList = instance.matrixBuf;
+                    var matTable = instance.matrixTable;
 
+                    // Find matrix index in table or add it
+                    int matrixID;
+
+                    if (!matTable.TryGetValue(matrixRef, out matrixID))
+                    {
+                        matrixID = matList.Count;
+                        matList.Add(matrixRef[0]);
+                        matTable.Add(matrixRef, matrixID);
+                    }
+
+                    // Get triangle count, ensure enough billboards are in the pool and add them to the
+                    // render queue before writing QB data to buffer
                     int triangleCount = quads.Count * 2,
                         bbRemaining = bbPool.Count - bbDataBack.Count,
                         bbToAdd = Math.Max(triangleCount - bbRemaining, 0);
@@ -361,45 +391,51 @@ namespace RichHudFramework
 
                     for (int i = 0; i < quads.Count; i++)
                     {
-                        QuadBoardData quadBoard = quads[i];
-                        MyQuadD quad = quadBoard.positions;
-                        BoundedQuadMaterial mat = quadBoard.material;
+                        BoundedQuadBoard boundedQB = quads[i];
+                        BoundedQuadMaterial mat = boundedQB.quadBoard.materialData;
+                        Vector2 size = boundedQB.bounds.Size * scale,
+                            center = boundedQB.bounds.Center * scale;
+                        BoundingBox2 bounds = BoundingBox2.CreateFromHalfExtent(center, .5f * size);
 
-                        var bbL = new TriangleBillboardData
+                        var bbL = new FlatTriangleBillboardData
                         {
                             blendType = BlendTypeEnum.PostPP,
-                            positions = new TriangleD
+                            matrixID = matrixID,
+                            mask = mask,
+                            material = mat.textureID,
+                            color = mat.bbColor,
+                            positions = new Triangle
                             {
-                                Point0 = quad.Point0,
-                                Point1 = quad.Point1,
-                                Point2 = quad.Point2,
+                                Point0 = bounds.Max + offset,
+                                Point1 = new Vector2(bounds.Max.X, bounds.Min.Y) + offset,
+                                Point2 = bounds.Min + offset,
                             },
                             texCoords = new Triangle
                             {
-                                Point0 = mat.texBounds.Min,
-                                Point1 = mat.texBounds.Min + new Vector2(0f, mat.texBounds.Size.Y),
-                                Point2 = mat.texBounds.Max,
+                                Point0 = new Vector2(mat.texBounds.Max.X, mat.texBounds.Min.Y), // 1
+                                Point1 = mat.texBounds.Max, // 0
+                                Point2 = new Vector2(mat.texBounds.Min.X, mat.texBounds.Max.Y), // 3
                             },
-                            material = mat.textureID,
-                            color = mat.bbColor,
                         };
-                        var bbR = new TriangleBillboardData
+                        var bbR = new FlatTriangleBillboardData
                         {
                             blendType = BlendTypeEnum.PostPP,
-                            positions = new TriangleD
+                            matrixID = matrixID,
+                            mask = mask,
+                            material = mat.textureID,
+                            color = mat.bbColor,
+                            positions = new Triangle
                             {
-                                Point0 = quad.Point0,
-                                Point1 = quad.Point2,
-                                Point2 = quad.Point3,
+                                Point0 = bounds.Max + offset,
+                                Point1 = bounds.Min + offset,
+                                Point2 = new Vector2(bounds.Min.X, bounds.Max.Y) + offset,
                             },
                             texCoords = new Triangle
                             {
-                                Point0 = mat.texBounds.Min,
-                                Point1 = mat.texBounds.Max,
-                                Point2 = mat.texBounds.Min + new Vector2(mat.texBounds.Size.X, 0f),
+                                Point0 = new Vector2(mat.texBounds.Max.X, mat.texBounds.Min.Y), // 1
+                                Point1 = new Vector2(mat.texBounds.Min.X, mat.texBounds.Max.Y), // 3
+                                Point2 = mat.texBounds.Min, // 2
                             },
-                            material = mat.textureID,
-                            color = mat.bbColor,
                         };
 
                         bbDataBack.Add(bbL);
@@ -408,105 +444,68 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Adds a triangle starting at the given index.
-                /// </summary>
-                public static void AddTriangle(int start, IReadOnlyList<int> indices, IReadOnlyList<Vector3D> vertices, ref TriMaterial mat)
-                {
-                    var bbPool = instance.bbPoolBack;
-                    var bbDataBack = instance.bbDataList;
-                    int index = bbDataBack.Count;
-
-                    var bb = new TriangleBillboardData
-                    {
-                        blendType = BlendTypeEnum.PostPP,
-                        positions = new TriangleD
-                        {
-                            Point0 = vertices[indices[start]],
-                            Point1 = vertices[indices[start + 1]],
-                            Point2 = vertices[indices[start + 2]],
-                        },
-                        texCoords = mat.texCoords,
-                        material = mat.textureID,
-                        color = mat.bbColor,
-                    };
-                    bbDataBack.Add(bb);
-
-                    if (index >= bbPool.Count)
-                        instance.AddNewBB(index - (bbPool.Count - 1));
-
-                    MyTransparentGeometry.AddBillboard(bbPool[index], false);
-                }
-
-                /// <summary>
-                /// Queues a single triangle billboard for rendering
-                /// </summary>
-                public static void AddTriangle(ref TriMaterial mat, ref TriangleD triangle)
-                {
-                    var bbPool = instance.bbPoolBack;
-                    var bbDataBack = instance.bbDataList;
-                    int index = bbDataBack.Count;
-
-                    var bb = new TriangleBillboardData
-                    {
-                        blendType = BlendTypeEnum.PostPP,
-                        positions = triangle,
-                        texCoords = mat.texCoords,
-                        material = mat.textureID,
-                        color = mat.bbColor,
-                    };
-                    bbDataBack.Add(bb);
-
-                    if (index >= bbPool.Count)
-                        instance.AddNewBB(index - (bbPool.Count - 1));
-
-                    MyTransparentGeometry.AddBillboard(bbPool[index], false);
-                }
-
-                /// <summary>
                 /// Queues a quad billboard for rendering
                 /// </summary>
-                public static void AddQuad(ref QuadMaterial mat, ref MyQuadD quad)
+                public static void AddQuad(ref BoundedQuadBoard boundedQB, BoundingBox2? mask, MatrixD[] matrixRef)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
+                    var matList = instance.matrixBuf;
+                    var matTable = instance.matrixTable;
+
+                    // Find matrix index in table or add it
+                    int matrixID;
+
+                    if (!matTable.TryGetValue(matrixRef, out matrixID))
+                    {
+                        matrixID = matList.Count;
+                        matList.Add(matrixRef[0]);
+                        matTable.Add(matrixRef, matrixID);
+                    }
+
                     int indexL = bbDataBack.Count,
                         indexR = bbDataBack.Count + 1;
+                    BoundedQuadMaterial mat = boundedQB.quadBoard.materialData;
 
-                    var bbL = new TriangleBillboardData
+                    var bbL = new FlatTriangleBillboardData
                     {
                         blendType = BlendTypeEnum.PostPP,
-                        positions = new TriangleD
+                        matrixID = matrixID,
+                        mask = mask,
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                        positions = new Triangle
                         {
-                            Point0 = quad.Point0,
-                            Point1 = quad.Point1,
-                            Point2 = quad.Point2,
+                            Point0 = boundedQB.bounds.Max,
+                            Point1 = new Vector2(boundedQB.bounds.Max.X, boundedQB.bounds.Min.Y),
+                            Point2 = boundedQB.bounds.Min,
                         },
                         texCoords = new Triangle
                         {
-                            Point0 = mat.texCoords.Point0,
-                            Point1 = mat.texCoords.Point1,
-                            Point2 = mat.texCoords.Point2,
+                            Point0 = new Vector2(mat.texBounds.Max.X, mat.texBounds.Min.Y), // 1
+                            Point1 = mat.texBounds.Max, // 0
+                            Point2 = new Vector2(mat.texBounds.Min.X, mat.texBounds.Max.Y), // 3
                         },
-                        material = mat.textureID,
-                        color = mat.bbColor,
                     };
-                    var bbR = new TriangleBillboardData
+                    var bbR = new FlatTriangleBillboardData
                     {
                         blendType = BlendTypeEnum.PostPP,
-                        positions = new TriangleD
+                        matrixID = matrixID,
+                        mask = mask,
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                        positions = new Triangle
                         {
-                            Point0 = quad.Point0,
-                            Point1 = quad.Point2,
-                            Point2 = quad.Point3,
+                            Point0 = boundedQB.bounds.Max,
+                            Point1 = boundedQB.bounds.Min,
+                            Point2 = new Vector2(boundedQB.bounds.Min.X, boundedQB.bounds.Max.Y),
                         },
                         texCoords = new Triangle
                         {
-                            Point0 = mat.texCoords.Point0,
-                            Point1 = mat.texCoords.Point2,
-                            Point2 = mat.texCoords.Point3,
+                            Point0 = new Vector2(mat.texBounds.Max.X, mat.texBounds.Min.Y), // 1
+                            Point1 = new Vector2(mat.texBounds.Min.X, mat.texBounds.Max.Y), // 3
+                            Point2 = mat.texBounds.Min, // 2
                         },
-                        material = mat.textureID,
-                        color = mat.bbColor,
                     };
 
                     bbDataBack.Add(bbL);
@@ -522,17 +521,33 @@ namespace RichHudFramework
                 /// <summary>
                 /// Queues a quad billboard for rendering
                 /// </summary>
-                public static void AddQuad(ref BoundedQuadMaterial mat, ref MyQuadD quad)
+                public static void AddQuad(ref FlatQuad quad, ref BoundedQuadMaterial mat, MatrixD[] matrixRef)
                 {
                     var bbPool = instance.bbPoolBack;
                     var bbDataBack = instance.bbDataList;
+                    var matList = instance.matrixBuf;
+                    var matTable = instance.matrixTable;
+
+                    // Find matrix index in table or add it
+                    int matrixID;
+
+                    if (!matTable.TryGetValue(matrixRef, out matrixID))
+                    {
+                        matrixID = matList.Count;
+                        matList.Add(matrixRef[0]);
+                        matTable.Add(matrixRef, matrixID);
+                    }
+
                     int indexL = bbDataBack.Count,
                         indexR = bbDataBack.Count + 1;
 
-                    var bbL = new TriangleBillboardData
+                    var bbL = new FlatTriangleBillboardData
                     {
                         blendType = BlendTypeEnum.PostPP,
-                        positions = new TriangleD
+                        matrixID = matrixID,
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                        positions = new Triangle
                         {
                             Point0 = quad.Point0,
                             Point1 = quad.Point1,
@@ -540,17 +555,18 @@ namespace RichHudFramework
                         },
                         texCoords = new Triangle
                         {
-                            Point0 = mat.texBounds.Min,
-                            Point1 = mat.texBounds.Min + new Vector2(0f, mat.texBounds.Size.Y),
-                            Point2 = mat.texBounds.Max,
+                            Point0 = new Vector2(mat.texBounds.Max.X, mat.texBounds.Min.Y), // 1
+                            Point1 = mat.texBounds.Max, // 0
+                            Point2 = new Vector2(mat.texBounds.Min.X, mat.texBounds.Max.Y), // 3
                         },
-                        material = mat.textureID,
-                        color = mat.bbColor,
                     };
-                    var bbR = new TriangleBillboardData
+                    var bbR = new FlatTriangleBillboardData
                     {
                         blendType = BlendTypeEnum.PostPP,
-                        positions = new TriangleD
+                        matrixID = matrixID,
+                        material = mat.textureID,
+                        color = mat.bbColor,
+                        positions = new Triangle
                         {
                             Point0 = quad.Point0,
                             Point1 = quad.Point2,
@@ -558,14 +574,12 @@ namespace RichHudFramework
                         },
                         texCoords = new Triangle
                         {
-                            Point0 = mat.texBounds.Min,
-                            Point1 = mat.texBounds.Max,
-                            Point2 = mat.texBounds.Min + new Vector2(mat.texBounds.Size.X, 0f),
+                            Point0 = new Vector2(mat.texBounds.Max.X, mat.texBounds.Min.Y), // 1
+                            Point1 = new Vector2(mat.texBounds.Min.X, mat.texBounds.Max.Y), // 3
+                            Point2 = mat.texBounds.Min, // 2
                         },
-                        material = mat.textureID,
-                        color = mat.bbColor,
                     };
-   
+
                     bbDataBack.Add(bbL);
                     bbDataBack.Add(bbR);
 

@@ -88,62 +88,36 @@ namespace RichHudFramework
                 /// <summary>
                 /// Draws a billboard in world space using the quad specified.
                 /// </summary>
+                [Obsolete]
                 public void Draw(ref MyQuadD quad)
-                {
-                    BillBoardUtils.AddQuad(ref materialData, ref quad);
-                }
-
-                /// <summary>
-                /// Draws a billboard in world space facing the +Z direction of the matrix specified. Units in meters matrix
-                /// transform notwithstanding.
-                /// </summary>
-                public void Draw(Vector2 size, Vector3D origin, ref MatrixD matrix)
-                {
-                    MyQuadD quad;
-
-                    Vector3D.TransformNoProjection(ref origin, ref matrix, out origin);
-                    MyUtils.GenerateQuad(out quad, ref origin, size.X * .5f, size.Y * .5f, ref matrix);
-
-                    if (skewRatio != 0f)
-                    {
-                        Vector3D start = quad.Point0, end = quad.Point3,
-                            offset = (end - start) * skewRatio * .5;
-
-                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
-                        quad.Point1 -= offset;
-                        quad.Point2 -= offset;
-                    }
-
-                    BillBoardUtils.AddQuad(ref materialData, ref quad);
-                }
+                { }
 
                 /// <summary>
                 /// Draws a billboard in world space facing the +Z direction of the matrix specified. Units in meters, matrix
                 /// transform notwithstanding.
                 /// </summary>
-                public void Draw(ref CroppedBox box, ref MatrixD matrix)
+                public void Draw(ref CroppedBox box, MatrixD[] matrixRef)
                 {
-                    Vector2 size = box.bounds.Size,
-                        pos = box.bounds.Center;
-                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
-                    MyQuadD quad;
-
-                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
+                    FlatQuad quad = new FlatQuad()
+                    {
+                        Point0 = box.bounds.Max,
+                        Point1 = new Vector2(box.bounds.Max.X, box.bounds.Min.Y),
+                        Point2 = box.bounds.Min,
+                        Point3 = new Vector2(box.bounds.Min.X, box.bounds.Max.Y),
+                    };
 
                     if (skewRatio != 0f)
                     {
-                        Vector3D start = quad.Point0, end = quad.Point3,
-                            offset = (end - start) * skewRatio * .5;
+                        Vector2 start = quad.Point0, end = quad.Point3,
+                            offset = (end - start) * skewRatio * .5f;
 
-                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
+                        quad.Point0 = Vector2.Lerp(start, end, skewRatio) - offset;
+                        quad.Point3 = Vector2.Lerp(start, end, 1f + skewRatio) - offset;
                         quad.Point1 -= offset;
                         quad.Point2 -= offset;
                     }
 
-                    BillBoardUtils.AddQuad(ref materialData, ref quad);
+                    BillBoardUtils.AddQuad(ref quad, ref materialData, matrixRef);
                 }
 
                 /// <summary>
@@ -152,30 +126,31 @@ namespace RichHudFramework
                 /// NON-TEXTURED billboards ONLY. This method will warp textures. Units in meters, matrix transform 
                 /// notwithstanding.
                 /// </summary>
-                public void DrawCropped(ref CroppedBox box, ref MatrixD matrix)
+                public void DrawCropped(ref CroppedBox box, MatrixD[] matrixRef)
                 {
                     box.bounds = box.bounds.Intersect(box.mask.Value);
-                    Vector2 size = box.bounds.Size,
-                        pos = box.bounds.Center;
 
-                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
-                    MyQuadD quad;
-
-                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
+                    // Generate quad from clipped bounds
+                    FlatQuad quad = new FlatQuad()
+                    {
+                        Point0 = box.bounds.Max,
+                        Point1 = new Vector2(box.bounds.Max.X, box.bounds.Min.Y),
+                        Point2 = box.bounds.Min,
+                        Point3 = new Vector2(box.bounds.Min.X, box.bounds.Max.Y),
+                    };
 
                     if (skewRatio != 0f)
                     {
-                        Vector3D start = quad.Point0, end = quad.Point3,
-                            offset = (end - start) * skewRatio * .5;
+                        Vector2 start = quad.Point0, end = quad.Point3,
+                            offset = (end - start) * skewRatio * .5f;
 
-                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
+                        quad.Point0 = Vector2.Lerp(start, end, skewRatio) - offset;
+                        quad.Point3 = Vector2.Lerp(start, end, 1f + skewRatio) - offset;
                         quad.Point1 -= offset;
                         quad.Point2 -= offset;
                     }
 
-                    BillBoardUtils.AddQuad(ref materialData, ref quad);
+                    BillBoardUtils.AddQuad(ref quad, ref materialData, matrixRef);
                 }
 
                 /// <summary>
@@ -183,7 +158,7 @@ namespace RichHudFramework
                 /// performed s.t. any parts outside the box defined by maskMin and maskMax are not rendered and WITHOUT 
                 /// warping the texture or displacing the billboard. Units in meters, matrix transform notwithstanding.
                 /// </summary>
-                public void DrawCroppedTex(ref CroppedBox box, ref MatrixD matrix)
+                public void DrawCroppedTex(ref CroppedBox box, MatrixD[] matrixRef)
                 {
                     Vector2 size = box.bounds.Size,
                         pos = box.bounds.Center;
@@ -198,214 +173,32 @@ namespace RichHudFramework
                         uvScale = cropMat.texBounds.Size,
                         uvOffset = cropMat.texBounds.Center;
 
-                    pos += clipOffset * size; // Offset billboard to compensate for changes in size
-                    size = clipSize; // Use cropped billboard size
                     clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
 
                     // Recalculate texture coordinates to simulate clipping without affecting material alignment
                     cropMat.texBounds.Min = ((cropMat.texBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
                     cropMat.texBounds.Max = ((cropMat.texBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
 
-                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
-                    MyQuadD quad;
-
-                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
-
-                    if (skewRatio != 0f)
+                    FlatQuad quad = new FlatQuad() 
                     {
-                        Vector3D start = quad.Point0, end = quad.Point3,
-                            offset = (end - start) * skewRatio * .5;
-
-                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
-                        quad.Point1 -= offset;
-                        quad.Point2 -= offset;
-                    }
-
-                    BillBoardUtils.AddQuad(ref cropMat, ref quad);
-                }
-
-                /// <summary>
-                /// Returns final quad for drawing paired with material
-                /// </summary>
-                public QuadBoardData GetQuadData(ref CroppedBox box, ref MatrixD matrix)
-                {
-                    Vector2 size = box.bounds.Size,
-                        pos = box.bounds.Center;
-                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
-                    MyQuadD quad;
-
-                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
-
-                    if (skewRatio != 0f)
-                    {
-                        Vector3D start = quad.Point0, end = quad.Point3,
-                            offset = (end - start) * skewRatio * .5;
-
-                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
-                        quad.Point1 -= offset;
-                        quad.Point2 -= offset;
-                    }
-
-                    return new QuadBoardData
-                    {
-                        material = materialData,
-                        positions = quad,
+                        Point0 = box.bounds.Max,
+                        Point1 = new Vector2(box.bounds.Max.X, box.bounds.Min.Y),
+                        Point2 = box.bounds.Min,
+                        Point3 = new Vector2(box.bounds.Min.X, box.bounds.Max.Y),
                     };
-                }
-
-                /// <summary>
-                /// Returns final quad for drawing paired with material
-                /// </summary>
-                public QuadBoardData GetCroppedData(ref CroppedBox box, ref MatrixD matrix)
-                {
-                    box.bounds = box.bounds.Intersect(box.mask.Value);
-                    Vector2 size = box.bounds.Size,
-                        pos = box.bounds.Center;
-
-                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
-                    MyQuadD quad;
-
-                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
 
                     if (skewRatio != 0f)
                     {
-                        Vector3D start = quad.Point0, end = quad.Point3,
-                            offset = (end - start) * skewRatio * .5;
+                        Vector2 start = quad.Point0, end = quad.Point3,
+                            offset = (end - start) * skewRatio * .5f;
 
-                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
+                        quad.Point0 = Vector2.Lerp(start, end, skewRatio) - offset;
+                        quad.Point3 = Vector2.Lerp(start, end, 1f + skewRatio) - offset;
                         quad.Point1 -= offset;
                         quad.Point2 -= offset;
                     }
 
-                    return new QuadBoardData 
-                    {
-                        material = materialData,
-                        positions = quad,
-                    };
-                }
-
-                /// <summary>
-                /// Returns final quad for drawing paired with material
-                /// </summary>
-                public QuadBoardData GetCroppedTexData(ref CroppedBox box, ref MatrixD matrix)
-                {
-                    Vector2 size = box.bounds.Size,
-                        pos = box.bounds.Center;
-                    box.bounds = box.bounds.Intersect(box.mask.Value);
-
-                    Vector2 clipSize = box.bounds.Size;
-                    BoundedQuadMaterial cropMat = materialData;
-
-                    // Normalized cropped size and offset
-                    Vector2 clipScale = clipSize / size,
-                        clipOffset = (box.bounds.Center - pos) / size,
-                        uvScale = cropMat.texBounds.Size,
-                        uvOffset = cropMat.texBounds.Center;
-
-                    pos += clipOffset * size; // Offset billboard to compensate for changes in size
-                    size = clipSize; // Use cropped billboard size
-                    clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
-
-                    // Recalculate texture coordinates to simulate clipping without affecting material alignment
-                    cropMat.texBounds.Min = ((cropMat.texBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
-                    cropMat.texBounds.Max = ((cropMat.texBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
-
-                    Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
-                    MyQuadD quad;
-
-                    Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                    MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
-
-                    if (skewRatio != 0f)
-                    {
-                        Vector3D start = quad.Point0, end = quad.Point3,
-                            offset = (end - start) * skewRatio * .5;
-
-                        quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - offset;
-                        quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - offset;
-                        quad.Point1 -= offset;
-                        quad.Point2 -= offset;
-                    }
-
-                    return new QuadBoardData 
-                    {
-                        material = cropMat,
-                        positions = quad,
-                    };
-                }
-
-                /// <summary>
-                /// Generates final <see cref="QuadBoardData"/> in a single batch and adds it to the given buffer list.
-                /// </summary>
-                public static void AddQuadData(List<QuadBoardData> qbData, IReadOnlyList<BoundedQuadBoard> quadBoards,
-                    ref MatrixD matrix, BoundingBox2? mask, Vector2 offset = default(Vector2), float scale = 1f)
-                {
-                    foreach (BoundedQuadBoard boundedQB in quadBoards)
-                    {
-                        QuadBoard qb = boundedQB.quadBoard;
-                        BoundingBox2 bounds = boundedQB.bounds;
-                        BoundedQuadMaterial cropMat = qb.materialData;
-                        float skewRatio = qb.skewRatio;
-
-                        Vector2 size = bounds.Size * scale,
-                            pos = offset + bounds.Center * scale;
-                        ContainmentType containment;
-
-                        bounds = BoundingBox2.CreateFromHalfExtent(pos, .5f * size);
-                        mask.Value.Contains(ref bounds, out containment);
-
-                        if (containment != ContainmentType.Disjoint)
-                        {
-                            if (containment == ContainmentType.Intersects)
-                            {
-                                bounds = bounds.Intersect(mask.Value);
-                                Vector2 clipSize = bounds.Size;
-
-                                // Normalized cropped size and offset
-                                Vector2 clipScale = clipSize / size,
-                                    clipOffset = (bounds.Center - pos) / size,
-                                    uvScale = cropMat.texBounds.Size,
-                                    uvOffset = cropMat.texBounds.Center;
-
-                                pos += clipOffset * size; // Offset billboard to compensate for changes in size
-                                size = clipSize; // Use cropped billboard size
-                                clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
-
-                                // Recalculate texture coordinates to simulate clipping without affecting material alignment
-                                cropMat.texBounds.Min = ((cropMat.texBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
-                                cropMat.texBounds.Max = ((cropMat.texBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
-                            }
-
-                            Vector3D worldPos = new Vector3D(pos.X, pos.Y, 0d);
-                            MyQuadD quad;
-
-                            Vector3D.TransformNoProjection(ref worldPos, ref matrix, out worldPos);
-                            MyUtils.GenerateQuad(out quad, ref worldPos, size.X * .5f, size.Y * .5f, ref matrix);
-
-                            if (skewRatio != 0f)
-                            {
-                                Vector3D start = quad.Point0, end = quad.Point3,
-                                    skew = (end - start) * skewRatio * .5;
-
-                                quad.Point0 = Vector3D.Lerp(start, end, skewRatio) - skew;
-                                quad.Point3 = Vector3D.Lerp(start, end, 1d + skewRatio) - skew;
-                                quad.Point1 -= skew;
-                                quad.Point2 -= skew;
-                            }
-
-                            qbData.Add(new QuadBoardData
-                            {
-                                material = cropMat,
-                                positions = quad,
-                            });
-                        }
-                    }
+                    BillBoardUtils.AddQuad(ref quad, ref cropMat, matrixRef);
                 }
             }
         }
