@@ -42,8 +42,8 @@ namespace RichHudFramework
                 private readonly List<MatrixD> matrixBuf;
                 private readonly Dictionary<MatrixD[], int> matrixTable;
 
-                private readonly int[] billboardUsage, billboardAlloc;
-                private readonly List<int> billboardUsageStats, billboardAllocStats;
+                private readonly int[] billboardUsage, billboardAlloc, matrixUsage;
+                private readonly List<int> billboardUsageStats, billboardAllocStats, matrixUsageStats;
                 private readonly Action UpdateBillboardsCallback;
                 private int sampleTick, tick;
 
@@ -66,9 +66,11 @@ namespace RichHudFramework
 
                     billboardUsage = new int[statsWindowSize];
                     billboardAlloc = new int[statsWindowSize];
+                    matrixUsage = new int[statsWindowSize];
 
                     billboardUsageStats = new List<int>(statsWindowSize);
                     billboardAllocStats = new List<int>(statsWindowSize);
+                    matrixUsageStats = new List<int>(statsWindowSize);
 
                     UpdateBillboardsCallback = UpdateBillboards;
                 }
@@ -104,6 +106,17 @@ namespace RichHudFramework
                 {
                     if (instance != null)
                         return instance.billboardAllocStats[(int)(statsWindowSize * percentile)];
+                    else
+                        throw new Exception($"{typeof(BillBoardUtils).Name} not initialized!");
+                }
+
+                /// <summary>
+                /// Returns unique matrix usage at the given percentile.
+                /// </summary>
+                public static int GetMatrixUsagePercentile(float percentile)
+                {
+                    if (instance != null)
+                        return instance.matrixUsageStats[(int)(statsWindowSize * percentile)];
                     else
                         throw new Exception($"{typeof(BillBoardUtils).Name} not initialized!");
                 }
@@ -146,6 +159,11 @@ namespace RichHudFramework
                         billboardAllocStats.AddRange(billboardAlloc);
                         billboardAllocStats.Sort();
 
+                        matrixUsage[sampleTick] = matrixBuf.Count;
+                        matrixUsageStats.Clear();
+                        matrixUsageStats.AddRange(matrixUsage);
+                        matrixUsageStats.Sort();
+
                         sampleTick++;
                         sampleTick %= statsWindowSize;
 
@@ -182,7 +200,10 @@ namespace RichHudFramework
 
                 private void UpdateBillboards()
                 {
-                    MyAPIGateway.Parallel.For(0, Math.Min(bbDataList.Count, bbPoolBack.Count), i => 
+                    int count = Math.Min(bbDataList.Count, bbPoolBack.Count),
+                        stride = Math.Max(500, MathHelper.CeilToInt(count / 8d));
+
+                    MyAPIGateway.Parallel.For(0, count, i => 
                     {
                         FlatTriangleBillboardData bbData = bbDataList[i];
                         Triangle planePos = bbData.positions,
@@ -246,7 +267,7 @@ namespace RichHudFramework
                         bb.UV2 = texCoords.Point2;
                         bb.Material = bbData.material;
                         bb.Color = bbData.color;
-                    });
+                    }, stride);
                 }
 
                 /// <summary>

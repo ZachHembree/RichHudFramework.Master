@@ -147,12 +147,13 @@ namespace RichHudFramework.Server
                 BindManager.Client masterInput = BindManager.MainClient;
                 int bbUsage30 = BillBoardUtils.GetUsagePercentile(.30f),
                     bbUsage50 = BillBoardUtils.GetUsagePercentile(.50f),
-                    bbUsage70 = BillBoardUtils.GetUsagePercentile(.70f),
                     bbUsage99 = BillBoardUtils.GetUsagePercentile(.99f),
                     bbAlloc30 = BillBoardUtils.GetAllocPercentile(.30f),
                     bbAlloc50 = BillBoardUtils.GetAllocPercentile(.50f),
-                    bbAlloc70 = BillBoardUtils.GetAllocPercentile(.70f),
-                    bbAlloc99 = BillBoardUtils.GetAllocPercentile(.99f);
+                    bbAlloc99 = BillBoardUtils.GetAllocPercentile(.99f),
+                    matUsage30 = BillBoardUtils.GetMatrixUsagePercentile(.30f),
+                    matUsage50 = BillBoardUtils.GetMatrixUsagePercentile(.50f),
+                    matUsage99 = BillBoardUtils.GetMatrixUsagePercentile(.99f);
 
                 stats.Update();
                 statsBuilder.Clear();
@@ -173,12 +174,13 @@ namespace RichHudFramework.Server
                 statsBuilder.Append($"\t\tElements Updating: {HudMain.TreeManager.ElementRegistered}\n");
                 statsBuilder.Append($"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n");
 
-                statsBuilder.Append($"\t\tBillboard Usage\n");
+                statsBuilder.Append($"\t\tBillboard Stats\n");
                 AddGrid(statsBuilder, new string[,]
                 {
-                    { "",   "30th",          "50th",     "70th",         "99th" },
-                    { "Use",   $"{bbUsage30}",    $"{bbUsage50}",    $"{bbUsage70}",   $"{bbUsage99}" },
-                    { "Alloc",   $"{bbAlloc30}",    $"{bbAlloc50}",    $"{bbAlloc70}",   $"{bbAlloc99}" },
+                    { "Name",       "30th",             "50th",             "99th" },
+                    { "BB Use",     $"{bbUsage30}",     $"{bbUsage50}",     $"{bbUsage99}" },
+                    { "BB Alloc",   $"{bbAlloc30}",     $"{bbAlloc50}",     $"{bbAlloc99}" },
+                    { "Matrices",   $"{matUsage30}",    $"{matUsage50}",    $"{matUsage99}" },
 
                 }, 3, 4);
 
