@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using VRage.Input;
 using VRage.Utils;
+using VRage.Game.ModAPI;
 using VRageMath;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
 
@@ -141,18 +142,18 @@ namespace RichHudFramework
                 {
                     for (int n = 0; n < bindClients.Count; n++)
                         bindClients[n].HandleInput();
+                }                
+
+                // Synchronize with actual value every second or so
+                if (chatInputTick == 0)
+                {
+                    IsChatOpen = MyAPIGateway.Gui.ChatEntryVisible;
                 }
 
-                if (SharedBinds.Enter.IsNewPressed)
+                if (SharedBinds.Enter.IsNewPressed && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.None)
                 {
                     IsChatOpen = !IsChatOpen;
                     chatInputTick = 0;
-                }
-
-                // Synchronize with actual value every second or so
-                if (chatInputTick == 60)
-                {
-                    IsChatOpen = MyAPIGateway.Gui.ChatEntryVisible;
                 }
 
                 chatInputTick++;
