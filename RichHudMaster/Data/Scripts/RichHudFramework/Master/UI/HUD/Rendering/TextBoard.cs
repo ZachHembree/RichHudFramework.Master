@@ -327,7 +327,7 @@ namespace RichHudFramework
                 /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
                 /// direction.
                 /// </summary>
-                public void Draw(BoundingBox2 box, BoundingBox2 mask, MatrixD[] matrix)
+                public void Draw(BoundingBox2 box, BoundingBox2 mask, MatrixD[] matrixRef)
                 {
                     ContainmentType containment;
                     mask.Contains(ref box, out containment);
@@ -352,32 +352,28 @@ namespace RichHudFramework
                         BoundingBox2 textMask = box.Intersect(mask);
                         Vector2 offset = box.Center + _textOffset * Scale;
 
-                        var quadBuf = BillBoardUtils.PostQuadBuffer;
-                        quadBuf.Clear();
-
-                        DrawCharacters(quadBuf, textMask, offset, ref matrix[0]);
-                        DrawUnderlines(quadBuf, textMask, offset, ref matrix[0]);
-                        BillBoardUtils.AddQuads(quadBuf);
+                        DrawCharacters(textMask, offset, matrixRef);
+                        DrawUnderlines(textMask, offset, matrixRef);
                     }
                 }
 
                 /// <summary>
                 /// Adds final transformed character quads w/masking and offset to the buffer for rendering
                 /// </summary>
-                private void DrawCharacters(List<QuadBoardData> quadBuf, BoundingBox2 mask, Vector2 offset, ref MatrixD matrix)
+                private void DrawCharacters(BoundingBox2 mask, Vector2 offset, MatrixD[] matrixRef)
                 {
                     IReadOnlyList<Line> lineList = lines.PooledLines;
 
                     for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
                     {
-                        QuadBoard.AddQuadData(quadBuf, lineList[ln].GlyphBoards, ref matrix, mask, offset, Scale);
+                        BillBoardUtils.AddQuads(lineList[ln].GlyphBoards, matrixRef, mask, offset, Scale);
                     }
                 }
                 
                 /// <summary>
                 /// Adds final transformed underline quads w/masking and offset to the buffer for rendering
                 /// </summary>
-                private void DrawUnderlines(List<QuadBoardData> quadBuf, BoundingBox2 mask, Vector2 offset, ref MatrixD matrix)
+                private void DrawUnderlines(BoundingBox2 mask, Vector2 offset, MatrixD[] matrixRef)
                 {
                     ContainmentType containment;
                     QuadBoard underlineBoard = QuadBoard.Default;
@@ -393,10 +389,8 @@ namespace RichHudFramework
                         bb.mask.Value.Contains(ref bb.bounds, out containment);
                         underlineBoard.materialData.bbColor = underlines[n].color;
 
-                        if (containment == ContainmentType.Contains)
-                            quadBuf.Add(underlineBoard.GetQuadData(ref bb, ref matrix));
-                        else if (containment != ContainmentType.Disjoint)
-                            quadBuf.Add(underlineBoard.GetCroppedData(ref bb, ref matrix));
+                        if (containment != ContainmentType.Disjoint)
+                            underlineBoard.Draw(ref bb, matrixRef);
                     }
                 }
 

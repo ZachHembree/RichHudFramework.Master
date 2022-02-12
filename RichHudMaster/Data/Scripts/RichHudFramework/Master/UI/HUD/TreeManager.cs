@@ -192,8 +192,8 @@ namespace RichHudFramework
 
                     drawTimer.Stop();
                     RichHudDebug.UpdateDisplay();
-
                     drawTimer.Start();
+
                     BillBoardUtils.FinishDraw();
 
                     drawTimer.Stop();

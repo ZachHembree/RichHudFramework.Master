@@ -46,7 +46,7 @@ namespace RichHudFramework
                 Enabled = true;
             }
 
-            public virtual void Reset()
+            public override void Reset()
             {
                 Element.TextBoard.Clear();
                 Enabled = false;
