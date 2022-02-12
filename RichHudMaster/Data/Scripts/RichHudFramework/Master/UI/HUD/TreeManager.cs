@@ -179,6 +179,10 @@ namespace RichHudFramework
                     treeTimes[drawTick] = treeTimer.ElapsedTicks;
                     drawTimer.Restart();
 
+                    // Invoke before draw callbacks on clients
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].BeforeDrawCallback?.Invoke();
+
                     // Older clients (1.0.3-) node spaces require layout refreshes to function
                     bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
                         refreshLayout = lastResScale != resScale || rebuildLists;
@@ -193,6 +197,10 @@ namespace RichHudFramework
                     drawTimer.Stop();
                     RichHudDebug.UpdateDisplay();
                     drawTimer.Start();
+
+                    // Invoke after draw callbacks on clients
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].AfterDrawCallback?.Invoke();
 
                     BillBoardUtils.FinishDraw();
 
@@ -215,11 +223,19 @@ namespace RichHudFramework
                 {
                     inputTimer.Restart();
 
+                    // Invoke after draw callbacks on clients
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].BeforeInputCallback?.Invoke();
+
                     for (int n = 0; n < depthTestActions.Count; n++)
                         depthTestActions[n]();
 
                     for (int n = inputActions.Count - 1; n >= 0; n--)
                         inputActions[n]();
+
+                    // Invoke after draw callbacks on clients
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].AfterInputCallback?.Invoke();
 
                     inputTimer.Stop();
                     inputTimes[instance.drawTick] = inputTimer.ElapsedTicks;
