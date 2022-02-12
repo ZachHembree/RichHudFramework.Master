@@ -190,7 +190,10 @@ namespace RichHudFramework
                     for (int n = 0; n < drawActions.Count; n++)
                         drawActions[n]();
 
+                    drawTimer.Stop();
                     RichHudDebug.UpdateDisplay();
+                    drawTimer.Start();
+
                     BillBoardUtils.FinishDraw();
 
                     drawTimer.Stop();
