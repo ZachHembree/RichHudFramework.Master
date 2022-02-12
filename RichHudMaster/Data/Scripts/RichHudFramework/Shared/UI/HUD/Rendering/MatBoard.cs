@@ -106,12 +106,8 @@ namespace RichHudFramework
                             updateMatFit = false;
                         }
 
-                        if (containment == ContainmentType.Contains)
+                        if (containment != ContainmentType.Disjoint)
                             minBoard.Draw(ref box, matrixRef);
-                        else if (containment == ContainmentType.Intersects && matFrame.Material == Material.Default)
-                            minBoard.DrawCropped(ref box, matrixRef);
-                        else
-                            minBoard.DrawCroppedTex(ref box, matrixRef);
                     }
                 }     
             }

@@ -352,9 +352,6 @@ namespace RichHudFramework
                         BoundingBox2 textMask = box.Intersect(mask);
                         Vector2 offset = box.Center + _textOffset * Scale;
 
-                        var quadBuf = BillBoardUtils.PostQuadBuffer;
-                        quadBuf.Clear();
-
                         DrawCharacters(textMask, offset, matrixRef);
                         DrawUnderlines(textMask, offset, matrixRef);
                     }
@@ -392,10 +389,8 @@ namespace RichHudFramework
                         bb.mask.Value.Contains(ref bb.bounds, out containment);
                         underlineBoard.materialData.bbColor = underlines[n].color;
 
-                        if (containment == ContainmentType.Contains)
+                        if (containment != ContainmentType.Disjoint)
                             underlineBoard.Draw(ref bb, matrixRef);
-                        else if (containment != ContainmentType.Disjoint)
-                            underlineBoard.DrawCropped(ref bb, matrixRef);
                     }
                 }
 
