@@ -639,7 +639,7 @@ namespace RichHudFramework
                         case RichCharAccessors.Offset:
                             return lines[i.X].GlyphBoards[i.Y].bounds.Center * Scale;
                         case RichCharAccessors.Size:
-                            return lines[i.X].GlyphBoards[i.Y].bounds.Size * Scale;
+                            return lines[i.X].FormattedGlyphs[i.X].chSize * Scale;
                     }
 
                     return null;
