@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using VRage.Utils;
+using RichHudFramework.UI.Rendering;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
@@ -158,16 +159,18 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw()
                 {
+                    BillBoardUtils.BeginDraw();
+
                     int drawTick = instance.drawTick;
                     float resScale = ResScale;
 
                     mainClient.EnableCursor = EnableCursor;
-                    instance._cursor.Visible = false;
+                    instance._cursor.DrawCursor = false;
 
                     for (int n = 0; n < clients.Count; n++)
                     {
                         if (clients[n].EnableCursor)
-                            instance._cursor.Visible = true;
+                            instance._cursor.DrawCursor = true;
                     }
 
                     for (int n = 0; n < clients.Count; n++)
@@ -175,6 +178,10 @@ namespace RichHudFramework
 
                     treeTimes[drawTick] = treeTimer.ElapsedTicks;
                     drawTimer.Restart();
+
+                    // Invoke before draw callbacks on clients
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].BeforeDrawCallback?.Invoke();
 
                     // Older clients (1.0.3-) node spaces require layout refreshes to function
                     bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
@@ -186,6 +193,16 @@ namespace RichHudFramework
                     // Draw UI elements
                     for (int n = 0; n < drawActions.Count; n++)
                         drawActions[n]();
+
+                    drawTimer.Stop();
+                    RichHudDebug.UpdateDisplay();
+                    drawTimer.Start();
+
+                    // Invoke after draw callbacks on clients
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].AfterDrawCallback?.Invoke();
+
+                    BillBoardUtils.FinishDraw();
 
                     drawTimer.Stop();
                     drawTimes[drawTick] = drawTimer.ElapsedTicks;
@@ -206,11 +223,19 @@ namespace RichHudFramework
                 {
                     inputTimer.Restart();
 
+                    // Invoke after draw callbacks on clients
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].BeforeInputCallback?.Invoke();
+
                     for (int n = 0; n < depthTestActions.Count; n++)
                         depthTestActions[n]();
 
                     for (int n = inputActions.Count - 1; n >= 0; n--)
                         inputActions[n]();
+
+                    // Invoke after draw callbacks on clients
+                    for (int n = 0; n < clients.Count; n++)
+                        clients[n].AfterInputCallback?.Invoke();
 
                     inputTimer.Stop();
                     inputTimes[instance.drawTick] = inputTimer.ElapsedTicks;

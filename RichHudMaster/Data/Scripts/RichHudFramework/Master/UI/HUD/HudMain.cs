@@ -1,4 +1,5 @@
 using RichHudFramework.Internal;
+using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
 using VRage;
@@ -154,6 +155,8 @@ namespace RichHudFramework
 
             public static void Init()
             {
+                BillBoardUtils.Init();   
+
                 if (instance == null)
                     new HudMain();
             }
@@ -182,7 +185,7 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
-                if (instance._cursor.Visible)
+                if (instance._cursor.DrawCursor)
                 {
                     if (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible)
                         InputMode = HudInputMode.Full;
@@ -222,7 +225,7 @@ namespace RichHudFramework
                     M43 = -MyAPIGateway.Session.Camera.NearPlaneDistance,
                     M44 = 1d
                 };
-
+                
                 PixelToWorldRef[0] *= MyAPIGateway.Session.Camera.WorldMatrix;
             }
 
@@ -280,7 +283,6 @@ namespace RichHudFramework
                         unfocusedOffset = WindowBaseOffset;
 
                     this.LoseFocusCallback = LoseFocusCallback;
-
                     return WindowMaxOffset;
                 }
                 else

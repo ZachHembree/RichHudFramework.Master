@@ -27,8 +27,8 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         public const long modID = 1965654081, queueID = 1314086443;
-        public const int apiVID = 9, minApiVID = 7;
-        public static readonly Vector4I versionID = new Vector4I(1, 2, 0, 3); // Major, Minor, Rev, Hotfix
+        public const int apiVID = 10, minApiVID = 7;
+        public static readonly Vector4I versionID = new Vector4I(1, 2, 1, 0); // Major, Minor, Rev, Hotfix
 
         /// <summary>
         /// Read-only list of currently registered clients

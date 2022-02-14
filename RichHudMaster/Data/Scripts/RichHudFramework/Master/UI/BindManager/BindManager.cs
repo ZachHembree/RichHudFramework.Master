@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using VRage.Input;
 using VRage.Utils;
+using VRage.Game.ModAPI;
 using VRageMath;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
 
@@ -56,6 +57,11 @@ namespace RichHudFramework
             public static SeBlacklistModes CurrentBlacklistMode { get; private set; }
 
             /// <summary>
+            /// MyAPIGateway.Gui.ChatEntryVisible, but actually usable for input polling
+            /// </summary>
+            public static bool IsChatOpen { get; private set; }
+
+            /// <summary>
             /// Read-only list of all controls bound to a key
             /// </summary>
             public static IReadOnlyList<string> SeControlIDs { get { if (_instance == null) Init(); return _instance.seControlIDs; } }
@@ -65,20 +71,12 @@ namespace RichHudFramework
             /// </summary>
             public static IReadOnlyList<string> SeMouseControlIDs { get { if (_instance == null) Init(); return _instance.seMouseControlIDs; } }
 
-            /// <summary>
-            /// Set of control indices identified by the Bind Manager as being at least a subset of a pressed
-            /// keybind
-            /// </summary>
-            public static IReadOnlyCollection<int> CandidateBindSet => _instance.candidateBindSet;
-
             private static BindManager Instance
             {
                 get { Init(); return _instance; }
                 set { _instance = value; }
             }
             private static BindManager _instance;
-
-            private const long maxCandidateBindTime = 1000L;
 
             private static readonly HashSet<MyKeys> controlBlacklist = new HashSet<MyKeys>()
             {
@@ -107,9 +105,7 @@ namespace RichHudFramework
 
             private Client mainClient;
             private bool areControlsBlacklisted, areMouseControlsBlacklisted;
-
-            private readonly HashSet<int> candidateBindSet;
-            private readonly Stopwatch candidateBindTimer;
+            private int chatInputTick;
 
             private BindManager() : base(false, true)
             {
@@ -121,10 +117,6 @@ namespace RichHudFramework
                 GetControlStringIDs(keys, out seControlIDs, out seMouseControlIDs);
 
                 bindClients = new List<Client>();
-
-                candidateBindSet = new HashSet<int>();
-                candidateBindTimer = new Stopwatch();
-                candidateBindTimer.Start();
             }
 
             public static void Init()
@@ -135,7 +127,9 @@ namespace RichHudFramework
                     _instance.RegisterComponent(RichHudCore.Instance);
 
                 if (_instance.mainClient == null)
+                {
                     _instance.mainClient = new Client();
+                }
             }
 
             public override void HandleInput()
@@ -148,47 +142,32 @@ namespace RichHudFramework
                 {
                     for (int n = 0; n < bindClients.Count; n++)
                         bindClients[n].HandleInput();
+                }                
+
+                // Synchronize with actual value every second or so
+                if (chatInputTick == 0)
+                {
+                    IsChatOpen = MyAPIGateway.Gui.ChatEntryVisible;
                 }
+
+                if (SharedBinds.Enter.IsNewPressed && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.None)
+                {
+                    IsChatOpen = !IsChatOpen;
+                    chatInputTick = 0;
+                }
+
+                chatInputTick++;
+                chatInputTick %= 60;
             }
 
             private void UpdateControls()
             {
-                if (candidateBindSet.Count == 0)
-                    candidateBindTimer.Restart();
-
                 foreach (Control control in controls)
                 {
                     if (control != Control.Default)
                     {
                         control.Update();
-
-                        if (control.IsNewPressed)
-                        {
-                            if (!candidateBindSet.Contains(control.Index))
-                            {
-                                candidateBindSet.Add(control.Index);
-                                candidateBindTimer.Restart();
-                            }
-                        }
                     }
-                }
-
-                // Check the number of controls still pressed in the candidate sequence
-                int pressCount = 0;
-
-                foreach (int conIndex in candidateBindSet)
-                {
-                    Control control = controls[conIndex];
-
-                    if (control.IsPressed)
-                        pressCount++;
-                }
-
-                // If the full sequence isn't pressed and the timer has elapsed, clear the sequence
-                if ( pressCount == 0 || 
-                    (pressCount < candidateBindSet.Count && (candidateBindTimer.ElapsedMilliseconds > maxCandidateBindTime)) )
-                {
-                    candidateBindSet.Clear();
                 }
             }
 
@@ -271,6 +250,15 @@ namespace RichHudFramework
 
                 SetBlacklist(seControlIDs, false);
                 SetBlacklist(seMouseControlIDs, false);
+            }
+
+            /// <summary>
+            /// Sets a temporary control blacklist cleared after every frame. Blacklists set via
+            /// property will persist regardless.
+            /// </summary>
+            public static void RequestTempBlacklist(SeBlacklistModes mode)
+            {
+                Instance.mainClient.RequestTempBlacklist(mode);
             }
 
             /// <summary>

@@ -1,6 +1,59 @@
 <?xml version="1.0"?>
 <Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 	<TransparentMaterials>
+
+		<!-- Circle -->
+		<TransparentMaterial> 
+		  <Id>
+			  <TypeId>TransparentMaterialDefinition</TypeId>
+			  <SubtypeId>RhfCircle</SubtypeId>
+		  </Id>
+		  <AlphaMistingEnable>false</AlphaMistingEnable>
+		  <CanBeAffectedByOtherLights>false</CanBeAffectedByOtherLights>
+		  <AlphaSaturation>1</AlphaSaturation>
+		  <Emissivity>0</Emissivity>
+		  <IgnoreDepth>false</IgnoreDepth>
+		  <NeedSort>false</NeedSort>
+		  <SoftParticleDistanceScale>0</SoftParticleDistanceScale>
+		  <Texture>Textures\rhf_circle.dds</Texture>
+		  <Reflectivity>0</Reflectivity>
+		  <UseAtlas>false</UseAtlas>
+		  <UVOffset>
+			  <X>0</X>
+			  <Y>0</Y>
+		  </UVOffset>
+		  <UVSize>
+			  <X>1</X>
+			  <Y>1</Y>
+		  </UVSize>
+		</TransparentMaterial>
+		
+		<!-- Annulus -->
+		<TransparentMaterial> 
+		  <Id>
+			  <TypeId>TransparentMaterialDefinition</TypeId>
+			  <SubtypeId>RhfAnnulus</SubtypeId>
+		  </Id>
+		  <AlphaMistingEnable>false</AlphaMistingEnable>
+		  <CanBeAffectedByOtherLights>false</CanBeAffectedByOtherLights>
+		  <AlphaSaturation>1</AlphaSaturation>
+		  <Emissivity>0</Emissivity>
+		  <IgnoreDepth>false</IgnoreDepth>
+		  <NeedSort>false</NeedSort>
+		  <SoftParticleDistanceScale>0</SoftParticleDistanceScale>
+		  <Texture>Textures\rhf_annulus.dds</Texture>
+		  <Reflectivity>0</Reflectivity>
+		  <UseAtlas>false</UseAtlas>
+		  <UVOffset>
+			  <X>0</X>
+			  <Y>0</Y>
+		  </UVOffset>
+		  <UVSize>
+			  <X>1</X>
+			  <Y>1</Y>
+		  </UVSize>
+		</TransparentMaterial>
+
 		<!-- Cursor Texture -->
 		<TransparentMaterial> 
 		  <Id>

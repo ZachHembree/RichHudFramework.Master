@@ -41,7 +41,7 @@ namespace RichHudFramework
                         /// <summary>
                         /// Billboard object used to render the rich char.
                         /// </summary>
-                        public QuadBoard GlyphBoard => line.glyphBoards[index];
+                        public QuadBoard GlyphBoard => line.glyphBoards[index].quadBoard;
 
                         /// <summary>
                         /// Defines the formatting applied to the character.
@@ -51,17 +51,17 @@ namespace RichHudFramework
                         /// <summary>
                         /// The size of the character as it appears.
                         /// </summary>
-                        public Vector2 Size => line.locData[index].chSize * builder.Scale;
+                        public Vector2 Size => line.formattedGlyphs[index].chSize * builder.Scale;
 
                         /// <summary>
                         /// The actual size of the character as rendered by the billboard.
                         /// </summary>
-                        public Vector2 BbSize => line.locData[index].bbSize * builder.Scale;
+                        public Vector2 BbSize => line.glyphBoards[index].bounds.Size * builder.Scale;
 
                         /// <summary>
                         /// The position of the character's center relative to its TextBoard.
                         /// </summary>
-                        public Vector2 Offset => line.locData[index].bbOffset * builder.Scale;
+                        public Vector2 Offset => line.glyphBoards[index].bounds.Center * builder.Scale;
 
                         public readonly int index;
                         public readonly Line line;

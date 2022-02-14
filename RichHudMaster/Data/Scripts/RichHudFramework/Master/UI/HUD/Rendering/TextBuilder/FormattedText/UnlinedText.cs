@@ -12,7 +12,7 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private class UnlinedText : FormattedTextBase
         {
-            public UnlinedText(LinePool lines) : base(lines)
+            public UnlinedText(LinePool lines) : base(lines, false)
             {
                 if (lines.Count > 1)
                     FlattenText();
@@ -59,7 +59,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 charBuffer.Clear();
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, false);
+                    GetRichChars(text[n], charBuffer, AllowSpecialChars);
 
                 lines[0].InsertRange(start.Y, charBuffer);
                 lines[0].UpdateSize();

@@ -105,6 +105,26 @@ namespace RichHudFramework
                     /// </summary>
                     public bool RefreshDrawList => _refreshDrawList;
 
+                    /// <summary>
+                    /// Optional callback invoked before draw
+                    /// </summary>
+                    public Action BeforeDrawCallback { get; private set; }
+
+                    /// <summary>
+                    /// Optional callback invoked after draw
+                    /// </summary>
+                    public Action AfterDrawCallback { get; private set; }
+
+                    /// <summary>
+                    /// Optional callback invoked before handle input
+                    /// </summary>
+                    public Action BeforeInputCallback { get; private set; }
+
+                    /// <summary>
+                    /// Optional callback invoked after handle input
+                    /// </summary>
+                    public Action AfterInputCallback { get; private set; }
+
                     private bool _refreshDrawList, _enableCursor, refreshRequested;
                     private readonly int apiVersion;
                     private readonly List<HudUpdateAccessors> updateAccessors;
@@ -246,6 +266,14 @@ namespace RichHudFramework
                                 GetInputFocus(data as Action); break;
                             case HudMainAccessors.InputMode:
                                 return InputMode;
+                            case HudMainAccessors.SetBeforeDrawCallback:
+                                BeforeDrawCallback = data as Action; break;
+                            case HudMainAccessors.SetAfterDrawCallback:
+                                AfterDrawCallback = data as Action; break;
+                            case HudMainAccessors.SetBeforeInputCallback:
+                                BeforeInputCallback = data as Action; break;
+                            case HudMainAccessors.SetAfterInputCallback:
+                                AfterInputCallback = data as Action; break;
                         }
 
                         return null;

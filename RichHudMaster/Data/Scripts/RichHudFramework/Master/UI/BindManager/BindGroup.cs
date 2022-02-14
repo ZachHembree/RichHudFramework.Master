@@ -29,6 +29,11 @@ namespace RichHudFramework
                 public IBind this[int index] => keyBinds[index];
 
                 /// <summary>
+                /// Retrieves the bind with the given name
+                /// </summary>
+                public IBind this[string name] => GetBind(name);
+
+                /// <summary>
                 /// Returns the number of binds in the group
                 /// </summary>
                 public int Count => keyBinds.Count;
@@ -80,9 +85,9 @@ namespace RichHudFramework
                     if (keyBinds.Count > 0)
                     {
                         int controlsPressed = GetPressedControls();
-                        bool canUpdateBinds;
+                        bool canUpdateBinds = true;
 
-                        if (controlsPressed > 0 && controlsPressed >= _instance.candidateBindSet.Count)
+                        if (controlsPressed > 0)
                         {
                             int bindsPressed = GetPressedBinds();
 
@@ -96,8 +101,6 @@ namespace RichHudFramework
                                 if (bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased)
                                     bindControlsPressed += bind.length;
                             }
-
-                            canUpdateBinds = bindControlsPressed >= _instance.candidateBindSet.Count;
                         }
                         else
                             canUpdateBinds = false;

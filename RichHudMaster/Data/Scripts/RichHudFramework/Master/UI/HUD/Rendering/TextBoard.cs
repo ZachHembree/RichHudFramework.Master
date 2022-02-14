@@ -204,10 +204,11 @@ namespace RichHudFramework
                     {
                         if (index.Y != 0)
                         {
-                            GlyphLocData locData = line.LocData[index.Y];
+                            Vector2 chSize = line.FormattedGlyphs[index.Y].chSize,
+                                bbOffset = line.GlyphBoards[index.Y].bounds.Center;
 
-                            float minOffset = -locData.bbOffset.X + locData.chSize.X * .5f - _fixedSize.X * .5f,
-                                maxOffset = minOffset - locData.chSize.X + _fixedSize.X;
+                            float minOffset = -bbOffset.X + chSize.X * .5f - _fixedSize.X * .5f,
+                                maxOffset = minOffset - chSize.X + _fixedSize.X;
 
                             offset = MathHelper.Clamp(offset, minOffset, maxOffset);
                         }
@@ -264,7 +265,7 @@ namespace RichHudFramework
                     for (int ch = 0; ch < lines[ln].Count; ch++)
                     {
                         Line line = lines[ln];
-                        float pos = line.LocData[ch].bbOffset.X;
+                        float pos = line.GlyphBoards[ch].bounds.Center.X;
 
                         if (((offset >= last || ch == 0) && offset < pos) || ch == lines[ln].Count - 1)
                             return ch;
@@ -326,7 +327,7 @@ namespace RichHudFramework
                 /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
                 /// direction.
                 /// </summary>
-                public void Draw(BoundingBox2 box, BoundingBox2 mask, MatrixD[] matrix)
+                public void Draw(BoundingBox2 box, BoundingBox2 mask, MatrixD[] matrixRef)
                 {
                     ContainmentType containment;
                     mask.Contains(ref box, out containment);
@@ -351,48 +352,45 @@ namespace RichHudFramework
                         BoundingBox2 textMask = box.Intersect(mask);
                         Vector2 offset = box.Center + _textOffset * Scale;
 
-                        IReadOnlyList<Line> lineList = lines.PooledLines;
-                        CroppedBox bb = default(CroppedBox);
-                        bb.mask = textMask;
+                        DrawCharacters(textMask, offset, matrixRef);
+                        DrawUnderlines(textMask, offset, matrixRef);
+                    }
+                }
 
-                        // Draw glyphs
-                        for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
-                        {
-                            Line line = lineList[ln];
+                /// <summary>
+                /// Adds final transformed character quads w/masking and offset to the buffer for rendering
+                /// </summary>
+                private void DrawCharacters(BoundingBox2 mask, Vector2 offset, MatrixD[] matrixRef)
+                {
+                    IReadOnlyList<Line> lineList = lines.PooledLines;
 
-                            for (int ch = 0; ch < line.Count; ch++)
-                            {
-                                GlyphLocData locData = line.LocData[ch];
-                                Vector2 halfSize = locData.bbSize * Scale * .5f,
-                                    pos = offset + locData.bbOffset * Scale;
+                    for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
+                    {
+                        BillBoardUtils.AddQuads(lineList[ln].GlyphBoards, matrixRef, mask, offset, Scale);
+                    }
+                }
+                
+                /// <summary>
+                /// Adds final transformed underline quads w/masking and offset to the buffer for rendering
+                /// </summary>
+                private void DrawUnderlines(BoundingBox2 mask, Vector2 offset, MatrixD[] matrixRef)
+                {
+                    ContainmentType containment;
+                    QuadBoard underlineBoard = QuadBoard.Default;
+                    CroppedBox bb = default(CroppedBox);
+                    bb.mask = mask;
 
-                                bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
-                                bb.mask.Value.Contains(ref bb.bounds, out containment);
+                    for (int n = 0; n < underlines.Count; n++)
+                    {
+                        Vector2 halfSize = underlines[n].size * Scale * .5f,
+                            pos = offset + underlines[n].offset * Scale;
 
-                                if (containment == ContainmentType.Contains)
-                                    line.GlyphBoards[ch].Draw(ref bb, ref matrix[0]);
-                                else if (containment != ContainmentType.Disjoint)
-                                    line.GlyphBoards[ch].DrawCroppedTex(ref bb, ref matrix[0]);
-                            }
-                        }
+                        bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
+                        bb.mask.Value.Contains(ref bb.bounds, out containment);
+                        underlineBoard.materialData.bbColor = underlines[n].color;
 
-                        QuadBoard underlineBoard = QuadBoard.Default;
-
-                        // Draw underlines
-                        for (int n = 0; n < underlines.Count; n++)
-                        {
-                            Vector2 halfSize = underlines[n].size * Scale * .5f,
-                                pos = offset + underlines[n].offset * Scale;
-
-                            bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
-                            bb.mask.Value.Contains(ref bb.bounds, out containment);
-                            underlineBoard.bbColor = underlines[n].color;
-
-                            if (containment == ContainmentType.Contains)
-                                underlineBoard.Draw(ref bb, ref matrix[0]);
-                            else if (containment != ContainmentType.Disjoint)
-                                underlineBoard.DrawCropped(ref bb, ref matrix[0]);
-                        }
+                        if (containment != ContainmentType.Disjoint)
+                            underlineBoard.Draw(ref bb, matrixRef);
                     }
                 }
 
@@ -594,9 +592,11 @@ namespace RichHudFramework
 
                     for (int ch = 0; ch < lines[line].Count; ch++)
                     {
-                        if (lines[line].LocData[ch].chSize.Y == lines[line].UnscaledSize.Y)
+                        FormattedGlyph fmtGlyph = lines[line].FormattedGlyphs[ch];
+
+                        if (fmtGlyph.chSize.Y == lines[line].UnscaledSize.Y)
                         {
-                            GlyphFormat format = lines[line].FormattedGlyphs[ch].format;
+                            GlyphFormat format = fmtGlyph.format;
                             IFontStyle fontStyle = FontManager.Fonts[format.StyleIndex.X][format.StyleIndex.Y];
 
                             baseline = (fontStyle.BaseLine - (fontStyle.Height - fontStyle.BaseLine) * .5f) * (format.TextSize * fontStyle.FontScale);
@@ -630,15 +630,16 @@ namespace RichHudFramework
                             pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], ch) * formatScale;
                     }
 
-                    GlyphLocData locData = line.LocData[right];
+                    Vector2 chSize = line.FormattedGlyphs[right].chSize,
+                        bbSize = line.GlyphBoards[right].bounds.Size;
 
-                    line.SetOffsetAt(right, new Vector2()
+                    line.SetOffsetAt(right, new Vector2
                     {
-                        X = pos.X + locData.bbSize.X * .5f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
-                        Y = pos.Y - (locData.bbSize.Y * .5f) + (fontStyle.BaseLine * formatScale) + cjkOffset
+                        X = pos.X + bbSize.X * .5f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
+                        Y = pos.Y - (bbSize.Y * .5f) + (fontStyle.BaseLine * formatScale) + cjkOffset
                     });
 
-                    return pos.X + locData.chSize.X;
+                    return pos.X + chSize.X;
                 }
 
                 /// <summary>
@@ -676,20 +677,24 @@ namespace RichHudFramework
                                 {
                                     if (((FontStyles)formatData.Value.Item3.Y & FontStyles.Underline) > 0)
                                     {
-                                        GlyphLocData start = line.LocData[startCh], end = line.LocData[ch];
+                                        Vector2 startSize = line.FormattedGlyphs[startCh].chSize,
+                                            endSize = line.FormattedGlyphs[ch].chSize,
+                                            startPos = line.GlyphBoards[startCh].bounds.Center,
+                                            endPos = line.GlyphBoards[ch].bounds.Center;
+
                                         Vector2 pos = new Vector2
                                         (
-                                            (start.bbOffset.X + end.bbOffset.X) * .5f,
-                                            end.bbOffset.Y - (end.chSize.Y * .5f - (1f * formatData.Value.Item2))
+                                            (startPos.X + endPos.X) * .5f,
+                                            endPos.Y - (endSize.Y * .5f - (1f * formatData.Value.Item2))
                                         );
 
                                         Vector2 size = new Vector2
                                         (
-                                            (end.bbOffset.X - start.bbOffset.X) + (end.chSize.X + start.chSize.X) * .5f,
+                                            (endPos.X - startPos.X) + (endSize.X + startSize.X) * .5f,
                                             Math.Max((int)formatData.Value.Item2, 1)
                                         );
 
-                                        Vector4 color = QuadBoard.GetQuadBoardColor(formatData.Value.Item4) * .9f;
+                                        Vector4 color = BillBoardUtils.GetBillBoardBoardColor(formatData.Value.Item4) * .9f;
                                         underlines.Add(new UnderlineBoard(size, pos, color));
                                     }
 

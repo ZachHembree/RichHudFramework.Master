@@ -19,17 +19,17 @@ namespace RichHudFramework
                     /// <summary>
                     /// Invoked when the bind is first pressed.
                     /// </summary>
-                    public event Action NewPressed;
+                    public event EventHandler NewPressed;
 
                     /// <summary>
                     /// Invoked after the bind has been held and pressed for at least 500ms.
                     /// </summary>
-                    public event Action PressedAndHeld;
+                    public event EventHandler PressedAndHeld;
 
                     /// <summary>
                     /// Invoked after the bind has been released.
                     /// </summary>
-                    public event Action Released;
+                    public event EventHandler Released;
 
                     /// <summary>
                     /// Name of the keybind
@@ -103,14 +103,14 @@ namespace RichHudFramework
 
                         if (IsNewPressed)
                         {
-                            NewPressed?.Invoke();
+                            NewPressed?.Invoke(this, EventArgs.Empty);
                             stopwatch.Restart();
                         }
 
                         if (IsPressed && stopwatch.ElapsedTicks > holdTime)
                         {
                             if (!IsPressedAndHeld)
-                                PressedAndHeld?.Invoke();
+                                PressedAndHeld?.Invoke(this, EventArgs.Empty);
 
                             IsPressedAndHeld = true;
                         }
@@ -118,7 +118,7 @@ namespace RichHudFramework
                             IsPressedAndHeld = false;
 
                         if (IsReleased)
-                            Released?.Invoke();
+                            Released?.Invoke(this, EventArgs.Empty);
                     }
 
                     /// <summary>
