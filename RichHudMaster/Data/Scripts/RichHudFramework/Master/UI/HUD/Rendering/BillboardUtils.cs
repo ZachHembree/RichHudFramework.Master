@@ -68,7 +68,7 @@ namespace RichHudFramework
                     if (instance != null)
                         throw new Exception($"Only one instance of {GetType().Name} can exist at once.");
 
-                    bbSwapPools = new List<MyTriangleBillboard>[3]
+                    bbSwapPools = new List<MyTriangleBillboard>[]
                     {
                         new List<MyTriangleBillboard>(1000),
                         new List<MyTriangleBillboard>(1000),
@@ -192,45 +192,12 @@ namespace RichHudFramework
 
                     if (tick == 0)
                     {
-                        billboardUsage[sampleTick] = flatTriangleList.Count;
-                        billboardUsageStats.Clear();
-                        billboardUsageStats.AddRange(billboardUsage);
-                        billboardUsageStats.Sort();
-
-                        billboardAlloc[sampleTick] = flatTriangleList.Capacity;
-                        billboardAllocStats.Clear();
-                        billboardAllocStats.AddRange(billboardAlloc);
-                        billboardAllocStats.Sort();
-
-                        matrixUsage[sampleTick] = matrixBuf.Count;
-                        matrixUsageStats.Clear();
-                        matrixUsageStats.AddRange(matrixUsage);
-                        matrixUsageStats.Sort();
+                        UpdateStats();
 
                         sampleTick++;
                         sampleTick %= statsWindowSize;
 
-                        int usage99 = GetUsagePercentile(.99f),
-                            alloc01 = GetAllocPercentile(0.01f);
-
-                        if (flatTriangleList.Capacity > bufMinResizeThreshold
-                            && flatTriangleList.Capacity > 3 * flatTriangleList.Count
-                            && flatTriangleList.Capacity > 3 * usage99
-                            && alloc01 > 3 * usage99)
-                        {
-                            int max = Math.Max(2 * flatTriangleList.Count, bufMinResizeThreshold);
-                            flatTriangleList.ClearAndTrim(max);
-                            bbBuf.ClearAndTrim(max);
-
-                            foreach (List<MyTriangleBillboard> bb in bbSwapPools)
-                            {
-                                int remStart = Math.Min(max, bb.Count - 1),
-                                    remCount = Math.Max(bb.Count - remStart, 0);
-
-                                bb.RemoveRange(remStart, remCount);
-                                bb.TrimExcess();
-                            }
-                        }
+                        UpdateBllboardTrimming();
                     }
 
                     triangleList.Clear();
@@ -240,6 +207,77 @@ namespace RichHudFramework
 
                     tick++;
                     tick %= sampleRateDiv;
+                }
+
+                /// <summary>
+                /// Updates pool usages stats
+                /// </summary>
+                private void UpdateStats()
+                {
+                    billboardUsage[sampleTick] = flatTriangleList.Count + triangleList.Count;
+                    billboardUsageStats.Clear();
+                    billboardUsageStats.AddRange(billboardUsage);
+                    billboardUsageStats.Sort();
+
+                    billboardAlloc[sampleTick] = flatTriangleList.Capacity + triangleList.Capacity;
+                    billboardAllocStats.Clear();
+                    billboardAllocStats.AddRange(billboardAlloc);
+                    billboardAllocStats.Sort();
+
+                    matrixUsage[sampleTick] = matrixBuf.Count;
+                    matrixUsageStats.Clear();
+                    matrixUsageStats.AddRange(matrixUsage);
+                    matrixUsageStats.Sort();
+                }
+
+                /// <summary>
+                /// Trims billboard pool and data periodically
+                /// </summary>
+                private void UpdateBllboardTrimming()
+                {
+                    int usage99 = GetUsagePercentile(.99f),
+                            alloc01 = GetAllocPercentile(0.01f);
+                    bool trimBillboards = false;
+
+                    // 2D Bllboards billboards
+                    if (flatTriangleList.Capacity > bufMinResizeThreshold
+                        && flatTriangleList.Capacity > 3 * flatTriangleList.Count
+                        && flatTriangleList.Capacity > 3 * usage99
+                        && alloc01 > 3 * usage99
+                    )
+                    {
+                        int max = Math.Max(2 * flatTriangleList.Count, bufMinResizeThreshold);
+                        flatTriangleList.ClearAndTrim(max);
+                        trimBillboards = true;
+                    }
+
+                    // 3D Billboard data
+                    if (triangleList.Capacity > bufMinResizeThreshold
+                        && triangleList.Capacity > 3 * triangleList.Count
+                        && triangleList.Capacity > 3 * usage99
+                        && alloc01 > 3 * usage99
+                    )
+                    {
+                        int max = Math.Max(2 * triangleList.Count, bufMinResizeThreshold);
+                        triangleList.ClearAndTrim(max);
+                        trimBillboards = true;
+                    }
+
+                    // Trim billboards
+                    if (trimBillboards)
+                    {
+                        int max = triangleList.Capacity + flatTriangleList.Capacity;
+                        bbBuf.ClearAndTrim(max);
+
+                        foreach (List<MyTriangleBillboard> bb in bbSwapPools)
+                        {
+                            int remStart = Math.Min(max, bb.Count - 1),
+                                remCount = Math.Max(bb.Count - remStart, 0);
+
+                            bb.RemoveRange(remStart, remCount);
+                            bb.TrimExcess();
+                        }
+                    }
                 }
 
                 private void UpdateBillboards()
@@ -257,6 +295,14 @@ namespace RichHudFramework
                     {
                         TriangleBillboardData bbData = triangleList[i];
                         MyTriangleBillboard bb = bbPoolBack[bbData.Item2.X];
+
+                        if (bbData.Item2.Y != -1)
+                        {
+                            MatrixD matrix = matrixBuf[bbData.Item2.Y];
+                            Vector3D.TransformNoProjection(ref bbData.Item6.Item1, ref matrix, out bbData.Item6.Item1);
+                            Vector3D.TransformNoProjection(ref bbData.Item6.Item2, ref matrix, out bbData.Item6.Item2);
+                            Vector3D.TransformNoProjection(ref bbData.Item6.Item3, ref matrix, out bbData.Item6.Item3);
+                        }
 
                         bb.BlendType = bbData.Item1;
                         bb.Material = bbData.Item3;
