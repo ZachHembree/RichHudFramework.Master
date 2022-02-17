@@ -121,16 +121,32 @@ namespace RichHudFramework
                 private int GetPressedControls()
                 {
                     int controlsPressed = 0;
+                    bool anyNewPresses = false;
+
+                    foreach (Control con in usedControls)
+                    {
+                        if (con.IsNewPressed)
+                        {
+                            anyNewPresses = true;
+                            break;
+                        }
+                    }
 
                     foreach (Bind bind in keyBinds)
+                    {
+                        // If any used controls have new presses, stop releasing
+                        bind.beingReleased = bind.beingReleased && !anyNewPresses;
                         bind.bindHits = 0;
+                    }
 
-                    foreach (IControl con in usedControls)
+                    foreach (Control con in usedControls)
                     {
                         if (con.IsPressed)
                         {
                             foreach (Bind bind in controlMap[con.Index])
+                            {
                                 bind.bindHits++;
+                            }
 
                             controlsPressed++;
                         }
