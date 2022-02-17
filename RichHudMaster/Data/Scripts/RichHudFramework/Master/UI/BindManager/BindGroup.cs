@@ -13,10 +13,12 @@ namespace RichHudFramework
             /// <summary>
             /// A collection of unique keybinds.
             /// </summary>
-            private partial class BindGroup : IBindGroup
+            public partial class BindGroup : IBindGroup
             {
                 public const int maxBindLength = 3;
                 private const long holdTime = TimeSpan.TicksPerMillisecond * 500;
+
+                public event EventHandler BindChanged;
 
                 /// <summary>
                 /// Name assigned to the bind group
@@ -52,6 +54,7 @@ namespace RichHudFramework
                 private readonly List<IBind>[] controlMap; // X = controls; Y = associated binds
                 private List<IControl> usedControls;
                 private List<List<IBind>> bindMap; // X = used controls; Y = associated binds
+                private bool wasBindChanged;
 
                 public BindGroup(int index, string name)
                 {
@@ -110,6 +113,12 @@ namespace RichHudFramework
                             bind.UpdatePress(canUpdateBinds
                                 && (bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased)
                             );
+                        }
+
+                        if (wasBindChanged)
+                        {
+                            BindChanged?.Invoke(this, EventArgs.Empty);
+                            wasBindChanged = false;
                         }
                     }
                 }
@@ -499,6 +508,7 @@ namespace RichHudFramework
                         }
 
                         bind.length = newCombo.Count;
+                        wasBindChanged = true;
                     }
                 }
 
@@ -521,6 +531,7 @@ namespace RichHudFramework
 
                     bind.Analog = false;
                     bind.length = 0;
+                    wasBindChanged = true;
                 }
 
                 /// <summary>

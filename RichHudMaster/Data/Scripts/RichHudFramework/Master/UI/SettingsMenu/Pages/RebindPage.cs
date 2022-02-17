@@ -329,6 +329,9 @@ namespace RichHudFramework
 
                 public void Reset()
                 {
+                    var fullGroup = group as BindManager.BindGroup;
+                    fullGroup.BindChanged -= OnBindChanged;
+
                     bindName.TextBoard.Clear();
                     bind = null;
                     group = null;
@@ -338,6 +341,14 @@ namespace RichHudFramework
                 {
                     this.bind = bind;
                     this.group = group;
+                    UpdateBindText();
+
+                    var fullGroup = group as BindManager.BindGroup;
+                    fullGroup.BindChanged += OnBindChanged;
+                }
+
+                private void OnBindChanged(object sender, EventArgs args)
+                {
                     UpdateBindText();
                 }
 
@@ -355,7 +366,6 @@ namespace RichHudFramework
                 /// </summary>
                 private void DialogClosed()
                 {
-                    UpdateBindText();
                     RichHudTerminal.OpenMenu();
                 }
 
@@ -371,14 +381,11 @@ namespace RichHudFramework
                         if (index == 0 && combo.Count == 1)
                         {
                             bind.ClearCombo();
-                            UpdateBindText();
                         }
                         else
                         {
                             combo.RemoveAt(index);
-
-                            if (bind.TrySetCombo(combo.ToArray(), false))
-                                UpdateBindText();
+                            bind.TrySetCombo(combo.ToArray(), false);
                         }
                     }
                 }

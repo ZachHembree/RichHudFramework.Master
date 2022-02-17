@@ -10,7 +10,7 @@ namespace RichHudFramework
     {
         public sealed partial class BindManager
         {
-            private partial class BindGroup
+            public partial class BindGroup
             {
                 /// <summary>
                 /// Logic and data for individual keybinds
