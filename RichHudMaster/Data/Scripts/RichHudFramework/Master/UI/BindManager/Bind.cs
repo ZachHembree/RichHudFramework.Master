@@ -1,5 +1,6 @@
 ﻿using RichHudFramework.Internal;
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -218,6 +219,26 @@ namespace RichHudFramework
                         NewPressed = null;
                         PressedAndHeld = null;
                         Released = null;
+                    }
+
+                    public override string ToString()
+                    {
+                        var sb = new StringBuilder();
+                        var combo = GetCombo();
+
+                        sb.Append(Name);
+                        sb.Append(": ");
+
+                        if (combo.Count > 0)
+                            sb.Append(combo[0].ToString());
+
+                        for (int i = 1; i < combo.Count; i++)
+                        {
+                            sb.Append(", ");
+                            sb.Append(combo[i].ToString());                       
+                        }
+
+                        return sb.ToString();
                     }
                 }
             }

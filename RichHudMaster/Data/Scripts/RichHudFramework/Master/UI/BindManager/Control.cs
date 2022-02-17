@@ -90,6 +90,11 @@ namespace RichHudFramework
                     IsPressed = false;
                     IsNewPressed = false;
                 }
+
+                public override string ToString()
+                {
+                    return Name;
+                }
             }
         }
     }
