@@ -363,6 +363,10 @@ namespace RichHudFramework
                                 return control.Index;
                             case ControlAccessors.IsPressed:
                                 return control.IsPressed;
+                            case ControlAccessors.IsNewPressed:
+                                return control.IsNewPressed;
+                            case ControlAccessors.IsReleased:
+                                return control.IsReleased;
                             case ControlAccessors.Analog:
                                 return control.Analog;
                         }
