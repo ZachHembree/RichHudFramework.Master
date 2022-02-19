@@ -150,7 +150,7 @@ namespace RichHudFramework
                     IsChatOpen = MyAPIGateway.Gui.ChatEntryVisible;
                 }
 
-                if (SharedBinds.Enter.IsNewPressed && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.None)
+                if (MyAPIGateway.Input.IsNewGameControlPressed(MyStringId.Get("CHAT_SCREEN")) && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.None)
                 {
                     IsChatOpen = !IsChatOpen;
                     chatInputTick = 0;
