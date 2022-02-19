@@ -110,9 +110,8 @@ namespace RichHudFramework
 
                         foreach (Bind bind in keyBinds)
                         {
-                            bind.UpdatePress(canUpdateBinds
-                                && (bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased)
-                            );
+                            bind.beingReleased = bind.beingReleased && bind.bindHits > 0;
+                            bind.UpdatePress(canUpdateBinds && (bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased));
                         }
 
                         if (wasBindChanged)
@@ -181,8 +180,6 @@ namespace RichHudFramework
                                 bind.bindHits = bind.length;
                                 bind.beingReleased = true;
                             }
-                            else if (bind.beingReleased)
-                                bind.beingReleased = false;
                         }
 
                         if (bind.length > 0 && bind.bindHits == bind.length)
