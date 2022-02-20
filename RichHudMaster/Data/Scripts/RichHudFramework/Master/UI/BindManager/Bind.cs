@@ -127,15 +127,15 @@ namespace RichHudFramework
                     /// </summary>
                     public List<IControl> GetCombo()
                     {
-                        List<int> indices = GetComboIndices();
                         List<IControl> combo = new List<IControl>();
 
-                        foreach (int index in indices)
+                        foreach (IControl con in group.usedControls)
                         {
-                            if (group.BindUsesControl(this, _instance.controls[index]))
-                                combo.Add(_instance.controls[index]);
+                            if (group.BindUsesControl(this, con))
+                                combo.Add(con);
                         }
 
+                        combo.Sort((a, b) => a.Index.CompareTo(b.Index));
                         return combo;
                     }
 
