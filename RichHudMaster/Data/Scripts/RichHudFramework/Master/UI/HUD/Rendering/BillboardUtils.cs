@@ -72,6 +72,9 @@ namespace RichHudFramework
                     {
                         new List<MyTriangleBillboard>(1000),
                         new List<MyTriangleBillboard>(1000),
+                        new List<MyTriangleBillboard>(1000),
+                        new List<MyTriangleBillboard>(1000),
+                        new List<MyTriangleBillboard>(1000),
                         new List<MyTriangleBillboard>(1000)
                     };
                     bbBuf = new List<MyTriangleBillboard>(1000);
@@ -182,7 +185,12 @@ namespace RichHudFramework
 
                 private void BeginDrawInternal()
                 {
-                    bbPoolBack = bbSwapPools[currentPool];                    
+                    var nextPool = bbSwapPools[currentPool];
+
+                    if (bbPoolBack != null)
+                        nextPool.EnsureCapacity(bbPoolBack.Count);
+
+                    bbPoolBack = nextPool;
                 }
 
                 private void FinishDrawInternal()
