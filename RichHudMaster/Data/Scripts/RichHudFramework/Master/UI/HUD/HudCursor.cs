@@ -78,6 +78,7 @@ namespace RichHudFramework
                 private HudSpaceDelegate GetCapturedHudSpaceFunc;
                 private readonly TexturedBox cursorBox;
                 private readonly LabelBox toolTip;
+                private Vector2 invMousePosScale;
 
                 public HudCursor(HudParentBase parent = null) : base(parent)
                 {
@@ -218,7 +219,7 @@ namespace RichHudFramework
                     // Reverse scaling due to differences between rendering resolution and
                     // desktop resolution when running the game in windowed mode
                     Vector2 desktopSize = MyAPIGateway.Input.GetMouseAreaSize();
-                    Vector2 invMousePosScale = new Vector2
+                    invMousePosScale = new Vector2
                     {
                         X = ScreenWidth / desktopSize.X,
                         Y = ScreenHeight / desktopSize.Y,
@@ -341,7 +342,7 @@ namespace RichHudFramework
                         case HudCursorAccessors.WorldPos:
                             return WorldPos;
                         case HudCursorAccessors.WorldLine:
-                            return WorldLine;
+                            return MyAPIGateway.Session.Camera.WorldLineFromScreen(MyAPIGateway.Input.GetMousePosition() * invMousePosScale);
                     }
 
                     return null;
@@ -360,7 +361,7 @@ namespace RichHudFramework
                         case HudCursorAccessors.WorldPos:
                             return WorldPos;
                         case HudCursorAccessors.WorldLine:
-                            return WorldLine;
+                            return MyAPIGateway.Session.Camera.WorldLineFromScreen(MyAPIGateway.Input.GetMousePosition() * invMousePosScale);
                         case HudCursorAccessors.RegisterToolTip:
                             {
                                 if (!IsToolTipRegistered)
