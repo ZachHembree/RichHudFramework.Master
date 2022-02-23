@@ -250,6 +250,7 @@ namespace RichHudFramework
                     bool boundTooltips = false, useScreenSpace = true;
                     float tooltipScale = 1f;
 
+                    #if false // Broken: Matrix out of sync
                     if (useCapturedHudSpace)
                     {
                         PlaneToWorldRef[0] = hudSpaceData.Value.Item3;
@@ -257,7 +258,8 @@ namespace RichHudFramework
                             PlaneToWorldRef[0].EqualsFast(ref HighDpiRoot.HudSpace.PlaneToWorldRef[0]) ||
                             PlaneToWorldRef[0].EqualsFast(ref Root.HudSpace.PlaneToWorldRef[0]);
                     }
-                    
+                    #endif
+
                     if (useScreenSpace)
                     {
                         PlaneToWorldRef[0] = HighDpiRoot.HudSpace.PlaneToWorldRef[0];
@@ -271,6 +273,11 @@ namespace RichHudFramework
                     layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     cursorBox.Offset = new Vector2(CursorPos.X, CursorPos.Y);
                     UpdateToolTip(boundTooltips, tooltipScale);
+                }
+
+                protected override void Draw()
+                {
+                    base.Draw();
                 }
 
                 protected override void HandleInput(Vector2 cursorPos)
