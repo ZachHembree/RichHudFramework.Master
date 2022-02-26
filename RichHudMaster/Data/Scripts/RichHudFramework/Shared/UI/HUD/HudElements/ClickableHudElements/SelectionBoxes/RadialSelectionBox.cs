@@ -78,15 +78,16 @@ namespace RichHudFramework.UI
         public virtual Color HighlightColor { get; set; }
 
         /// <summary>
-        /// Cursor sensitivity for wheel scrolling on a scale from .1 to 1.
+        /// Cursor sensitivity for wheel scrolling on a scale from .3 to 2.
         /// </summary>
         public float CursorSensitivity { get; set; }
 
         public readonly PuncturedPolyBoard polyBoard;
 
-        protected int selectionVisPos, effectiveMaxCount;
+        protected int selectionVisPos, effectiveMaxCount, minPolySize;
         protected bool isStartPosStale;
         protected Vector2 lastCursorPos, cursorNormal;
+        private float lastDot;
         private bool _isInputEnabled;
 
         public RadialSelectionBox(HudParentBase parent = null) : base(parent)
@@ -97,6 +98,7 @@ namespace RichHudFramework.UI
                 Sides = 64
             };
 
+            minPolySize = 64;
             Size = new Vector2(512f);
             MaxEntryCount = 8;
             CursorSensitivity = .5f;
@@ -151,17 +153,18 @@ namespace RichHudFramework.UI
                 }
             }
 
-            polyBoard.Sides = Math.Max(effectiveMaxCount * 6, polyBoard.Sides);
+            polyBoard.Sides = Math.Max(effectiveMaxCount * 6, minPolySize);
         }
 
         protected override void HandleInput(Vector2 cursorPos)
         {
             if (IsInputEnabled)
             {
-                CursorSensitivity = MathHelper.Clamp(CursorSensitivity, 0.1f, 1f);
+                CursorSensitivity = MathHelper.Clamp(CursorSensitivity, 0.3f, 2f);
 
                 if (isStartPosStale)
                 {
+                    lastDot = 0f;
                     cursorNormal = Vector2.Zero;
                     lastCursorPos = cursorPos;
                     isStartPosStale = false;
@@ -169,11 +172,11 @@ namespace RichHudFramework.UI
 
                 Vector2 cursorOffset = cursorPos - lastCursorPos;
 
-                if (cursorOffset.LengthSquared() > 16f)
+                if (cursorOffset.LengthSquared() > 64f)
                 {
                     // Find enabled entry with the offset that most closely matches
                     // the direction of the normal
-                    float dot = .1f;
+                    float dot = .5f;
                     int newSelection = -1;
                     Vector2 normalizedOffset = CursorSensitivity * 0.4f * Vector2.Normalize(cursorOffset);
                     cursorNormal = Vector2.Normalize(cursorNormal + normalizedOffset);
@@ -187,9 +190,10 @@ namespace RichHudFramework.UI
                         {
                             float newDot = Vector2.Dot(element.Offset, cursorNormal);
 
-                            if (newDot > dot)
+                            if (newDot > dot && Math.Abs(lastDot - newDot) > .1f)
                             {
                                 dot = newDot;
+                                lastDot = dot;
                                 newSelection = i;
                             }
                         }
@@ -222,16 +226,15 @@ namespace RichHudFramework.UI
         protected override void Draw()
         {
             Vector2 size = cachedSize - cachedPadding;
+            int entrySize = polyBoard.Sides / effectiveMaxCount;
             polyBoard.Color = BackgroundColor;
             polyBoard.Draw(size, cachedOrigin, HudSpace.PlaneToWorldRef);
 
-            if (SelectionIndex != -1)
+            if (SelectionIndex != -1 && selectionVisPos != -1 && entrySize > 0)
             {
                 UpdateVisPos();
 
-                int entrySize = polyBoard.Sides / effectiveMaxCount;
                 Vector2I slice = new Vector2I(0, entrySize - 1) + (selectionVisPos * entrySize);
-
                 polyBoard.Color = HighlightColor;
                 polyBoard.Draw(size, cachedOrigin, slice, HudSpace.PlaneToWorldRef);
             }
