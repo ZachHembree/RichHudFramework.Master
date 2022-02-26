@@ -50,13 +50,7 @@ namespace RichHudFramework.UI.Rendering.Server
                     lines.RemoveAt(splitStart.X);
                 }
 
-                List<Line> newLines = GetLines();
-                string contents = "";
-
-                for (int n = 0; n < newLines[0].Count; n++)
-                    contents += newLines[0][n].Ch;
-
-                InsertLines(newLines, splitStart.X);
+                InsertLines(GetLines(), splitStart.X);
             }
 
             /// <summary>
