@@ -82,7 +82,7 @@ namespace RichHudFramework
 
                 public HudCursor(HudParentBase parent = null) : base(parent)
                 {
-                    GetHudSpaceFunc = () => new HudSpaceData(DrawCursorInHudSpace, 1f, PlaneToWorldRef[0]);
+                    GetHudSpaceFunc = () => new HudSpaceData(false, 1f, PlaneToWorldRef[0]);
                     ZOffset = sbyte.MaxValue;
                     layerData.zOffsetInner = byte.MaxValue;
 
