@@ -116,13 +116,12 @@ namespace RichHudFramework.UI.Server
         {
             if (Open && newControl != null)
             {
-                IControl[] newCombo = new IControl[Math.Max(combo.Count, controlIndex + 1)];
+                if (controlIndex < combo.Count)
+                    combo[controlIndex] = newControl;
+                else
+                    combo.Add(newControl);
 
-                for (int n = 0; n < combo.Count; n++)
-                    newCombo[n] = combo[n];
-
-                newCombo[controlIndex] = newControl;
-                bind.TrySetCombo(newCombo, false);
+                bind.TrySetCombo(combo, false);
                 Exit();
             }
         }

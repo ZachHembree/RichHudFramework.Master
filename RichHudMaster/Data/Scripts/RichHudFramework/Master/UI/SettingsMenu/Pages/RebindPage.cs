@@ -264,7 +264,6 @@ namespace RichHudFramework
             {
                 private readonly Label bindName;
                 private readonly BorderedButton con1, con2, con3;
-                private readonly HudChain layout;
 
                 private IBind bind;
                 private IBindGroup group;
@@ -314,7 +313,7 @@ namespace RichHudFramework
                     con3.MouseInput.LeftClicked += (sender, args) => GetNewControl(2);
                     con3.MouseInput.RightClicked += (sender, args) => RemoveControl(2);
 
-                    layout = new HudChain(false, this)
+                    var layout = new HudChain(false, this)
                     {
                         SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                         Spacing = 13f,
@@ -374,18 +373,21 @@ namespace RichHudFramework
                 /// </summary>
                 private void RemoveControl(int index)
                 {
-                    List<IControl> combo = new List<IControl>(bind.GetCombo());
-
-                    if (index < combo.Count)
+                    if (index < 3)
                     {
-                        if (index == 0 && combo.Count == 1)
+                        List<IControl> combo = bind.GetCombo();
+
+                        if (index < combo.Count)
                         {
-                            bind.ClearCombo();
-                        }
-                        else
-                        {
-                            combo.RemoveAt(index);
-                            bind.TrySetCombo(combo.ToArray(), false);
+                            if (index == 0 && combo.Count == 1)
+                            {
+                                bind.ClearCombo();
+                            }
+                            else
+                            {
+                                combo.RemoveAt(index);
+                                bind.TrySetCombo(combo, false);
+                            }
                         }
                     }
                 }

@@ -54,6 +54,7 @@ namespace RichHudFramework
                 private readonly List<IBind>[] controlMap; // X = controls; Y = associated binds
                 private List<IControl> usedControls;
                 private List<List<IBind>> bindMap; // X = used controls; Y = associated binds
+                private readonly HashSet<IControl> comboHashSet;
                 private bool wasBindChanged;
 
                 public BindGroup(int index, string name)
@@ -69,6 +70,7 @@ namespace RichHudFramework
                     keyBinds = new List<Bind>();
                     usedControls = new List<IControl>();
                     bindMap = new List<List<IBind>>();
+                    comboHashSet = new HashSet<IControl>();
                 }
 
                 /// <summary>
@@ -486,9 +488,14 @@ namespace RichHudFramework
                 {
                     if (bind != null && newCombo != null)
                     {
+                        comboHashSet.Clear();
+
+                        for (int i = 0; i < newCombo.Count && comboHashSet.Count < maxBindLength; i++)
+                            comboHashSet.Add(newCombo[i]);
+
                         UnregisterBindFromCombo(bind);
 
-                        foreach (IControl con in newCombo)
+                        foreach (IControl con in comboHashSet)
                         {
                             List<IBind> registeredBinds = controlMap[con.Index];
 
@@ -504,7 +511,7 @@ namespace RichHudFramework
                                 bind.Analog = true;
                         }
 
-                        bind.length = newCombo.Count;
+                        bind.length = comboHashSet.Count;
                         wasBindChanged = true;
                     }
                 }
@@ -514,15 +521,21 @@ namespace RichHudFramework
                 /// </summary>
                 private void UnregisterBindFromCombo(Bind bind)
                 {
-                    for (int n = 0; n < usedControls.Count; n++)
+                    for (int i = usedControls.Count - 1; i >= 0; i--)
                     {
-                        List<IBind> registeredBinds = controlMap[usedControls[n].Index];
-                        registeredBinds.Remove(bind);
+                        List<IBind> registeredBinds = controlMap[usedControls[i].Index];
+
+                        // Exhaustive remove, probably overkill
+                        for (int j = registeredBinds.Count - 1; j >= 0; j--)
+                        {
+                            if (registeredBinds[j] == bind)
+                                registeredBinds.RemoveAt(j);
+                        }
 
                         if (registeredBinds.Count == 0)
                         {
                             bindMap.Remove(registeredBinds);
-                            usedControls.Remove(usedControls[n]);
+                            usedControls.Remove(usedControls[i]);
                         }
                     }
 
