@@ -168,6 +168,7 @@ namespace RichHudFramework.UI
         /// </summary>
         protected virtual void UpdateSelectionInput(Vector2 cursorPos)
         {
+            SelectionIndex = MathHelper.Clamp(SelectionIndex, -1, Entries.Count - 1);
             HighlightIndex = MathHelper.Clamp(HighlightIndex, 0, Entries.Count - 1);
 
             // If using arrow keys to scroll, adjust the scrollbox's start/end indices
