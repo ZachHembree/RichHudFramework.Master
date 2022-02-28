@@ -181,6 +181,9 @@ namespace RichHudFramework
 
                 if (drawTick == tickResetInterval)
                     drawTick = 0;
+
+                if (SharedBinds.Escape.IsNewPressed)
+                    LoseInputFocusCallback?.Invoke();
             }
 
             public override void HandleInput()
