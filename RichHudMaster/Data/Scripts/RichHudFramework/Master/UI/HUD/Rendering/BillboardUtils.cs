@@ -105,7 +105,10 @@ namespace RichHudFramework
 
                 public override void Close()
                 {
-                    instance = null;
+                    if (ExceptionHandler.Unloading)
+                    {
+                        instance = null;
+                    }
                 }
 
                 /// <summary>
