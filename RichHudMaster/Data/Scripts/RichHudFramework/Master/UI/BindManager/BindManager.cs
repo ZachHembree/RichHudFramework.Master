@@ -150,10 +150,18 @@ namespace RichHudFramework
                     IsChatOpen = MyAPIGateway.Gui.ChatEntryVisible;
                 }
 
-                if (MyAPIGateway.Input.IsNewGameControlPressed(MyStringId.Get("CHAT_SCREEN")) && MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.None)
+                if (MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.None)
                 {
-                    IsChatOpen = !IsChatOpen;
-                    chatInputTick = 0;
+                    if (IsChatOpen && SharedBinds.Enter.IsNewPressed)
+                    {
+                        IsChatOpen = false;
+                        chatInputTick = 0;
+                    }
+                    else if (MyAPIGateway.Input.IsNewGameControlPressed(MyStringId.Get("CHAT_SCREEN")))
+                    {
+                        IsChatOpen = true;
+                        chatInputTick = 0;
+                    }
                 }
 
                 chatInputTick++;
