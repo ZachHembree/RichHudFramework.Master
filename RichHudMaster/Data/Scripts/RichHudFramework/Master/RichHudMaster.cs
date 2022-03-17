@@ -28,7 +28,7 @@ namespace RichHudFramework.Server
     {
         public const long modID = 1965654081, queueID = 1314086443;
         public const int apiVID = 10, minApiVID = 7;
-        public static readonly Vector4I versionID = new Vector4I(1, 2, 3, 3); // Major, Minor, Rev, Hotfix
+        public static readonly Vector4I versionID = new Vector4I(1, 2, 3, 4); // Major, Minor, Rev, Hotfix
 
         /// <summary>
         /// Read-only list of currently registered clients

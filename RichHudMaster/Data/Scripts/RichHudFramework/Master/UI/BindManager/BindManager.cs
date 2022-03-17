@@ -4,8 +4,10 @@ using Sandbox.ModAPI;
 using System;
 using System.Diagnostics;
 using System.Collections.Generic;
+using VRage;
 using VRage.Input;
 using VRage.Utils;
+using VRage.Game;
 using VRage.Game.ModAPI;
 using VRageMath;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
@@ -106,6 +108,8 @@ namespace RichHudFramework
             private Client mainClient;
             private bool areControlsBlacklisted, areMouseControlsBlacklisted;
             private int chatInputTick;
+            private MySpectatorCameraMovementEnum? lastSpecMode;
+            private Vector2 lastSpecSpeeds;
 
             private BindManager() : base(false, true)
             {
@@ -182,6 +186,8 @@ namespace RichHudFramework
             private void UpdateBlacklist()
             {
                 CurrentBlacklistMode = SeBlacklistModes.None;
+                IMyControllableEntity conEnt = MyAPIGateway.Session.ControlledObject;
+                var specCon = MyAPIGateway.Session.CameraController as MySpectator;
 
                 for (int n = 0; n < bindClients.Count; n++)
                 {
@@ -198,10 +204,39 @@ namespace RichHudFramework
                 // Block/allow camera rotation due to user input
                 if ((CurrentBlacklistMode & SeBlacklistModes.CameraRot) > 0)
                 {
-                    IMyControllableEntity conEnt = MyAPIGateway.Session.ControlledObject;
+                    if (specCon != null)
+                    {
+                        if (lastSpecMode == null)
+                            lastSpecMode = specCon.SpectatorCameraMovement;
+
+                        specCon.SpectatorCameraMovement = MySpectatorCameraMovementEnum.None;
+                        specCon.SpeedModeAngular = lastSpecSpeeds.X;
+                        specCon.SpeedModeLinear = lastSpecSpeeds.Y;
+                    }
 
                     if (conEnt != null)
-                        conEnt.MoveAndRotate(conEnt.LastMotionIndicator, Vector2.Zero, 0f);
+                    {
+                        if (specCon != null)
+                            conEnt.MoveAndRotate(Vector3.Zero, Vector2.Zero, 0f);
+                        else
+                            conEnt.MoveAndRotate(conEnt.LastMotionIndicator, Vector2.Zero, 0f);
+                    }
+                }
+                else
+                {
+                    if (lastSpecMode != null)
+                    {
+                        if (specCon != null)
+                        {
+                            specCon.SpectatorCameraMovement = lastSpecMode.Value;
+                            specCon.SpeedModeAngular = lastSpecSpeeds.X;
+                            specCon.SpeedModeLinear = lastSpecSpeeds.Y;
+                        }
+
+                        lastSpecMode = null;
+                    }
+                    else if (specCon != null)
+                        lastSpecSpeeds = new Vector2(specCon.SpeedModeAngular, specCon.SpeedModeLinear);
                 }
 
                 // Set control blacklist according to flag configuration
