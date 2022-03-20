@@ -286,13 +286,13 @@ namespace RichHudFramework
             public override void Close()
             {
                 bindClients.Clear();
+                CurrentBlacklistMode = SeBlacklistModes.None;
+                UpdateBlacklist();
+
                 mainClient = null;
 
                 if (ExceptionHandler.Unloading)
                     _instance = null;
-
-                SetBlacklist(seControlIDs, false);
-                SetBlacklist(seMouseControlIDs, false);
             }
 
             /// <summary>
