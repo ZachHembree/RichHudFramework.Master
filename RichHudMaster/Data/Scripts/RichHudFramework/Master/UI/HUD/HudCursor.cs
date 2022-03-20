@@ -86,11 +86,12 @@ namespace RichHudFramework
                     ZOffset = sbyte.MaxValue;
                     layerData.zOffsetInner = byte.MaxValue;
 
-                    cursorBox = new TexturedBox(this)
+                    cursorBox = new TexturedBox()
                     {
                         Material = new Material(MyStringId.GetOrCompute("MouseCursor"), new Vector2(64f)),
                         Size = new Vector2(64f),
                     };
+                    cursorBox.Register(this, true);
 
                     var shadow = new TexturedBox(cursorBox)
                     {
