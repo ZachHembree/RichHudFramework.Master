@@ -1,4 +1,5 @@
 using RichHudFramework.Internal;
+using RichHudFramework.Server;
 using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
@@ -274,13 +275,13 @@ namespace RichHudFramework
                 }
             }
 
-            private static void SetBlacklist(IReadOnlyList<string> IDs, bool value)
+            private static void SetBlacklist(string[] blacklist, bool value)
             {
-                if (MyAPIGateway.Session?.Player != null)
-                {
-                    foreach (string control in IDs)
-                        MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, MyAPIGateway.Session.Player.IdentityId, !value);
-                }
+                BlacklistMessage message = new BlacklistMessage(blacklist, value);
+                byte[] data;
+
+                if (Utils.ProtoBuf.TrySerialize(message, out data) == null)
+                    RhServer.SendActionToServer(ServerActions.SetBlacklist, data);
             }
 
             public override void Close()

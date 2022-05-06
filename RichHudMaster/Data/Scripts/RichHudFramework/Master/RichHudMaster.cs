@@ -28,7 +28,7 @@ namespace RichHudFramework.Server
     {
         public const long modID = 1965654081, queueID = 1314086443;
         public const int apiVID = 10, minApiVID = 7;
-        public static readonly Vector4I versionID = new Vector4I(1, 2, 3, 5); // Major, Minor, Rev, Hotfix
+        public static readonly Vector4I versionID = new Vector4I(1, 2, 4, 0); // Major, Minor, Rev, Hotfix
 
         /// <summary>
         /// Read-only list of currently registered clients
@@ -39,7 +39,7 @@ namespace RichHudFramework.Server
 
         private readonly List<ModClient> clients;
 
-        public RichHudMaster() : base(false, true)
+        public RichHudMaster() : base(true, true)
         {
             if (Instance == null)
                 Instance = this;
@@ -59,23 +59,32 @@ namespace RichHudFramework.Server
         {
             CmdManager.GetOrCreateGroup("/rhd", GetChatCommands());
 
-            FontManager.Init();
-            BindManager.Init();
-            MasterConfig.Load(true);
+            RhServer.Init();
+            BlacklistManager.Init();
+
+            if (ExceptionHandler.IsClient)
+            {
+                FontManager.Init();
+                BindManager.Init();
+                MasterConfig.Load(true);
+            }
         }
 
         protected override void AfterInit()
         {
-            HudMain.Init();
-            RebindDialog.Init();
-            RichHudDebug.Init();
-            InitSettingsMenu();
+            if (ExceptionHandler.IsClient)
+            {
+                HudMain.Init();
+                RebindDialog.Init();
+                RichHudDebug.Init();
+                InitSettingsMenu();
 
-            RegisterClientHandler();
-            CheckClientQueue();
+                RegisterClientHandler();
+                CheckClientQueue();
 
-            if (MenuUtilities.CanAddElements)
-                MenuUtilities.AddMenuElements(GetModMenuButton());
+                if (MenuUtilities.CanAddElements)
+                    MenuUtilities.AddMenuElements(GetModMenuButton());
+            }
         }
 
         /// <summary>
