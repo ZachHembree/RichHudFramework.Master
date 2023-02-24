@@ -67,6 +67,7 @@ namespace RichHudFramework
                 public static bool RefreshRequested;
 
                 public bool UpdatingTree { get; private set; }
+                private bool isImmediateUpdateReq;
 
                 private readonly List<HudUpdateAccessors> updateAccessors;
                 private readonly Dictionary<Func<Vector3D>, ushort> distMap;
@@ -148,6 +149,10 @@ namespace RichHudFramework
                     if (treeManager != null)
                     {
                         bool success = treeManager.clients.Remove(client);
+
+                        if (!treeManager.isImmediateUpdateReq)
+                            treeManager.isImmediateUpdateReq = success;
+
                         return success;
                     }
                     else
@@ -159,6 +164,14 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw()
                 {
+                    if (isImmediateUpdateReq)
+                    {
+                        UpdateAccessorLists();
+                        FinishAccessorUpdate();
+
+                        isImmediateUpdateReq = false;
+                    }
+
                     BillBoardUtils.BeginDraw();
 
                     int drawTick = instance.drawTick;
@@ -211,9 +224,9 @@ namespace RichHudFramework
                         RefreshRequested = false;
 
                     lastResScale = resScale;
-
+                    
                     if (!UpdatingTree)
-                        UpdateAccessorLists();
+                        BeginAccessorListsUpdate();
                 }
 
                 /// <summary>
@@ -244,30 +257,13 @@ namespace RichHudFramework
                 /// <summary>
                 /// Updates tree accessor delegate lists, spreading out updates over 5 ticks
                 /// </summary>
-                private void UpdateAccessorLists()
+                private void BeginAccessorListsUpdate()
                 {
                     UpdatingTree = true;
 
                     instance.EnqueueTask(() => 
                     {
-                        treeTimer.Restart();
-
-                        if (sortTick % 3 == 0)
-                        {
-                            RebuildUpdateLists();
-                            UpdateDistMap();
-                        }
-                        else if (sortTick % 3 == 1)
-                        {
-                            UpdateIndexBuffer();
-                            ResetUpdateBuffers();
-                        }
-                        else if (sortTick % 3 == 2)
-                        {
-                            BuildSortedUpdateLists();
-                        }
-
-                        treeTimer.Stop();
+                        UpdateAccessorLists();
                         sortTick++;
 
                         if (sortTick == 3)
@@ -277,16 +273,42 @@ namespace RichHudFramework
 
                         if (sortTick == 0)
                         {
-                            instance.EnqueueAction(() =>
-                            {
-                                ElementRegistered = updateAccessors.Count;
-
-                                MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
-                                MyUtils.Swap(ref inputActionBuffer, ref inputActions);
-                                MyUtils.Swap(ref drawActionBuffer, ref drawActions);
-                            });
+                            instance.EnqueueAction(FinishAccessorUpdate);
                         }
                     });
+                }
+
+                private void UpdateAccessorLists()
+                {
+                    treeTimer.Restart();
+
+                    if (sortTick % 3 == 0 || isImmediateUpdateReq)
+                    {
+                        RebuildUpdateLists();
+                        UpdateDistMap();
+                    }
+
+                    if (sortTick % 3 == 1 || isImmediateUpdateReq)
+                    {
+                        UpdateIndexBuffer();
+                        ResetUpdateBuffers();
+                    }
+
+                    if (sortTick % 3 == 2 || isImmediateUpdateReq)
+                    {
+                        BuildSortedUpdateLists();
+                    }
+
+                    treeTimer.Stop();
+                }
+
+                private void FinishAccessorUpdate()
+                {
+                    ElementRegistered = updateAccessors.Count;
+
+                    MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
+                    MyUtils.Swap(ref inputActionBuffer, ref inputActions);
+                    MyUtils.Swap(ref drawActionBuffer, ref drawActions);
                 }
 
                 /// <summary>
