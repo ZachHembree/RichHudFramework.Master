@@ -111,7 +111,8 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormatting(GlyphFormat format, bool onlyChangeColor)
                     {
-                        SetFormatting(0, chars.Count, format, onlyChangeColor);
+                        if (chars.Count > 0)
+                            SetFormatting(0, chars.Count - 1, format, onlyChangeColor);
                     }
 
                     /// <summary>
@@ -119,6 +120,11 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormatting(int start, int end, GlyphFormat format, bool onlyChangeColor)
                     {
+                        if (chars.Count == 0)
+                            return;
+                        else if (start < 0 || end < 0 || start >= chars.Count || end >= chars.Count)
+                            throw new Exception($"Index was out of range. Start: {start} End: {end} Count: {Count}");
+
                         Vector4 bbColor = BillBoardUtils.GetBillBoardBoardColor(format.Data.Item4);
 
                         for (int n = start; n <= end; n++)

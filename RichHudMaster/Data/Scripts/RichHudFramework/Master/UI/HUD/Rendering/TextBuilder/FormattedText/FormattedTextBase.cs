@@ -92,7 +92,7 @@ namespace RichHudFramework.UI.Rendering.Server
                         for (int x = start.X + 1; x < end.X; x++)
                             lines[x].SetFormatting(formatting, onlyChangeColor);
 
-                        lines[start.X].SetFormatting(0, end.Y, formatting, onlyChangeColor);
+                        lines[end.X].SetFormatting(0, end.Y, formatting, onlyChangeColor);
                     }
                     else
                     {
