@@ -119,7 +119,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 for (int n = start; n <= end; n++)
                     charBuffer.AddRange(lines[n]);
 
-                lines.RemoveRange(insertStart, insertStart - end + 1);
+                lines.RemoveRange(insertStart, end - insertStart + 1);
 
                 List<Line> newLines = GetLines(GetBufferWidth());
                 InsertLines(newLines, insertStart);

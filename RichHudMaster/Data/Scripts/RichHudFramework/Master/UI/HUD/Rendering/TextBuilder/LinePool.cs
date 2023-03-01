@@ -173,6 +173,9 @@ namespace RichHudFramework
                     /// </summary>
                     public void RemoveRange(int index, int rangeSize)
                     {
+                        if (index < 0 || rangeSize < 0 || (index + rangeSize) >= lines.Count || lines.Count == 0)
+                            throw new Exception($"Index out of range. Start: {index} Size: {rangeSize} Count: {Count} BufCount: {lines.Count}");
+
                         // Move everything after the range being removed and move the
                         // lines being removed to the end of the list.
                         for (int n = (index + rangeSize); n < Count; n++)
