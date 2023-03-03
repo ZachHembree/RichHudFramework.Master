@@ -111,9 +111,20 @@ namespace RichHudFramework
                 public bool VertCenterText { get; set; }
 
                 private int startLine, endLine;
-                private bool isUpdateEventPending, areOffsetsStale, isLineRangeStale, isBbCacheStale;
                 private BoundingBox2 lastBox, lastMask;
-                private Vector2 _size, _textSize, _fixedSize, _textOffset, lastFixedSize, lastTextOffset;
+                private Vector2 
+                    _size, 
+                    _textSize, 
+                    _fixedSize, 
+                    _textOffset, 
+                    lastFixedSize, 
+                    lastTextOffset;
+                private bool 
+                    isUpdateEventPending,
+                    areOffsetsStale,
+                    areUnderlinesStale,
+                    isLineRangeStale,
+                    isBbCacheStale;
 
                 private readonly Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
@@ -140,6 +151,7 @@ namespace RichHudFramework
                     areOffsetsStale = true;
                     isLineRangeStale = true;
                     isBbCacheStale = true;
+                    areUnderlinesStale = true;
                 }
 
                 /// <summary>
@@ -366,6 +378,9 @@ namespace RichHudFramework
                         // Update line range but leave characters unchanged
                         else if (isLineRangeStale || (endLine == -1 && lines.Count > 0))
                             UpdateLineRange();
+                        // Update underlines only
+                        else if (areUnderlinesStale && lines.Count > 0)
+                            UpdateUnderlines();
 
                         // Update bb data cache
                         if (isBbCacheStale)
@@ -441,7 +456,8 @@ namespace RichHudFramework
                 /// </summary>
                 protected override void AfterFullTextUpdate()
                 {
-                    UpdateOffsets();
+                    areOffsetsStale = true;
+                    isLineRangeStale = true;
                     isUpdateEventPending = true;
                     isBbCacheStale = true;
 
@@ -452,11 +468,7 @@ namespace RichHudFramework
                 {
                     base.AfterColorUpdate();
 
-                    if (lines.Count > 0)
-                    {
-                        UpdateUnderlines();
-                    }
-
+                    areUnderlinesStale = true;
                     isBbCacheStale = true;
                 }
 
@@ -754,6 +766,9 @@ namespace RichHudFramework
 
                     if (visRange > 9 && underlines.Capacity > 3 * underlines.Count && underlines.Capacity > visRange)
                         underlines.TrimExcess();
+
+                    areUnderlinesStale = false;
+                    isBbCacheStale = true;
                 }
 
                 /// <summary>

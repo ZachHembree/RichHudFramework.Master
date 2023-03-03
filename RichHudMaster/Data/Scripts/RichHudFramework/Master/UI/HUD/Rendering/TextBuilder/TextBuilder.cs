@@ -367,7 +367,7 @@ namespace RichHudFramework
                             nextTextData = lastTextData;
 
                         if (lastText == null || nextTextData != lastText.apiData)
-                            lastText = new RichText(lastText.apiData);
+                            lastText = new RichText(lastText?.apiData);
 
                         return lastText;
                     }
@@ -479,7 +479,7 @@ namespace RichHudFramework
                 /// </summary>
                 protected bool GetIsTextEqual(IReadOnlyList<RichStringMembers> text)
                 {
-                    if (GetIsTextLengthEqual(text))
+                    if (text != null && GetIsTextLengthEqual(text))
                     {
                         Vector2I i = Vector2I.Zero;
 
@@ -509,7 +509,7 @@ namespace RichHudFramework
                                     if (ch != newChars[y])
                                         return false;
 
-                                    // Increment idnex
+                                    // Increment index
                                     if (i.X < Count && i.Y + 1 < lines[i.X].Count)
                                         i.Y++;
                                     else if (i.X + 1 < Count)
