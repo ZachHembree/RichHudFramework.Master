@@ -66,7 +66,7 @@ Praesent eros est, blandit et ullamcorper nec, tempus a dui. Duis arcu arcu, dic
         private void TextBench(string[] args)
         {
             int iterations = 1;
-            bool benchAssign = false, benchDraw = false;
+            bool benchAssign, benchDraw;
 
             bool.TryParse(args[0], out benchDraw);
             bool.TryParse(args[1], out benchAssign);
@@ -105,7 +105,7 @@ Praesent eros est, blandit et ullamcorper nec, tempus a dui. Duis arcu arcu, dic
             ExceptionHandler.SendChatMessage
             (
                 $"Text Bench:\n" +
-                $"\tBencDraw: {benchDraw}\n" +
+                $"\tBenchDraw: {benchDraw}\n" +
                 $"\tBenchAssign: {benchAssign}\n" +
                 $"\tCharCount: {charCount}\n" +
                 $"\tTime: {(timer.ElapsedTicks / (double)TimeSpan.TicksPerMillisecond):G6} ms\n" +

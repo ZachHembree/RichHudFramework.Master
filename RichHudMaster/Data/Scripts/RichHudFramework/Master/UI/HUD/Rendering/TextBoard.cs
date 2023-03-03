@@ -6,9 +6,11 @@ using VRage;
 using VRageMath;
 using RichHudFramework.UI.Server;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
+using VRage.Utils;
 
 namespace RichHudFramework
 {
+    using static VRageRender.MyBillboard;
     using BoolProp = MyTuple<Func<bool>, Action<bool>>;
     using FloatProp = MyTuple<Func<float>, Action<float>>;
     using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
@@ -23,6 +25,14 @@ namespace RichHudFramework
             Action<IList<RichStringMembers>, Vector2I>, // Insert
             Action<IList<RichStringMembers>>, // SetText
             Action // Clear
+        >;
+        using FlatTriangleBillboardData = MyTuple<
+            BlendTypeEnum, // blendType
+            Vector2I, // bbID + matrixID
+            MyStringId, // material
+            MyTuple<Vector4, BoundingBox2?>, // color + mask
+            MyTuple<Vector2, Vector2, Vector2>, // texCoords
+            MyTuple<Vector2, Vector2, Vector2> // flat pos
         >;
 
         namespace Rendering.Server
@@ -79,7 +89,7 @@ namespace RichHudFramework
 
                         if (Math.Abs(_fixedSize.X - value.X) + Math.Abs(_fixedSize.Y - value.Y) > .1f)
                         {
-                            offsetsAreStale = true;
+                            areOffsetsStale = true;
                             _fixedSize = value;
                             LineWrapWidth = _fixedSize.X;
                         }
@@ -98,7 +108,7 @@ namespace RichHudFramework
 
                         if (Math.Abs(_textOffset.X - value.X) + Math.Abs(_textOffset.Y - value.Y) > .1f)
                         {
-                            lineRangeIsStale = true;
+                            isLineRangeStale = true;
                             _textOffset = value;
                         }
                     }
@@ -120,11 +130,13 @@ namespace RichHudFramework
                 public bool VertCenterText { get; set; }
 
                 private int startLine, endLine;
-                private bool updateEvent, offsetsAreStale, lineRangeIsStale;
+                private bool isUpdateEventPending, areOffsetsStale, isLineRangeStale, isBbCacheStale;
+                private BoundingBox2 lastBox, lastMask;
                 private Vector2 _size, _textSize, _fixedSize, _textOffset;
 
                 private readonly Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
+                private readonly List<FlatTriangleBillboardData> bbCache;
                 private readonly MatrixD[] matRef;
 
                 public TextBoard()
@@ -139,8 +151,14 @@ namespace RichHudFramework
 
                     matRef = new MatrixD[1];
                     underlines = new List<UnderlineBoard>();
+                    bbCache = new List<FlatTriangleBillboardData>();
+
                     eventTimer = new Stopwatch();
                     eventTimer.Start();
+
+                    areOffsetsStale = true;
+                    isLineRangeStale = true;
+                    isBbCacheStale = true;
                 }
 
                 /// <summary>
@@ -334,46 +352,63 @@ namespace RichHudFramework
 
                     if (containment != ContainmentType.Disjoint)
                     {
-                        if (offsetsAreStale)
+                        if (areOffsetsStale)
                             UpdateOffsets();
-                        else if (lineRangeIsStale || (endLine == -1 && lines.Count > 0))
+                        else if (isLineRangeStale || (endLine == -1 && lines.Count > 0))
                             UpdateLineRange();
 
                         if (AutoResize)
                             _textOffset = Vector2.Zero;
 
-                        if (updateEvent && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
+                        if (isUpdateEventPending && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
                         {
                             TextChanged?.Invoke();
                             eventTimer.Restart();
-                            updateEvent = false;
+                            isUpdateEventPending = false;
                         }
 
-                        BoundingBox2 textMask = box.Intersect(mask);
-                        Vector2 offset = box.Center + _textOffset * Scale;
+                        if (lastBox != box || lastMask != mask)
+                            isBbCacheStale = true;
 
-                        DrawCharacters(textMask, offset, matrixRef);
-                        DrawUnderlines(textMask, offset, matrixRef);
+                        lastBox = box;
+                        lastMask = mask;
+
+                        if (isBbCacheStale)
+                            UpdateBbCache(box, mask);
+
+                        BillBoardUtils.AddTriangleData(bbCache, matrixRef);
                     }
+                }
+
+                private void UpdateBbCache(BoundingBox2 box, BoundingBox2 mask)
+                {
+                    BoundingBox2 textMask = box.Intersect(mask);
+                    Vector2 offset = box.Center + _textOffset * Scale;
+
+                    bbCache.Clear();
+                    UpdateCharCache(textMask, offset);
+                    UpdateUnderlineCache(textMask, offset);
+
+                    isBbCacheStale = false;
                 }
 
                 /// <summary>
                 /// Adds final transformed character quads w/masking and offset to the buffer for rendering
                 /// </summary>
-                private void DrawCharacters(BoundingBox2 mask, Vector2 offset, MatrixD[] matrixRef)
+                private void UpdateCharCache(BoundingBox2 mask, Vector2 offset)
                 {
                     IReadOnlyList<Line> lineList = lines.PooledLines;
 
                     for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
                     {
-                        BillBoardUtils.AddQuads(lineList[ln].GlyphBoards, matrixRef, mask, offset, Scale);
+                        BillBoardUtils.GetTriangleData(lineList[ln].GlyphBoards, bbCache, mask, offset, Scale);
                     }
                 }
                 
                 /// <summary>
                 /// Adds final transformed underline quads w/masking and offset to the buffer for rendering
                 /// </summary>
-                private void DrawUnderlines(BoundingBox2 mask, Vector2 offset, MatrixD[] matrixRef)
+                private void UpdateUnderlineCache(BoundingBox2 mask, Vector2 offset)
                 {
                     ContainmentType containment;
                     QuadBoard underlineBoard = QuadBoard.Default;
@@ -390,7 +425,7 @@ namespace RichHudFramework
                         underlineBoard.materialData.bbColor = underlines[n].color;
 
                         if (containment != ContainmentType.Disjoint)
-                            underlineBoard.Draw(ref bb, matrixRef);
+                            BillBoardUtils.GetTriangleData(ref underlineBoard, ref bb, bbCache);
                     }
                 }
 
@@ -400,7 +435,8 @@ namespace RichHudFramework
                 protected override void AfterFullTextUpdate()
                 {
                     UpdateOffsets();
-                    updateEvent = true;
+                    isUpdateEventPending = true;
+                    isBbCacheStale = true;
 
                     base.AfterFullTextUpdate();
                 }
@@ -413,6 +449,8 @@ namespace RichHudFramework
                     {
                         UpdateUnderlines();
                     }
+
+                    isBbCacheStale = true;
                 }
 
                 /// <summary>
@@ -426,8 +464,9 @@ namespace RichHudFramework
 
                     UpdateVisibleRange();
 
-                    offsetsAreStale = false;
-                    lineRangeIsStale = false;
+                    areOffsetsStale = false;
+                    isLineRangeStale = false;
+                    isBbCacheStale = true;
                 }
 
                 /// <summary>
@@ -449,7 +488,8 @@ namespace RichHudFramework
                         }
                     }
 
-                    lineRangeIsStale = false;
+                    isLineRangeStale = false;
+                    isBbCacheStale = true;
                 }
 
                 /// <summary>
