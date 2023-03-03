@@ -331,8 +331,12 @@ namespace RichHudFramework
                     ContainmentType containment;
                     mask.Contains(ref box, out containment);
 
+                    // If it's not visible, dont bother
                     if (containment != ContainmentType.Disjoint)
                     {
+                        if (AutoResize)
+                            _textOffset = Vector2.Zero;
+
                         // Check for external resizing
                         if (Vector2.DistanceSquared(lastFixedSize, _fixedSize) > .1f)
                         {
@@ -348,31 +352,35 @@ namespace RichHudFramework
                             lastTextOffset = _textOffset;
                         }
 
+                        // Check for changes in position, size or masking
+                        if (lastBox != box || lastMask != mask)
+                        {
+                            isBbCacheStale = true;
+                            lastBox = box;
+                            lastMask = mask;
+                        }
+
+                        // Update character positions and line range
                         if (areOffsetsStale)
                             UpdateOffsets();
+                        // Update line range but leave characters unchanged
                         else if (isLineRangeStale || (endLine == -1 && lines.Count > 0))
                             UpdateLineRange();
 
-                        if (AutoResize)
-                            _textOffset = Vector2.Zero;
+                        // Update bb data cache
+                        if (isBbCacheStale)
+                            UpdateBbCache(box, mask);
 
+                        // Draw text from cached bb data
+                        BillBoardUtils.AddTriangleData(bbCache, matrixRef);
+
+                        // Invoke update callback
                         if (isUpdateEventPending && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
                         {
                             TextChanged?.Invoke();
                             eventTimer.Restart();
                             isUpdateEventPending = false;
                         }
-
-                        if (lastBox != box || lastMask != mask)
-                            isBbCacheStale = true;
-
-                        lastBox = box;
-                        lastMask = mask;
-
-                        if (isBbCacheStale)
-                            UpdateBbCache(box, mask);
-
-                        BillBoardUtils.AddTriangleData(bbCache, matrixRef);
                     }
                 }
 
@@ -384,6 +392,9 @@ namespace RichHudFramework
                     bbCache.Clear();
                     UpdateCharCache(textMask, offset);
                     UpdateUnderlineCache(textMask, offset);
+
+                    if (bbCache.Capacity > 2 * bbCache.Count && bbCache.Count > 20)
+                        bbCache.TrimExcess();
 
                     isBbCacheStale = false;
                 }
