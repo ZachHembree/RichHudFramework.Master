@@ -462,7 +462,11 @@ namespace RichHudFramework
                             if (!isOtherEqual)
                                 break;
 
-                            lines.TryGetNextIndex(i, out i);
+                            // Increment idnex
+                            if (i.X < Count && i.Y + 1 < lines[i.X].Count)
+                                i.Y++;
+                            else if (i.X + 1 < Count)
+                                i = new Vector2I(i.X + 1, 0);
 
                             if (i.X > start.X || i.Y > end.Y)
                                 break;
