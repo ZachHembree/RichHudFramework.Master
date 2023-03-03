@@ -83,17 +83,7 @@ namespace RichHudFramework
                 public Vector2 FixedSize
                 {
                     get { return _fixedSize * Scale; }
-                    set
-                    {
-                        value /= Scale;
-
-                        if (Math.Abs(_fixedSize.X - value.X) + Math.Abs(_fixedSize.Y - value.Y) > .1f)
-                        {
-                            areOffsetsStale = true;
-                            _fixedSize = value;
-                            LineWrapWidth = _fixedSize.X;
-                        }
-                    }
+                    set { _fixedSize = value / Scale; }
                 }
 
                 /// <summary>
@@ -102,16 +92,7 @@ namespace RichHudFramework
                 public Vector2 TextOffset
                 {
                     get { return _textOffset * Scale; }
-                    set
-                    {
-                        value /= Scale;
-
-                        if (Math.Abs(_textOffset.X - value.X) + Math.Abs(_textOffset.Y - value.Y) > .1f)
-                        {
-                            isLineRangeStale = true;
-                            _textOffset = value;
-                        }
-                    }
+                    set { _textOffset = value / Scale; }
                 }
 
                 /// <summary>
@@ -132,7 +113,7 @@ namespace RichHudFramework
                 private int startLine, endLine;
                 private bool isUpdateEventPending, areOffsetsStale, isLineRangeStale, isBbCacheStale;
                 private BoundingBox2 lastBox, lastMask;
-                private Vector2 _size, _textSize, _fixedSize, _textOffset;
+                private Vector2 _size, _textSize, _fixedSize, _textOffset, lastFixedSize, lastTextOffset;
 
                 private readonly Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
@@ -352,6 +333,21 @@ namespace RichHudFramework
 
                     if (containment != ContainmentType.Disjoint)
                     {
+                        // Check for external resizing
+                        if (Vector2.DistanceSquared(lastFixedSize, _fixedSize) > .1f)
+                        {
+                            areOffsetsStale = true;
+                            lastFixedSize = _fixedSize;
+                            LineWrapWidth = _fixedSize.X;
+                        }
+
+                        // Check for offset changes
+                        if (Vector2.DistanceSquared(lastTextOffset, _textOffset) > .1f)
+                        {
+                            isLineRangeStale = true;
+                            lastTextOffset = _textOffset;
+                        }
+
                         if (areOffsetsStale)
                             UpdateOffsets();
                         else if (isLineRangeStale || (endLine == -1 && lines.Count > 0))

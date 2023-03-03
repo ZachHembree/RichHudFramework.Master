@@ -54,13 +54,24 @@ Praesent eros est, blandit et ullamcorper nec, tempus a dui. Duis arcu arcu, dic
                 { "toggleDebug", x => RichHudDebug.EnableDebug = !RichHudDebug.EnableDebug },
                 { "textBench", TextBench, 2 },
                 { "printConIDs", x => ExceptionHandler.WriteToLog(StringListToString(BindManager.SeControlIDs)) },
-                { "printMouseConIDs", x => ExceptionHandler.WriteToLog(StringListToString(BindManager.SeMouseControlIDs)) }
+                { "printMouseConIDs", x => ExceptionHandler.WriteToLog(StringListToString(BindManager.SeMouseControlIDs)) },
+                { "debugLogging", SetDebugLogging, 1 }
             };
         }
 
         private static void ThrowException()
         {
             throw new Exception("Crash chat command was called");
+        }
+
+        private void SetDebugLogging(string[] args)
+        {
+            bool isEnabled;
+
+            if (bool.TryParse(args[0], out isEnabled))
+            {
+                ExceptionHandler.DebugLogging = isEnabled;
+            }
         }
 
         private void TextBench(string[] args)
