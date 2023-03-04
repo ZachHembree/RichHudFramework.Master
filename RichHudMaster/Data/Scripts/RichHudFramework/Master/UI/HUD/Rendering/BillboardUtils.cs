@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System;
 using System.Threading;
 using Sandbox.ModAPI;
@@ -296,12 +296,31 @@ namespace RichHudFramework
                 {
                     for (int i = 0; i < quads.Count; i++)
                     {
-                        BoundedQuadBoard boundedQB = quads[i];
-                        BoundedQuadMaterial mat = boundedQB.quadBoard.materialData;
-                        Vector2 size = boundedQB.bounds.Size * scale,
-                            center = offset + boundedQB.bounds.Center * scale;
-
+                        BoundedQuadBoard bqb = quads[i];
+                        BoundedQuadMaterial mat = bqb.quadBoard.materialData;
+                        Vector2 size = bqb.bounds.Size * scale,
+                            center = offset + bqb.bounds.Center * scale;
                         BoundingBox2 bounds = BoundingBox2.CreateFromHalfExtent(center, .5f * size);
+
+                        FlatQuad quad = new FlatQuad()
+                        {
+                            Point0 = bounds.Max,
+                            Point1 = new Vector2(bounds.Max.X, bounds.Min.Y),
+                            Point2 = bounds.Min,
+                            Point3 = new Vector2(bounds.Min.X, bounds.Max.Y),
+                        };
+
+                        if (bqb.quadBoard.skewRatio != 0f)
+                        {
+                            Vector2 start = quad.Point0, end = quad.Point3,
+                                delta = (end - start) * bqb.quadBoard.skewRatio * .5f;
+
+                            quad.Point0 = Vector2.Lerp(start, end, bqb.quadBoard.skewRatio) - delta;
+                            quad.Point3 = Vector2.Lerp(start, end, 1f + bqb.quadBoard.skewRatio) - delta;
+                            quad.Point1 -= delta;
+                            quad.Point2 -= delta;
+                        }
+
                         BoundingBox2? maskBox = mask;
                         ContainmentType containment = ContainmentType.Contains;
 
@@ -328,9 +347,9 @@ namespace RichHudFramework
                                 ),
                                 Item6 = new MyTuple<Vector2, Vector2, Vector2>
                                 (
-                                    bounds.Max,
-                                    new Vector2(bounds.Max.X, bounds.Min.Y),
-                                    bounds.Min
+                                    quad.Point0,
+                                    quad.Point1,
+                                    quad.Point2
                                 ),
                             };
                             var bbR = new FlatTriangleBillboardData
@@ -346,9 +365,9 @@ namespace RichHudFramework
                                 ),
                                 Item6 = new MyTuple<Vector2, Vector2, Vector2>
                                 (
-                                    bounds.Max,
-                                    bounds.Min,
-                                    new Vector2(bounds.Min.X, bounds.Max.Y)
+                                    quad.Point0,
+                                    quad.Point2,
+                                    quad.Point3
                                 ),
                             };
 

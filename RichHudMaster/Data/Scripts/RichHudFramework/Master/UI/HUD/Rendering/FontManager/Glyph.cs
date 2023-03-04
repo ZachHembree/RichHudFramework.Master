@@ -48,7 +48,7 @@ namespace RichHudFramework
                             texBounds = texBounds,
                             bbColor = bbColor,
                         },
-                        skewRatio = ((FontStyles)format.Data.Item3.Y & FontStyles.Italic) > 0 ? .4f : 0f
+                        skewRatio = ((FontStyles)format.Data.Item3.Y & FontStyles.Italic) > 0 ? -.4f : 0f
                     };
                 }
             }
