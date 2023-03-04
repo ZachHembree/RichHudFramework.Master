@@ -206,8 +206,7 @@ namespace RichHudFramework
                 public static void GetTriangleData(
                     ref QuadBoard qb,
                     ref CroppedBox box,
-                    List<FlatTriangleBillboardData> bbDataOut, 
-                    BoundingBox2? mask = null
+                    List<FlatTriangleBillboardData> bbDataOut
                 )
                 {
                     FlatQuad quad = new FlatQuad()
@@ -230,7 +229,7 @@ namespace RichHudFramework
                     }
 
                     // Mask bounding check. Null mask if not intersecting.
-                    BoundingBox2? maskBox = mask;
+                    BoundingBox2? maskBox = box.mask;
                     ContainmentType containment = ContainmentType.Contains;
 
                     if (maskBox != null)
