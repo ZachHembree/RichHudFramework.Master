@@ -1,4 +1,4 @@
-﻿using ParallelTasks;
+using ParallelTasks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -125,7 +125,7 @@ namespace RichHudFramework
                         else if (start < 0 || end < 0 || start >= chars.Count || end >= chars.Count)
                             throw new Exception($"Index was out of range. Start: {start} End: {end} Count: {Count}");
 
-                        Vector4 bbColor = BillBoardUtils.GetBillBoardBoardColor(format.Data.Item4);
+                        Vector4 bbColor = format.Data.Item4.GetBbColor();
 
                         for (int n = start; n <= end; n++)
                         {
@@ -231,8 +231,8 @@ namespace RichHudFramework
                     /// <summary>
                     /// Adds a new character to the end of the line with the given format
                     /// </summary>
-                    public void AddNew(char ch, GlyphFormat format, Vector4 color) =>
-                        InsertNew(chars.Count, ch, format, color);
+                    public void AddNew(char ch, GlyphFormat format) =>
+                        InsertNew(chars.Count, ch, format);
 
                     /// <summary>
                     /// Adds the characters in the line given to the end of this line.
@@ -243,7 +243,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Inserts a new character at the index specified with the given format
                     /// </summary>
-                    public void InsertNew(int index, char ch, GlyphFormat format, Vector4 bbColor)
+                    public void InsertNew(int index, char ch, GlyphFormat format)
                     {
                         IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
                         float fontSize = format.Data.Item2 * fontStyle.FontScale;
@@ -261,7 +261,7 @@ namespace RichHudFramework
                         glyphBoards.Insert(index, new BoundedQuadBoard
                         {
                             bounds = BoundingBox2.CreateFromHalfExtent(Vector2.Zero, .5f * bbSize),
-                            quadBoard = glyph.GetQuadBoard(format, bbColor)
+                            quadBoard = glyph.GetQuadBoard(format, format.Color.GetBbColor())
                         });
 
                         TrimExcess();

@@ -152,21 +152,13 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 StringBuilder text = richString.Item1;
                 GlyphFormatMembers formatData = richString.Item2;
-                Color lastColor = default(Color);
-                Vector4 bbColor = default(Vector4);
 
                 charBuffer.EnsureCapacity(charBuffer.Count + text.Length);
 
                 for (int n = 0; n < text.Length; n++)
                 {
-                    if (formatData.Item4 != lastColor)
-                    {
-                        lastColor = formatData.Item4;
-                        bbColor = BillBoardUtils.GetBillBoardBoardColor(formatData.Item4);
-                    }
-
                     if (text[n] >= ' ' || allowSpecialChars && (text[n] == '\n' || text[n] == '\t'))
-                        charBuffer.InsertNew(charBuffer.Chars.Count, text[n], new GlyphFormat(formatData), bbColor);
+                        charBuffer.InsertNew(charBuffer.Chars.Count, text[n], new GlyphFormat(formatData));
                 }
             }
 

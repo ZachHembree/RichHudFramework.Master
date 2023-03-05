@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
@@ -753,7 +753,7 @@ namespace RichHudFramework
                                             Math.Max((int)formatData.Value.Item2, 1)
                                         );
 
-                                        Vector4 color = BillBoardUtils.GetBillBoardBoardColor(formatData.Value.Item4) * .9f;
+                                        Vector4 color = formatData.Value.Item4.GetBbColor() * .9f;
                                         underlines.Add(new UnderlineBoard(size, pos, color));
                                     }
 
