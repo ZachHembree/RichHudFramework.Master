@@ -367,7 +367,7 @@ namespace RichHudFramework
                             nextTextData = lastTextData;
 
                         if (lastText == null || nextTextData != lastText.apiData)
-                            lastText = new RichText(lastText.apiData);
+                            lastText = new RichText(lastText?.apiData);
 
                         return lastText;
                     }
@@ -462,7 +462,11 @@ namespace RichHudFramework
                             if (!isOtherEqual)
                                 break;
 
-                            lines.TryGetNextIndex(i, out i);
+                            // Increment idnex
+                            if (i.X < Count && i.Y + 1 < lines[i.X].Count)
+                                i.Y++;
+                            else if (i.X + 1 < Count)
+                                i = new Vector2I(i.X + 1, 0);
 
                             if (i.X > start.X || i.Y > end.Y)
                                 break;
@@ -475,7 +479,7 @@ namespace RichHudFramework
                 /// </summary>
                 protected bool GetIsTextEqual(IReadOnlyList<RichStringMembers> text)
                 {
-                    if (GetIsTextLengthEqual(text))
+                    if (text != null && GetIsTextLengthEqual(text))
                     {
                         Vector2I i = Vector2I.Zero;
 
@@ -505,7 +509,11 @@ namespace RichHudFramework
                                     if (ch != newChars[y])
                                         return false;
 
-                                    lines.TryGetNextIndex(i, out i);
+                                    // Increment index
+                                    if (i.X < Count && i.Y + 1 < lines[i.X].Count)
+                                        i.Y++;
+                                    else if (i.X + 1 < Count)
+                                        i = new Vector2I(i.X + 1, 0);
                                 }
                             }
                         }

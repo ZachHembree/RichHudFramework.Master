@@ -218,11 +218,14 @@ namespace RichHudFramework
                     /// </summary>
                     public void AddCharFromLine(int index, Line line)
                     {
-                        chars.Add(line.chars[index]);
-                        formattedGlyphs.Add(line.formattedGlyphs[index]);
-                        glyphBoards.Add(line.glyphBoards[index]);
+                        if (line.chars.Count > 0)
+                        {
+                            chars.Add(line.chars[index]);
+                            formattedGlyphs.Add(line.formattedGlyphs[index]);
+                            glyphBoards.Add(line.glyphBoards[index]);
 
-                        TrimExcess();
+                            TrimExcess();
+                        }
                     }
 
                     /// <summary>
@@ -269,11 +272,14 @@ namespace RichHudFramework
                     /// </summary>
                     public void InsertRange(int index, Line newChars)
                     {
-                        chars.InsertRange(index, newChars.chars);
-                        formattedGlyphs.InsertRange(index, newChars.formattedGlyphs);
-                        glyphBoards.InsertRange(index, newChars.glyphBoards);
+                        if (newChars.chars.Count > 0)
+                        {
+                            chars.InsertRange(index, newChars.chars);
+                            formattedGlyphs.InsertRange(index, newChars.formattedGlyphs);
+                            glyphBoards.InsertRange(index, newChars.glyphBoards);
 
-                        TrimExcess();
+                            TrimExcess();
+                        }
                     }
 
                     /// <summary>

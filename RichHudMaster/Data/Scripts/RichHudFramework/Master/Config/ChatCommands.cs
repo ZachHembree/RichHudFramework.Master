@@ -54,7 +54,8 @@ Praesent eros est, blandit et ullamcorper nec, tempus a dui. Duis arcu arcu, dic
                 { "toggleDebug", x => RichHudDebug.EnableDebug = !RichHudDebug.EnableDebug },
                 { "textBench", TextBench, 2 },
                 { "printConIDs", x => ExceptionHandler.WriteToLog(StringListToString(BindManager.SeControlIDs)) },
-                { "printMouseConIDs", x => ExceptionHandler.WriteToLog(StringListToString(BindManager.SeMouseControlIDs)) }
+                { "printMouseConIDs", x => ExceptionHandler.WriteToLog(StringListToString(BindManager.SeMouseControlIDs)) },
+                { "debugLogging", SetDebugLogging, 1 }
             };
         }
 
@@ -63,10 +64,20 @@ Praesent eros est, blandit et ullamcorper nec, tempus a dui. Duis arcu arcu, dic
             throw new Exception("Crash chat command was called");
         }
 
+        private void SetDebugLogging(string[] args)
+        {
+            bool isEnabled;
+
+            if (bool.TryParse(args[0], out isEnabled))
+            {
+                ExceptionHandler.DebugLogging = isEnabled;
+            }
+        }
+
         private void TextBench(string[] args)
         {
             int iterations = 1;
-            bool benchAssign = false, benchDraw = false;
+            bool benchAssign, benchDraw;
 
             bool.TryParse(args[0], out benchDraw);
             bool.TryParse(args[1], out benchAssign);
@@ -105,7 +116,7 @@ Praesent eros est, blandit et ullamcorper nec, tempus a dui. Duis arcu arcu, dic
             ExceptionHandler.SendChatMessage
             (
                 $"Text Bench:\n" +
-                $"\tBencDraw: {benchDraw}\n" +
+                $"\tBenchDraw: {benchDraw}\n" +
                 $"\tBenchAssign: {benchAssign}\n" +
                 $"\tCharCount: {charCount}\n" +
                 $"\tTime: {(timer.ElapsedTicks / (double)TimeSpan.TicksPerMillisecond):G6} ms\n" +
