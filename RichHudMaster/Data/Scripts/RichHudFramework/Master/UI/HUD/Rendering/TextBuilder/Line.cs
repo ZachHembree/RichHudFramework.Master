@@ -2,6 +2,7 @@ using ParallelTasks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using VRage;
 using VRageMath;
@@ -90,6 +91,7 @@ namespace RichHudFramework
 
                     private Vector2 _size;
                     private readonly TextBuilder builder;
+                    private bool areGlyphBoardsStale;
 
                     /// <summary>
                     /// Initializes a new TextBuilder Line with capacity for the given number of rich characters.
@@ -125,39 +127,70 @@ namespace RichHudFramework
                         else if (start < 0 || end < 0 || start >= chars.Count || end >= chars.Count)
                             throw new Exception($"Index was out of range. Start: {start} End: {end} Count: {Count}");
 
-                        Vector4 bbColor = format.Data.Item4.GetBbColor();
-
-                        for (int n = start; n <= end; n++)
+                        if (areGlyphBoardsStale)
                         {
-                            if (onlyChangeColor)
+                            for (int n = start; n <= end; n++)
                             {
-                                var bbData = glyphBoards[n];
-                                var fmtGlyph = formattedGlyphs[n];
-                                bbData.quadBoard.materialData.bbColor = bbColor;
-                                fmtGlyph.format = format;
+                                if (onlyChangeColor)
+                                {
+                                    var fmtGlyph = formattedGlyphs[n];
+                                    fmtGlyph.format = format;
+                                    formattedGlyphs[n] = fmtGlyph;
+                                }
+                                else if (!formattedGlyphs[n].format.Equals(format))
+                                {
+                                    IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
+                                    float fontSize = format.Data.Item2 * fontStyle.FontScale;
+                                    Glyph glyph = fontStyle[chars[n]];
+                                    Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
 
-                                glyphBoards[n] = bbData;
-                                formattedGlyphs[n] = fmtGlyph;
+                                    formattedGlyphs[n] = new FormattedGlyph
+                                    {
+                                        chSize = glyphSize,
+                                        format = format,
+                                        glyph = glyph
+                                    };
+                                }
                             }
-                            else if (!formattedGlyphs[n].format.Equals(format))
-                            {
-                                IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
-                                float fontSize = format.Data.Item2 * fontStyle.FontScale;
-                                Glyph glyph = fontStyle[chars[n]];
-                                Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize,
-                                    bbSize = glyph.MatFrame.Material.size * fontSize;
 
-                                formattedGlyphs[n] = new FormattedGlyph 
+                            UpdateGlyphBoards();
+                        }
+                        else
+                        {
+                            Vector4 bbColor = format.Data.Item4.GetBbColor();
+
+                            for (int n = start; n <= end; n++)
+                            {
+                                if (onlyChangeColor)
                                 {
-                                    chSize = glyphSize,
-                                    format = format,
-                                    glyph = glyph
-                                };
-                                glyphBoards[n] = new BoundedQuadBoard 
+                                    var bbData = glyphBoards[n];
+                                    var fmtGlyph = formattedGlyphs[n];
+                                    bbData.quadBoard.materialData.bbColor = bbColor;
+                                    fmtGlyph.format = format;
+
+                                    glyphBoards[n] = bbData;
+                                    formattedGlyphs[n] = fmtGlyph;
+                                }
+                                else if (!formattedGlyphs[n].format.Equals(format))
                                 {
-                                    bounds = new BoundingBox2(-.5f * bbSize, .5f * bbSize),
-                                    quadBoard = glyph.GetQuadBoard(format, bbColor)
-                                };
+                                    IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
+                                    float fontSize = format.Data.Item2 * fontStyle.FontScale;
+                                    Glyph glyph = fontStyle[chars[n]];
+                                    Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize,
+                                        bbSize = glyph.MatFrame.Material.size * fontSize;
+
+                                    formattedGlyphs[n] = new FormattedGlyph
+                                    {
+                                        chSize = glyphSize,
+                                        format = format,
+                                        glyph = glyph
+                                    };
+                                    glyphBoards[n] = new BoundedQuadBoard
+                                    {
+                                        bounds = new BoundingBox2(-.5f * bbSize, .5f * bbSize),
+                                        quadBoard = glyph.GetQuadBoard(format, bbColor)
+                                    };
+                                }
                             }
                         }
                     }
@@ -222,9 +255,9 @@ namespace RichHudFramework
                         {
                             chars.Add(line.chars[index]);
                             formattedGlyphs.Add(line.formattedGlyphs[index]);
-                            glyphBoards.Add(line.glyphBoards[index]);
 
                             TrimExcess();
+                            areGlyphBoardsStale = true;
                         }
                     }
 
@@ -248,8 +281,7 @@ namespace RichHudFramework
                         IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
                         float fontSize = format.Data.Item2 * fontStyle.FontScale;
                         Glyph glyph = fontStyle[ch];
-                        Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize,
-                            bbSize = glyph.MatFrame.Material.size * fontSize;
+                        Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
 
                         chars.Insert(index, ch);
                         formattedGlyphs.Insert(index, new FormattedGlyph
@@ -258,13 +290,38 @@ namespace RichHudFramework
                             format = format,
                             glyph = glyph
                         });
-                        glyphBoards.Insert(index, new BoundedQuadBoard
-                        {
-                            bounds = BoundingBox2.CreateFromHalfExtent(Vector2.Zero, .5f * bbSize),
-                            quadBoard = glyph.GetQuadBoard(format, format.Color.GetBbColor())
-                        });
 
                         TrimExcess();
+                        areGlyphBoardsStale = true;
+                    }
+
+                    public void UpdateGlyphBoards()
+                    {
+                        if (areGlyphBoardsStale)
+                        {
+                            glyphBoards.Clear();
+                            glyphBoards.EnsureCapacity(formattedGlyphs.Count);
+
+                            if (glyphBoards.Count > 20 && glyphBoards.Capacity > 5 * glyphBoards.Count)
+                            {
+                                glyphBoards.TrimExcess();
+                            }
+
+                            foreach (FormattedGlyph fGlyph in formattedGlyphs)
+                            {
+                                IFontStyle fontStyle = FontManager.GetFontStyle(fGlyph.format.Data.Item3);
+                                float fontSize = fGlyph.format.Data.Item2 * fontStyle.FontScale;
+                                Vector2 bbSize = Vector2.Max(fGlyph.glyph.MatFrame.Material.size * fontSize, fGlyph.chSize);
+
+                                glyphBoards.Add(new BoundedQuadBoard
+                                {
+                                    bounds = BoundingBox2.CreateFromHalfExtent(Vector2.Zero, .5f * bbSize),
+                                    quadBoard = fGlyph.glyph.GetQuadBoard(fGlyph.format, fGlyph.format.Color.GetBbColor())
+                                });
+                            }
+
+                            areGlyphBoardsStale = false;
+                        }
                     }
 
                     /// <summary>
@@ -274,11 +331,11 @@ namespace RichHudFramework
                     {
                         if (newChars.chars.Count > 0)
                         {
-                            chars.InsertRange(index, newChars.chars);
-                            formattedGlyphs.InsertRange(index, newChars.formattedGlyphs);
-                            glyphBoards.InsertRange(index, newChars.glyphBoards);
+                            chars.InsertSpan(index, newChars.chars);
+                            formattedGlyphs.InsertSpan(index, newChars.formattedGlyphs);
 
                             TrimExcess();
+                            areGlyphBoardsStale = true;
                         }
                     }
 
@@ -289,7 +346,7 @@ namespace RichHudFramework
                     {
                         chars.RemoveRange(index, count);
                         formattedGlyphs.RemoveRange(index, count);
-                        glyphBoards.RemoveRange(index, count);
+                        areGlyphBoardsStale = true;
                     }
 
                     /// <summary>
@@ -299,7 +356,7 @@ namespace RichHudFramework
                     {
                         chars.Clear();
                         formattedGlyphs.Clear();
-                        glyphBoards.Clear();
+                        areGlyphBoardsStale = true;
                     }
 
                     /// <summary>
@@ -309,7 +366,6 @@ namespace RichHudFramework
                     {
                         chars.EnsureCapacity(minCapacity);
                         formattedGlyphs.EnsureCapacity(minCapacity);
-                        glyphBoards.EnsureCapacity(minCapacity);
                     }
 
                     public void TrimExcess()
@@ -318,7 +374,6 @@ namespace RichHudFramework
                         {
                             chars.TrimExcess();
                             formattedGlyphs.TrimExcess();
-                            glyphBoards.TrimExcess();
                         }
                     }
 
@@ -342,7 +397,6 @@ namespace RichHudFramework
 
                                 if (chars[n] == '\t')
                                 {
-                                    BoundedQuadBoard qb = glyphBoards[n];
                                     IFontStyle fontStyle = FontManager.GetFontStyle(fmtGlyph.format.StyleIndex);
                                     float scale = fmtGlyph.format.TextSize * fontStyle.FontScale;
 
@@ -354,13 +408,8 @@ namespace RichHudFramework
                                     else // if it's really close, just skip to the next stop
                                         chWidth += (chWidth - rem);
 
-                                    Vector2 bbSize = qb.bounds.Size;
-                                    bbSize.X = chWidth;
-                                    qb.bounds = BoundingBox2.CreateFromHalfExtent(qb.bounds.Center, .5f * bbSize);
                                     fmtGlyph.chSize.X = chWidth;
-
                                     formattedGlyphs[n] = fmtGlyph;
-                                    glyphBoards[n] = qb;
                                 }
 
                                 _size.X += chWidth;

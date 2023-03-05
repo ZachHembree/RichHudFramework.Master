@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
@@ -215,6 +215,8 @@ namespace RichHudFramework
                     {
                         if (index.Y != 0)
                         {
+                            UpdateGlyphBoards();
+
                             Vector2 chSize = line.FormattedGlyphs[index.Y].chSize,
                                 bbOffset = line.GlyphBoards[index.Y].bounds.Center;
 
@@ -472,6 +474,12 @@ namespace RichHudFramework
                     isBbCacheStale = true;
                 }
 
+                private void UpdateGlyphBoards()
+                {
+                    for (int i = 0; i < lines.Count; i++)
+                        lines[i].UpdateGlyphBoards();
+                }
+
                 /// <summary>
                 /// Updates the position and range of visible characters
                 /// </summary>
@@ -517,6 +525,8 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateVisibleRange()
                 {
+                    UpdateGlyphBoards();
+
                     _textSize = GetTextSize();
                     _size = AutoResize ? _textSize : _fixedSize;
 

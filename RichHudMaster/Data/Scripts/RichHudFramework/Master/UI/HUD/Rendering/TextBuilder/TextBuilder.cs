@@ -645,7 +645,12 @@ namespace RichHudFramework
                         case RichCharAccessors.Format:
                             return lines[i.X].FormattedGlyphs[i.Y].format.Data;
                         case RichCharAccessors.Offset:
-                            return lines[i.X].GlyphBoards[i.Y].bounds.Center * Scale;
+                            {
+                                if (lines[i.X].GlyphBoards.Count <= i.Y)
+                                    return Vector2.Zero;
+                                else
+                                    return lines[i.X].GlyphBoards[i.Y].bounds.Center * Scale;
+                            }
                         case RichCharAccessors.Size:
                             return lines[i.X].FormattedGlyphs[i.Y].chSize * Scale;
                     }
