@@ -363,6 +363,7 @@ namespace RichHudFramework
                         if (Vector2.DistanceSquared(lastTextOffset, _textOffset) > .1f)
                         {
                             isLineRangeStale = true;
+                            isBbCacheStale = true;
                             lastTextOffset = _textOffset;
                         }
 
@@ -461,18 +462,10 @@ namespace RichHudFramework
                     areOffsetsStale = true;
                     isLineRangeStale = true;
                     isUpdateEventPending = true;
-                    isBbCacheStale = true;
-
-                    base.AfterFullTextUpdate();
                 }
 
                 protected override void AfterColorUpdate()
-                {
-                    base.AfterColorUpdate();
-
-                    areUnderlinesStale = true;
-                    isBbCacheStale = true;
-                }
+                { }
 
                 private void UpdateGlyphBoards()
                 {
@@ -493,7 +486,6 @@ namespace RichHudFramework
 
                     areOffsetsStale = false;
                     isLineRangeStale = false;
-                    isBbCacheStale = true;
                 }
 
                 /// <summary>
@@ -516,7 +508,6 @@ namespace RichHudFramework
                     }
 
                     isLineRangeStale = false;
-                    isBbCacheStale = true;
                 }
 
                 /// <summary>
@@ -527,6 +518,7 @@ namespace RichHudFramework
                 {
                     UpdateGlyphBoards();
 
+                    bool wereAnyLinesStale = false;
                     _textSize = GetTextSize();
                     _size = AutoResize ? _textSize : _fixedSize;
 
@@ -534,11 +526,17 @@ namespace RichHudFramework
                     {
                         for (int line = startLine; line <= endLine; line++)
                         {   
-                            if (lines[line].Count > 0)
+                            if (lines[line].Count > 0 && lines[line].areGlyphBoardsStale)
+                            {
                                 UpdateLineOffsets(line, lines[line]._verticalOffset);
+                                lines[line].areGlyphBoardsStale = false;
+                                isBbCacheStale = true;
+                                wereAnyLinesStale = true;
+                            }
                         }
 
-                        UpdateUnderlines();
+                        if (wereAnyLinesStale || isLineRangeStale)
+                            UpdateUnderlines();
                     }
                 }
 
