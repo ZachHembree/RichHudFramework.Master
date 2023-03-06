@@ -86,7 +86,10 @@ namespace RichHudFramework
 
                     private Vector2 _size;
                     private readonly TextBuilder builder;
+
                     private bool wasTextUpdated;
+                    private bool isTextEqual;
+                    private int lastCount;
 
                     /// <summary>
                     /// Initializes a new TextBuilder Line with capacity for the given number of rich characters.
@@ -250,10 +253,25 @@ namespace RichHudFramework
                         if (Count == chars.Length)
                             SetCapacity(Count + 1);
 
-                        chars[Count] = line.chars[index];
-                        formattedGlyphs[Count] = line.formattedGlyphs[index];
+                        if (isTextEqual)
+                        {
+                            if (
+                                chars[Count] != line.chars[index] ||
+                                !formattedGlyphs[Count].format.Equals(line.formattedGlyphs[index].format)
+                            )
+                            {
+                                isTextEqual = false;
+                            }
+                        }
 
-                        wasTextUpdated = true;
+                        if (!isTextEqual)
+                        {
+                            chars[Count] = line.chars[index];
+                            formattedGlyphs[Count] = line.formattedGlyphs[index];
+
+                            wasTextUpdated = true;
+                        }
+
                         Count++;
                     }
 
@@ -274,17 +292,6 @@ namespace RichHudFramework
                     /// </summary>
                     public void InsertNew(int index, char ch, GlyphFormat format)
                     {
-                        IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
-                        float fontSize = format.Data.Item2 * fontStyle.FontScale;
-                        Glyph glyph = fontStyle[ch];
-                        var glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;                  
-                        var fGlyph = new FormattedGlyph
-                        {
-                            chSize = glyphSize,
-                            format = format,
-                            glyph = glyph
-                        };
-
                         if (Count == chars.Length)
                             SetCapacity(Count + 1);
 
@@ -292,76 +299,39 @@ namespace RichHudFramework
                         {
                             Array.Copy(chars, index, chars, index + 1, Count - index);
                             Array.Copy(formattedGlyphs, index, formattedGlyphs, index + 1, Count - index);
+
+                            // Non-sequential update
+                            isTextEqual = false;
                         }
-                        
-                        chars[index] = ch;
-                        formattedGlyphs[index] = fGlyph;
 
-                        wasTextUpdated = true;
-                        Count++;
-                    }
-
-                    public void UpdateGlyphBoards()
-                    {
-                        if (wasTextUpdated)
+                        if (isTextEqual)
                         {
-                            bool isUpdateRequired = false;
-
-                            if (glyphBoards.Count != Count)
+                            if ( chars[Count] != ch || !formattedGlyphs[Count].format.Equals(format) )
                             {
-                                isUpdateRequired = true;
+                                isTextEqual = false;
                             }
-                            else
-                            {
-                                for (int i = 0; i < Count; i++)
-                                {
-                                    FormattedGlyph fGlyph = formattedGlyphs[i];
-                                    QuadBoard newQB = fGlyph.glyph.GetQuadBoard(fGlyph.format, fGlyph.format.Color.GetBbColor()),
-                                        oldQB = glyphBoards[i].quadBoard;
-
-                                    if (
-                                        newQB.skewRatio != oldQB.skewRatio ||
-                                        newQB.materialData.textureID != oldQB.materialData.textureID ||
-                                        newQB.materialData.texBounds != oldQB.materialData.texBounds ||
-                                        newQB.materialData.bbColor != oldQB.materialData.bbColor
-                                    )
-                                    {
-                                        isUpdateRequired = true;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (isUpdateRequired)
-                            {
-                                areGlyphBoardsStale = true;
-
-                                glyphBoards.Clear();
-                                glyphBoards.EnsureCapacity(Count);
-
-                                for (int i = 0; i < Count; i++)
-                                {
-                                    FormattedGlyph fGlyph = formattedGlyphs[i];
-                                    IFontStyle fontStyle = FontManager.GetFontStyle(fGlyph.format.Data.Item3);
-                                    float fontSize = fGlyph.format.Data.Item2 * fontStyle.FontScale;
-                                    Vector2 bbSize = Vector2.Max(fGlyph.glyph.MatFrame.Material.size * fontSize, fGlyph.chSize);
-
-                                    glyphBoards.Add(new BoundedQuadBoard
-                                    {
-                                        bounds = BoundingBox2.CreateFromHalfExtent(Vector2.Zero, .5f * bbSize),
-                                        quadBoard = fGlyph.glyph.GetQuadBoard(fGlyph.format, fGlyph.format.Color.GetBbColor())
-                                    });
-                                }
-
-                                if (glyphBoards.Count > 20 && glyphBoards.Capacity > 5 * glyphBoards.Count)
-                                {
-                                    glyphBoards.TrimExcess();
-                                }
-                            }
-
-                            wasTextUpdated = false;
-                            TrimExcess();
                         }
+
+                        if (!isTextEqual)
+                        {
+                            IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
+                            float fontSize = format.Data.Item2 * fontStyle.FontScale;
+                            Glyph glyph = fontStyle[ch];
+                            var glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
+                            var fGlyph = new FormattedGlyph
+                            {
+                                chSize = glyphSize,
+                                format = format,
+                                glyph = glyph
+                            };
+
+                            chars[index] = ch;
+                            formattedGlyphs[index] = fGlyph;
+
+                            wasTextUpdated = true;
+                        }
+
+                        Count++;
                     }
 
                     /// <summary>
@@ -380,12 +350,44 @@ namespace RichHudFramework
                             {
                                 Array.Copy(chars, index, chars, index + newChars.Count, Count - index);
                                 Array.Copy(formattedGlyphs, index, formattedGlyphs, index + newChars.Count, Count - index);
+                                
+                                // Non-sequential update
+                                isTextEqual = false;
                             }
 
-                            Array.Copy(newChars.chars, 0, chars, index, newChars.Count);
-                            Array.Copy(newChars.formattedGlyphs, 0, formattedGlyphs, index, newChars.Count);
+                            if (isTextEqual)
+                            {
+                                for (int i = 0; i < newChars.Count; i++)
+                                {
+                                    if (isTextEqual && newChars.chars[i] != chars[i + index])
+                                        isTextEqual = false;
 
-                            wasTextUpdated = true;
+                                    chars[i + index] = newChars.chars[i];
+                                }
+                            }
+                            else
+                            {
+                                Array.Copy(newChars.chars, 0, chars, index, newChars.Count);
+                            }
+
+                            if (isTextEqual)
+                            {
+                                for (int i = 0; i < newChars.Count; i++)
+                                {
+                                    if (isTextEqual && !newChars.formattedGlyphs[i].format.Equals(formattedGlyphs[i + index].format))
+                                        isTextEqual = false;
+
+                                    formattedGlyphs[i + index] = newChars.formattedGlyphs[i];
+                                }
+                            }
+                            else
+                            {
+                                Array.Copy(newChars.formattedGlyphs, 0, formattedGlyphs, index, newChars.Count);
+                            }
+
+                            if (!isTextEqual)
+                                wasTextUpdated = true;
+
                             Count = newCount;
                         }
                     }
@@ -402,7 +404,9 @@ namespace RichHudFramework
                                 Array.Copy(chars, index + count, chars, index, Count - index);
                                 Array.Copy(formattedGlyphs, index + count, formattedGlyphs, index, Count - index);
                             }
-                            
+                            else
+                                isTextEqual = true;
+
                             wasTextUpdated = true;
                             Count -= count;
                         }
@@ -413,6 +417,7 @@ namespace RichHudFramework
                     /// </summary>
                     public void Clear()
                     {
+                        isTextEqual = true;
                         wasTextUpdated = true;
                         Count = 0;
                     }
@@ -489,6 +494,71 @@ namespace RichHudFramework
 
                                 _size.X += chWidth;
                             }
+                        }
+                    }
+
+                    public void UpdateGlyphBoards()
+                    {
+                        if (wasTextUpdated)
+                        {
+                            bool isUpdateRequired = false;
+
+                            if (glyphBoards.Count != Count)
+                            {
+                                isUpdateRequired = true;
+                            }
+                            else
+                            {
+                                for (int i = 0; i < Count; i++)
+                                {
+                                    FormattedGlyph fGlyph = formattedGlyphs[i];
+                                    QuadBoard newQB = fGlyph.glyph.GetQuadBoard(fGlyph.format, fGlyph.format.Color.GetBbColor()),
+                                        oldQB = glyphBoards[i].quadBoard;
+
+                                    if (
+                                        newQB.skewRatio != oldQB.skewRatio ||
+                                        newQB.materialData.textureID != oldQB.materialData.textureID ||
+                                        newQB.materialData.texBounds != oldQB.materialData.texBounds ||
+                                        newQB.materialData.bbColor != oldQB.materialData.bbColor
+                                    )
+                                    {
+                                        isUpdateRequired = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (isUpdateRequired)
+                            {
+                                areGlyphBoardsStale = true;
+
+                                glyphBoards.Clear();
+                                glyphBoards.EnsureCapacity(Count);
+
+                                for (int i = 0; i < Count; i++)
+                                {
+                                    FormattedGlyph fGlyph = formattedGlyphs[i];
+                                    IFontStyle fontStyle = FontManager.GetFontStyle(fGlyph.format.Data.Item3);
+                                    float fontSize = fGlyph.format.Data.Item2 * fontStyle.FontScale;
+                                    Vector2 bbSize = Vector2.Max(fGlyph.glyph.MatFrame.Material.size * fontSize, fGlyph.chSize);
+
+                                    glyphBoards.Add(new BoundedQuadBoard
+                                    {
+                                        bounds = BoundingBox2.CreateFromHalfExtent(Vector2.Zero, .5f * bbSize),
+                                        quadBoard = fGlyph.glyph.GetQuadBoard(fGlyph.format, fGlyph.format.Color.GetBbColor())
+                                    });
+                                }
+
+                                if (glyphBoards.Count > 20 && glyphBoards.Capacity > 5 * glyphBoards.Count)
+                                {
+                                    glyphBoards.TrimExcess();
+                                }
+                            }
+
+                            wasTextUpdated = false;
+                            isTextEqual = true;
+                            lastCount = Count;
+                            TrimExcess();
                         }
                     }
                 }
