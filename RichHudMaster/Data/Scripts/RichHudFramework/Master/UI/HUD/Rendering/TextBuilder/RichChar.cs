@@ -34,7 +34,16 @@ namespace RichHudFramework
                     /// <summary>
                     /// The position of the character's center relative to its TextBoard.
                     /// </summary>
-                    public Vector2 Offset => line.GlyphBoards[index].bounds.Center * builder.Scale;
+                    public Vector2 Offset 
+                    { 
+                        get 
+                        {
+                            if (index < line.GlyphBoards.Count)
+                                return line.GlyphBoards[index].bounds.Center * builder.Scale;
+                            else
+                                return Vector2.Zero;
+                        } 
+                    }
 
                     public readonly int index;
                     public readonly Line line;

@@ -169,7 +169,7 @@ namespace RichHudFramework.UI.Rendering.Server
             protected GlyphFormat? GetPreviousFormat(Vector2I i)
             {
                 if (lines.TryGetLastIndex(i, out i))
-                    return lines[i.X].FormattedGlyphs[i.Y].format;
+                    return lines.PooledLines[i.X].FormattedGlyphs[i.Y].format;
                 else
                     return null;
             }
@@ -180,7 +180,7 @@ namespace RichHudFramework.UI.Rendering.Server
             protected Vector2I ClampIndex(Vector2I index)
             {
                 index.X = MathHelper.Clamp(index.X, 0, lines.Count);
-                index.Y = MathHelper.Clamp(index.Y, 0, (lines.Count > 0) ? lines[index.X].Count : 0);
+                index.Y = MathHelper.Clamp(index.Y, 0, (lines.PooledLines.Count > 0) ? lines.PooledLines[index.X].Count : 0);
 
                 return index;
             }
@@ -190,8 +190,8 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             protected bool IsWordBreak(Vector2I iLeft, Vector2I iRight)
             {
-                char left = lines[iLeft.X].Chars[iLeft.Y], 
-                    right = lines[iRight.X].Chars[iRight.Y];
+                char left = lines.PooledLines[iLeft.X].Chars[iLeft.Y], 
+                    right = lines.PooledLines[iRight.X].Chars[iRight.Y];
 
                 return (left == ' ' || left == '-' || left == '_') && !(right == ' ' || right == '-' || right == '_');
             }

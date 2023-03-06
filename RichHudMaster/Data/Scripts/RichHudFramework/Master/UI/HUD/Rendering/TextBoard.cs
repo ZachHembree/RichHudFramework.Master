@@ -122,7 +122,6 @@ namespace RichHudFramework
                 private bool 
                     isUpdateEventPending,
                     areOffsetsStale,
-                    areUnderlinesStale,
                     isLineRangeStale,
                     isBbCacheStale;
 
@@ -151,7 +150,6 @@ namespace RichHudFramework
                     areOffsetsStale = true;
                     isLineRangeStale = true;
                     isBbCacheStale = true;
-                    areUnderlinesStale = true;
                 }
 
                 /// <summary>
@@ -375,15 +373,14 @@ namespace RichHudFramework
                             lastMask = mask;
                         }
 
+                        UpdateGlyphBoards();
+
                         // Update character positions and line range
                         if (areOffsetsStale)
                             UpdateOffsets();
                         // Update line range but leave characters unchanged
                         else if (isLineRangeStale || (endLine == -1 && lines.Count > 0))
                             UpdateLineRange();
-                        // Update underlines only
-                        else if (areUnderlinesStale && lines.Count > 0)
-                            UpdateUnderlines();
 
                         // Update bb data cache
                         if (isBbCacheStale)
@@ -470,7 +467,12 @@ namespace RichHudFramework
                 private void UpdateGlyphBoards()
                 {
                     for (int i = 0; i < lines.Count; i++)
+                    {
                         lines[i].UpdateGlyphBoards();
+
+                        if (lines[i].isBbCacheStale)
+                            isBbCacheStale = true;
+                    }
                 }
 
                 /// <summary>
@@ -516,9 +518,6 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateVisibleRange()
                 {
-                    UpdateGlyphBoards();
-
-                    bool wereAnyLinesStale = false;
                     _textSize = GetTextSize();
                     _size = AutoResize ? _textSize : _fixedSize;
 
@@ -526,16 +525,17 @@ namespace RichHudFramework
                     {
                         for (int line = startLine; line <= endLine; line++)
                         {   
-                            if (lines[line].Count > 0 && lines[line].areGlyphBoardsStale)
+                            if (lines[line].Count > 0)
                             {
                                 UpdateLineOffsets(line, lines[line]._verticalOffset);
-                                lines[line].areGlyphBoardsStale = false;
+                                lines[line].isBbCacheStale = false;
                                 isBbCacheStale = true;
-                                wereAnyLinesStale = true;
                             }
                         }
 
-                        if (wereAnyLinesStale || isLineRangeStale)
+                        // Underlines are only generated for the range of lines currently visible.
+                        // If that range changes, the need to be regenerated.
+                        if (isBbCacheStale || isLineRangeStale)
                             UpdateUnderlines();
                     }
                 }
@@ -574,7 +574,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Updates the visible range of lines based on the current text offset.
+                /// Calculates the range of lines currently visible based on the text offset
                 /// </summary>
                 private Vector2I GetLineRange()
                 {
@@ -618,16 +618,49 @@ namespace RichHudFramework
                 /// <summary>
                 /// Updates the position of each character in the given line.
                 /// </summary>
-                private void UpdateLineOffsets(int line, float height)
+                private void UpdateLineOffsets(int ln, float height)
                 {
                     float width = 0f,
-                        xAlign = GetLineAlignment(lines[line]);
+                        xAlign = GetLineAlignment(lines.PooledLines[ln]);
 
-                    height -= GetBaseline(line);
+                    height -= GetBaseline(ln);
 
-                    for (int ch = 0; ch < lines[line].Count; ch++)
+                    for (int i = 0; i < lines.PooledLines[ln].Count; i++)
                     {
-                        width = UpdateCharOffset(lines[line], ch, ch - 1, new Vector2(width, height), xAlign);
+                        Line line = lines.PooledLines[ln];
+                        int right = i, left = i - 1;
+                        Vector2 pos = new Vector2(width, height);
+
+                        line.UpdateGlyphBoards();
+
+                        char ch = line.Chars[right];
+                        FormattedGlyph formattedGlyph = line.FormattedGlyphs[right];
+                        IFontStyle fontStyle = FontManager.GetFontStyle(formattedGlyph.format.StyleIndex);
+
+                        float textSize = formattedGlyph.format.TextSize,
+                            formatScale = textSize * fontStyle.FontScale,
+                            // Quick fix for CJK characters in Space Engineers font data
+                            cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && ch >= 0x4E00) ? (-4f * textSize) : 0f;
+
+                        // Kerning adjustment
+                        if (left >= 0)
+                        {
+                            GlyphFormat leftFmt = line.FormattedGlyphs[left].format, rightFmt = formattedGlyph.format;
+
+                            if (leftFmt.StyleIndex == rightFmt.StyleIndex && leftFmt.TextSize == rightFmt.TextSize)
+                                pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], ch) * formatScale;
+                        }
+
+                        Vector2 chSize = line.FormattedGlyphs[right].chSize,
+                            bbSize = line.GlyphBoards[right].bounds.Size;
+
+                        line.SetOffsetAt(right, new Vector2
+                        {
+                            X = pos.X + bbSize.X * .5f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
+                            Y = pos.Y - (bbSize.Y * .5f) + (fontStyle.BaseLine * formatScale) + cjkOffset
+                        });
+
+                        width = pos.X + chSize.X;
                     }
                 }
 
@@ -638,7 +671,7 @@ namespace RichHudFramework
                 {
                     float offset = 0f;
                     int ch = line.Count > 1 ? 1 : 0;
-                    TextAlignment alignment = line[ch].Format.Alignment;
+                    TextAlignment alignment = line.FormattedGlyphs[ch].format.Alignment;
 
                     if (alignment == TextAlignment.Left)
                         offset = -_size.X * .5f;
@@ -675,42 +708,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Updates the position of the right character.
-                /// </summary>
-                private float UpdateCharOffset(Line line, int right, int left, Vector2 pos, float xAlign)
-                {
-                    char ch = line.Chars[right];
-                    FormattedGlyph formattedGlyph = line.FormattedGlyphs[right];
-                    IFontStyle fontStyle = FontManager.GetFontStyle(formattedGlyph.format.StyleIndex);
-
-                    float textSize = formattedGlyph.format.TextSize,
-                        formatScale = textSize * fontStyle.FontScale,
-                        // Quick fix for CJK characters in Space Engineers font data
-                        cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && ch >= 0x4E00) ? (-4f * textSize) : 0f;
-
-                    // Kerning adjustment
-                    if (left >= 0)
-                    {
-                        GlyphFormat leftFmt = line.FormattedGlyphs[left].format, rightFmt = formattedGlyph.format;
-
-                        if (leftFmt.StyleIndex == rightFmt.StyleIndex && leftFmt.TextSize == rightFmt.TextSize)
-                            pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], ch) * formatScale;
-                    }
-
-                    Vector2 chSize = line.FormattedGlyphs[right].chSize,
-                        bbSize = line.GlyphBoards[right].bounds.Size;
-
-                    line.SetOffsetAt(right, new Vector2
-                    {
-                        X = pos.X + bbSize.X * .5f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
-                        Y = pos.Y - (bbSize.Y * .5f) + (fontStyle.BaseLine * formatScale) + cjkOffset
-                    });
-
-                    return pos.X + chSize.X;
-                }
-
-                /// <summary>
-                /// Generates underlines for underlined text
+                /// Generates underlines for underlined text inside the visible line range
                 /// </summary>
                 private void UpdateUnderlines()
                 {
@@ -775,7 +773,6 @@ namespace RichHudFramework
                     if (visRange > 9 && underlines.Capacity > 3 * underlines.Count && underlines.Capacity > visRange)
                         underlines.TrimExcess();
 
-                    areUnderlinesStale = false;
                     isBbCacheStale = true;
                 }
 
