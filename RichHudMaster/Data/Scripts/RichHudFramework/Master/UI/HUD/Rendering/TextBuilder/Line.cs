@@ -1,4 +1,3 @@
-using ParallelTasks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,7 +21,7 @@ namespace RichHudFramework
                 /// </summary>
                 protected abstract partial class Line : ILine
                 {
-                    public IRichChar this[int index] 
+                    public IRichChar this[int index]
                     {
                         get
                         {
@@ -41,9 +40,9 @@ namespace RichHudFramework
                     /// <summary>
                     /// The maximum number of rich characters the line can hold without resizing.
                     /// </summary>
-                    public int Capacity 
-                    { 
-                        get { return chars.Length; } 
+                    public int Capacity
+                    {
+                        get { return chars.Length; }
                         set { SetCapacity(value); }
                     }
 
@@ -170,24 +169,34 @@ namespace RichHudFramework
 
                                     isBbCacheStale = true;
                                 }
-                                else if (!formattedGlyphs[n].format.Equals(format))
+                                else
                                 {
-                                    IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
-                                    float fontSize = format.Data.Item2 * fontStyle.FontScale;
-                                    Glyph glyph = fontStyle[chars[n]];
-                                    Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
+                                    GlyphFormatMembers lastFormat = formattedGlyphs[n].format.Data;
+                                    bool formatEqual =
+                                        lastFormat.Item1 == format.Data.Item1
+                                        && lastFormat.Item2 == format.Data.Item2
+                                        && lastFormat.Item3 == format.Data.Item3
+                                        && lastFormat.Item4 == format.Data.Item4;
 
-                                    formattedGlyphs[n] = new FormattedGlyph
+                                    if (!formatEqual)
                                     {
-                                        chSize = glyphSize,
-                                        format = format,
-                                        glyph = glyph
-                                    };
+                                        IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
+                                        float fontSize = format.Data.Item2 * fontStyle.FontScale;
+                                        Glyph glyph = fontStyle[chars[n]];
+                                        Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
 
-                                    canTextBeEqual = false;
+                                        formattedGlyphs[n] = new FormattedGlyph
+                                        {
+                                            chSize = glyphSize,
+                                            format = format,
+                                            glyph = glyph
+                                        };
+
+                                        canTextBeEqual = false;
+                                    }
                                 }
                             }
-                        }   
+                        }
                     }
 
                     /// <summary>
@@ -251,13 +260,20 @@ namespace RichHudFramework
 
                         if (canTextBeEqual)
                         {
-                            if (
-                                chars[Count] != line.chars[index] ||
-                                !formattedGlyphs[Count].format.Equals(line.formattedGlyphs[index].format)
-                            )
+                            if (chars[Count] == line.chars[index])
                             {
-                                canTextBeEqual = false;
+                                GlyphFormatMembers format = line.formattedGlyphs[index].format.Data,
+                                    lastFormat = formattedGlyphs[Count].format.Data;
+                                bool formatEqual =
+                                    lastFormat.Item1 == format.Item1
+                                    && lastFormat.Item2 == format.Item2
+                                    && lastFormat.Item3 == format.Item3
+                                    && lastFormat.Item4 == format.Item4;
+
+                                canTextBeEqual = formatEqual;
                             }
+                            else
+                                canTextBeEqual = false;
                         }
 
                         if (!canTextBeEqual)
@@ -289,7 +305,7 @@ namespace RichHudFramework
                         if (Count == chars.Length)
                             SetCapacity(Count + 1);
 
-                        if (Count > index)
+                        if (index < Count)
                         {
                             Array.Copy(chars, index, chars, index + 1, Count - index);
                             Array.Copy(formattedGlyphs, index, formattedGlyphs, index + 1, Count - index);
@@ -300,10 +316,19 @@ namespace RichHudFramework
 
                         if (canTextBeEqual)
                         {
-                            if ( chars[Count] != ch || !formattedGlyphs[Count].format.Equals(format) )
+                            if (chars[Count] == ch)
                             {
-                                canTextBeEqual = false;
+                                GlyphFormatMembers lastFormat = formattedGlyphs[index].format.Data;
+                                bool formatEqual =
+                                    lastFormat.Item1 == format.Data.Item1
+                                    && lastFormat.Item2 == format.Data.Item2
+                                    && lastFormat.Item3 == format.Data.Item3
+                                    && lastFormat.Item4 == format.Data.Item4;
+
+                                canTextBeEqual = formatEqual;
                             }
+                            else
+                                canTextBeEqual = false;
                         }
 
                         if (!canTextBeEqual)
@@ -342,7 +367,7 @@ namespace RichHudFramework
                             {
                                 Array.Copy(chars, index, chars, index + newChars.Count, Count - index);
                                 Array.Copy(formattedGlyphs, index, formattedGlyphs, index + newChars.Count, Count - index);
-                                
+
                                 // Non-sequential update
                                 canTextBeEqual = false;
                             }
@@ -366,8 +391,18 @@ namespace RichHudFramework
                             {
                                 for (int i = 0; i < newChars.Count; i++)
                                 {
-                                    if (canTextBeEqual && !newChars.formattedGlyphs[i].format.Equals(formattedGlyphs[i + index].format))
-                                        canTextBeEqual = false;
+                                    if (canTextBeEqual)
+                                    {
+                                        GlyphFormatMembers lastFormat = formattedGlyphs[i + index].format.Data,
+                                            format = newChars.formattedGlyphs[i].format.Data;
+                                        bool formatEqual =
+                                            lastFormat.Item1 == format.Item1
+                                            && lastFormat.Item2 == format.Item2
+                                            && lastFormat.Item3 == format.Item3
+                                            && lastFormat.Item4 == format.Item4;
+
+                                        canTextBeEqual = formatEqual;
+                                    }
 
                                     formattedGlyphs[i + index] = newChars.formattedGlyphs[i];
                                 }
