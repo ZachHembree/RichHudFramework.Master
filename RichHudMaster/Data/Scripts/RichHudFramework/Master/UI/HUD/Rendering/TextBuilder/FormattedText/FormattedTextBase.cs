@@ -158,7 +158,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 for (int n = 0; n < text.Length; n++)
                 {
                     if (text[n] >= ' ' || allowSpecialChars && (text[n] == '\n' || text[n] == '\t'))
-                        charBuffer.InsertNew(charBuffer.Chars.Count, text[n], new GlyphFormat(formatData));
+                        charBuffer.InsertNew(charBuffer.Count, text[n], new GlyphFormat(formatData));
                 }
             }
 

@@ -549,7 +549,7 @@ namespace RichHudFramework
                     }
 
                     for (int n = 0; n < lines.Count; n++)
-                        currentLength += lines[n].Chars.Count;
+                        currentLength += lines[n].Count;
 
                     return newTextLength == currentLength;
                 }
@@ -679,14 +679,14 @@ namespace RichHudFramework
                     int charCount = 0;
 
                     for (int i = 0; i < lines.Count; i++)
-                        charCount += lines[i].Chars.Count;
+                        charCount += lines[i].Count;
 
                     StringBuilder sb = new StringBuilder();
                     sb.EnsureCapacity(charCount);
 
                     for (int i = 0; i < lines.Count; i++)
                     {
-                        for (int j = 0; j < lines[i].Chars.Count; j++)
+                        for (int j = 0; j < lines[i].Count; j++)
                             sb.Append(lines[i].Chars[j]);
                     }
 

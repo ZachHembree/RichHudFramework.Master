@@ -2,7 +2,6 @@ using ParallelTasks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 using VRage;
 using VRageMath;
@@ -37,20 +36,15 @@ namespace RichHudFramework
                     /// <summary>
                     /// The number of rich characters currently in the collection.
                     /// </summary>
-                    public int Count => chars.Count;
+                    public int Count { get; private set; }
 
                     /// <summary>
                     /// The maximum number of rich characters the line can hold without resizing.
                     /// </summary>
                     public int Capacity 
                     { 
-                        get { return chars.Capacity; } 
-                        set 
-                        {
-                            chars.Capacity = value;
-                            formattedGlyphs.Capacity = value;
-                            glyphBoards.Capacity = value;
-                        } 
+                        get { return chars.Length; } 
+                        set { SetCapacity(value); }
                     }
 
                     /// <summary>
@@ -65,18 +59,18 @@ namespace RichHudFramework
 
                     /// <summary>
                     /// Starting vertical position of the line starting from the center of the text element, sans text offset.
+
                     /// </summary>
                     public float VerticalOffset => _verticalOffset * builder.Scale;
-
                     /// <summary>
                     /// Read-only list of the characters in the line.
                     /// </summary>
-                    public readonly IReadOnlyList<char> Chars;
+                    public IReadOnlyList<char> Chars { get; private set; }
 
                     /// <summary>
                     /// Read-only list of the formatted glyphs for each character in the line.
                     /// </summary>
-                    public readonly IReadOnlyList<FormattedGlyph> FormattedGlyphs;
+                    public IReadOnlyList<FormattedGlyph> FormattedGlyphs { get; private set; }
 
                     /// <summary>
                     /// Read-only list of the QuadBoards for each character in the line.
@@ -86,8 +80,8 @@ namespace RichHudFramework
                     public float _verticalOffset;
                     public bool areGlyphBoardsStale;
 
-                    private readonly List<char> chars;
-                    private readonly List<FormattedGlyph> formattedGlyphs;
+                    private char[] chars;
+                    private FormattedGlyph[] formattedGlyphs;
                     private readonly List<BoundedQuadBoard> glyphBoards;
 
                     private Vector2 _size;
@@ -97,16 +91,17 @@ namespace RichHudFramework
                     /// <summary>
                     /// Initializes a new TextBuilder Line with capacity for the given number of rich characters.
                     /// </summary>
-                    protected Line(TextBuilder builder, int capacity = 6)
+                    protected Line(TextBuilder builder, int capacity = 0)
                     {
                         this.builder = builder;
-                        chars = new List<char>(capacity);
-                        formattedGlyphs = new List<FormattedGlyph>(capacity);
+                        chars = new char[capacity];
+                        formattedGlyphs = new FormattedGlyph[capacity];
                         glyphBoards = new List<BoundedQuadBoard>(capacity);
 
                         Chars = chars;
                         FormattedGlyphs = formattedGlyphs;
                         GlyphBoards = glyphBoards;
+                        Count = 0;
                     }
 
                     /// <summary>
@@ -114,8 +109,8 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormatting(GlyphFormat format, bool onlyChangeColor)
                     {
-                        if (chars.Count > 0)
-                            SetFormatting(0, chars.Count - 1, format, onlyChangeColor);
+                        if (Count > 0)
+                            SetFormatting(0, Count - 1, format, onlyChangeColor);
                     }
 
                     /// <summary>
@@ -123,9 +118,9 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetFormatting(int start, int end, GlyphFormat format, bool onlyChangeColor)
                     {
-                        if (chars.Count == 0)
+                        if (Count == 0 || end < start)
                             return;
-                        else if (start < 0 || end < 0 || start >= chars.Count || end >= chars.Count)
+                        else if (start < 0 || end < 0 || start >= Count || end >= Count)
                             throw new Exception($"Index was out of range. Start: {start} End: {end} Count: {Count}");
 
                         if (wasTextUpdated)
@@ -252,27 +247,27 @@ namespace RichHudFramework
                     /// </summary>
                     public void AddCharFromLine(int index, Line line)
                     {
-                        if (line.chars.Count > 0)
-                        {
-                            chars.Add(line.chars[index]);
-                            formattedGlyphs.Add(line.formattedGlyphs[index]);
+                        if (Count == chars.Length)
+                            SetCapacity(Count + 1);
 
-                            TrimExcess();
-                            wasTextUpdated = true;
-                        }
+                        chars[Count] = line.chars[index];
+                        formattedGlyphs[Count] = line.formattedGlyphs[index];
+
+                        wasTextUpdated = true;
+                        Count++;
                     }
 
                     /// <summary>
                     /// Adds a new character to the end of the line with the given format
                     /// </summary>
                     public void AddNew(char ch, GlyphFormat format) =>
-                        InsertNew(chars.Count, ch, format);
+                        InsertNew(Count, ch, format);
 
                     /// <summary>
                     /// Adds the characters in the line given to the end of this line.
                     /// </summary>
                     public void AddRange(Line newChars) =>
-                        InsertRange(chars.Count, newChars);
+                        InsertRange(Count, newChars);
 
                     /// <summary>
                     /// Inserts a new character at the index specified with the given format
@@ -282,18 +277,28 @@ namespace RichHudFramework
                         IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
                         float fontSize = format.Data.Item2 * fontStyle.FontScale;
                         Glyph glyph = fontStyle[ch];
-                        Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
-
-                        chars.Insert(index, ch);
-                        formattedGlyphs.Insert(index, new FormattedGlyph
+                        var glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;                  
+                        var fGlyph = new FormattedGlyph
                         {
                             chSize = glyphSize,
                             format = format,
                             glyph = glyph
-                        });
+                        };
 
-                        TrimExcess();
+                        if (Count == chars.Length)
+                            SetCapacity(Count + 1);
+
+                        if (Count > index)
+                        {
+                            Array.Copy(chars, index, chars, index + 1, Count - index);
+                            Array.Copy(formattedGlyphs, index, formattedGlyphs, index + 1, Count - index);
+                        }
+                        
+                        chars[index] = ch;
+                        formattedGlyphs[index] = fGlyph;
+
                         wasTextUpdated = true;
+                        Count++;
                     }
 
                     public void UpdateGlyphBoards()
@@ -302,13 +307,13 @@ namespace RichHudFramework
                         {
                             bool isUpdateRequired = false;
 
-                            if (glyphBoards.Count != formattedGlyphs.Count)
+                            if (glyphBoards.Count != Count)
                             {
                                 isUpdateRequired = true;
                             }
                             else
                             {
-                                for (int i = 0; i < formattedGlyphs.Count; i++)
+                                for (int i = 0; i < Count; i++)
                                 {
                                     FormattedGlyph fGlyph = formattedGlyphs[i];
                                     QuadBoard newQB = fGlyph.glyph.GetQuadBoard(fGlyph.format, fGlyph.format.Color.GetBbColor()),
@@ -332,10 +337,11 @@ namespace RichHudFramework
                                 areGlyphBoardsStale = true;
 
                                 glyphBoards.Clear();
-                                glyphBoards.EnsureCapacity(formattedGlyphs.Count);
+                                glyphBoards.EnsureCapacity(Count);
 
-                                foreach (FormattedGlyph fGlyph in formattedGlyphs)
+                                for (int i = 0; i < Count; i++)
                                 {
+                                    FormattedGlyph fGlyph = formattedGlyphs[i];
                                     IFontStyle fontStyle = FontManager.GetFontStyle(fGlyph.format.Data.Item3);
                                     float fontSize = fGlyph.format.Data.Item2 * fontStyle.FontScale;
                                     Vector2 bbSize = Vector2.Max(fGlyph.glyph.MatFrame.Material.size * fontSize, fGlyph.chSize);
@@ -354,6 +360,7 @@ namespace RichHudFramework
                             }
 
                             wasTextUpdated = false;
+                            TrimExcess();
                         }
                     }
 
@@ -362,13 +369,24 @@ namespace RichHudFramework
                     /// </summary>
                     public void InsertRange(int index, Line newChars)
                     {
-                        if (newChars.chars.Count > 0)
+                        if (newChars.Count > 0)
                         {
-                            chars.InsertSpan(index, newChars.chars);
-                            formattedGlyphs.InsertSpan(index, newChars.formattedGlyphs);
+                            int newCount = newChars.Count + Count;
 
-                            TrimExcess();
+                            if (newCount > chars.Length)
+                                SetCapacity(newCount);
+
+                            if (Count > index)
+                            {
+                                Array.Copy(chars, index, chars, index + newChars.Count, Count - index);
+                                Array.Copy(formattedGlyphs, index, formattedGlyphs, index + newChars.Count, Count - index);
+                            }
+
+                            Array.Copy(newChars.chars, 0, chars, index, newChars.Count);
+                            Array.Copy(newChars.formattedGlyphs, 0, formattedGlyphs, index, newChars.Count);
+
                             wasTextUpdated = true;
+                            Count = newCount;
                         }
                     }
 
@@ -377,9 +395,17 @@ namespace RichHudFramework
                     /// </summary>
                     public void RemoveRange(int index, int count)
                     {
-                        chars.RemoveRange(index, count);
-                        formattedGlyphs.RemoveRange(index, count);
-                        wasTextUpdated = true;
+                        if (count > 0 && Count > 0)
+                        {
+                            if ((index + count) < Count)
+                            {
+                                Array.Copy(chars, index + count, chars, index, Count - index);
+                                Array.Copy(formattedGlyphs, index + count, formattedGlyphs, index, Count - index);
+                            }
+                            
+                            wasTextUpdated = true;
+                            Count -= count;
+                        }
                     }
 
                     /// <summary>
@@ -387,9 +413,8 @@ namespace RichHudFramework
                     /// </summary>
                     public void Clear()
                     {
-                        chars.Clear();
-                        formattedGlyphs.Clear();
                         wasTextUpdated = true;
+                        Count = 0;
                     }
 
                     /// <summary>
@@ -397,17 +422,34 @@ namespace RichHudFramework
                     /// </summary>
                     public void EnsureCapacity(int minCapacity)
                     {
-                        chars.EnsureCapacity(minCapacity);
-                        formattedGlyphs.EnsureCapacity(minCapacity);
+                        if (chars.Length < minCapacity)
+                        {
+                            SetCapacity(minCapacity);
+                        }
                     }
 
+                    /// <summary>
+                    /// Trims line capacity to current length
+                    /// </summary>
                     public void TrimExcess()
                     {
-                        if (chars.Count > 20 && chars.Capacity > 5 * chars.Count)
+                        if (Count > 20 && chars.Length > 5 * Count)
                         {
-                            chars.TrimExcess();
-                            formattedGlyphs.TrimExcess();
+                            SetCapacity(Count);
                         }
+                    }
+
+                    /// <summary>
+                    /// Sets the capacity of the line to the given number of characters
+                    /// </summary>
+                    public void SetCapacity(int newCapacity)
+                    {
+                        newCapacity = Math.Max(Count + 6, newCapacity);
+                        Array.Resize(ref chars, newCapacity);
+                        Array.Resize(ref formattedGlyphs, newCapacity);
+
+                        Chars = chars;
+                        FormattedGlyphs = formattedGlyphs;
                     }
 
                     /// <summary>
@@ -417,9 +459,9 @@ namespace RichHudFramework
                     {
                         _size = Vector2.Zero;
 
-                        if (chars.Count > 0)
+                        if (Count > 0)
                         {
-                            for (int n = 0; n < formattedGlyphs.Count; n++)
+                            for (int n = 0; n < Count; n++)
                             {
                                 FormattedGlyph fmtGlyph = formattedGlyphs[n];
 

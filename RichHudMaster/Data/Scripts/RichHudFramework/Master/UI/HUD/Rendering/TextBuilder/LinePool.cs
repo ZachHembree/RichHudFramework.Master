@@ -68,7 +68,7 @@ namespace RichHudFramework
                     /// Pulls a line out of the pool, if one is available, and returns it. If no pooled lines
                     /// are available, a new line will be created.
                     /// </summary>
-                    public Line GetNewLine(int minCapacity = 6)
+                    public Line GetNewLine(int minCapacity = 0)
                     {
                         Line line;
 
@@ -223,7 +223,7 @@ namespace RichHudFramework
 
                     private class PooledLine : Line
                     {
-                        public PooledLine(TextBuilder builder, int capacity = 6) : base(builder, 6)
+                        public PooledLine(TextBuilder builder, int capacity = 0) : base(builder, capacity)
                         { }
                     }
                 }
