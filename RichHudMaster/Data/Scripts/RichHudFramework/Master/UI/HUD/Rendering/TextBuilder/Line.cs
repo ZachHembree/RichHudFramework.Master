@@ -286,69 +286,68 @@ namespace RichHudFramework
                     }
 
                     /// <summary>
-                    /// Adds a new character to the end of the line with the given format
-                    /// </summary>
-                    public void AddNew(char ch, GlyphFormat format) =>
-                        InsertNew(Count, ch, format);
-
-                    /// <summary>
                     /// Adds the characters in the line given to the end of this line.
                     /// </summary>
                     public void AddRange(Line newChars) =>
                         InsertRange(Count, newChars);
 
                     /// <summary>
-                    /// Inserts a new character at the index specified with the given format
+                    /// Appends the contents of the given rich string to the line
                     /// </summary>
-                    public void InsertNew(int index, char ch, GlyphFormat format)
+                    public void AppendRichString(RichStringMembers richString, bool allowSpecialChars)
                     {
-                        if (Count == chars.Length)
-                            SetCapacity(Count + 1);
+                        StringBuilder text = richString.Item1;
+                        GlyphFormat format = new GlyphFormat(richString.Item2);
 
-                        if (index < Count)
+                        if (text.Length > 0)
                         {
-                            Array.Copy(chars, index, chars, index + 1, Count - index);
-                            Array.Copy(formattedGlyphs, index, formattedGlyphs, index + 1, Count - index);
+                            int newCount = text.Length + Count;
 
-                            // Non-sequential update
-                            canTextBeEqual = false;
-                        }
+                            if (newCount > chars.Length)
+                                SetCapacity(newCount);
 
-                        if (canTextBeEqual)
-                        {
-                            if (chars[Count] == ch)
+                            for (int n = 0; n < text.Length; n++)
                             {
-                                GlyphFormatMembers lastFormat = formattedGlyphs[index].format.Data;
-                                bool formatEqual =
-                                    lastFormat.Item1 == format.Data.Item1
-                                    && lastFormat.Item2 == format.Data.Item2
-                                    && lastFormat.Item3 == format.Data.Item3
-                                    && lastFormat.Item4 == format.Data.Item4;
+                                if (text[n] >= ' ' || allowSpecialChars && (text[n] == '\n' || text[n] == '\t'))
+                                {
+                                    if (canTextBeEqual)
+                                    {
+                                        if (chars[Count] == text[n])
+                                        {
+                                            GlyphFormatMembers lastFormat = formattedGlyphs[Count].format.Data;
+                                            bool formatEqual =
+                                                lastFormat.Item1 == format.Data.Item1
+                                                && lastFormat.Item2 == format.Data.Item2
+                                                && lastFormat.Item3 == format.Data.Item3
+                                                && lastFormat.Item4 == format.Data.Item4;
 
-                                canTextBeEqual = formatEqual;
+                                            canTextBeEqual = formatEqual;
+                                        }
+                                        else
+                                            canTextBeEqual = false;
+                                    }
+
+                                    if (!canTextBeEqual)
+                                    {
+                                        IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
+                                        float fontSize = format.Data.Item2 * fontStyle.FontScale;
+                                        Glyph glyph = fontStyle[text[n]];
+                                        var glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
+                                        var fGlyph = new FormattedGlyph
+                                        {
+                                            chSize = glyphSize,
+                                            format = format,
+                                            glyph = glyph
+                                        };
+
+                                        chars[Count] = text[n];
+                                        formattedGlyphs[Count] = fGlyph;
+                                    }
+
+                                    Count++;
+                                }
                             }
-                            else
-                                canTextBeEqual = false;
                         }
-
-                        if (!canTextBeEqual)
-                        {
-                            IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
-                            float fontSize = format.Data.Item2 * fontStyle.FontScale;
-                            Glyph glyph = fontStyle[ch];
-                            var glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
-                            var fGlyph = new FormattedGlyph
-                            {
-                                chSize = glyphSize,
-                                format = format,
-                                glyph = glyph
-                            };
-
-                            chars[index] = ch;
-                            formattedGlyphs[index] = fGlyph;
-                        }
-
-                        Count++;
                     }
 
                     /// <summary>

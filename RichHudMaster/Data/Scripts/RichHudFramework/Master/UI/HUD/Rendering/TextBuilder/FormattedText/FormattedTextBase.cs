@@ -146,35 +146,6 @@ namespace RichHudFramework.UI.Rendering.Server
             }
 
             /// <summary>
-            /// Builds a list of <see cref="Line.RichChar"/>s from RichString data.
-            /// </summary>
-            protected static void GetRichChars(RichStringMembers richString, Line charBuffer, bool allowSpecialChars)
-            {
-                StringBuilder text = richString.Item1;
-                GlyphFormatMembers formatData = richString.Item2;
-
-                charBuffer.EnsureCapacity(charBuffer.Count + text.Length);
-
-                for (int n = 0; n < text.Length; n++)
-                {
-                    if (text[n] >= ' ' || allowSpecialChars && (text[n] == '\n' || text[n] == '\t'))
-                        charBuffer.InsertNew(charBuffer.Count, text[n], new GlyphFormat(formatData));
-                }
-            }
-
-            /// <summary>
-            /// Returns the glyph formatting of the character immediately preceding the one
-            /// at the index given, if it exists.
-            /// </summary>
-            protected GlyphFormat? GetPreviousFormat(Vector2I i)
-            {
-                if (lines.TryGetLastIndex(i, out i))
-                    return lines.PooledLines[i.X].FormattedGlyphs[i.Y].format;
-                else
-                    return null;
-            }
-
-            /// <summary>
             /// Clamps the given index within the range of valid indices.
             /// </summary>
             protected Vector2I ClampIndex(Vector2I index)

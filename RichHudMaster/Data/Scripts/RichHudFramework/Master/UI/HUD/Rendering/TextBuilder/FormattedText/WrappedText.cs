@@ -45,7 +45,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 int insertStart = GetInsertStart(start);
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, AllowSpecialChars);
+                    charBuffer.AppendRichString(text[n], AllowSpecialChars);
 
                 InsertChars(insertStart, start);
             }
