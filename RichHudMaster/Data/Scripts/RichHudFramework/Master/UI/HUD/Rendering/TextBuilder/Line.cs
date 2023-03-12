@@ -422,15 +422,15 @@ namespace RichHudFramework
                     {
                         if (count > 0 && Count > 0)
                         {
-                            if ((index + count) < Count)
+                            Count -= count;
+
+                            if (index < Count)
                             {
                                 Array.Copy(chars, index + count, chars, index, Count - index);
                                 Array.Copy(formattedGlyphs, index + count, formattedGlyphs, index, Count - index);
                             }
                             else
                                 canTextBeEqual = true;
-
-                            Count -= count;
                         }
                     }
 

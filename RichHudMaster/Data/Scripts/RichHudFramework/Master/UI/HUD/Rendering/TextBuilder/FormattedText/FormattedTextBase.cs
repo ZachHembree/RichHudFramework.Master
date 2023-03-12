@@ -146,12 +146,13 @@ namespace RichHudFramework.UI.Rendering.Server
             }
 
             /// <summary>
-            /// Clamps the given index within the range of valid indices.
+            /// Clamps the given index within the range of valid indices. Char indicies == char count are used to
+            /// indicated appends.
             /// </summary>
             protected Vector2I ClampIndex(Vector2I index)
             {
-                index.X = MathHelper.Clamp(index.X, 0, lines.Count);
-                index.Y = MathHelper.Clamp(index.Y, 0, (lines.PooledLines.Count > 0) ? lines.PooledLines[index.X].Count : 0);
+                index.X = MathHelper.Clamp(index.X, 0, lines.PooledLines.Count - 1);
+                index.Y = MathHelper.Clamp(index.Y, 0, (index.X < lines.PooledLines.Count) ? lines.PooledLines[index.X].Count : 0);
 
                 return index;
             }
