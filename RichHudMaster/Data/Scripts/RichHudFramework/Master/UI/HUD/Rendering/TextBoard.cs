@@ -444,74 +444,12 @@ namespace RichHudFramework
                     isUpdateEventPending = true;
                 }
 
-                private void UpdateGlyphBoards()
-                {
-                    UpdateLineRange();
-
-                    foreach (Line line in lines.PooledLines)
-                    {
-                        line.UpdateGlyphBoards();
-                    }
-
-                    for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
-                    {
-                        Line line = lines.PooledLines[ln];
-
-                        if (line.isQuadCacheStale)
-                        {
-                            areOffsetsStale = true;
-                        }
-                    }
-                }
-
-                private void UpdateLineRange()
-                {
-                    int start = 0, 
-                        end = lines.Count - 1;
-
-                    if (!AutoResize)
-                    {
-                        float height = _textOffset.Y;
-
-                        if (VertCenterText)
-                            height += MathHelper.Max(0f, _textSize.Y - _size.Y) * .5f;
-
-                        for (int line = 0; line < lines.PooledLines.Count; line++)
-                        {
-                            float lineHeight = lines.PooledLines[line].UnscaledSize.Y;
-
-                            if (height <= lineHeight)
-                            {
-                                if (end == -1)
-                                {
-                                    start = line;
-                                    end = line;
-                                }
-                                else if (height > -_fixedSize.Y)
-                                {
-                                    end = line;
-                                }
-                                else
-                                    break;
-                            }
-
-                            height -= lineHeight;
-                        }
-                    }
-
-                    lastLineRange = lineRange;
-                    lineRange.X = start;
-                    lineRange.Y = end;
-
-                    if (lastLineRange != lineRange)
-                        isLineRangeStale = true;
-                }
-
                 /// <summary>
                 /// Updates the position and range of visible characters as needed
                 /// </summary>
                 private void UpdateCharOffsets()
                 {
+                    UpdateLineRange();
                     UpdateGlyphBoards();
 
                     // Check for external resizing
@@ -539,6 +477,73 @@ namespace RichHudFramework
                     lastTextOffset = _textOffset;
                     lastFixedSize = _fixedSize;
                     LineWrapWidth = _fixedSize.X;
+                }
+
+                private void UpdateLineRange()
+                {
+                    int start = 0,
+                        end;
+
+                    if (!AutoResize)
+                    {
+                        float height = _textOffset.Y;
+
+                        if (VertCenterText)
+                            height += MathHelper.Max(0f, _textSize.Y - _size.Y) * .5f;
+
+                        end = -1;
+
+                        for (int line = 0; line < lines.PooledLines.Count; line++)
+                        {
+                            float lineHeight = lines.PooledLines[line].UnscaledSize.Y;
+
+                            if (height <= lineHeight)
+                            {
+                                if (end == -1)
+                                {
+                                    start = line;
+                                    end = line;
+                                }
+                                else if (height > -_fixedSize.Y)
+                                {
+                                    end = line;
+                                }
+                                else
+                                    break;
+                            }
+
+                            height -= lineHeight;
+                        }
+                    }
+                    else
+                    {
+                        end = lines.Count - 1;
+                    }
+
+                    lastLineRange = lineRange;
+                    lineRange.X = start;
+                    lineRange.Y = end;
+
+                    if (lastLineRange != lineRange)
+                        isLineRangeStale = true;
+                }
+
+                private void UpdateGlyphBoards()
+                {
+                    foreach (Line line in lines.PooledLines)
+                    {
+                        line.UpdateGlyphBoards();
+                    }
+
+                    for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
+                    {
+                        Line line = lines.PooledLines[ln];
+
+                        if (line.isQuadCacheStale)
+                        {
+                            areOffsetsStale = true;
+                        }
+                    }
                 }
 
                 /// <summary>
