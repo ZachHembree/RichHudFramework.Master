@@ -98,7 +98,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Returns the range of lines visible.
                 /// </summary>
-                public Vector2I VisibleLineRange => new Vector2I(startLine, endLine);
+                public Vector2I VisibleLineRange => lineRange;
 
                 /// <summary>
                 /// If true, the text board will automatically resize to fit the text.
@@ -110,7 +110,7 @@ namespace RichHudFramework
                 /// </summary>
                 public bool VertCenterText { get; set; }
 
-                private int startLine, endLine;
+                private Vector2I lineRange, lastLineRange;
                 private BoundingBox2 lastBox, lastMask;
                 private Vector2 
                     _size, 
@@ -122,7 +122,6 @@ namespace RichHudFramework
                 private bool 
                     isUpdateEventPending,
                     areOffsetsStale,
-                    areUnderlinesStale,
                     isLineRangeStale,
                     isBbCacheStale;
 
@@ -134,7 +133,6 @@ namespace RichHudFramework
                 public TextBoard()
                 {
                     Scale = 1f;
-                    endLine = -1;
                     AutoResize = true;
                     VertCenterText = true;
 
@@ -148,10 +146,13 @@ namespace RichHudFramework
                     eventTimer = new Stopwatch();
                     eventTimer.Start();
 
+                    lineRange.Y = -1;
+                    lastFixedSize = Vector2.PositiveInfinity;
+                    lastTextOffset = Vector2.PositiveInfinity;
+
                     areOffsetsStale = true;
                     isLineRangeStale = true;
                     isBbCacheStale = true;
-                    areUnderlinesStale = true;
                 }
 
                 /// <summary>
@@ -162,17 +163,17 @@ namespace RichHudFramework
                 {
                     if (!AutoResize)
                     {
+                        UpdateCharOffsets();
+
                         index.X = MathHelper.Clamp(index.X, 0, lines.Count - 1);
                         index.Y = MathHelper.Clamp(index.Y, 0, lines[index.X].Count - 1);
 
-                        if (index.X < startLine || index.X > endLine)
+                        if (index.X < lineRange.X || index.X > lineRange.Y)
                         {
                             if (BuilderMode != TextBuilderModes.Unlined)
                                 UpdateVerticalOffset(index.X);
                             else
-                                _textOffset.Y = 0f;
-
-                            UpdateLineRange();
+                                _textOffset.Y = 0f;                        
                         }
 
                         if (BuilderMode != TextBuilderModes.Wrapped)
@@ -189,13 +190,13 @@ namespace RichHudFramework
                 {
                     Line line = lines[index];
 
-                    if (index > endLine) // Scroll down
+                    if (index > lineRange.Y) // Scroll down
                     {
                         _textOffset.Y = -line._verticalOffset;
                         _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y * .5f : _fixedSize.Y * .5f;
                         _textOffset.Y -= (_fixedSize.Y - line.UnscaledSize.Y);
                     }
-                    else if (index < startLine) // Scroll up
+                    else if (index < lineRange.X) // Scroll up
                     {
                         _textOffset.Y = -line._verticalOffset;
                         _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y * .5f : _fixedSize.Y * .5f;
@@ -215,6 +216,8 @@ namespace RichHudFramework
                     {
                         if (index.Y != 0)
                         {
+                            UpdateGlyphBoards();
+
                             Vector2 chSize = line.FormattedGlyphs[index.Y].chSize,
                                 bbOffset = line.GlyphBoards[index.Y].bounds.Center;
 
@@ -254,7 +257,7 @@ namespace RichHudFramework
                 /// </summary>
                 private int GetLineAt(float offset)
                 {
-                    for (int line = startLine; line <= endLine; line++)
+                    for (int line = lineRange.X; line <= lineRange.Y; line++)
                     {
                         float top = lines[line]._verticalOffset, 
                             bottom = (top - lines[line].UnscaledSize.Y);
@@ -263,7 +266,7 @@ namespace RichHudFramework
                             return line;
                     }
 
-                    return endLine;
+                    return lineRange.Y;
                 }
 
                 /// <summary>
@@ -349,20 +352,7 @@ namespace RichHudFramework
                         if (AutoResize)
                             _textOffset = Vector2.Zero;
 
-                        // Check for external resizing
-                        if (Vector2.DistanceSquared(lastFixedSize, _fixedSize) > .1f)
-                        {
-                            areOffsetsStale = true;
-                            lastFixedSize = _fixedSize;
-                            LineWrapWidth = _fixedSize.X;
-                        }
-
-                        // Check for offset changes
-                        if (Vector2.DistanceSquared(lastTextOffset, _textOffset) > .1f)
-                        {
-                            isLineRangeStale = true;
-                            lastTextOffset = _textOffset;
-                        }
+                        UpdateCharOffsets();
 
                         // Check for changes in position, size or masking
                         if (lastBox != box || lastMask != mask)
@@ -371,16 +361,6 @@ namespace RichHudFramework
                             lastBox = box;
                             lastMask = mask;
                         }
-
-                        // Update character positions and line range
-                        if (areOffsetsStale)
-                            UpdateOffsets();
-                        // Update line range but leave characters unchanged
-                        else if (isLineRangeStale || (endLine == -1 && lines.Count > 0))
-                            UpdateLineRange();
-                        // Update underlines only
-                        else if (areUnderlinesStale && lines.Count > 0)
-                            UpdateUnderlines();
 
                         // Update bb data cache
                         if (isBbCacheStale)
@@ -415,20 +395,20 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Adds final transformed character quads w/masking and offset to the buffer for rendering
+                /// Adds final character quads w/masking and offset to the buffer for rendering
                 /// </summary>
                 private void UpdateCharCache(BoundingBox2 mask, Vector2 offset)
                 {
                     IReadOnlyList<Line> lineList = lines.PooledLines;
 
-                    for (int ln = startLine; ln <= endLine && ln < lines.Count; ln++)
+                    for (int ln = lineRange.X; ln <= lineRange.Y && ln < lines.Count; ln++)
                     {
                         BillBoardUtils.GetTriangleData(lineList[ln].GlyphBoards, bbCache, mask, offset, Scale);
                     }
                 }
                 
                 /// <summary>
-                /// Adds final transformed underline quads w/masking and offset to the buffer for rendering
+                /// Adds final underline quads w/masking and offset to the buffer for rendering
                 /// </summary>
                 private void UpdateUnderlineCache(BoundingBox2 mask, Vector2 offset)
                 {
@@ -456,120 +436,54 @@ namespace RichHudFramework
                 /// </summary>
                 protected override void AfterFullTextUpdate()
                 {
-                    areOffsetsStale = true;
-                    isLineRangeStale = true;
                     isUpdateEventPending = true;
-                    isBbCacheStale = true;
-
-                    base.AfterFullTextUpdate();
                 }
 
                 protected override void AfterColorUpdate()
                 {
-                    base.AfterColorUpdate();
-
-                    areUnderlinesStale = true;
-                    isBbCacheStale = true;
+                    isUpdateEventPending = true;
                 }
 
                 /// <summary>
-                /// Updates the position and range of visible characters
+                /// Updates the position and range of visible characters as needed
                 /// </summary>
-                private void UpdateOffsets()
+                private void UpdateCharOffsets()
                 {
-                    Vector2I range = GetLineRange();
-                    startLine = range.X;
-                    endLine = range.Y;
+                    UpdateLineRange();
+                    UpdateGlyphBoards();
 
-                    UpdateVisibleRange();
+                    // Check for external resizing
+                    if (Vector2.DistanceSquared(lastFixedSize, _fixedSize) > .1f)
+                    {
+                        areOffsetsStale = true;
+                        isBbCacheStale = true;
+                    }
 
-                    areOffsetsStale = false;
-                    isLineRangeStale = false;
-                    isBbCacheStale = true;
+                    // Check for offset changes
+                    if (Vector2.DistanceSquared(lastTextOffset, _textOffset) > .1f)
+                    {
+                        isLineRangeStale = true;
+                        isBbCacheStale = true;
+                    }
+
+                    if (areOffsetsStale || isLineRangeStale)
+                    {
+                        UpdateVisibleRange();
+
+                        isLineRangeStale = false;
+                        areOffsetsStale = false;
+                    }
+
+                    lastTextOffset = _textOffset;
+                    lastFixedSize = _fixedSize;
+                    LineWrapWidth = _fixedSize.X;
                 }
 
-                /// <summary>
-                /// Updates the range of visible lines and updates character offsets
-                /// if the range has changed.
-                /// </summary>
                 private void UpdateLineRange()
                 {
-                    if (!AutoResize)
-                    {
-                        Vector2I range = GetLineRange();
+                    int start = 0,
+                        end;
 
-                        if (range.X != startLine || range.Y != endLine)
-                        {
-                            startLine = range.X;
-                            endLine = range.Y;
-
-                            UpdateVisibleRange();
-                        }
-                    }
-
-                    isLineRangeStale = false;
-                    isBbCacheStale = true;
-                }
-
-                /// <summary>
-                /// Updates the offsets for characters within the visible range of text and updates the
-                /// current size of the text box.
-                /// </summary>
-                private void UpdateVisibleRange()
-                {
-                    _textSize = GetTextSize();
-                    _size = AutoResize ? _textSize : _fixedSize;
-
-                    if (lines.Count > 0)
-                    {
-                        for (int line = startLine; line <= endLine; line++)
-                        {   
-                            if (lines[line].Count > 0)
-                                UpdateLineOffsets(line, lines[line]._verticalOffset);
-                        }
-
-                        UpdateUnderlines();
-                    }
-                }
-
-                /// <summary>
-                /// Calculates the total size of the text, both visible and not.
-                /// </summary>
-                private Vector2 GetTextSize()
-                {
-                    Vector2 tSize = new Vector2();
-
-                    if (lines.Count > 0)
-                    {
-                        for (int line = 0; line < lines.Count; line++)
-                        {
-                            lines[line]._verticalOffset = -tSize.Y;
-
-                            if (lines[line].UnscaledSize.X > tSize.X)
-                                tSize.X = lines[line].UnscaledSize.X;
-
-                            tSize.Y += lines[line].UnscaledSize.Y;
-                        }
-
-                        Line lastLine = lines[lines.Count - 1];
-
-                        if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
-                            tSize.Y -= lastLine.UnscaledSize.Y;
-
-                        float vAlign = ((VertCenterText || AutoResize) ? tSize.Y : _fixedSize.Y) * .5f;
-
-                        for (int line = 0; line < lines.Count; line++)
-                            lines[line]._verticalOffset += vAlign;
-                    }
-
-                    return tSize;
-                }
-
-                /// <summary>
-                /// Updates the visible range of lines based on the current text offset.
-                /// </summary>
-                private Vector2I GetLineRange()
-                {
                     if (!AutoResize)
                     {
                         float height = _textOffset.Y;
@@ -577,11 +491,11 @@ namespace RichHudFramework
                         if (VertCenterText)
                             height += MathHelper.Max(0f, _textSize.Y - _size.Y) * .5f;
 
-                        int start = 0, end = -1;
+                        end = -1;
 
-                        for (int line = 0; line < lines.Count; line++)
+                        for (int line = 0; line < lines.PooledLines.Count; line++)
                         {
-                            float lineHeight = lines[line].UnscaledSize.Y;
+                            float lineHeight = lines.PooledLines[line].UnscaledSize.Y;
 
                             if (height <= lineHeight)
                             {
@@ -600,26 +514,143 @@ namespace RichHudFramework
 
                             height -= lineHeight;
                         }
-
-                        return new Vector2I(start, end);
                     }
                     else
-                        return new Vector2I(0, lines.Count - 1);
+                    {
+                        end = lines.Count - 1;
+                    }
+
+                    lastLineRange = lineRange;
+                    lineRange.X = start;
+                    lineRange.Y = end;
+
+                    if (lastLineRange != lineRange)
+                        isLineRangeStale = true;
+                }
+
+                private void UpdateGlyphBoards()
+                {
+                    foreach (Line line in lines.PooledLines)
+                    {
+                        line.UpdateGlyphBoards();
+                    }
+
+                    for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
+                    {
+                        Line line = lines.PooledLines[ln];
+
+                        if (line.isQuadCacheStale)
+                        {
+                            areOffsetsStale = true;
+                        }
+                    }
+                }
+
+                /// <summary>
+                /// Updates the offsets for characters within the visible range of text and updates the
+                /// current size of the text box.
+                /// </summary>
+                private void UpdateVisibleRange()
+                {
+                    _textSize = GetTextSize();
+                    _size = AutoResize ? _textSize : _fixedSize;
+
+                    if (lines.Count > 0)
+                    {
+                        for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
+                        {
+                            Line line = lines.PooledLines[ln];
+                            UpdateLineOffsets(line);
+
+                            if (line.isQuadCacheStale)
+                            {
+                                isBbCacheStale = true;
+                                line.isQuadCacheStale = false;
+                            }
+                        }
+
+                        // Underlines are only generated for the range of lines currently visible.
+                        // If that range changes, they need to be regenerated.
+                        if (isBbCacheStale || isLineRangeStale)
+                            UpdateUnderlines();
+                    }
+                }
+
+                /// <summary>
+                /// Calculates the total size of the text, both visible and not.
+                /// </summary>
+                private Vector2 GetTextSize()
+                {
+                    Vector2 tSize = new Vector2();
+
+                    if (lines.Count > 0)
+                    {
+                        foreach (Line line in lines.PooledLines)
+                        {
+                            line._verticalOffset = -tSize.Y;
+
+                            if (line.UnscaledSize.X > tSize.X)
+                                tSize.X = line.UnscaledSize.X;
+
+                            tSize.Y += line.UnscaledSize.Y;
+                        }
+
+                        Line lastLine = lines[lines.Count - 1];
+
+                        if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
+                            tSize.Y -= lastLine.UnscaledSize.Y;
+
+                        float vAlign = ((VertCenterText || AutoResize) ? tSize.Y : _fixedSize.Y) * .5f;
+
+                        foreach (Line line in lines.PooledLines)
+                            line._verticalOffset += vAlign;
+                    }
+
+                    return tSize;
                 }
 
                 /// <summary>
                 /// Updates the position of each character in the given line.
                 /// </summary>
-                private void UpdateLineOffsets(int line, float height)
+                private void UpdateLineOffsets(Line line)
                 {
                     float width = 0f,
-                        xAlign = GetLineAlignment(lines[line]);
+                        height = line._verticalOffset - GetBaseline(line),
+                        xAlign = GetLineAlignment(line);
 
-                    height -= GetBaseline(line);
-
-                    for (int ch = 0; ch < lines[line].Count; ch++)
+                    for (int i = 0; i < line.Count; i++)
                     {
-                        width = UpdateCharOffset(lines[line], ch, ch - 1, new Vector2(width, height), xAlign);
+                        int right = i, left = i - 1;
+                        Vector2 pos = new Vector2(width, height);
+
+                        char ch = line.Chars[right];
+                        FormattedGlyph formattedGlyph = line.FormattedGlyphs[right];
+                        IFontStyle fontStyle = FontManager.GetFontStyle(formattedGlyph.format.StyleIndex);
+
+                        float textSize = formattedGlyph.format.TextSize,
+                            formatScale = textSize * fontStyle.FontScale,
+                            // Quick fix for CJK characters in Space Engineers font data
+                            cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && ch >= 0x4E00) ? (-4f * textSize) : 0f;
+
+                        // Kerning adjustment
+                        if (left >= 0)
+                        {
+                            GlyphFormat leftFmt = line.FormattedGlyphs[left].format, rightFmt = formattedGlyph.format;
+
+                            if (leftFmt.StyleIndex == rightFmt.StyleIndex && leftFmt.TextSize == rightFmt.TextSize)
+                                pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], ch) * formatScale;
+                        }
+
+                        Vector2 chSize = line.FormattedGlyphs[right].chSize,
+                            bbSize = line.GlyphBoards[right].bounds.Size;
+
+                        line.SetOffsetAt(right, new Vector2
+                        {
+                            X = pos.X + bbSize.X * .5f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
+                            Y = pos.Y - (bbSize.Y * .5f) + (fontStyle.BaseLine * formatScale) + cjkOffset
+                        });
+
+                        width = pos.X + chSize.X;
                     }
                 }
 
@@ -630,7 +661,7 @@ namespace RichHudFramework
                 {
                     float offset = 0f;
                     int ch = line.Count > 1 ? 1 : 0;
-                    TextAlignment alignment = line[ch].Format.Alignment;
+                    TextAlignment alignment = line.FormattedGlyphs[ch].format.Alignment;
 
                     if (alignment == TextAlignment.Left)
                         offset = -_size.X * .5f;
@@ -645,15 +676,15 @@ namespace RichHudFramework
                 /// <summary>
                 /// Calculates the baseline to be shared by each character in the line.
                 /// </summary>
-                private float GetBaseline(int line)
+                private float GetBaseline(Line line)
                 {
                     float baseline = 0f;
 
-                    for (int ch = 0; ch < lines[line].Count; ch++)
+                    for (int ch = 0; ch < line.Count; ch++)
                     {
-                        FormattedGlyph fmtGlyph = lines[line].FormattedGlyphs[ch];
+                        FormattedGlyph fmtGlyph = line.FormattedGlyphs[ch];
 
-                        if (fmtGlyph.chSize.Y == lines[line].UnscaledSize.Y)
+                        if (fmtGlyph.chSize.Y == line.UnscaledSize.Y)
                         {
                             GlyphFormat format = fmtGlyph.format;
                             IFontStyle fontStyle = FontManager.Fonts[format.StyleIndex.X][format.StyleIndex.Y];
@@ -667,50 +698,15 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Updates the position of the right character.
-                /// </summary>
-                private float UpdateCharOffset(Line line, int right, int left, Vector2 pos, float xAlign)
-                {
-                    char ch = line.Chars[right];
-                    FormattedGlyph formattedGlyph = line.FormattedGlyphs[right];
-                    IFontStyle fontStyle = FontManager.GetFontStyle(formattedGlyph.format.StyleIndex);
-
-                    float textSize = formattedGlyph.format.TextSize,
-                        formatScale = textSize * fontStyle.FontScale,
-                        // Quick fix for CJK characters in Space Engineers font data
-                        cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && ch >= 0x4E00) ? (-4f * textSize) : 0f;
-
-                    // Kerning adjustment
-                    if (left >= 0)
-                    {
-                        GlyphFormat leftFmt = line.FormattedGlyphs[left].format, rightFmt = formattedGlyph.format;
-
-                        if (leftFmt.StyleIndex == rightFmt.StyleIndex && leftFmt.TextSize == rightFmt.TextSize)
-                            pos.X += fontStyle.GetKerningAdjustment(line.Chars[left], ch) * formatScale;
-                    }
-
-                    Vector2 chSize = line.FormattedGlyphs[right].chSize,
-                        bbSize = line.GlyphBoards[right].bounds.Size;
-
-                    line.SetOffsetAt(right, new Vector2
-                    {
-                        X = pos.X + bbSize.X * .5f + (formattedGlyph.glyph.leftSideBearing * formatScale) + xAlign,
-                        Y = pos.Y - (bbSize.Y * .5f) + (fontStyle.BaseLine * formatScale) + cjkOffset
-                    });
-
-                    return pos.X + chSize.X;
-                }
-
-                /// <summary>
-                /// Generates underlines for underlined text
+                /// Generates underlines for underlined text inside the visible line range
                 /// </summary>
                 private void UpdateUnderlines()
                 {
-                    int visRange = endLine - startLine;
+                    int visRange = lineRange.Y - lineRange.X;
                     underlines.Clear();
                     underlines.EnsureCapacity(visRange);
 
-                    for (int ln = startLine; ln <= endLine; ln++)
+                    for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
                     {
                         Line line = lines[ln];
 
@@ -753,7 +749,7 @@ namespace RichHudFramework
                                             Math.Max((int)formatData.Value.Item2, 1)
                                         );
 
-                                        Vector4 color = BillBoardUtils.GetBillBoardBoardColor(formatData.Value.Item4) * .9f;
+                                        Vector4 color = formatData.Value.Item4.GetBbColor() * .9f;
                                         underlines.Add(new UnderlineBoard(size, pos, color));
                                     }
 
@@ -767,7 +763,6 @@ namespace RichHudFramework
                     if (visRange > 9 && underlines.Capacity > 3 * underlines.Count && underlines.Capacity > visRange)
                         underlines.TrimExcess();
 
-                    areUnderlinesStale = false;
                     isBbCacheStale = true;
                 }
 
@@ -827,7 +822,7 @@ namespace RichHudFramework
                                     break;
                                 }
                             case TextBoardAccessors.VisibleLineRange:
-                                return new Vector2I(startLine, endLine);
+                                return new Vector2I(lineRange.X, lineRange.Y);
                         }
 
                         return null;

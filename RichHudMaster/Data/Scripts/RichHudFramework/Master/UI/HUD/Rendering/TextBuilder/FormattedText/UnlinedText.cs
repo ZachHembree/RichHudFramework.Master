@@ -59,10 +59,10 @@ namespace RichHudFramework.UI.Rendering.Server
                 charBuffer.Clear();
 
                 for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, AllowSpecialChars);
+                    charBuffer.AppendRichString(text[n], AllowSpecialChars);
 
-                lines[0].InsertRange(start.Y, charBuffer);
-                lines[0].UpdateSize();
+                lines.PooledLines[0].InsertRange(start.Y, charBuffer);
+                lines.PooledLines[0].UpdateSize();
                 charBuffer.Clear();
             }
 

@@ -87,7 +87,7 @@ Praesent eros est, blandit et ullamcorper nec, tempus a dui. Duis arcu arcu, dic
 
             if (textBoard == null)
             {
-                textBoard = new TextBoard() { AutoResize = true, BuilderMode = TextBuilderModes.Lined };
+                textBoard = new TextBoard() { AutoResize = true, BuilderMode = TextBuilderModes.Wrapped };
                 textBoard.SetText(loremIpsum);
             }
 

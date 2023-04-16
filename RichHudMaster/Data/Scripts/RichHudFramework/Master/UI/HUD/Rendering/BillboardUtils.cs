@@ -48,7 +48,8 @@ namespace RichHudFramework
             {
                 private static BillBoardUtils instance;
                 private const int statsWindowSize = 240, sampleRateDiv = 5,
-                    bufMinResizeThreshold = 4000;
+                    bufMinResizeThreshold = 4000,
+                    bbUpdateSize = 10;
 
                 private readonly List<MyTriangleBillboard> bbBuf;
                 private readonly List<MyTriangleBillboard>[] bbSwapPools;
@@ -517,102 +518,114 @@ namespace RichHudFramework
                 private void Update3dBillboards()
                 {
                     int count = Math.Min(triangleList.Count, bbPoolBack.Count),
-                        stride = Math.Max(500, MathHelper.CeilToInt(count / 8d));
+                        adjCount = MathHelper.CeilToInt(count / (double)bbUpdateSize),
+                        stride = Math.Max(500 / bbUpdateSize, MathHelper.CeilToInt(adjCount / 8d));
 
-                    MyAPIGateway.Parallel.For(0, count, i => 
+                    MyAPIGateway.Parallel.For(0, adjCount, i =>
                     {
-                        TriangleBillboardData bbData = triangleList[i];
-                        MyTriangleBillboard bb = bbPoolBack[bbData.Item2.X];
+                        int strideEnd = Math.Min(count, (i + 1) * bbUpdateSize);
 
-                        if (bbData.Item2.Y != -1)
+                        for (int j = i * bbUpdateSize; j < strideEnd; j++)
                         {
-                            MatrixD matrix = matrixBuf[bbData.Item2.Y];
-                            Vector3D.TransformNoProjection(ref bbData.Item6.Item1, ref matrix, out bbData.Item6.Item1);
-                            Vector3D.TransformNoProjection(ref bbData.Item6.Item2, ref matrix, out bbData.Item6.Item2);
-                            Vector3D.TransformNoProjection(ref bbData.Item6.Item3, ref matrix, out bbData.Item6.Item3);
-                        }
+                            TriangleBillboardData bbData = triangleList[j];
+                            MyTriangleBillboard bb = bbPoolBack[bbData.Item2.X];
 
-                        bb.BlendType = bbData.Item1;
-                        bb.Material = bbData.Item3;
-                        bb.Color = bbData.Item4;
-                        bb.UV0 = bbData.Item5.Item1;
-                        bb.UV1 = bbData.Item5.Item2;
-                        bb.UV2 = bbData.Item5.Item3;
-                        bb.Position0 = bbData.Item6.Item1;
-                        bb.Position1 = bbData.Item6.Item2;
-                        bb.Position2 = bbData.Item6.Item3;
+                            if (bbData.Item2.Y != -1)
+                            {
+                                MatrixD matrix = matrixBuf[bbData.Item2.Y];
+                                Vector3D.TransformNoProjection(ref bbData.Item6.Item1, ref matrix, out bbData.Item6.Item1);
+                                Vector3D.TransformNoProjection(ref bbData.Item6.Item2, ref matrix, out bbData.Item6.Item2);
+                                Vector3D.TransformNoProjection(ref bbData.Item6.Item3, ref matrix, out bbData.Item6.Item3);
+                            }
+
+                            bb.BlendType = bbData.Item1;
+                            bb.Material = bbData.Item3;
+                            bb.Color = bbData.Item4;
+                            bb.UV0 = bbData.Item5.Item1;
+                            bb.UV1 = bbData.Item5.Item2;
+                            bb.UV2 = bbData.Item5.Item3;
+                            bb.Position0 = bbData.Item6.Item1;
+                            bb.Position1 = bbData.Item6.Item2;
+                            bb.Position2 = bbData.Item6.Item3;
+                        }
                     });
                 }
 
                 private void UpdateFlatBillboards()
                 {
                     int count = Math.Min(flatTriangleList.Count, bbPoolBack.Count),
-                        stride = Math.Max(500, MathHelper.CeilToInt(count / 8d));
+                        adjCount = MathHelper.CeilToInt(count / (double)bbUpdateSize),
+                        stride = Math.Max(500 / bbUpdateSize, MathHelper.CeilToInt(adjCount / 8d));
 
-                    MyAPIGateway.Parallel.For(0, count, i =>
+                    MyAPIGateway.Parallel.For(0, adjCount, i =>
                     {
-                        FlatTriangleBillboardData bbData = flatTriangleList[i];
-                        Triangle planePos = new Triangle { Point0 = bbData.Item6.Item1, Point1 = bbData.Item6.Item2, Point2 = bbData.Item6.Item3 },
-                            texCoords = new Triangle { Point0 = bbData.Item5.Item1, Point1 = bbData.Item5.Item2, Point2 = bbData.Item5.Item3 };
-                        BoundingBox2? mask = bbData.Item4.Item2;
+                        int strideEnd = Math.Min(count, (i + 1) * bbUpdateSize);
 
-                        // Masking/clipping
-                        if (mask != null)
+                        for (int j = i * bbUpdateSize; j < strideEnd; j++)
                         {
-                            BoundingBox2 bounds = new BoundingBox2(Vector2.Min(planePos.Point1, planePos.Point2), planePos.Point0),
-                                texBounds = new BoundingBox2(Vector2.Min(texCoords.Point0, texCoords.Point2), Vector2.Max(texCoords.Point0, texCoords.Point1));
-                            Vector2 size = bounds.Size,
-                                pos = bounds.Center;
+                            FlatTriangleBillboardData bbData = flatTriangleList[j];
+                            Triangle planePos = new Triangle { Point0 = bbData.Item6.Item1, Point1 = bbData.Item6.Item2, Point2 = bbData.Item6.Item3 },
+                                texCoords = new Triangle { Point0 = bbData.Item5.Item1, Point1 = bbData.Item5.Item2, Point2 = bbData.Item5.Item3 };
+                            BoundingBox2? mask = bbData.Item4.Item2;
 
-                            bounds = bounds.Intersect(mask.Value);
-                            planePos.Point0 = Vector2.Clamp(planePos.Point0, bounds.Min, bounds.Max);
-                            planePos.Point1 = Vector2.Clamp(planePos.Point1, bounds.Min, bounds.Max);
-                            planePos.Point2 = Vector2.Clamp(planePos.Point2, bounds.Min, bounds.Max);
-
-                            // Dont bother clipping texcoords for solid colors
-                            if (bbData.Item3 != Material.Default.TextureID)
+                            // Masking/clipping
+                            if (mask != null)
                             {
-                                Vector2 clipSize = bounds.Size;
+                                BoundingBox2 bounds = new BoundingBox2(Vector2.Min(planePos.Point1, planePos.Point2), planePos.Point0),
+                                    texBounds = new BoundingBox2(Vector2.Min(texCoords.Point0, texCoords.Point2), Vector2.Max(texCoords.Point0, texCoords.Point1));
+                                Vector2 size = bounds.Size,
+                                    pos = bounds.Center;
 
-                                // Normalized cropped size and offset
-                                Vector2 clipScale = clipSize / size,
-                                    clipOffset = (bounds.Center - pos) / size,
-                                    uvScale = texBounds.Size,
-                                    uvOffset = texBounds.Center;
+                                bounds = bounds.Intersect(mask.Value);
+                                planePos.Point0 = Vector2.Clamp(planePos.Point0, bounds.Min, bounds.Max);
+                                planePos.Point1 = Vector2.Clamp(planePos.Point1, bounds.Min, bounds.Max);
+                                planePos.Point2 = Vector2.Clamp(planePos.Point2, bounds.Min, bounds.Max);
 
-                                pos += clipOffset * size; // Offset billboard to compensate for changes in size
-                                size = clipSize; // Use cropped billboard size
-                                clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
+                                // Dont bother clipping texcoords for solid colors
+                                if (bbData.Item3 != Material.Default.TextureID)
+                                {
+                                    Vector2 clipSize = bounds.Size;
 
-                                // Recalculate texture coordinates to simulate clipping without affecting material alignment
-                                texBounds.Min = ((texBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
-                                texBounds.Max = ((texBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
+                                    // Normalized cropped size and offset
+                                    Vector2 clipScale = clipSize / size,
+                                        clipOffset = (bounds.Center - pos) / size,
+                                        uvScale = texBounds.Size,
+                                        uvOffset = texBounds.Center;
 
-                                texCoords.Point0 = Vector2.Clamp(texCoords.Point0, texBounds.Min, texBounds.Max);
-                                texCoords.Point1 = Vector2.Clamp(texCoords.Point1, texBounds.Min, texBounds.Max);
-                                texCoords.Point2 = Vector2.Clamp(texCoords.Point2, texBounds.Min, texBounds.Max);
+                                    pos += clipOffset * size; // Offset billboard to compensate for changes in size
+                                    size = clipSize; // Use cropped billboard size
+                                    clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
+
+                                    // Recalculate texture coordinates to simulate clipping without affecting material alignment
+                                    texBounds.Min = ((texBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
+                                    texBounds.Max = ((texBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
+
+                                    texCoords.Point0 = Vector2.Clamp(texCoords.Point0, texBounds.Min, texBounds.Max);
+                                    texCoords.Point1 = Vector2.Clamp(texCoords.Point1, texBounds.Min, texBounds.Max);
+                                    texCoords.Point2 = Vector2.Clamp(texCoords.Point2, texBounds.Min, texBounds.Max);
+                                }
                             }
+
+                            // Transform 2D planar positions into world space
+                            MatrixD matrix = matrixBuf[bbData.Item2.Y];
+                            TriangleD worldPos = new TriangleD
+                            {
+                                Point0 = matrix.Translation + (planePos.Point0.X * matrix.Right) + (planePos.Point0.Y * matrix.Up),
+                                Point1 = matrix.Translation + (planePos.Point1.X * matrix.Right) + (planePos.Point1.Y * matrix.Up),
+                                Point2 = matrix.Translation + (planePos.Point2.X * matrix.Right) + (planePos.Point2.Y * matrix.Up)
+                            };
+
+                            MyTriangleBillboard bb = bbPoolBack[bbData.Item2.X];
+                            bb.BlendType = bbData.Item1;
+                            bb.Position0 = worldPos.Point0;
+                            bb.Position1 = worldPos.Point1;
+                            bb.Position2 = worldPos.Point2;
+                            bb.UV0 = texCoords.Point0;
+                            bb.UV1 = texCoords.Point1;
+                            bb.UV2 = texCoords.Point2;
+                            bb.Material = bbData.Item3;
+                            bb.Color = bbData.Item4.Item1;
                         }
-
-                        // Transform 2D planar positions into world space
-                        MatrixD matrix = matrixBuf[bbData.Item2.Y];
-                        TriangleD worldPos = new TriangleD
-                        {
-                            Point0 = matrix.Translation + (planePos.Point0.X * matrix.Right) + (planePos.Point0.Y * matrix.Up),
-                            Point1 = matrix.Translation + (planePos.Point1.X * matrix.Right) + (planePos.Point1.Y * matrix.Up),
-                            Point2 = matrix.Translation + (planePos.Point2.X * matrix.Right) + (planePos.Point2.Y * matrix.Up)
-                        };
-
-                        MyTriangleBillboard bb = bbPoolBack[bbData.Item2.X];
-                        bb.BlendType = bbData.Item1;
-                        bb.Position0 = worldPos.Point0;
-                        bb.Position1 = worldPos.Point1;
-                        bb.Position2 = worldPos.Point2;
-                        bb.UV0 = texCoords.Point0;
-                        bb.UV1 = texCoords.Point1;
-                        bb.UV2 = texCoords.Point2;
-                        bb.Material = bbData.Item3;
-                        bb.Color = bbData.Item4.Item1;
                     }, stride);
                 }
 

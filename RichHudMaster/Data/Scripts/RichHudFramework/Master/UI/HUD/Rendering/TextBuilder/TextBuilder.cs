@@ -101,7 +101,7 @@ namespace RichHudFramework
                 public TextBuilder()
                 {
                     lines = new LinePool(this);
-                    sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
+                    sbPool = StringBuilderPoolPolicy.GetNewPool();
                     BuilderMode = TextBuilderModes.Unlined;
                     Format = GlyphFormat.White;
                 }
@@ -396,15 +396,15 @@ namespace RichHudFramework
 
                     if (end.X > start.X)
                     {
-                        lines[start.X].GetRangeString(text, start.Y, lines[start.X].Count - 1);
+                        lines.PooledLines[start.X].GetRangeString(text, start.Y, lines[start.X].Count - 1);
 
                         for (int line = start.X + 1; line <= end.X - 1; line++)
-                            lines[line].GetRangeString(text, 0, lines[line].Count - 1);
+                            lines.PooledLines[line].GetRangeString(text, 0, lines[line].Count - 1);
 
-                        lines[end.X].GetRangeString(text, 0, end.Y);
+                        lines.PooledLines[end.X].GetRangeString(text, 0, end.Y);
                     }
                     else
-                        lines[start.X].GetRangeString(text, start.Y, end.Y);
+                        lines.PooledLines[start.X].GetRangeString(text, start.Y, end.Y);
 
                     return text;
                 }
@@ -549,7 +549,7 @@ namespace RichHudFramework
                     }
 
                     for (int n = 0; n < lines.Count; n++)
-                        currentLength += lines[n].Chars.Count;
+                        currentLength += lines[n].Count;
 
                     return newTextLength == currentLength;
                 }
@@ -623,11 +623,11 @@ namespace RichHudFramework
                     switch ((LineAccessors)memberEnum)
                     {
                         case LineAccessors.Count:
-                            return lines[index].Count;
+                            return lines.PooledLines[index].Count;
                         case LineAccessors.Size:
-                            return lines[index].Size;
+                            return lines.PooledLines[index].Size;
                         case LineAccessors.VerticalOffset:
-                            return lines[index].VerticalOffset;
+                            return lines.PooledLines[index].VerticalOffset;
                     }
 
                     return null;
@@ -638,16 +638,21 @@ namespace RichHudFramework
                 /// </summary>
                 protected object GetRichCharMember(Vector2I i, int memberEnum)
                 {
+                    Line ln = lines.PooledLines[i.X];
+
                     switch ((RichCharAccessors)memberEnum)
                     {
                         case RichCharAccessors.Ch:
-                            return lines[i.X].Chars[i.Y];
+                            return ln.Chars[i.Y];
                         case RichCharAccessors.Format:
-                            return lines[i.X].FormattedGlyphs[i.Y].format.Data;
+                            return ln.FormattedGlyphs[i.Y].format.Data;
                         case RichCharAccessors.Offset:
-                            return lines[i.X].GlyphBoards[i.Y].bounds.Center * Scale;
+                            {
+                                ln.UpdateGlyphBoards();
+                                return ln.GlyphBoards[i.Y].bounds.Center * Scale;
+                            }
                         case RichCharAccessors.Size:
-                            return lines[i.X].FormattedGlyphs[i.Y].chSize * Scale;
+                            return ln.FormattedGlyphs[i.Y].chSize * Scale;
                     }
 
                     return null;
@@ -674,14 +679,14 @@ namespace RichHudFramework
                     int charCount = 0;
 
                     for (int i = 0; i < lines.Count; i++)
-                        charCount += lines[i].Chars.Count;
+                        charCount += lines[i].Count;
 
                     StringBuilder sb = new StringBuilder();
                     sb.EnsureCapacity(charCount);
 
                     for (int i = 0; i < lines.Count; i++)
                     {
-                        for (int j = 0; j < lines[i].Chars.Count; j++)
+                        for (int j = 0; j < lines[i].Count; j++)
                             sb.Append(lines[i].Chars[j]);
                     }
 
