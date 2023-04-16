@@ -163,7 +163,7 @@ namespace RichHudFramework
                 {
                     if (!AutoResize)
                     {
-                        UpdateLineRange();
+                        UpdateCharOffsets();
 
                         index.X = MathHelper.Clamp(index.X, 0, lines.Count - 1);
                         index.Y = MathHelper.Clamp(index.Y, 0, lines[index.X].Count - 1);
@@ -173,9 +173,7 @@ namespace RichHudFramework
                             if (BuilderMode != TextBuilderModes.Unlined)
                                 UpdateVerticalOffset(index.X);
                             else
-                                _textOffset.Y = 0f;
-
-                            UpdateCharOffsets();
+                                _textOffset.Y = 0f;                        
                         }
 
                         if (BuilderMode != TextBuilderModes.Wrapped)
@@ -354,7 +352,6 @@ namespace RichHudFramework
                         if (AutoResize)
                             _textOffset = Vector2.Zero;
 
-                        UpdateGlyphBoards();
                         UpdateCharOffsets();
 
                         // Check for changes in position, size or masking
@@ -515,6 +512,8 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateCharOffsets()
                 {
+                    UpdateGlyphBoards();
+
                     // Check for external resizing
                     if (Vector2.DistanceSquared(lastFixedSize, _fixedSize) > .1f)
                     {
