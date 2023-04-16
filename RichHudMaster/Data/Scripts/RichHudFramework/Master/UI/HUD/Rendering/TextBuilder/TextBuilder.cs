@@ -101,7 +101,7 @@ namespace RichHudFramework
                 public TextBuilder()
                 {
                     lines = new LinePool(this);
-                    sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
+                    sbPool = StringBuilderPoolPolicy.GetNewPool();
                     BuilderMode = TextBuilderModes.Unlined;
                     Format = GlyphFormat.White;
                 }

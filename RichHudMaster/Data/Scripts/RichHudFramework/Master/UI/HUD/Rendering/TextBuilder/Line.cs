@@ -81,7 +81,7 @@ namespace RichHudFramework
                     /// Used to indicate changes to text that would invalidate the TextBoard
                     /// billboard cache.
                     /// </summary>
-                    public bool isBbCacheStale;
+                    public bool isQuadCacheStale;
 
                     private char[] chars;
                     private FormattedGlyph[] formattedGlyphs;
@@ -115,7 +115,7 @@ namespace RichHudFramework
                         FormattedGlyphs = formattedGlyphs;
                         GlyphBoards = glyphBoards;
 
-                        isBbCacheStale = true;
+                        isQuadCacheStale = true;
                         canTextBeEqual = false;
                         lastCount = 0;
                         Count = 0;
@@ -154,7 +154,7 @@ namespace RichHudFramework
                                 glyphBoards[n] = bbData;
                                 formattedGlyphs[n] = fmtGlyph;
 
-                                isBbCacheStale = true;
+                                isQuadCacheStale = true;
                             }
                         }
                         else
@@ -167,7 +167,7 @@ namespace RichHudFramework
                                     fmtGlyph.format = format;
                                     formattedGlyphs[n] = fmtGlyph;
 
-                                    isBbCacheStale = true;
+                                    isQuadCacheStale = true;
                                 }
                                 else
                                 {
@@ -522,7 +522,7 @@ namespace RichHudFramework
                     {
                         if (!canTextBeEqual || Count != lastCount || glyphBoards.Count != Count)
                         {
-                            isBbCacheStale = true;
+                            isQuadCacheStale = true;
 
                             glyphBoards.Clear();
                             glyphBoards.EnsureCapacity(Count);
