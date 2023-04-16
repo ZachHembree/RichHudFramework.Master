@@ -98,7 +98,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 lines.AddRange(GetLines(GetBufferWidth()));
 
                 for (int n = 0; n < lines.Count; n++)
-                    lines[n].UpdateSize();
+                    lines.PooledLines[n].UpdateSize();
             }
 
             /// <summary>
@@ -237,7 +237,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                     do
                     {
-                        lines[line].AddCharFromLine(i.Y, lines[i.X]);
+                        lines.PooledLines[line].AddCharFromLine(i.Y, lines[i.X]);
                     }
                     while (lines.TryGetNextIndex(i, out i) && (i.X < wordEnd.X || (i.X == wordEnd.X && i.Y <= wordEnd.Y)));
                 }
@@ -246,14 +246,14 @@ namespace RichHudFramework.UI.Rendering.Server
                 {
                     if (end.Y < lines[end.X].Count - 1)
                     {
-                        lines[end.X].RemoveRange(0, end.Y + 1);
-                        lines[end.X].UpdateSize();
+                        lines.PooledLines[end.X].RemoveRange(0, end.Y + 1);
+                        lines.PooledLines[end.X].UpdateSize();
                         lines.RemoveRange(line + 1, end.X - line - 1);
                     }
                     else
                         lines.RemoveRange(line + 1, end.X - line);
 
-                    lines[line].UpdateSize();
+                    lines.PooledLines[line].UpdateSize();
                     return true;
                 }
                 else

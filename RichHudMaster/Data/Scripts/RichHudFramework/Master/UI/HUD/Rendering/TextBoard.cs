@@ -468,7 +468,7 @@ namespace RichHudFramework
                 {
                     for (int i = 0; i < lines.Count; i++)
                     {
-                        lines[i].UpdateGlyphBoards();
+                        lines.PooledLines[i].UpdateGlyphBoards();
 
                         if (lines[i].isBbCacheStale)
                             isBbCacheStale = true;
@@ -528,7 +528,7 @@ namespace RichHudFramework
                             if (lines[line].Count > 0)
                             {
                                 UpdateLineOffsets(line, lines[line]._verticalOffset);
-                                lines[line].isBbCacheStale = false;
+                                lines.PooledLines[line].isBbCacheStale = false;
                                 isBbCacheStale = true;
                             }
                         }
@@ -551,7 +551,7 @@ namespace RichHudFramework
                     {
                         for (int line = 0; line < lines.Count; line++)
                         {
-                            lines[line]._verticalOffset = -tSize.Y;
+                            lines.PooledLines[line]._verticalOffset = -tSize.Y;
 
                             if (lines[line].UnscaledSize.X > tSize.X)
                                 tSize.X = lines[line].UnscaledSize.X;
@@ -567,7 +567,7 @@ namespace RichHudFramework
                         float vAlign = ((VertCenterText || AutoResize) ? tSize.Y : _fixedSize.Y) * .5f;
 
                         for (int line = 0; line < lines.Count; line++)
-                            lines[line]._verticalOffset += vAlign;
+                            lines.PooledLines[line]._verticalOffset += vAlign;
                     }
 
                     return tSize;

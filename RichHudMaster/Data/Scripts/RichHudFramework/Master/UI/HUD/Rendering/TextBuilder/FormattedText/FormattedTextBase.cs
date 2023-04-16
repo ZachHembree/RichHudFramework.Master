@@ -87,20 +87,20 @@ namespace RichHudFramework.UI.Rendering.Server
                 {
                     if (end.X > start.X)
                     {
-                        lines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting, onlyChangeColor);
+                        lines.PooledLines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting, onlyChangeColor);
 
                         for (int x = start.X + 1; x < end.X; x++)
-                            lines[x].SetFormatting(formatting, onlyChangeColor);
+                            lines.PooledLines[x].SetFormatting(formatting, onlyChangeColor);
 
-                        lines[end.X].SetFormatting(0, end.Y, formatting, onlyChangeColor);
+                        lines.PooledLines[end.X].SetFormatting(0, end.Y, formatting, onlyChangeColor);
                     }
                     else
                     {
-                        lines[start.X].SetFormatting(start.Y, end.Y, formatting, onlyChangeColor);
+                        lines.PooledLines[start.X].SetFormatting(start.Y, end.Y, formatting, onlyChangeColor);
                     }
 
                     for (int n = start.X; n <= end.X; n++)
-                        lines[n].UpdateSize();
+                        lines.PooledLines[n].UpdateSize();
                 }
             }
 
@@ -117,8 +117,8 @@ namespace RichHudFramework.UI.Rendering.Server
                             lines.RemoveAt(end.X);
                         else
                         {
-                            lines[end.X].RemoveRange(0, lines[end.X].Count - end.Y);
-                            lines[end.X].UpdateSize();
+                            lines.PooledLines[end.X].RemoveRange(0, lines[end.X].Count - end.Y);
+                            lines.PooledLines[end.X].UpdateSize();
                         }
 
                         if (start.X + 1 < end.X)
@@ -128,8 +128,8 @@ namespace RichHudFramework.UI.Rendering.Server
                             lines.RemoveAt(start.X);
                         else
                         {
-                            lines[start.X].RemoveRange(start.Y, lines[start.X].Count - start.Y);
-                            lines[start.X].UpdateSize();
+                            lines.PooledLines[start.X].RemoveRange(start.Y, lines[start.X].Count - start.Y);
+                            lines.PooledLines[start.X].UpdateSize();
                         }
                     }
                     else
@@ -138,8 +138,8 @@ namespace RichHudFramework.UI.Rendering.Server
                             lines.RemoveAt(start.X);
                         else
                         {
-                            lines[start.X].RemoveRange(start.Y, end.Y - start.Y + 1);
-                            lines[start.X].UpdateSize();
+                            lines.PooledLines[start.X].RemoveRange(start.Y, end.Y - start.Y + 1);
+                            lines.PooledLines[start.X].UpdateSize();
                         }
                     }
                 }
