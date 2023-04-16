@@ -124,77 +124,46 @@ namespace RichHudFramework
                     /// <summary>
                     /// Sets the formatting for the given range of characters
                     /// </summary>
-                    public void SetFormatting(GlyphFormat format, bool onlyChangeColor)
+                    public void SetFormatting(GlyphFormat format)
                     {
                         if (Count > 0)
-                            SetFormatting(0, Count - 1, format, onlyChangeColor);
+                            SetFormatting(0, Count - 1, format);
                     }
 
                     /// <summary>
                     /// Sets the formatting for the given range of characters in the line
                     /// </summary>
-                    public void SetFormatting(int start, int end, GlyphFormat format, bool onlyChangeColor)
+                    public void SetFormatting(int start, int end, GlyphFormat format)
                     {
                         if (Count == 0 || end < start)
                             return;
                         else if (start < 0 || end < 0 || start >= Count || end >= Count)
                             throw new Exception($"Index was out of range. Start: {start} End: {end} Count: {Count}");
 
-                        Vector4 bbColor = format.Data.Item4.GetBbColor();
-
-                        if (glyphBoards.Count == Count && onlyChangeColor)
+                        for (int n = start; n <= end; n++)
                         {
-                            for (int n = start; n <= end; n++)
+                            GlyphFormatMembers lastFormat = formattedGlyphs[n].format.Data;
+                            bool formatEqual =
+                                lastFormat.Item1 == format.Data.Item1
+                                && lastFormat.Item2 == format.Data.Item2
+                                && lastFormat.Item3 == format.Data.Item3
+                                && lastFormat.Item4 == format.Data.Item4;
+
+                            if (!formatEqual)
                             {
-                                var bbData = glyphBoards[n];
-                                var fmtGlyph = formattedGlyphs[n];
-                                bbData.quadBoard.materialData.bbColor = bbColor;
-                                fmtGlyph.format = format;
+                                IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
+                                float fontSize = format.Data.Item2 * fontStyle.FontScale;
+                                Glyph glyph = fontStyle[chars[n]];
+                                Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
 
-                                glyphBoards[n] = bbData;
-                                formattedGlyphs[n] = fmtGlyph;
-
-                                isQuadCacheStale = true;
-                            }
-                        }
-                        else
-                        {
-                            for (int n = start; n <= end; n++)
-                            {
-                                if (onlyChangeColor)
+                                formattedGlyphs[n] = new FormattedGlyph
                                 {
-                                    var fmtGlyph = formattedGlyphs[n];
-                                    fmtGlyph.format = format;
-                                    formattedGlyphs[n] = fmtGlyph;
+                                    chSize = glyphSize,
+                                    format = format,
+                                    glyph = glyph
+                                };
 
-                                    isQuadCacheStale = true;
-                                }
-                                else
-                                {
-                                    GlyphFormatMembers lastFormat = formattedGlyphs[n].format.Data;
-                                    bool formatEqual =
-                                        lastFormat.Item1 == format.Data.Item1
-                                        && lastFormat.Item2 == format.Data.Item2
-                                        && lastFormat.Item3 == format.Data.Item3
-                                        && lastFormat.Item4 == format.Data.Item4;
-
-                                    if (!formatEqual)
-                                    {
-                                        IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
-                                        float fontSize = format.Data.Item2 * fontStyle.FontScale;
-                                        Glyph glyph = fontStyle[chars[n]];
-                                        Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
-
-                                        formattedGlyphs[n] = new FormattedGlyph
-                                        {
-                                            chSize = glyphSize,
-                                            format = format,
-                                            glyph = glyph
-                                        };
-
-                                        canTextBeEqual = false;
-                                    }
-                                }
+                                canTextBeEqual = false;
                             }
                         }
                     }
@@ -202,9 +171,9 @@ namespace RichHudFramework
                     /// <summary>
                     /// Sets the formatting of the character at the given index.
                     /// </summary>
-                    public void SetFormattingAt(int index, GlyphFormat format, bool onlyChangeColor)
+                    public void SetFormattingAt(int index, GlyphFormat format)
                     {
-                        SetFormatting(index, index, format, onlyChangeColor);
+                        SetFormatting(index, index, format);
                     }
 
                     public void SetOffsetAt(int index, Vector2 offset)
@@ -428,8 +397,10 @@ namespace RichHudFramework
                             {
                                 Array.Copy(chars, index + count, chars, index, Count - index);
                                 Array.Copy(formattedGlyphs, index + count, formattedGlyphs, index, Count - index);
+                                canTextBeEqual = false;
                             }
-                            else
+
+                            if (Count == 0)
                                 canTextBeEqual = true;
                         }
                     }

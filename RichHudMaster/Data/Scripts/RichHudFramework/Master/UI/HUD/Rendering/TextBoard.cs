@@ -434,12 +434,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Called when the text builder is updated
                 /// </summary>
-                protected override void AfterFullTextUpdate()
-                {
-                    isUpdateEventPending = true;
-                }
-
-                protected override void AfterColorUpdate()
+                protected override void AfterTextUpdate()
                 {
                     isUpdateEventPending = true;
                 }
@@ -554,19 +549,20 @@ namespace RichHudFramework
                 {
                     _textSize = GetTextSize();
                     _size = AutoResize ? _textSize : _fixedSize;
+                    isBbCacheStale = true;
 
                     if (lines.Count > 0)
                     {
                         for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
                         {
                             Line line = lines.PooledLines[ln];
-                            UpdateLineOffsets(line);
 
                             if (line.isQuadCacheStale)
                             {
-                                isBbCacheStale = true;
-                                line.isQuadCacheStale = false;
+                                UpdateLineOffsets(line);
                             }
+
+                            line.isQuadCacheStale = false;
                         }
 
                         // Underlines are only generated for the range of lines currently visible.

@@ -61,9 +61,9 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             /// <param name="start">Position of the first character being formatted.</param>
             /// <param name="end">Position of the last character being formatted.</param>
-            public override void SetFormatting(Vector2I start, Vector2I end, GlyphFormat formatting, bool onlyChangeColor)
+            public override void SetFormatting(Vector2I start, Vector2I end, GlyphFormat formatting)
             {
-                base.SetFormatting(start, end, formatting, onlyChangeColor);
+                base.SetFormatting(start, end, formatting);
                 RewrapRange(start.X, end.X);
             }
 

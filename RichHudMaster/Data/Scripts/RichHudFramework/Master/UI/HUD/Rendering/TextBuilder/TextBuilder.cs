@@ -79,7 +79,7 @@ namespace RichHudFramework
                             }
 
                             if (formatter != null)
-                                AfterFullTextUpdate();
+                                AfterTextUpdate();
 
                             formatter = newFormatter;
                             builderMode = value;
@@ -106,10 +106,7 @@ namespace RichHudFramework
                     Format = GlyphFormat.White;
                 }
 
-                protected virtual void AfterFullTextUpdate()
-                { }
-
-                protected virtual void AfterColorUpdate()
+                protected virtual void AfterTextUpdate()
                 { }
 
                 protected void SetWrapWidth(float width)
@@ -117,7 +114,7 @@ namespace RichHudFramework
                     if (BuilderMode == TextBuilderModes.Wrapped && (width < wrappedText.MaxLineWidth - 2f || width > wrappedText.MaxLineWidth + 4f))
                     {
                         wrappedText.SetWrapWidth(width);
-                        AfterFullTextUpdate();
+                        AfterTextUpdate();
                     }
                 }
 
@@ -175,12 +172,9 @@ namespace RichHudFramework
 
                     lastTextData = text as List<RichStringMembers>;
 
-                    if (!GetIsTextEqual(lastTextData))
-                    {
-                        Clear();
-                        formatter.Append(text);
-                        AfterFullTextUpdate();
-                    }
+                    formatter.Clear();
+                    formatter.Append(text);
+                    AfterTextUpdate();
                 }
 
                 /// <summary>
@@ -246,7 +240,7 @@ namespace RichHudFramework
                     }
 
                     formatter.Append(text);
-                    AfterFullTextUpdate();
+                    AfterTextUpdate();
                 }
 
                 /// <summary>
@@ -312,7 +306,7 @@ namespace RichHudFramework
                     }
 
                     formatter.Insert(text, start);
-                    AfterFullTextUpdate();
+                    AfterTextUpdate();
                 }
 
                 /// <summary>
@@ -337,15 +331,10 @@ namespace RichHudFramework
                     bool isOtherEqual, isColorEqual;
                     GetIsFormatEqual(format, start, end, out isOtherEqual, out isColorEqual);
 
-                    if (isOtherEqual && !isColorEqual)
+                    if (!isOtherEqual || !isColorEqual)
                     {
-                        formatter.SetFormatting(start, end, new GlyphFormat(format), true);
-                        AfterColorUpdate();
-                    }
-                    else if (!isOtherEqual)
-                    {
-                        formatter.SetFormatting(start, end, new GlyphFormat(format), false);
-                        AfterFullTextUpdate();
+                        formatter.SetFormatting(start, end, new GlyphFormat(format));
+                        AfterTextUpdate();
                     }
                 }
 
@@ -418,7 +407,7 @@ namespace RichHudFramework
                 public void RemoveRange(Vector2I start, Vector2I end)
                 {
                     formatter.RemoveRange(start, end);
-                    AfterFullTextUpdate();
+                    AfterTextUpdate();
                 }
 
                 /// <summary>
@@ -429,7 +418,7 @@ namespace RichHudFramework
                     if (lines.Count > 0)
                     {
                         formatter.Clear();
-                        AfterFullTextUpdate();
+                        AfterTextUpdate();
                     }
                 }
 

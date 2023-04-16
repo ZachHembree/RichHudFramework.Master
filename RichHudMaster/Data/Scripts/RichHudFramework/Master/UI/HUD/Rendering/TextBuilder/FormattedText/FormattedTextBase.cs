@@ -81,22 +81,22 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             /// <param name="start">Position of the first character being formatted.</param>
             /// <param name="end">Position of the last character being formatted.</param>
-            public virtual void SetFormatting(Vector2I start, Vector2I end, GlyphFormat formatting, bool onlyChangeColor)
+            public virtual void SetFormatting(Vector2I start, Vector2I end, GlyphFormat formatting)
             {
                 if (lines.Count > 0)
                 {
                     if (end.X > start.X)
                     {
-                        lines.PooledLines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting, onlyChangeColor);
+                        lines.PooledLines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting);
 
                         for (int x = start.X + 1; x < end.X; x++)
-                            lines.PooledLines[x].SetFormatting(formatting, onlyChangeColor);
+                            lines.PooledLines[x].SetFormatting(formatting);
 
-                        lines.PooledLines[end.X].SetFormatting(0, end.Y, formatting, onlyChangeColor);
+                        lines.PooledLines[end.X].SetFormatting(0, end.Y, formatting);
                     }
                     else
                     {
-                        lines.PooledLines[start.X].SetFormatting(start.Y, end.Y, formatting, onlyChangeColor);
+                        lines.PooledLines[start.X].SetFormatting(start.Y, end.Y, formatting);
                     }
 
                     for (int n = start.X; n <= end.X; n++)
