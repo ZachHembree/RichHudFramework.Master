@@ -60,6 +60,7 @@ namespace RichHudFramework
                     /// Starting vertical position of the line starting from the center of the text element, sans text offset.
                     /// </summary>
                     public float VerticalOffset => _verticalOffset * builder.Scale;
+
                     /// <summary>
                     /// Read-only list of the characters in the line.
                     /// </summary>
@@ -75,6 +76,9 @@ namespace RichHudFramework
                     /// </summary>
                     public readonly IReadOnlyList<BoundedQuadBoard> GlyphBoards;
 
+                    /// <summary>
+                    /// Unscaled vertical line position
+                    /// </summary>
                     public float _verticalOffset;
 
                     /// <summary>
@@ -95,6 +99,9 @@ namespace RichHudFramework
                     /// </summary>
                     private bool canTextBeEqual;
 
+                    /// <summary>
+                    /// True if text size has changed since the last time the size was calculated
+                    /// </summary>
                     private bool isSizeStale;
 
                     /// <summary>
@@ -179,6 +186,9 @@ namespace RichHudFramework
                         SetFormatting(index, index, format);
                     }
 
+                    /// <summary>
+                    /// Sets the position of the character's quad at the given index
+                    /// </summary>
                     public void SetOffsetAt(int index, Vector2 offset)
                     {
                         var qb = glyphBoards[index];
@@ -261,8 +271,8 @@ namespace RichHudFramework
                     /// <summary>
                     /// Adds the characters in the line given to the end of this line.
                     /// </summary>
-                    public void AddRange(Line newChars) =>
-                        InsertRange(Count, newChars);
+                    public void AddRange(Line src, int srcIndex = 0, int srcCount = -1) =>
+                        InsertRange(Count, src, srcIndex, srcCount);
 
                     /// <summary>
                     /// Appends the contents of the given rich string to the line
@@ -328,19 +338,22 @@ namespace RichHudFramework
                     /// <summary>
                     /// Inserts the contents of the line given starting at the specified index.
                     /// </summary>
-                    public void InsertRange(int index, Line newChars)
+                    public void InsertRange(int dstIndex, Line src, int srcIndex = 0, int srcCount = -1)
                     {
-                        if (newChars.Count > 0)
+                        if (srcCount == -1)
+                            srcCount = src.Count;
+
+                        if (srcCount > 0)
                         {
-                            int newCount = newChars.Count + Count;
+                            int newCount = srcCount + Count;
 
                             if (newCount > chars.Length)
                                 SetCapacity(newCount);
 
-                            if (Count > index)
+                            if (Count > dstIndex)
                             {
-                                Array.Copy(chars, index, chars, index + newChars.Count, Count - index);
-                                Array.Copy(formattedGlyphs, index, formattedGlyphs, index + newChars.Count, Count - index);
+                                Array.Copy(chars, dstIndex, chars, dstIndex + srcCount, Count - dstIndex);
+                                Array.Copy(formattedGlyphs, dstIndex, formattedGlyphs, dstIndex + srcCount, Count - dstIndex);
 
                                 // Non-sequential update
                                 canTextBeEqual = false;
@@ -348,27 +361,33 @@ namespace RichHudFramework
 
                             if (canTextBeEqual)
                             {
-                                for (int i = 0; i < newChars.Count; i++)
+                                for (int i = 0; i < srcCount; i++)
                                 {
-                                    if (canTextBeEqual && newChars.chars[i] != chars[i + index])
+                                    int j = i + dstIndex,
+                                        k = i + srcIndex;
+
+                                    if (canTextBeEqual && src.chars[k] != chars[j])
                                         canTextBeEqual = false;
 
-                                    chars[i + index] = newChars.chars[i];
+                                    chars[j] = src.chars[k];
                                 }
                             }
                             else
                             {
-                                Array.Copy(newChars.chars, 0, chars, index, newChars.Count);
+                                Array.Copy(src.chars, srcIndex, chars, dstIndex, srcCount);
                             }
 
                             if (canTextBeEqual)
                             {
-                                for (int i = 0; i < newChars.Count; i++)
+                                for (int i = 0; i < srcCount; i++)
                                 {
+                                    int j = i + dstIndex,
+                                        k = i + srcIndex;
+
                                     if (canTextBeEqual)
                                     {
-                                        GlyphFormatMembers lastFormat = formattedGlyphs[i + index].format.Data,
-                                            format = newChars.formattedGlyphs[i].format.Data;
+                                        GlyphFormatMembers lastFormat = formattedGlyphs[j].format.Data,
+                                            format = src.formattedGlyphs[k].format.Data;
                                         bool formatEqual =
                                             lastFormat.Item1 == format.Item1
                                             && lastFormat.Item2 == format.Item2
@@ -378,12 +397,12 @@ namespace RichHudFramework
                                         canTextBeEqual = formatEqual;
                                     }
 
-                                    formattedGlyphs[i + index] = newChars.formattedGlyphs[i];
+                                    formattedGlyphs[j] = src.formattedGlyphs[k];
                                 }
                             }
                             else
                             {
-                                Array.Copy(newChars.formattedGlyphs, 0, formattedGlyphs, index, newChars.Count);
+                                Array.Copy(src.formattedGlyphs, srcIndex, formattedGlyphs, dstIndex, srcCount);
                             }
 
                             Count = newCount;
