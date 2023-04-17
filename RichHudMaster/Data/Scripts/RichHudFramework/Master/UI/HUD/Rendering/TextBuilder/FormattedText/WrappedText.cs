@@ -14,8 +14,11 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private class WrappedText : FormattedTextBase
         {
+            private readonly List<Line> lineBuf;
+
             public WrappedText(LinePool lines) : base(lines, true)
             {
+                lineBuf = new List<Line>();
                 Rewrap();
             }
 
@@ -96,7 +99,8 @@ namespace RichHudFramework.UI.Rendering.Server
                     charBuffer.AddRange(lines[n]);
 
                 lines.Clear();
-                lines.AddRange(GetLines(GetBufferWidth()));
+                GenerateLines();
+                lines.AddRange(lineBuf);
 
                 for (int n = 0; n < lines.Count; n++)
                     lines.PooledLines[n].UpdateSize();
@@ -122,8 +126,8 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 lines.RemoveRange(insertStart, end - insertStart + 1);
 
-                List<Line> newLines = GetLines(GetBufferWidth());
-                InsertLines(newLines, insertStart);
+                GenerateLines();
+                InsertLines(insertStart);
             }
 
             /// <summary>
@@ -167,58 +171,60 @@ namespace RichHudFramework.UI.Rendering.Server
                     lines.RemoveRange(startLine, splitStart.X - startLine + 1);
                 }
 
-                List<Line> newLines = GetLines(GetBufferWidth());
-                InsertLines(newLines, startLine);
+                GenerateLines();
+                InsertLines(startLine);
             }
 
             /// <summary>
-            /// Generates a new list of wrapped <see cref="Line"/>s from the contents of the character buffer. Uses precalculated list
-            /// width to estimate the size of the collection.
+            /// Generates a new list of wrapped <see cref="Line"/>s from the contents of the character buffer.
             /// </summary>
-            private List<Line> GetLines(float listWidth)
+            private void GenerateLines()
             {
+                lineBuf.TrimExcess();
+                lineBuf.Clear();
+
                 Line currentLine = null;
-                List<Line> newLines = new List<Line>(Math.Max(3, (int)(1.1f * (listWidth / MaxLineWidth))));
-                int estLineLength = Math.Max(3, (int)(charBuffer.Count / (listWidth / MaxLineWidth)) / 2), end;
                 float wordWidth, spaceRemaining = -1f;
+                int wordEnd;
 
-                for (int start = 0; TryGetWordEnd(start, out end, out wordWidth); start = end + 1)
+                for (int wordStart = 0; TryGetWordEnd(wordStart, out wordEnd, out wordWidth); wordStart = wordEnd + 1)
                 {
-                    bool wrapWord = (spaceRemaining < wordWidth && wordWidth <= MaxLineWidth) || charBuffer.Chars[start] == '\n';
+                    bool isWrapping = 
+                        (spaceRemaining < wordWidth && wordWidth <= MaxLineWidth) 
+                        || charBuffer.Chars[wordStart] == '\n';
 
-                    for (int n = start; n <= end; n++)
+                    for (int n = wordStart; n <= wordEnd; n++)
                     {
-                        if (spaceRemaining < charBuffer.FormattedGlyphs[n].chSize.X || wrapWord)
+                        // Start new line beginning with the nth character, usually wordStart
+                        if (spaceRemaining < charBuffer.FormattedGlyphs[n].chSize.X || isWrapping)
                         {
                             spaceRemaining = MaxLineWidth;
-                            currentLine = lines.GetNewLine(estLineLength);
+                            currentLine = lines.GetNewLine();
+                            lineBuf.Add(currentLine);
 
-                            newLines.Add(currentLine);
-                            wrapWord = false;
+                            isWrapping = false;
                         }
 
                         currentLine.AddCharFromLine(n, charBuffer);
                         spaceRemaining -= charBuffer.FormattedGlyphs[n].chSize.X;
                     }
                 }
-
-                return newLines;
             }
 
             /// <summary>
             /// Inserts a list of lines at the specified starting index and updates the wrapping of the lines following
             /// as needed.
             /// </summary>
-            private void InsertLines(List<Line> newLines, int index)
+            private void InsertLines(int index)
             {
-                for (int n = 0; n < newLines.Count; n++)
-                    newLines[n].UpdateSize();
+                for (int n = 0; n < lineBuf.Count; n++)
+                    lineBuf[n].UpdateSize();
 
-                lines.InsertRange(index, newLines);
+                lines.InsertRange(index, lineBuf);
                 charBuffer.Clear();
 
                 // Pull text from the lines following the insert to maintain proper text wrapping
-                index += newLines.Count - 1;
+                index += lineBuf.Count - 1;
 
                 while (index < lines.Count - 1 && TryPullToLine(index))
                     index++;               
@@ -259,19 +265,6 @@ namespace RichHudFramework.UI.Rendering.Server
                 }
                 else
                     return false;
-            }
-
-            /// <summary>
-            /// Calculates the total width of the characters in the buffer.
-            /// </summary>
-            private float GetBufferWidth()
-            {
-                float width = 0f;
-
-                for (int n = 0; n < charBuffer.Count; n++)
-                    width += charBuffer.FormattedGlyphs[n].chSize.X;
-
-                return width;
             }
 
             /// <summary>

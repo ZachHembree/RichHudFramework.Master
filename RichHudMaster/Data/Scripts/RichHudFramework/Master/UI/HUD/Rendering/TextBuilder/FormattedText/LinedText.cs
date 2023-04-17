@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using RichHudFramework.Internal;
+using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
@@ -12,8 +13,12 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private class LinedText : FormattedTextBase
         {
+            private readonly List<Line> lineBuf;
+
             public LinedText(LinePool lines) : base(lines, true)
-            { }
+            {
+                lineBuf = new List<Line>();
+            }
 
             /// <summary>
             /// Inserts text at a given position in the document.
@@ -44,47 +49,51 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 if (lines.Count > 0)
                 {
-                    for (int y = splitStart.Y; y < lines[splitStart.X].Count; y++)
-                        charBuffer.AddCharFromLine(y, lines[splitStart.X]);
+                    int spanStart = splitStart.Y,
+                        spanLength = lines[splitStart.X].Count - splitStart.Y + 1;
 
+                    charBuffer.AddRange(lines[splitStart.X], spanStart, spanLength);
                     lines.RemoveAt(splitStart.X);
                 }
 
-                InsertLines(GetLines(), splitStart.X);
+                GenerateLines();
+                InsertLines(splitStart.X);
+                charBuffer.Clear();
             }
 
             /// <summary>
-            /// Generates a list of lines from the contents of the character buffer.
+            /// Splits character buffer into multiple lines at line breaks, if any are present
             /// </summary>
-            private List<Line> GetLines()
+            private void GenerateLines()
             {
-                Line currentLine = null;
-                List<Line> newLines = new List<Line>();
+                lineBuf.TrimExcess();
+                lineBuf.Clear();
 
                 for (int n = 0; n < charBuffer.Count; n++)
                 {
-                    if (currentLine == null || (charBuffer.Chars[n] == '\n' && currentLine.Count > 0))
-                    {
-                        currentLine = lines.GetNewLine();
-                        newLines.Add(currentLine);
-                    }
+                    int k = n;
 
-                    currentLine.AddCharFromLine(n, charBuffer);
+                    // Find line break
+                    while (k < charBuffer.Count && (charBuffer.Chars[k] != '\n' || k == n))
+                        k++;
+
+                    Line currentLine = lines.GetNewLine();
+                    currentLine.AddRange(charBuffer, n, k - n);
+                    lineBuf.Add(currentLine);
+
+                    n = k - 1;
                 }
-
-                return newLines;
             }
 
             /// <summary>
             /// Inserts new lines at the given index and calculates the size of each line.
             /// </summary>
-            private void InsertLines(List<Line> newLines, int start)
+            private void InsertLines(int start)
             {
-                for (int n = 0; n < newLines.Count; n++)
-                    newLines[n].UpdateSize();
+                for (int n = 0; n < lineBuf.Count; n++)
+                    lineBuf[n].UpdateSize();
 
-                lines.InsertRange(start, newLines);
-                charBuffer.Clear();
+                lines.InsertRange(start, lineBuf);
             }
         }
     }
