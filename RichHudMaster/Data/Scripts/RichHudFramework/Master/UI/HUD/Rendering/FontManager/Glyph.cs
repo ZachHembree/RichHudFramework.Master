@@ -19,15 +19,14 @@ namespace RichHudFramework
 
                 public readonly float advanceWidth, leftSideBearing;
 
-                private readonly MaterialFrame matFrame;
-                private readonly BoundingBox2 texBounds;
+                public readonly BoundingBox2 texBounds;
 
                 public Glyph(Material atlas, Vector2 size, Vector2 origin, float aw, float lsb)
                 {
                     advanceWidth = aw;
                     leftSideBearing = lsb;
 
-                    matFrame = new MaterialFrame()
+                    var matFrame = new MaterialFrame()
                     {
                         Material = new Material(atlas.TextureID, atlas.size, origin, size),
                         Alignment = MaterialAlignment.FitHorizontal,
@@ -44,7 +43,7 @@ namespace RichHudFramework
                     {
                         materialData = new BoundedQuadMaterial
                         {
-                            textureID = matFrame.Material.TextureID,
+                            textureID = MatFrame.Material.TextureID,
                             texBounds = texBounds,
                             bbColor = bbColor,
                         },
