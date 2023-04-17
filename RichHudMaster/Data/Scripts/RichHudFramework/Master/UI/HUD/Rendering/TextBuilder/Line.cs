@@ -172,10 +172,9 @@ namespace RichHudFramework
                                 };
 
                                 canTextBeEqual = false;
+                                isSizeStale = true;
                             }
-                        }
-
-                        isSizeStale = true;
+                        }                        
                     }
 
                     /// <summary>
@@ -428,7 +427,12 @@ namespace RichHudFramework
                             }
 
                             if (Count == 0)
+                            {
+                                if (!canTextBeEqual)
+                                    isQuadCacheStale = true;
+
                                 canTextBeEqual = true;
+                            }
 
                             isSizeStale = true;
                         }
@@ -439,6 +443,9 @@ namespace RichHudFramework
                     /// </summary>
                     public void Clear()
                     {
+                        if (!canTextBeEqual)
+                            isQuadCacheStale = true;
+
                         isSizeStale = true;
                         canTextBeEqual = true;
                         Count = 0;
@@ -489,9 +496,7 @@ namespace RichHudFramework
                             UpdateSize();
 
                         if (!canTextBeEqual || Count != lastCount)
-                        {
                             isQuadCacheStale = true;
-                        }
 
                         canTextBeEqual = true;
                         lastCount = Count;

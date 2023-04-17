@@ -528,11 +528,6 @@ namespace RichHudFramework
 
                 private void UpdateGlyphBoards()
                 {
-                    foreach (Line line in lines.PooledLines)
-                    {
-                        line.RestartTextUpdate();
-                    }
-
                     for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
                     {
                         Line line = lines.PooledLines[ln];
