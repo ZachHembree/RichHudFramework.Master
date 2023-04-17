@@ -122,6 +122,7 @@ namespace RichHudFramework
                 private bool 
                     isUpdateEventPending,
                     areOffsetsStale,
+                    isQuadCacheStale,
                     isLineRangeStale,
                     isBbCacheStale;
 
@@ -151,6 +152,7 @@ namespace RichHudFramework
                     lastTextOffset = Vector2.PositiveInfinity;
 
                     areOffsetsStale = true;
+                    isQuadCacheStale = true;
                     isLineRangeStale = true;
                     isBbCacheStale = true;
                 }
@@ -461,12 +463,13 @@ namespace RichHudFramework
                         isBbCacheStale = true;
                     }
 
-                    if (areOffsetsStale || isLineRangeStale)
+                    if (isQuadCacheStale || areOffsetsStale || isLineRangeStale)
                     {
                         UpdateVisibleRange();
 
                         isLineRangeStale = false;
                         areOffsetsStale = false;
+                        isQuadCacheStale = false;
                     }
 
                     lastTextOffset = _textOffset;
@@ -536,9 +539,7 @@ namespace RichHudFramework
                         line.UpdateGlyphBoards();
 
                         if (line.isQuadCacheStale)
-                        {
-                            areOffsetsStale = true;
-                        }
+                            isQuadCacheStale = true;
                     }
                 }
 

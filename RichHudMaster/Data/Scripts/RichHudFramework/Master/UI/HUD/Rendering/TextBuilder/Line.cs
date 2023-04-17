@@ -471,12 +471,16 @@ namespace RichHudFramework
                     /// </summary>
                     public void SetCapacity(int newCapacity)
                     {
-                        newCapacity = Math.Max(Count + 6, newCapacity);
-                        Array.Resize(ref chars, newCapacity);
-                        Array.Resize(ref formattedGlyphs, newCapacity);
+                        if (newCapacity != chars.Length)
+                        {
+                            newCapacity = Math.Max(Count + 6, newCapacity);
+                            Array.Resize(ref chars, newCapacity);
+                            Array.Resize(ref formattedGlyphs, newCapacity);
 
-                        Chars = chars;
-                        FormattedGlyphs = formattedGlyphs;
+                            Chars = chars;
+                            FormattedGlyphs = formattedGlyphs;
+                            canTextBeEqual = false;
+                        }
                     }
 
                     public void RestartTextUpdate()
