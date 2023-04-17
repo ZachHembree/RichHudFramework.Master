@@ -479,7 +479,7 @@ namespace RichHudFramework
                         FormattedGlyphs = formattedGlyphs;
                     }
 
-                    private void RestartTextUpdate()
+                    public void RestartTextUpdate()
                     {
                         if (isSizeStale)
                             UpdateSize();

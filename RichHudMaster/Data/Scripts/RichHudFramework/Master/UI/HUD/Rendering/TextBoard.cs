@@ -527,12 +527,13 @@ namespace RichHudFramework
                 {
                     foreach (Line line in lines.PooledLines)
                     {
-                        line.UpdateGlyphBoards();
+                        line.RestartTextUpdate();
                     }
 
                     for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
                     {
                         Line line = lines.PooledLines[ln];
+                        line.UpdateGlyphBoards();
 
                         if (line.isQuadCacheStale)
                         {
@@ -557,10 +558,11 @@ namespace RichHudFramework
                         {
                             Line line = lines.PooledLines[ln];
 
-                            if (line.isQuadCacheStale)
-                            {
+                            // Line alignment is determined partly by text board size.
+                            // If the textboard is resized, the entire visible range has to
+                            // be recalculated.
+                            if (areOffsetsStale || line.isQuadCacheStale)
                                 UpdateLineOffsets(line);
-                            }
 
                             line.isQuadCacheStale = false;
                         }
