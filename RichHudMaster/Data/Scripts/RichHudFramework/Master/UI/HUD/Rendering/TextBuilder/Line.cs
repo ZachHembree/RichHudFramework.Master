@@ -49,12 +49,12 @@ namespace RichHudFramework
                     /// <summary>
                     /// Physical size of the line as rendered
                     /// </summary>
-                    public Vector2 Size => _size * builder.Scale;
+                    public Vector2 Size => UnscaledSize * builder.Scale;
 
                     /// <summary>
                     /// Size of the line before scaling
                     /// </summary>
-                    public Vector2 UnscaledSize => _size;
+                    public Vector2 UnscaledSize { get; private set; }
 
                     /// <summary>
                     /// Starting vertical position of the line starting from the center of the text element, sans text offset.
@@ -87,7 +87,6 @@ namespace RichHudFramework
                     private FormattedGlyph[] formattedGlyphs;
                     private readonly List<BoundedQuadBoard> glyphBoards;
 
-                    private Vector2 _size;
                     private readonly TextBuilder builder;
 
                     /// <summary>
@@ -95,6 +94,8 @@ namespace RichHudFramework
                     /// still stored internally. Does not account for changes in length.
                     /// </summary>
                     private bool canTextBeEqual;
+
+                    private bool isSizeStale;
 
                     /// <summary>
                     /// Used to check for changes in line length between frames.
@@ -166,6 +167,8 @@ namespace RichHudFramework
                                 canTextBeEqual = false;
                             }
                         }
+
+                        isSizeStale = true;
                     }
 
                     /// <summary>
@@ -252,6 +255,7 @@ namespace RichHudFramework
                         }
 
                         Count++;
+                        isSizeStale = true;
                     }
 
                     /// <summary>
@@ -316,6 +320,8 @@ namespace RichHudFramework
                                     Count++;
                                 }
                             }
+
+                            isSizeStale = true;
                         }
                     }
 
@@ -381,6 +387,7 @@ namespace RichHudFramework
                             }
 
                             Count = newCount;
+                            isSizeStale = true;
                         }
                     }
 
@@ -397,11 +404,14 @@ namespace RichHudFramework
                             {
                                 Array.Copy(chars, index + count, chars, index, Count - index);
                                 Array.Copy(formattedGlyphs, index + count, formattedGlyphs, index, Count - index);
+
                                 canTextBeEqual = false;
                             }
 
                             if (Count == 0)
                                 canTextBeEqual = true;
+
+                            isSizeStale = true;
                         }
                     }
 
@@ -410,6 +420,7 @@ namespace RichHudFramework
                     /// </summary>
                     public void Clear()
                     {
+                        isSizeStale = true;
                         canTextBeEqual = true;
                         Count = 0;
                     }
@@ -449,52 +460,74 @@ namespace RichHudFramework
                         FormattedGlyphs = formattedGlyphs;
                     }
 
+                    private void EndTextUpdate()
+                    {
+                        if (isSizeStale)
+                            UpdateSize();
+
+                        if (!canTextBeEqual || Count != lastCount)
+                        {
+                            isQuadCacheStale = true;
+                        }
+
+                        canTextBeEqual = true;
+                        lastCount = Count;
+
+                        TrimExcess();
+                    }
+
                     /// <summary>
                     /// Recalculates the width and height of the line.
                     /// </summary>
                     public void UpdateSize()
                     {
-                        _size = Vector2.Zero;
-
-                        if (Count > 0)
+                        if (isSizeStale)
                         {
-                            for (int n = 0; n < Count; n++)
+                            Vector2 newSize = Vector2.Zero;
+
+                            if (Count > 0)
                             {
-                                FormattedGlyph fmtGlyph = formattedGlyphs[n];
-
-                                if (fmtGlyph.chSize.Y > _size.Y)
-                                    _size.Y = fmtGlyph.chSize.Y;
-
-                                float chWidth = fmtGlyph.chSize.X;
-
-                                if (chars[n] == '\t')
+                                for (int n = 0; n < Count; n++)
                                 {
-                                    IFontStyle fontStyle = FontManager.GetFontStyle(fmtGlyph.format.StyleIndex);
-                                    float scale = fmtGlyph.format.TextSize * fontStyle.FontScale;
+                                    FormattedGlyph fmtGlyph = formattedGlyphs[n];
 
-                                    chWidth = formattedGlyphs[n].glyph.advanceWidth * scale;
-                                    float rem = _size.X % chWidth;
+                                    if (fmtGlyph.chSize.Y > newSize.Y)
+                                        newSize.Y = fmtGlyph.chSize.Y;
 
-                                    if (rem < chWidth * .8f)
-                                        chWidth -= rem;
-                                    else // if it's really close, just skip to the next stop
-                                        chWidth += (chWidth - rem);
+                                    float chWidth = fmtGlyph.chSize.X;
 
-                                    fmtGlyph.chSize.X = chWidth;
-                                    formattedGlyphs[n] = fmtGlyph;
+                                    if (chars[n] == '\t')
+                                    {
+                                        IFontStyle fontStyle = FontManager.GetFontStyle(fmtGlyph.format.StyleIndex);
+                                        float scale = fmtGlyph.format.TextSize * fontStyle.FontScale;
+
+                                        chWidth = formattedGlyphs[n].glyph.advanceWidth * scale;
+                                        float rem = newSize.X % chWidth;
+
+                                        if (rem < chWidth * .8f)
+                                            chWidth -= rem;
+                                        else // if it's really close, just skip to the next stop
+                                            chWidth += (chWidth - rem);
+
+                                        fmtGlyph.chSize.X = chWidth;
+                                        formattedGlyphs[n] = fmtGlyph;
+                                    }
+
+                                    newSize.X += chWidth;
                                 }
-
-                                _size.X += chWidth;
                             }
+
+                            UnscaledSize = newSize;
+                            isSizeStale = false;
                         }
                     }
 
                     public void UpdateGlyphBoards()
                     {
-                        if (!canTextBeEqual || Count != lastCount || glyphBoards.Count != Count)
-                        {
-                            isQuadCacheStale = true;
+                        EndTextUpdate();
 
+                        if (isQuadCacheStale)
+                        {
                             glyphBoards.Clear();
                             glyphBoards.EnsureCapacity(Count);
 
@@ -517,11 +550,6 @@ namespace RichHudFramework
                                 glyphBoards.TrimExcess();
                             }
                         }
-
-                        canTextBeEqual = true;
-                        lastCount = Count;
-
-                        TrimExcess();
                     }
                 }
             }
