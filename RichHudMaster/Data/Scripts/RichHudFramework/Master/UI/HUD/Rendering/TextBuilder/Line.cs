@@ -460,7 +460,7 @@ namespace RichHudFramework
                         FormattedGlyphs = formattedGlyphs;
                     }
 
-                    private void EndTextUpdate()
+                    private void RestartTextUpdate()
                     {
                         if (isSizeStale)
                             UpdateSize();
@@ -524,9 +524,9 @@ namespace RichHudFramework
 
                     public void UpdateGlyphBoards()
                     {
-                        EndTextUpdate();
+                        RestartTextUpdate();
 
-                        if (isQuadCacheStale)
+                        if (isQuadCacheStale || glyphBoards.Count != Count)
                         {
                             glyphBoards.Clear();
                             glyphBoards.EnsureCapacity(Count);

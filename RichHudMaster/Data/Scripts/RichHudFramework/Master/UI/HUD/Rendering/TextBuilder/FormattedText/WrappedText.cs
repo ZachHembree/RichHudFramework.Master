@@ -4,6 +4,7 @@ using VRageMath;
 using VRage;
 using System.Text;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
+using System.Collections;
 
 namespace RichHudFramework.UI.Rendering.Server
 {
@@ -280,8 +281,21 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 Vector2I start;
 
-                while (lines.TryGetLastIndex(end, out start) && !(lines[end.X].Chars[end.Y] == '\n' || IsWordBreak(start, end)))
-                    end = start;
+                while (lines.TryGetLastIndex(end, out start))
+                {
+                    char left = lines.PooledLines[start.X].Chars[start.Y],
+                        right = lines.PooledLines[end.X].Chars[end.Y];
+                    bool isWordBreak =
+                        (left == ' ' || left == '-' || left == '_') &&
+                        !(right == ' ' || right == '-' || right == '_');
+
+                    if (!(lines[end.X].Chars[end.Y] == '\n' || isWordBreak))
+                    {
+                        end = start;
+                    }
+                    else
+                        break;
+                }
 
                 return start;
             }
@@ -295,10 +309,21 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 spaceRemaining -= lines[start.X].FormattedGlyphs[start.Y].chSize.X;
 
-                while (lines.TryGetNextIndex(start, out end) && spaceRemaining > 0f && !(lines[end.X].Chars[end.Y] == '\n' || IsWordBreak(start, end)))
+                while (lines.TryGetNextIndex(start, out end) && spaceRemaining > 0f)
                 {
-                    spaceRemaining -= lines[end.X].FormattedGlyphs[end.Y].chSize.X;
-                    start = end;
+                    char left = lines.PooledLines[start.X].Chars[start.Y],
+                        right = lines.PooledLines[end.X].Chars[end.Y];
+                    bool isWordBreak =
+                        (left == ' ' || left == '-' || left == '_') &&
+                        !(right == ' ' || right == '-' || right == '_');
+
+                    if (!(lines[end.X].Chars[end.Y] == '\n' || isWordBreak))
+                    {
+                        spaceRemaining -= lines[end.X].FormattedGlyphs[end.Y].chSize.X;
+                        start = end;
+                    }
+                    else
+                        break;
                 }
 
                 end = start;
@@ -315,12 +340,26 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 for (int n = start; n < charBuffer.Count; n++)
                 {
-                    width += charBuffer.FormattedGlyphs[n].chSize.X;
-
-                    if (n == (charBuffer.Count - 1) || charBuffer.Chars[n + 1] == '\n' || IsWordBreak(n, n + 1))
+                    if (n == (charBuffer.Count - 1) || charBuffer.Chars[n + 1] == '\n')
                     {
                         wordEnd = n;
                         return true;
+                    }
+                    else
+                    {
+                        char left = charBuffer.Chars[n],
+                            right = charBuffer.Chars[n + 1];
+                        bool isWordBreak =
+                            (left == ' ' || left == '-' || left == '_') &&
+                            !(right == ' ' || right == '-' || right == '_');
+
+                        width += charBuffer.FormattedGlyphs[n].chSize.X;
+
+                        if (isWordBreak)
+                        {
+                            wordEnd = n;
+                            return true;
+                        }
                     }
                 }
 

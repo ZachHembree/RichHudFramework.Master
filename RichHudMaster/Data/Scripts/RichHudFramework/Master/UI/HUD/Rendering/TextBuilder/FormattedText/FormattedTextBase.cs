@@ -156,28 +156,6 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 return index;
             }
-
-            /// <summary>
-            /// Determines whether the two characters at the indices provided indicate a word break.
-            /// </summary>
-            protected bool IsWordBreak(Vector2I iLeft, Vector2I iRight)
-            {
-                char left = lines.PooledLines[iLeft.X].Chars[iLeft.Y], 
-                    right = lines.PooledLines[iRight.X].Chars[iRight.Y];
-
-                return (left == ' ' || left == '-' || left == '_') && !(right == ' ' || right == '-' || right == '_');
-            }
-
-            /// <summary>
-            /// Determines whether the two characters at the charBuffer indices provided indicate a word break.
-            /// </summary>
-            protected bool IsWordBreak(int iLeft, int iRight)
-            {
-                char left = charBuffer.Chars[iLeft],
-                    right = charBuffer.Chars[iRight];
-
-                return (left == ' ' || left == '-' || left == '_') && !(right == ' ' || right == '-' || right == '_');
-            }
         }
     }
 }
