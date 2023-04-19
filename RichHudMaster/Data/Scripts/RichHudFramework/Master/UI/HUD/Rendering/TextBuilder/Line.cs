@@ -87,6 +87,8 @@ namespace RichHudFramework
                     /// </summary>
                     public bool isQuadCacheStale;
 
+                    public int lastIndex;
+
                     private char[] chars;
                     private FormattedGlyph[] formattedGlyphs;
                     private readonly List<BoundedQuadBoard> glyphBoards;
@@ -127,6 +129,7 @@ namespace RichHudFramework
                         canTextBeEqual = false;
                         lastCount = 0;
                         Count = 0;
+                        lastIndex = -1;
                     }
 
                     /// <summary>

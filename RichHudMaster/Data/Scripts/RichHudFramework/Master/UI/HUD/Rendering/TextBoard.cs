@@ -539,6 +539,11 @@ namespace RichHudFramework
 
                         if (line.isQuadCacheStale)
                             isQuadCacheStale = true;
+
+                        if (line.lastIndex != ln)
+                            areOffsetsStale = true;
+
+                        line.lastIndex = ln;
                     }
                 }
 
