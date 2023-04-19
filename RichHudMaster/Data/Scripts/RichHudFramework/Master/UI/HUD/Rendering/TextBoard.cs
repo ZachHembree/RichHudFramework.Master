@@ -7,6 +7,7 @@ using VRageMath;
 using RichHudFramework.UI.Server;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 using VRage.Utils;
+using System.Linq;
 
 namespace RichHudFramework
 {
@@ -163,25 +164,28 @@ namespace RichHudFramework
                 /// </summary>
                 public void MoveToChar(Vector2I index)
                 {
-                    if (!AutoResize)
+                    if (!AutoResize && lines.Count > 0)
                     {
-                        UpdateCharOffsets();
-
                         index.X = MathHelper.Clamp(index.X, 0, lines.Count - 1);
                         index.Y = MathHelper.Clamp(index.Y, 0, lines[index.X].Count - 1);
 
-                        if (index.X < lineRange.X || index.X > lineRange.Y)
+                        if (lines[index.X].Count > 0)
                         {
-                            if (BuilderMode != TextBuilderModes.Unlined)
-                                UpdateVerticalOffset(index.X);
-                            else
-                                _textOffset.Y = 0f;                        
-                        }
+                            UpdateCharOffsets();
 
-                        if (BuilderMode != TextBuilderModes.Wrapped)
-                            _textOffset.X = GetCharRangeOffset(index);
-                        else
-                            _textOffset.X = 0f;
+                            if (index.X < lineRange.X || index.X > lineRange.Y)
+                            {
+                                if (BuilderMode != TextBuilderModes.Unlined)
+                                    UpdateVerticalOffset(index.X);
+                                else
+                                    _textOffset.Y = 0f;
+                            }
+
+                            if (BuilderMode != TextBuilderModes.Wrapped)
+                                _textOffset.X = GetCharRangeOffset(index);
+                            else
+                                _textOffset.X = 0f;
+                        }
                     }
                 }
 
@@ -218,7 +222,7 @@ namespace RichHudFramework
                     {
                         if (index.Y != 0)
                         {
-                            UpdateGlyphBoards();
+                            line.UpdateGlyphBoards();
 
                             Vector2 chSize = line.FormattedGlyphs[index.Y].chSize,
                                 bbOffset = line.GlyphBoards[index.Y].bounds.Center;
