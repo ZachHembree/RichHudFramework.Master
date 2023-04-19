@@ -342,6 +342,13 @@ namespace RichHudFramework
                         if (srcCount == -1)
                             srcCount = src.Count;
 
+                        if ((srcCount - srcIndex) > src.Count || dstIndex > Count)
+                        {
+                            throw new Exception(
+                                $"Index out of range. dstIndex: {dstIndex} dstCount: {Count} " +
+                                $"srcIndex: {srcIndex} srcCount: {srcCount} / {src.Count}");
+                        }
+
                         if (srcCount > 0)
                         {
                             int newCount = srcCount + Count;
@@ -349,7 +356,7 @@ namespace RichHudFramework
                             if (newCount > chars.Length)
                                 SetCapacity(newCount);
 
-                            if (Count > dstIndex)
+                            if (dstIndex < Count)
                             {
                                 Array.Copy(chars, dstIndex, chars, dstIndex + srcCount, Count - dstIndex);
                                 Array.Copy(formattedGlyphs, dstIndex, formattedGlyphs, dstIndex + srcCount, Count - dstIndex);
@@ -365,13 +372,15 @@ namespace RichHudFramework
                                     int j = i + dstIndex,
                                         k = i + srcIndex;
 
-                                    if (canTextBeEqual && src.chars[k] != chars[j])
+                                    if (src.chars[k] != chars[j])
+                                    {
                                         canTextBeEqual = false;
-
-                                    chars[j] = src.chars[k];
+                                        break;
+                                    }
                                 }
                             }
-                            else
+
+                            if (!canTextBeEqual)
                             {
                                 Array.Copy(src.chars, srcIndex, chars, dstIndex, srcCount);
                             }
@@ -393,13 +402,16 @@ namespace RichHudFramework
                                             && lastFormat.Item3 == format.Item3
                                             && lastFormat.Item4 == format.Item4;
 
-                                        canTextBeEqual = formatEqual;
+                                        if (!formatEqual)
+                                        {
+                                            canTextBeEqual = false;
+                                            break;
+                                        }
                                     }
-
-                                    formattedGlyphs[j] = src.formattedGlyphs[k];
                                 }
                             }
-                            else
+
+                            if (!canTextBeEqual)
                             {
                                 Array.Copy(src.formattedGlyphs, srcIndex, formattedGlyphs, dstIndex, srcCount);
                             }

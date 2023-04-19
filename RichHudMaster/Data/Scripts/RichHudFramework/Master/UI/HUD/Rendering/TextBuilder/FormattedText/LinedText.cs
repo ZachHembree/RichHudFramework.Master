@@ -1,6 +1,7 @@
 ﻿using RichHudFramework.Internal;
 using System.Collections.Generic;
 using System.Text;
+using System;
 using VRage;
 using VRageMath;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
@@ -23,16 +24,28 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <summary>
             /// Inserts text at a given position in the document.
             /// </summary>
-            /// <param name="start">X = line; Y = ch</param>
-            public override void Insert(IList<RichStringMembers> text, Vector2I start)
+            /// <param name="index">X = line; Y = ch</param>
+            public override void Insert(IList<RichStringMembers> text, Vector2I index)
             {
-                start = ClampIndex(start);
+                index = ClampIndex(index);
                 charBuffer.Clear();
+
+                // Prepend immediately preceeding text
+                if (lines.Count > 0)
+                    charBuffer.AddRange(lines[index.X], 0, index.Y);
 
                 for (int n = 0; n < text.Count; n++)
                     charBuffer.AppendRichString(text[n], AllowSpecialChars);
 
-                InsertChars(start);
+                // Append succeeding text
+                if (lines.Count > 0)
+                {
+                    charBuffer.AddRange(lines[index.X], index.Y, lines[index.X].Count - index.Y);
+                    lines.RemoveAt(index.X);
+                }
+
+                GenerateLines();
+                InsertLines(index.X);
             }
 
             /// <summary>
@@ -41,25 +54,6 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <param name="start">X = line; Y = ch</param>
             public override void Insert(RichStringMembers text, Vector2I start) =>
                 Insert(new RichStringMembers[] { text }, start);
-
-            /// <summary>
-            /// Inserts the contents of the character buffer at the index specified.
-            /// </summary>
-            private void InsertChars(Vector2I splitStart)
-            {
-                if (lines.Count > 0)
-                {
-                    int spanStart = splitStart.Y,
-                        spanLength = lines[splitStart.X].Count - splitStart.Y + 1;
-
-                    charBuffer.AddRange(lines[splitStart.X], spanStart, spanLength);
-                    lines.RemoveAt(splitStart.X);
-                }
-
-                GenerateLines();
-                InsertLines(splitStart.X);
-                charBuffer.Clear();
-            }
 
             /// <summary>
             /// Splits character buffer into multiple lines at line breaks, if any are present
@@ -71,10 +65,10 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 for (int n = 0; n < charBuffer.Count; n++)
                 {
-                    int k = n;
+                    int k = n + 1;
 
                     // Find line break
-                    while (k < charBuffer.Count && (charBuffer.Chars[k] != '\n' || k == n))
+                    while (k < charBuffer.Count && charBuffer.Chars[k] != '\n')
                         k++;
 
                     Line currentLine = lines.GetNewLine();
