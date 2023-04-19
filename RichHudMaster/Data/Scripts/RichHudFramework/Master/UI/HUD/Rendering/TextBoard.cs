@@ -118,7 +118,8 @@ namespace RichHudFramework
                     _textSize, 
                     _fixedSize, 
                     _textOffset, 
-                    lastFixedSize, 
+                    lastFixedSize,
+                    lastTextSize,
                     lastTextOffset;
                 private bool 
                     isUpdateEventPending,
@@ -454,7 +455,9 @@ namespace RichHudFramework
                     UpdateGlyphBoards();
 
                     // Check for external resizing
-                    if (Vector2.DistanceSquared(lastFixedSize, _fixedSize) > .1f)
+                    if (Vector2.DistanceSquared(lastFixedSize, _fixedSize) > .1f || 
+                        Vector2.DistanceSquared(lastTextSize, _textSize) > .1f
+                    )
                     {
                         areOffsetsStale = true;
                         isBbCacheStale = true;
@@ -477,6 +480,7 @@ namespace RichHudFramework
                     }
 
                     lastTextOffset = _textOffset;
+                    lastTextSize = _textSize;
                     lastFixedSize = _fixedSize;
                     LineWrapWidth = _fixedSize.X;
                 }
@@ -485,6 +489,8 @@ namespace RichHudFramework
                 {
                     int start = 0,
                         end;
+
+                    _textSize = GetTextSize();
 
                     if (!AutoResize)
                     {
@@ -553,7 +559,7 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateVisibleRange()
                 {
-                    _textSize = GetTextSize();
+                    //_textSize = GetTextSize();
                     _size = AutoResize ? _textSize : _fixedSize;
                     isBbCacheStale = true;
 
