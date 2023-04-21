@@ -251,22 +251,6 @@ namespace RichHudFramework
                     /// </summary>
                     public IReadOnlyList<ModControlRoot> ModRoots => scrollBox.Collection;
 
-                    public override float Width
-                    {
-                        get { return scrollBox.Width; }
-                        set
-                        {
-                            header.Width = value;
-                            scrollBox.Width = value;
-                        }
-                    }
-
-                    public override float Height
-                    {
-                        get { return scrollBox.Height + header.Height; }
-                        set { scrollBox.Height = value - header.Height; }
-                    }
-
                     private readonly LabelBox header;
                     private readonly ScrollBox<ModControlRoot, LabelElementBase> scrollBox;
                     private readonly ListInputElement<ModControlRoot, LabelElementBase> listInput;
@@ -277,6 +261,7 @@ namespace RichHudFramework
                         {
                             SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.ClampChainBoth,
                             ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV,
+                            DimAlignment = DimAlignments.Width,
                             Color = TerminalFormatting.DarkSlateGrey,
                             Padding = new Vector2(6f)
                         };
@@ -342,6 +327,8 @@ namespace RichHudFramework
 
                     protected override void Layout()
                     {
+                        scrollBox.Height = cachedSize.Y - cachedPadding.Y - header.Height;
+
                         Vector2 listSize = scrollBox.Size,
                             listPos = scrollBox.Position;
 
