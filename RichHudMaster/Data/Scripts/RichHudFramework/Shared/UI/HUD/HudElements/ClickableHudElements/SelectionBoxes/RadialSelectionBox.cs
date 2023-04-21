@@ -228,7 +228,7 @@ namespace RichHudFramework.UI
             Vector2 size = cachedSize - cachedPadding;
             int entrySize = polyBoard.Sides / effectiveMaxCount;
             polyBoard.Color = BackgroundColor;
-            polyBoard.Draw(size, cachedOrigin, HudSpace.PlaneToWorldRef);
+            polyBoard.Draw(size, cachedPosition, HudSpace.PlaneToWorldRef);
 
             if (SelectionIndex != -1 && selectionVisPos != -1 && entrySize > 0)
             {
@@ -236,7 +236,7 @@ namespace RichHudFramework.UI
 
                 Vector2I slice = new Vector2I(0, entrySize - 1) + (selectionVisPos * entrySize);
                 polyBoard.Color = HighlightColor;
-                polyBoard.Draw(size, cachedOrigin, slice, HudSpace.PlaneToWorldRef);
+                polyBoard.Draw(size, cachedPosition, slice, HudSpace.PlaneToWorldRef);
             }
         }
     }

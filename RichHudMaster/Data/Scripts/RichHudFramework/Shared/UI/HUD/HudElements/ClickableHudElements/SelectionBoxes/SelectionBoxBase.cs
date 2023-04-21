@@ -294,6 +294,8 @@ namespace RichHudFramework.UI
                     entry.Element.Visible = entry.Enabled;
                 }
             }
+
+            Size = hudChain.Size + Padding;
         }
 
         protected override void HandleInput(Vector2 cursorPos)
@@ -405,11 +407,6 @@ namespace RichHudFramework.UI
             lastSelection.Item2 = textBoard.Format;
 
             textBoard.SetFormatting(textBoard.Format.WithColor(FocusTextColor));
-        }
-
-        protected override void Draw()
-        {
-            Size = hudChain.Size + Padding;
         }
 
         /// <summary>

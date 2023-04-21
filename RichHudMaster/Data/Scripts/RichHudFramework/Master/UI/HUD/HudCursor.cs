@@ -276,11 +276,6 @@ namespace RichHudFramework
                     UpdateToolTip(boundTooltips, tooltipScale);
                 }
 
-                protected override void Draw()
-                {
-                    base.Draw();
-                }
-
                 protected override void HandleInput(Vector2 cursorPos)
                 {
                     IsToolTipRegistered = false;

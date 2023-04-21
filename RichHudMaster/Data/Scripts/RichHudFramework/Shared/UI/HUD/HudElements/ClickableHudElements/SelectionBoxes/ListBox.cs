@@ -91,8 +91,9 @@ namespace RichHudFramework.UI
         public ListBox() : this(null)
         { }
 
-        protected override void Draw()
+        protected override void Layout()
         {
+            base.Layout();
             Size = hudChain.Size + Padding;
         }
     }

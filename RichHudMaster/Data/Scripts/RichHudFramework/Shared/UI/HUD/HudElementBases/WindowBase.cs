@@ -154,23 +154,6 @@ namespace RichHudFramework.UI
         protected override void Layout()
         {
             body.Height = Height - header.Height;
-
-            if (Visible && WindowActive)
-            {
-                if (canMoveWindow)
-                {
-                    Vector3 cursorPos = HudSpace.CursorPos;
-                    Offset = new Vector2(cursorPos.X, cursorPos.Y) + cursorOffset - Origin;
-                }
-
-                if (canResize)
-                    Resize();
-            }
-            else
-            {
-                canMoveWindow = false;
-                canResize = false;
-            }
         }
 
         protected void Resize()
@@ -247,6 +230,22 @@ namespace RichHudFramework.UI
                     canMoveWindow = false;
                     canResize = false;
                 }
+            }
+
+            if (WindowActive)
+            {
+                if (canMoveWindow)
+                {
+                    Offset = cursorPos + cursorOffset - Origin;
+                }
+
+                if (canResize)
+                    Resize();
+            }
+            else
+            {
+                canMoveWindow = false;
+                canResize = false;
             }
         }
 

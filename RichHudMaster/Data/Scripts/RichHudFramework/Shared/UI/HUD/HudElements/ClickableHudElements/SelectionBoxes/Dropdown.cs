@@ -416,7 +416,6 @@ namespace RichHudFramework.UI
 
             protected override void Layout()
             {
-                base.Layout();
                 name.Width = (Width - Padding.X) - divider.Width - arrow.Width;
             }
 

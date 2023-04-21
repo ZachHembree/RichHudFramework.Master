@@ -76,9 +76,9 @@ namespace RichHudFramework.UI
             get
             {
                 if (!ListOpen)
-                    return display.Height + Padding.Y;
+                    return displayHeight + Padding.Y;
                 else
-                    return display.Height + selectionBox.Height + Padding.Y;
+                    return displayHeight + listHeight + Padding.Y;
             }
             set
             {
@@ -86,9 +86,7 @@ namespace RichHudFramework.UI
                     value -= Padding.Y;
 
                 if (!ListOpen)
-                {
-                    display.Height = value;
-                }
+                    displayHeight = value;
             }
         }
 
@@ -188,7 +186,7 @@ namespace RichHudFramework.UI
 
         public readonly TSelectionBox selectionBox;
         protected readonly TreeBoxDisplay display;
-        protected float _indentSize;
+        protected float _indentSize, displayHeight, listHeight;
 
         public TreeBoxBase(HudParentBase parent) : base(parent)
         {
@@ -216,7 +214,6 @@ namespace RichHudFramework.UI
             IndentSize = 20f;
 
             Format = GlyphFormat.Blueish;
-
             display.Name = "NewTreeBox";
             display.MouseInput.LeftClicked += ToggleList;
         }
@@ -252,27 +249,32 @@ namespace RichHudFramework.UI
 
         public void OpenList()
         {
-            selectionBox.Visible = true;
             display.Open = true;
             ListOpen = true;
         }
 
         public void CloseList()
         {
-            selectionBox.Visible = false;
             display.Open = false;
             ListOpen = false;
         }
 
         protected override void Layout()
         {
-            selectionBox.Visible = ListOpen;
+            display.Height = displayHeight;
 
-            if (ListOpen)
+            if (selectionBox.Visible)
             {
                 selectionBox.Width = Width - 2f * IndentSize - Padding.X;
                 selectionBox.Offset = new Vector2(IndentSize, 0f);
+
+                listHeight = selectionBox.Height;
             }
+        }
+
+        protected override void HandleInput(Vector2 cursorPos)
+        {
+            selectionBox.Visible = ListOpen;
         }
 
         public IEnumerator<TContainer> GetEnumerator() =>

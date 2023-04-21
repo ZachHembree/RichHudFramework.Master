@@ -316,6 +316,7 @@ namespace RichHudFramework.UI
 
             // Calculate member start offset
             Vector2 startOffset;
+            listSize = cachedSize - effectivePadding;
 
             if (alignAxis == 1)
                 startOffset = new Vector2(-scrollBarPadding * .5f, listSize.Y * .5f + scrollOffset);

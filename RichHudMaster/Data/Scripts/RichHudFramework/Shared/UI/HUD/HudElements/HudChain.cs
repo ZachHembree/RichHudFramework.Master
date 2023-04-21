@@ -211,22 +211,19 @@ namespace RichHudFramework
 
             protected override void Layout()
             {
-                UpdateMemberSizes();
-
-                Vector2 visibleTotalSize = GetVisibleTotalSize(),
-                    listSize = GetListSize(cachedSize - cachedPadding, visibleTotalSize);
-
-                _size = listSize;
-
-                // Calculate member start offset
-                Vector2 startOffset = new Vector2();
+                Vector2 listSize = cachedSize - cachedPadding,
+                    startOffset = Vector2.Zero;
 
                 if (alignAxis == 1)
                     startOffset.Y = listSize.Y * .5f;
                 else
                     startOffset.X = -listSize.X * .5f;
 
+                UpdateMemberSizes();
                 UpdateMemberOffsets(startOffset, cachedPadding);
+
+                Vector2 visibleTotalSize = GetVisibleTotalSize();
+                _size = GetListSize(cachedSize - cachedPadding, visibleTotalSize);
             }
 
             /// <summary>
