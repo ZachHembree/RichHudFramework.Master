@@ -310,27 +310,36 @@ namespace RichHudFramework
                     try
                     {
                         layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
-
-                        if (_parent == null)
-                        {
-                            ParentVisible = false;
-                        }
-                        else
-                        {
-                            ParentVisible = _parent.Visible;
-                        }
+                        ParentVisible = _parent?.Visible ?? false;
 
                         if (Visible || refresh)
                         {
-                            UpdateCache();
-                            Layout();
-
-                            // Update cached values for use on draw and by child nodes
                             cachedPadding = Padding;
                             cachedSize = new Vector2(Width, Height);
                             cachedPosition = cachedOrigin + Offset;
 
-                            UpdateMasking();
+                            Layout();
+
+                            if (children.Count > 0)
+                                UpdateChildAlignment();
+
+                            cachedPadding = Padding;
+                            cachedSize = new Vector2(Width, Height);
+                            cachedPosition = cachedOrigin + Offset;
+
+                            if (_parentFull != null && (_parentFull.State & HudElementStates.IsMasked) > 0 &&
+                                (State & HudElementStates.CanIgnoreMasking) == 0
+                            )
+                                State |= HudElementStates.IsMasked;
+                            else
+                                State &= ~HudElementStates.IsMasked;
+
+                            if ((State & HudElementStates.IsMasking) > 0 || (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0))
+                                UpdateMasking();
+                            else if ((State & HudElementStates.IsMasked) > 0)
+                                maskingBox = _parentFull?.maskingBox;
+                            else
+                                maskingBox = null;
                         }
                     }
                     catch (Exception e)
@@ -352,7 +361,6 @@ namespace RichHudFramework
                     {
                         if (Visible)
                         {
-                            UpdateCache();
                             Draw();
                         }
                     }
@@ -366,164 +374,136 @@ namespace RichHudFramework
             /// <summary>
             /// Updates cached values as well as parent and dim alignment.
             /// </summary>
-            protected void UpdateCache()
+            protected void UpdateChildAlignment()
             {
-                cachedPadding = Padding;
+                // Update size
+                for (int i = 0; i < children.Count; i++)
+                {
+                    var child = children[i] as HudElementBase;
 
-                if (_parentFull != null)
-                {
-                    GetDimAlignment();
-                    originAlignment = GetParentAlignment();
-                    cachedOrigin = _parentFull.cachedPosition + originAlignment;
-                    cachedPosition = cachedOrigin + Offset;
+                    if (child != null && (child.State & HudElementStates.IsVisible) > 0)
+                    {
+                        child.cachedPadding = child.Padding;
+
+                        float width = child.Width, 
+                            height = child.Height;
+                        DimAlignments sizeFlags = child.DimAlignment;
+
+                        if (sizeFlags != DimAlignments.None)
+                        {
+                            if ((sizeFlags & DimAlignments.IgnorePadding) == DimAlignments.IgnorePadding)
+                            {
+                                if ((sizeFlags & DimAlignments.Width) == DimAlignments.Width)
+                                    width = cachedSize.X - cachedPadding.X;
+
+                                if ((sizeFlags & DimAlignments.Height) == DimAlignments.Height)
+                                    height = cachedSize.Y - cachedPadding.Y;
+                            }
+                            else
+                            {
+                                if ((sizeFlags & DimAlignments.Width) == DimAlignments.Width)
+                                    width = cachedSize.X;
+
+                                if ((sizeFlags & DimAlignments.Height) == DimAlignments.Height)
+                                    height = cachedSize.Y;
+                            }
+
+                            child.Width = width;
+                            child.Height = height;
+                        }
+
+                        child.cachedSize = new Vector2(width, height);
+                    }
                 }
-                else
+
+                // Update position
+                for (int i = 0; i < children.Count; i++)
                 {
-                    cachedSize = new Vector2(Width, Height);
-                    cachedOrigin = Vector2.Zero;
-                    cachedPosition = cachedOrigin + Offset;
+                    var child = children[i] as HudElementBase;
+
+                    if (child != null && (child.State & HudElementStates.IsVisible) > 0)
+                    {
+                        ParentAlignments originFlags = child.ParentAlignment;
+                        Vector2 pos = Vector2.Zero,
+                            max = (cachedSize + child.cachedSize) * .5f,
+                            min = -max;
+
+                        if ((originFlags & ParentAlignments.UsePadding) == ParentAlignments.UsePadding)
+                        {
+                            min += cachedPadding * .5f;
+                            max -= cachedPadding * .5f;
+                        }
+
+                        if ((originFlags & ParentAlignments.InnerV) == ParentAlignments.InnerV)
+                        {
+                            min.Y += child.cachedSize.Y;
+                            max.Y -= child.cachedSize.Y;
+                        }
+
+                        if ((originFlags & ParentAlignments.InnerH) == ParentAlignments.InnerH)
+                        {
+                            min.X += child.cachedSize.X;
+                            max.X -= child.cachedSize.X;
+                        }
+
+                        if ((originFlags & ParentAlignments.Bottom) == ParentAlignments.Bottom)
+                            pos.Y = min.Y;
+                        else if ((originFlags & ParentAlignments.Top) == ParentAlignments.Top)
+                            pos.Y = max.Y;
+
+                        if ((originFlags & ParentAlignments.Left) == ParentAlignments.Left)
+                            pos.X = min.X;
+                        else if ((originFlags & ParentAlignments.Right) == ParentAlignments.Right)
+                            pos.X = max.X;
+
+                        child.originAlignment = pos;
+                        child.cachedOrigin = cachedPosition + pos;
+                        child.cachedPosition = child.cachedOrigin + child.Offset;
+                    }
                 }
             }
 
             /// <summary>
             /// Updates masking state and bounding boxes used to mask billboards
             /// </summary>
-            private void UpdateMasking()
+            protected void UpdateMasking()
             {
-                if (_parentFull != null &&
-                    (_parentFull.State & HudElementStates.IsMasked) > 0 &&
-                    (State & HudElementStates.CanIgnoreMasking) == 0
-                )
-                    State |= HudElementStates.IsMasked;
-                else
-                    State &= ~HudElementStates.IsMasked;
+                State |= HudElementStates.IsMasked;
+                BoundingBox2? parentBox, box = null;
 
-                if ((State & HudElementStates.IsMasking) > 0 || (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0))
+                if ((State & HudElementStates.CanIgnoreMasking) > 0)
                 {
-                    State |= HudElementStates.IsMasked;
-                    BoundingBox2? parentBox, box = null;
-
-                    if ((State & HudElementStates.CanIgnoreMasking) > 0)
-                    {
-                        parentBox = null;
-                    }
-                    else if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
-                    {
-                        Vector2 halfParent = .5f * _parentFull.cachedSize;
-                        parentBox = new BoundingBox2(
-                            -halfParent + _parentFull.cachedPosition,
-                            halfParent + _parentFull.cachedPosition
-                        );
-
-                        if (_parentFull.maskingBox != null)
-                            parentBox = parentBox.Value.Intersect(_parentFull.maskingBox.Value);
-                    }
-                    else
-                        parentBox = _parentFull?.maskingBox;
-
-                    if ((State & HudElementStates.IsMasking) > 0)
-                    {
-                        Vector2 halfSize = .5f * cachedSize;
-                        box = new BoundingBox2(
-                            -halfSize + cachedPosition,
-                            halfSize + cachedPosition
-                        );
-                    }
-
-                    if (parentBox != null && box != null)
-                        box = box.Value.Intersect(parentBox.Value);
-                    else if (box == null)
-                        box = parentBox;
-
-                    maskingBox = box;
+                    parentBox = null;
                 }
-                else if ((State & HudElementStates.IsMasked) > 0)
+                else if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
                 {
-                    maskingBox = _parentFull?.maskingBox;
+                    Vector2 halfParent = .5f * _parentFull.cachedSize;
+                    parentBox = new BoundingBox2(
+                        -halfParent + _parentFull.cachedPosition,
+                        halfParent + _parentFull.cachedPosition
+                    );
+
+                    if (_parentFull.maskingBox != null)
+                        parentBox = parentBox.Value.Intersect(_parentFull.maskingBox.Value);
                 }
                 else
+                    parentBox = _parentFull?.maskingBox;
+
+                if ((State & HudElementStates.IsMasking) > 0)
                 {
-                    maskingBox = null;
-                }
-            }
-
-            /// <summary>
-            /// Updates element dimensions to match those of its parent in accordance
-            /// with its DimAlignment.
-            /// </summary>
-            private void GetDimAlignment()
-            {
-                float width = Width, height = Height;
-
-                if (DimAlignment != DimAlignments.None)
-                {
-                    float parentWidth = _parentFull.cachedSize.X, parentHeight = _parentFull.cachedSize.Y;
-
-                    if ((DimAlignment & DimAlignments.IgnorePadding) == DimAlignments.IgnorePadding)
-                    {
-                        Vector2 parentPadding = _parentFull.cachedPadding;
-
-                        if ((DimAlignment & DimAlignments.Width) == DimAlignments.Width)
-                            width = parentWidth - parentPadding.X;
-
-                        if ((DimAlignment & DimAlignments.Height) == DimAlignments.Height)
-                            height = parentHeight - parentPadding.Y;
-                    }
-                    else
-                    {
-                        if ((DimAlignment & DimAlignments.Width) == DimAlignments.Width)
-                            width = parentWidth;
-
-                        if ((DimAlignment & DimAlignments.Height) == DimAlignments.Height)
-                            height = parentHeight;
-                    }
-
-                    Width = width;
-                    Height = height;
+                    Vector2 halfSize = .5f * cachedSize;
+                    box = new BoundingBox2(
+                        -halfSize + cachedPosition,
+                        halfSize + cachedPosition
+                    );
                 }
 
-                cachedSize = new Vector2(width, height);
-            }
+                if (parentBox != null && box != null)
+                    box = box.Value.Intersect(parentBox.Value);
+                else if (box == null)
+                    box = parentBox;
 
-            /// <summary>
-            /// Calculates the offset necessary to achieve the alignment specified by the
-            /// ParentAlignment property.
-            /// </summary>
-            private Vector2 GetParentAlignment()
-            {
-                Vector2 alignment = Vector2.Zero,
-                    max = (_parentFull.cachedSize + cachedSize) * .5f,
-                    min = -max;
-
-                if ((ParentAlignment & ParentAlignments.UsePadding) == ParentAlignments.UsePadding)
-                {
-                    min += _parentFull.cachedPadding * .5f;
-                    max -= _parentFull.cachedPadding * .5f;
-                }
-
-                if ((ParentAlignment & ParentAlignments.InnerV) == ParentAlignments.InnerV)
-                {
-                    min.Y += cachedSize.Y;
-                    max.Y -= cachedSize.Y;
-                }
-
-                if ((ParentAlignment & ParentAlignments.InnerH) == ParentAlignments.InnerH)
-                {
-                    min.X += cachedSize.X;
-                    max.X -= cachedSize.X;
-                }
-
-                if ((ParentAlignment & ParentAlignments.Bottom) == ParentAlignments.Bottom)
-                    alignment.Y = min.Y;
-                else if ((ParentAlignment & ParentAlignments.Top) == ParentAlignments.Top)
-                    alignment.Y = max.Y;
-
-                if ((ParentAlignment & ParentAlignments.Left) == ParentAlignments.Left)
-                    alignment.X = min.X;
-                else if ((ParentAlignment & ParentAlignments.Right) == ParentAlignments.Right)
-                    alignment.X = max.X;
-
-                return alignment;
+                maskingBox = box;
             }
 
             protected override object GetOrSetApiMember(object data, int memberEnum)
