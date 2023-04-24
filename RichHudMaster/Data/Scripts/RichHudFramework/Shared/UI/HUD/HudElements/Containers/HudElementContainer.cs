@@ -4,12 +4,16 @@
     /// Base container class for <see cref="HudChain"/> members. Can be extended to associate data with chain
     /// elements.
     /// </summary>
-    public class HudElementContainer<TElement> : IHudElementContainer<TElement> where TElement : HudNodeBase
+    public class HudElementContainer<TElement> : IChainElementContainer<TElement> where TElement : HudElementBase
     {
-        public virtual TElement Element { get; private set; }
+        public virtual TElement Element { get; protected set; }
+
+        public float AlignAxisScale { get; set; }
 
         public HudElementContainer()
-        { }
+        {
+            AlignAxisScale = 1f;
+        }
 
         public virtual void SetElement(TElement element)
         {

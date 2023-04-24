@@ -16,4 +16,10 @@
         /// </summary>
         void SetElement(TElement Element);
     }
+
+    public interface IChainElementContainer<TElement> : IHudElementContainer<TElement> 
+        where TElement : HudElementBase
+    {
+        float AlignAxisScale { get; set; }
+    }
 }
