@@ -190,6 +190,7 @@ namespace RichHudFramework
 
             /// <summary>
             /// Updates the input of this UI element. Invocation order affected by z-Offset and depth sorting.
+            /// Executes last, after Draw.
             /// </summary>
             protected virtual void HandleInput(Vector2 cursorPos) { }
 
@@ -201,6 +202,7 @@ namespace RichHudFramework
 
             /// <summary>
             /// Used to immediately draw billboards. Invocation order affected by z-Offset and depth sorting.
+            /// Executes after Layout and before HandleInput.
             /// </summary>
             protected virtual void Draw() { }
 

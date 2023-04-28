@@ -85,7 +85,7 @@ namespace RichHudFramework
             {
                 background = new TexturedBox(this)
                 {
-                    DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+                    DimAlignment = DimAlignments.UnpaddedSize,
                 };
 
                 FitToTextElement = true;

@@ -116,7 +116,7 @@ namespace RichHudFramework.UI
 
             bodyBg = new TexturedBox(body)
             {
-                DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+                DimAlignment = DimAlignments.UnpaddedSize,
                 ZOffset = -2,
             };
 
@@ -124,20 +124,20 @@ namespace RichHudFramework.UI
             {
                 ZOffset = 1,
                 Thickness = 1f,
-                DimAlignment = DimAlignments.Both,
+                DimAlignment = DimAlignments.Size,
             };
 
             resizeInput = new MouseInputElement(this)
             {
                 ZOffset = sbyte.MaxValue,
                 Padding = new Vector2(16f),
-                DimAlignment = DimAlignments.Both,
+                DimAlignment = DimAlignments.Size,
                 CanIgnoreMasking = true
             };
             
             inputInner = new MouseInputElement(resizeInput)
             {
-                DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+                DimAlignment = DimAlignments.UnpaddedSize,
             };
 
             AllowResizing = true;

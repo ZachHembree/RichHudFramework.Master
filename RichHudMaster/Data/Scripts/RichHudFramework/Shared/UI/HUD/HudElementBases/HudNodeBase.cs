@@ -117,15 +117,7 @@ namespace RichHudFramework
                     try
                     {
                         layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
-
-                        if (_parent == null)
-                        {
-                            ParentVisible = false;
-                        }
-                        else
-                        {
-                            ParentVisible = _parent.Visible;
-                        }
+                        ParentVisible = _parent?.Visible ?? false;
 
                         if (Visible || refresh)
                             Layout();

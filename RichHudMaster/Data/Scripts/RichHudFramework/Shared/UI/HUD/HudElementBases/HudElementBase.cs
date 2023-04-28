@@ -303,7 +303,7 @@ namespace RichHudFramework
             /// Updates layout for the element and its children. Overriding this method is rarely necessary. 
             /// If you need to update layout, use Layout().
             /// </summary>
-            public override void BeginLayout(bool refresh)
+            public sealed override void BeginLayout(bool refresh)
             {
                 if (!ExceptionHandler.ClientsPaused)
                 {
@@ -314,18 +314,17 @@ namespace RichHudFramework
 
                         if (Visible || refresh)
                         {
+                            Vector2 lastSize = new Vector2(Width, Height),
+                                lastOffset = Offset;
+
                             cachedPadding = Padding;
-                            cachedSize = new Vector2(Width, Height);
-                            cachedPosition = cachedOrigin + Offset;
+                            cachedSize = lastSize;
+                            cachedPosition = cachedOrigin + lastOffset;
 
                             Layout();
 
                             if (children.Count > 0)
                                 UpdateChildAlignment();
-
-                            cachedPadding = Padding;
-                            cachedSize = new Vector2(Width, Height);
-                            cachedPosition = cachedOrigin + Offset;
 
                             if (_parentFull != null && (_parentFull.State & HudElementStates.IsMasked) > 0 &&
                                 (State & HudElementStates.CanIgnoreMasking) == 0
@@ -340,7 +339,7 @@ namespace RichHudFramework
                                 maskingBox = _parentFull?.maskingBox;
                             else
                                 maskingBox = null;
-                        }
+                        }                        
                     }
                     catch (Exception e)
                     {
@@ -353,7 +352,7 @@ namespace RichHudFramework
             /// Used to immediately draw billboards. Overriding this method is rarely necessary. 
             /// If you need to draw something, use Draw().
             /// </summary>
-            public override void BeginDraw()
+            public sealed override void BeginDraw()
             {
                 if (!ExceptionHandler.ClientsPaused)
                 {
@@ -381,7 +380,7 @@ namespace RichHudFramework
                 {
                     var child = children[i] as HudElementBase;
 
-                    if (child != null && (child.State & HudElementStates.IsVisible) > 0)
+                    if (child != null && (child.State & (nodeVisible)) == nodeVisible)
                     {
                         child.cachedPadding = child.Padding;
 
@@ -421,7 +420,7 @@ namespace RichHudFramework
                 {
                     var child = children[i] as HudElementBase;
 
-                    if (child != null && (child.State & HudElementStates.IsVisible) > 0)
+                    if (child != null && (child.State & (nodeVisible)) == nodeVisible)
                     {
                         ParentAlignments originFlags = child.ParentAlignment;
                         Vector2 pos = Vector2.Zero,
