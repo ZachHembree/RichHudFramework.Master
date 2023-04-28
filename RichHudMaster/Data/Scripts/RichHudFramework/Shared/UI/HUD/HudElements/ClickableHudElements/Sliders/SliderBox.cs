@@ -107,18 +107,18 @@ namespace RichHudFramework.UI
         {
             background = new TexturedBox(this)
             {
-                DimAlignment = DimAlignments.Both
+                DimAlignment = DimAlignments.Size
             };
 
             border = new BorderBox(background)
             {
                 Thickness = 1f,
-                DimAlignment = DimAlignments.Both,
+                DimAlignment = DimAlignments.Size,
             };
 
             slide = new SliderBar(this)
             {
-                DimAlignment = DimAlignments.Both,
+                DimAlignment = DimAlignments.Size,
                 SliderSize = new Vector2(14f, 28f),
                 BarHeight = 5f
             };

@@ -78,10 +78,10 @@ namespace RichHudFramework.UI
 
             layout = new HudChain(true, this)
             {
-                SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                DimAlignment = DimAlignments.UnpaddedSize,
                 Spacing = 2f,
-                CollectionContainer = { name, onOffButton }
+                CollectionContainer = { { name , 0f }, { onOffButton, 1f } }
             };
 
             Padding = new Vector2(20f, 0f);
@@ -90,10 +90,5 @@ namespace RichHudFramework.UI
 
         public NamedOnOffButton() : this(null)
         { }
-
-        protected override void Layout()
-        {
-            onOffButton.Height = Height - name.Height - Padding.Y - layout.Spacing;
-        }
     }
 }

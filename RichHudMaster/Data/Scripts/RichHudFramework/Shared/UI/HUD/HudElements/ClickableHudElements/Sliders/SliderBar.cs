@@ -229,7 +229,7 @@ namespace RichHudFramework.UI
         {
             bar = new TexturedBox(this);
             slider = new TexturedBox(bar) { UseCursor = true, ShareCursor = true };
-            mouseInput = new MouseInputElement(this) { DimAlignment = DimAlignments.Both };
+            mouseInput = new MouseInputElement(this) { DimAlignment = DimAlignments.Size };
 
             _barSize = new Vector2(100f, 12f);
             _sliderSize = new Vector2(6f, 12f);

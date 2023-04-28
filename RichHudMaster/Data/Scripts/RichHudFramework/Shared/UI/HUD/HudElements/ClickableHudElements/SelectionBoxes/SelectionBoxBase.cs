@@ -52,18 +52,6 @@ namespace RichHudFramework.UI
         /// </summary>
         public virtual bool UseSmoothScrolling { get { return hudChain.UseSmoothScrolling; } set { hudChain.UseSmoothScrolling = value; } }
 
-        /// <summary>
-        /// Minimum number of visible elements allowed. Supercedes maximum length. If the number of elements that
-        /// can fit within the maximum length is less than this value, then this element will expand beyond its maximum
-        /// size.
-        /// </summary>
-        public virtual int MinVisibleCount { get { return hudChain.MinVisibleCount; } set { hudChain.MinVisibleCount = value; } }
-
-        /// <summary>
-        /// Minimum total length (on the align axis) of visible members allowed in the scrollbox.
-        /// </summary>
-        public virtual float MinLength { get { return hudChain.MinLength; } set { hudChain.MinLength = value; } }
-
         protected override float HighlightWidth =>
             hudChain.Size.X - cachedPadding.X - hudChain.ScrollBar.Width - hudChain.Padding.X - HighlightPadding.X;
 
@@ -206,14 +194,10 @@ namespace RichHudFramework.UI
         /// </summary>
         protected virtual Vector2 ListPos => hudChain.Position;
 
-        /// <summary>
-        /// Sets sizing mode for list chain
-        /// </summary>
-        public virtual HudChainSizingModes SizingMode { get { return hudChain.SizingMode; } set { hudChain.SizingMode = value; } }
-
         protected virtual float HighlightWidth => hudChain.Size.X - cachedPadding.X - hudChain.Padding.X - HighlightPadding.X;
 
         public readonly TChain hudChain;
+
         protected readonly HighlightBox selectionBox, highlightBox;
         protected readonly ListInputElement<TContainer, TElement> listInput;
         protected readonly bool chainHidesDisabled;
@@ -224,11 +208,8 @@ namespace RichHudFramework.UI
             hudChain = new TChain()
             {
                 AlignVertical = true,
-                SizingMode = 
-                    HudChainSizingModes.FitMembersOffAxis | 
-                    HudChainSizingModes.ClampMembersAlignAxis | 
-                    HudChainSizingModes.ClampChainOffAxis,
-                DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding,
+                SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                DimAlignment = DimAlignments.UnpaddedSize,
             };
             hudChain.Register(this);
             chainHidesDisabled = hudChain is ScrollBox<TContainer, TElement>;
@@ -285,6 +266,15 @@ namespace RichHudFramework.UI
         public void ClearSelection() =>
             listInput.ClearSelection();
 
+        /// <summary>
+        /// Returns the most recent total size of the list elements in the given range,
+        /// including padding.
+        /// </summary>
+        public virtual Vector2 GetRangeSize(int start = 0, int end = -1)
+        {
+            return hudChain.GetRangeSize(start, end) + cachedPadding;
+        }
+
         protected override void Layout()
         {
             if (!chainHidesDisabled)
@@ -295,11 +285,6 @@ namespace RichHudFramework.UI
                 }
             }
 
-            Size = hudChain.Size + Padding;
-        }
-
-        protected override void HandleInput(Vector2 cursorPos)
-        {
             highlightBox.Visible = false;
             selectionBox.Visible = false;
 

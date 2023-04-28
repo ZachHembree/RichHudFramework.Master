@@ -17,9 +17,16 @@
         void SetElement(TElement Element);
     }
 
+    /// <summary>
+    /// Interface for objects containing UI elements compatible with HudChain
+    /// </summary>
     public interface IChainElementContainer<TElement> : IHudElementContainer<TElement> 
         where TElement : HudElementBase
     {
+        /// <summary>
+        /// Scale of the UI element relative to the chain. Normalized to sum of all members
+        /// scales. 0f = constant (no scaling); 1f full auto
+        /// </summary>
         float AlignAxisScale { get; set; }
     }
 }

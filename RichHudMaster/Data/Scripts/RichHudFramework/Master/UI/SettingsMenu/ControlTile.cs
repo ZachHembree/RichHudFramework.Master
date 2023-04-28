@@ -120,26 +120,27 @@ namespace RichHudFramework
                 {
                     background = new TexturedBox(this)
                     {
-                        DimAlignment = DimAlignments.Both,
+                        DimAlignment = DimAlignments.Size,
                         Color = TerminalFormatting.Gunmetal,
                     };
 
                     var border = new BorderBox(this)
                     {
-                        DimAlignment = DimAlignments.Both,
+                        DimAlignment = DimAlignments.Size,
                         Color = new Color(58, 68, 77),
                         Thickness = 1f,
                     };
 
                     controls = new HudChain<TerminalControlBase>(true, this)
                     {
-                        DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
+                        DimAlignment = DimAlignments.UnpaddedSize,
+                        SizingMode = HudChainSizingModes.ClampMembersOffAxis,
                         Spacing = 12f,
                     };
                     
                     Padding = new Vector2(16f);
                     Size = new Vector2(300f, 250f);
+                    IsMasking = true;
                 }
 
                 /// <summary>

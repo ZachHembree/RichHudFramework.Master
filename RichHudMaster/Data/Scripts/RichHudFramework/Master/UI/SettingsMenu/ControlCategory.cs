@@ -42,10 +42,6 @@ namespace RichHudFramework
 
                 scrollBox.Padding = new Vector2(16f);
                 scrollBox.Spacing = 30f;
-                scrollBox.SizingMode =
-                    HudChainSizingModes.FitChainOffAxis |
-                    HudChainSizingModes.ClampChainAlignAxis | 
-                    HudChainSizingModes.ClampMembersOffAxis;
             }
 
             /// <summary>
@@ -213,7 +209,6 @@ namespace RichHudFramework
 
                 public readonly ScrollBox<TMember> scrollBox;
                 private readonly Label header, subheader;
-                private readonly HudChain layout;
 
                 public CategoryElement(bool alignVertical, HudParentBase parent = null) : base(parent)
                 {
@@ -236,8 +231,7 @@ namespace RichHudFramework
 
                     scrollBox = new ScrollBox<TMember>(alignVertical)
                     {
-                        SizingMode = HudChainSizingModes.FitChainOffAxis | HudChainSizingModes.ClampChainAlignAxis,
-                        MinVisibleCount = 1,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
                         Spacing = 12f,
                         Height = 280f,
                         Color = Color.Red,
@@ -245,11 +239,11 @@ namespace RichHudFramework
 
                     scrollBox.Background.Visible = false;
 
-                    layout = new HudChain(true, this)
+                    var layout = new HudChain(true, this)
                     {
-                        DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                        CollectionContainer = { header, subheader, scrollBox }
+                        DimAlignment = DimAlignments.UnpaddedSize,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        CollectionContainer = { header, subheader, { scrollBox, 1f } }
                     };
 
                     HeaderText = "NewSettingsCategory";
@@ -270,8 +264,6 @@ namespace RichHudFramework
                 {
                     SliderBar slider = scrollBox.ScrollBar.slide;
                     slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
-
-                    scrollBox.Height = cachedSize.Y - header.Height - subheader.Height - cachedPadding.Y;
                 }
             }
         }

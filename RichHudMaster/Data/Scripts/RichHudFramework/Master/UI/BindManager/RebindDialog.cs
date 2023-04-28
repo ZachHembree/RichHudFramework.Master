@@ -156,22 +156,22 @@ namespace RichHudFramework.UI.Server
                 background = new TexturedBox(this)
                 {
                     Color = new Color(37, 46, 53),
-                    DimAlignment = DimAlignments.Both,
+                    DimAlignment = DimAlignments.Size,
                 };
 
                 border = new BorderBox(this)
                 {
                     Thickness = 1f,
                     Color = new Color(53, 66, 75),
-                    DimAlignment = DimAlignments.Both,
+                    DimAlignment = DimAlignments.Size,
                 };
 
                 header = new Label(this)
                 {
                     AutoResize = false, 
-                    DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                    DimAlignment = DimAlignments.UnpaddedWidth,
                     Height = 24f,
-                    ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV | ParentAlignments.UsePadding,
+                    ParentAlignment = ParentAlignments.PaddedInnerTop,
                     Offset = new Vector2(0f, -42f),
                     Format = new GlyphFormat(Color.White, TextAlignment.Center, 1.25f),
                     Text = "SELECT CONTROL",

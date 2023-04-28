@@ -120,7 +120,7 @@ namespace RichHudFramework.UI
             UseCursor = true;
             ShareCursor = true;
             HasFocus = false;
-            DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding;
+            DimAlignment = DimAlignments.UnpaddedSize;
 
             LoseFocusCallback = LoseFocus;
         }

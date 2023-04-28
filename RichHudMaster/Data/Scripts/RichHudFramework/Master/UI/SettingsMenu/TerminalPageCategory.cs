@@ -187,7 +187,6 @@ namespace RichHudFramework
             public PageCategoryNodeBox(HudParentBase parent) : base(parent)
             {
                 HeaderColor = new Color(40, 48, 55);
-                MemberMinSize = new Vector2(0f, 34f);
             }
 
             public PageCategoryNodeBox() : this(null)
