@@ -243,9 +243,8 @@ namespace RichHudFramework.UI
                     scrollOffset = 0f;
 
                 float elementSpanLength;
-                int visCount;
 
-                if (TryGetVisibleRange(chainSize[alignAxis], chainSize[offAxis], out visCount, out elementSpanLength))
+                if (TryGetVisibleRange(chainSize[alignAxis], chainSize[offAxis], out elementSpanLength))
                 {
                     Vector2 startOffset, endOffset;
                     float rcpSpanLength = 1f / Math.Max(elementSpanLength, 1E-6f);

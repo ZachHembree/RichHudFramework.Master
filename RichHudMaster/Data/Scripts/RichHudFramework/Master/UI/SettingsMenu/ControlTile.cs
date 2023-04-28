@@ -134,7 +134,7 @@ namespace RichHudFramework
                     controls = new HudChain<TerminalControlBase>(true, this)
                     {
                         DimAlignment = DimAlignments.UnpaddedSize,
-                        SizingMode = HudChainSizingModes.ClampMembersOffAxis,
+                        SizingMode = HudChainSizingModes.ClampMembersOffAxis | HudChainSizingModes.AlignMembersCenter,
                         Spacing = 12f,
                     };
                     

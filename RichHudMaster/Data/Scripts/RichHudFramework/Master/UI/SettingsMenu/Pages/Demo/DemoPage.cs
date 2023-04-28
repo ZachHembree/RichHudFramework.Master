@@ -123,6 +123,7 @@ namespace RichHudFramework
 
                     transformControls = new HudChain(false)
                     {
+                        SizingMode = HudChainSizingModes.ClampMembersOffAxis | HudChainSizingModes.AlignMembersCenter,
                         CollectionContainer = { transformCol1, transformCol2 },
                     };
                     transformControls.Size = transformControls.GetRangeSize();

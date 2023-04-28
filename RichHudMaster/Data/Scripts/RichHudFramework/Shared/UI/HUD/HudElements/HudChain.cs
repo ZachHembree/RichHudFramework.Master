@@ -206,9 +206,8 @@ namespace RichHudFramework
                 if (hudCollectionList.Count > 0 && (chainSize.X > 0f && chainSize.Y > 0f))
                 {
                     float elementSpanLength;
-                    int visCount;
 
-                    if (TryGetVisibleRange(chainSize[alignAxis], chainSize[offAxis], out visCount, out elementSpanLength))
+                    if (TryGetVisibleRange(chainSize[alignAxis], chainSize[offAxis], out elementSpanLength))
                     {
                         // Find the start and end points of the span within the chain element
                         Vector2 startOffset = Vector2.Zero,
@@ -219,13 +218,39 @@ namespace RichHudFramework
 
                         if (alignAxis == 1) // Vertical
                         {
-                            startOffset.Y = .5f * chainSize.Y;
-                            endOffset.Y = startOffset.Y - elementSpanLength;
+                            if ((SizingMode & HudChainSizingModes.AlignMembersCenter) > 0)
+                            {
+                                startOffset.Y = .5f * elementSpanLength;
+                                endOffset.Y = startOffset.Y - elementSpanLength;
+                            }
+                            else if ((SizingMode & HudChainSizingModes.AlignMembersEnd) > 0)
+                            {
+                                endOffset.Y = -.5f * chainSize.Y;
+                                startOffset.Y = endOffset.Y + elementSpanLength;
+                            }
+                            else
+                            {
+                                startOffset.Y = .5f * chainSize.Y;
+                                endOffset.Y = startOffset.Y - elementSpanLength;
+                            }                            
                         }
                         else
                         {
-                            startOffset.X = -.5f * chainSize.X;
-                            endOffset.X = startOffset.X + elementSpanLength;
+                            if ((SizingMode & HudChainSizingModes.AlignMembersCenter) > 0)
+                            {
+                                startOffset.X = -.5f * elementSpanLength;
+                                endOffset.X = startOffset.X + elementSpanLength;
+                            }
+                            else if ((SizingMode & HudChainSizingModes.AlignMembersEnd) > 0)
+                            {
+                                endOffset.X = .5f * chainSize.X;
+                                startOffset.X = endOffset.X - elementSpanLength;
+                            }
+                            else
+                            {
+                                startOffset.X = -.5f * chainSize.X;
+                                endOffset.X = startOffset.X + elementSpanLength;
+                            }
                         }
 
                         UpdateMemberOffsets(startOffset, endOffset, rcpSpanLength);
@@ -237,12 +262,12 @@ namespace RichHudFramework
             /// Finds the total number of elements visible as well as the total length of the span along the align axis.
             /// Returns false if no elements are visible.
             /// </summary>
-            protected virtual bool TryGetVisibleRange(float alignAxisSize, float offAxisSize, out int visCount, out float elementSpanLength)
+            protected virtual bool TryGetVisibleRange(float alignAxisSize, float offAxisSize, out float elementSpanLength)
             {
                 float totalScale = 0f,
                     constantSpanLength = 0f;
+                int visCount = 0;
 
-                visCount = 0;
                 elementSpanLength = 0f;
 
                 for (int i = 0; i < hudCollectionList.Count; i++)
