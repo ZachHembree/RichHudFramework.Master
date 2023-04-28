@@ -112,7 +112,7 @@ namespace RichHudFramework.UI
 
             border = new BorderBox(hudChain)
             {
-                DimAlignment = DimAlignments.UnpaddedSize,
+                DimAlignment = DimAlignments.Size,
                 Color = new Color(58, 68, 77),
                 Thickness = 1f,
             };
@@ -239,8 +239,8 @@ namespace RichHudFramework.UI
         {
             var entry = new TContainer();
             entry.Element.TextBoard.Format = Format;
-            entry.Element.Height = LineHeight;
             entry.Element.Padding = MemberPadding;
+            entry.Element.Height = LineHeight;
             entry.Element.ZOffset = 1;
             entry.Enabled = true;
 
