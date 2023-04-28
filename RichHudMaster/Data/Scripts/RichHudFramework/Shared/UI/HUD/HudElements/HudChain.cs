@@ -1,7 +1,4 @@
-﻿using Microsoft.Xml.Serialization.GeneratedAssembly;
-using System;
-using System.Runtime.InteropServices;
-using System.Xml.Linq;
+﻿using System;
 using VRage;
 using VRageMath;
 
@@ -16,51 +13,26 @@ namespace RichHudFramework
         /// </summary>
         public enum HudChainSizingModes : int
         {
-            // Naming: [Clamp/Fit]Members[OffAxis/AlignAxis/Both]
+            // Naming: [Clamp/Fit/Align]Members[OffAxis/AlignAxis/Both]
             // Fit > Clamp
 
             /// <summary>
             /// If this flag is set, then member size along the off axis will be allowed to vary freely, provided they
-            /// fit inside the chain. If they don't fit, they will be clamped.
+            /// fit inside the chain. For vertical chains, width will be clamped. For horizontal chains, height is clamped.
             /// </summary>
             ClampMembersOffAxis = 0x1,
 
             /// <summary>
-            /// If this flag is set, then member size along the align axis will be allowed to vary freely, provided they
-            /// fit inside the chain. If they don't fit, they will be clamped.
-            /// </summary>
-            ClampMembersAlignAxis = 0x2,
-
-            /// <summary>
-            /// In this mode member size can vary freely in both dimensions, provided they fit within the bounds of the
-            /// chain. If they don't fit, they will be clamped.
-            /// </summary>
-            ClampMembersBoth = ClampMembersOffAxis | ClampMembersAlignAxis,
-
-            /// <summary>
             /// If this flag is set, member size will be set to be equal to the size of the chain on the off axis, less
-            /// padding.
+            /// padding. For vertical chains, width will be matched. For horizontal chains, height is matched.
             /// </summary>
-            FitMembersOffAxis = 0x4,
+            FitMembersOffAxis = 0x2,
 
-            /// <summary>
-            /// If this flag is set, member size will be set to be proportional to the size of the chain on the align axis.
-            /// By default, each member is weighted equally, but the proportions can be defined on registration.
-            /// </summary>
-            FitMembersAlignAxis = 0x8,
+            AlignMembersStart = 0x4,
 
-            /// <summary>
-            /// If this flag is set, member size will be set to be proportional to the size of the chain on the align axis,
-            /// and equal to the chain size on the off axis.
-            /// By default, each member is weighted equally, but the proportions can be defined on registration.
-            /// </summary>
-            FitMembersBoth = FitMembersOffAxis | FitMembersAlignAxis,
+            AlignMembersEnd = 0x8,
 
-            AlignChainStart = 0x10,
-
-            AlignChainEnd = 0x20,
-
-            AlignChainCenter = 0x40
+            AlignMembersCenter = 0x10
         }
 
         /// <summary>
@@ -129,7 +101,7 @@ namespace RichHudFramework
                 Init();
 
                 Spacing = 0f;
-                SizingMode = HudChainSizingModes.FitMembersBoth;
+                SizingMode = HudChainSizingModes.ClampMembersOffAxis;
                 AlignVertical = alignVertical;
             }
 
@@ -140,10 +112,15 @@ namespace RichHudFramework
             { }
 
             /// <summary>
+            /// Initialzer called before the constructor.
+            /// </summary>
+            protected virtual void Init() { }
+
+            /// <summary>
             /// Adds a UI element to the end of the chain.
             /// </summary>
             /// <param name="alignAxisScale">Scale of the element relative to the chain along the align axis, less padding and space
-            /// required for other chain members. 0f == constant size; 1f = auto (default)</param>
+            /// required for other chain members. 0f == constant size (default); 1f = auto</param>
             /// <param name="preload"></param>
             public virtual void Add(TElement element, float alignAxisScale, bool preload = false)
             {
@@ -153,10 +130,74 @@ namespace RichHudFramework
                 Add(newContainer, preload);
             }
 
+            public virtual Vector2 SetMemberSize(Vector2 newSize, int start = 0, int end = -1)
+            {
+                Vector2 listSize = Vector2.Zero;
+                int visCount = 0;
+
+                if (hudCollectionList.Count > 0)
+                {
+                    if (end == -1)
+                        end = hudCollectionList.Count - 1;
+
+                    for (int i = start; i <= end ; i++)
+                    {
+                        TElement element = hudCollectionList[i].Element;
+
+                        if ((element.State & HudElementStates.IsVisible) > 0)
+                        {
+                            Vector2 elementSize = element.Size;
+
+                            if (newSize[alignAxis] != 0)
+                                elementSize[alignAxis] = newSize[alignAxis];
+
+                            if (newSize[offAxis] != 0)
+                                elementSize[offAxis] = newSize[offAxis];
+
+                            element.Size = elementSize;
+                            listSize[offAxis] = Math.Max(listSize[offAxis], elementSize[offAxis]);
+                            listSize[alignAxis] += elementSize[alignAxis];
+                            visCount++;
+                        }
+                    }
+
+                    listSize[alignAxis] += Spacing * (visCount - 1);
+                }
+
+                return listSize + cachedPadding;
+            }
+
             /// <summary>
-            /// Initialzer called before the constructor.
+            /// Returns the most recent total size of the chain elements in the given range.
             /// </summary>
-            protected virtual void Init() { }
+            public virtual Vector2 GetRangeSize(int start = 0, int end = -1)
+            {
+                Vector2 listSize = Vector2.Zero;
+                int visCount = 0;
+
+                if (hudCollectionList.Count > 0)
+                {
+                    if (end == -1)
+                        end = hudCollectionList.Count - 1;
+
+                    for (int i = start; i <= end; i++)
+                    {
+                        TElement element = hudCollectionList[i].Element;
+
+                        if ((element.State & HudElementStates.IsVisible) > 0)
+                        {
+                            Vector2 elementSize = element.Size;
+                            listSize[offAxis] = Math.Max(listSize[offAxis], elementSize[offAxis]);
+                            listSize[alignAxis] += elementSize[alignAxis];
+                            visCount++;
+                        }
+                    }
+
+                    listSize[alignAxis] += Spacing * (visCount - 1);
+                }
+
+                return listSize + cachedPadding;
+            }
 
             protected override void Layout()
             {
@@ -172,10 +213,9 @@ namespace RichHudFramework
                         // Find the start and end points of the span within the chain element
                         Vector2 startOffset = Vector2.Zero,
                             endOffset = Vector2.Zero;
-                        float totalSpacing = Spacing * (visCount - 1f), 
-                            rcpSpanLength = 1f / Math.Max(elementSpanLength, 1E-6f);
+                        float rcpSpanLength = 1f / Math.Max(elementSpanLength, 1E-6f);
 
-                        elementSpanLength = Math.Min(elementSpanLength + totalSpacing, chainSize[alignAxis]);
+                        elementSpanLength = Math.Min(elementSpanLength, chainSize[alignAxis]);
 
                         if (alignAxis == 1) // Vertical
                         {
@@ -199,7 +239,8 @@ namespace RichHudFramework
             /// </summary>
             protected virtual bool TryGetVisibleRange(float alignAxisSize, float offAxisSize, out int visCount, out float elementSpanLength)
             {
-                float rcpTotalScale = 0f;
+                float totalScale = 0f,
+                    constantSpanLength = 0f;
 
                 visCount = 0;
                 elementSpanLength = 0f;
@@ -210,17 +251,19 @@ namespace RichHudFramework
 
                     if ((container.Element.State & HudElementStates.IsVisible) > 0)
                     {
-                        rcpTotalScale += container.AlignAxisScale;
+                        totalScale += container.AlignAxisScale;
                         visCount++;
+
+                        if (container.AlignAxisScale == 0f)
+                            constantSpanLength += container.Element.Size[alignAxis];
                     }
                 }
 
-                rcpTotalScale /= Math.Max(rcpTotalScale, 1f);
-
                 if (visCount > 0)
                 {
-                    float totalSpacing = Spacing * (visCount - 1f), 
-                        availableLength = Math.Max(alignAxisSize - Spacing * totalSpacing, 0f);
+                    float totalSpacing = Spacing * (visCount - 1),
+                        autoSizeLength = Math.Max(alignAxisSize - constantSpanLength - totalSpacing, 0f),
+                        rcpTotalScale = Math.Min(1f / Math.Max(totalScale, 1f), 1f);
 
                     for (int i = 0; i < hudCollectionList.Count; i++)
                     {
@@ -230,10 +273,10 @@ namespace RichHudFramework
                         {
                             Vector2 size = container.Element.Size;
 
-                            if (container.AlignAxisScale != 0f)
+                            if (container.AlignAxisScale != 0f && autoSizeLength > 0f)
                             {
                                 float effectiveScale = container.AlignAxisScale * rcpTotalScale;
-                                size[alignAxis] = availableLength * effectiveScale;
+                                size[alignAxis] = autoSizeLength * effectiveScale;
                             }
 
                             // Update off axis size
@@ -246,6 +289,8 @@ namespace RichHudFramework
                             container.Element.Size = size;
                         }
                     }
+
+                    elementSpanLength += totalSpacing;
 
                     return true;
                 }
@@ -261,7 +306,7 @@ namespace RichHudFramework
                 ParentAlignments left = (ParentAlignments)((int)ParentAlignments.Left * (2 - alignAxis)),
                     right = (ParentAlignments)((int)ParentAlignments.Right * (2 - alignAxis)),
                     bitmask = left | right;
-                float j = 0f;
+                float j = 0f, spacingInc = Spacing * rcpSpanLength;
 
                 for (int i = 0; i < hudCollectionList.Count; i++)
                 {
@@ -276,7 +321,8 @@ namespace RichHudFramework
 
                         float increment = element.Size[alignAxis] * rcpSpanLength;
                         element.Offset = Vector2.Lerp(startOffset, endOffset, j + (.5f * increment));
-                        j += increment;
+
+                        j += increment + spacingInc;
                     }
                 }
             }
