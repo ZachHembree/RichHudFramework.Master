@@ -152,7 +152,7 @@ namespace RichHudFramework.UI
             {
                 DimAlignment = DimAlignments.Size,
                 SizingMode = HudChainSizingModes.FitMembersOffAxis,
-                Padding = new Vector2(12f, 10f),
+                Padding = new Vector2(20f, 10f),
                 Spacing = 9f,
                 CollectionContainer = { { on, 1f }, { off, 1f } }
             };
