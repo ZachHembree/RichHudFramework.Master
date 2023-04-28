@@ -91,6 +91,7 @@ namespace RichHudFramework
             {
                 page.Element.TextBoard.AutoResize = false;
                 page.Element.Padding = new Vector2(20f, 6f);
+                page.Element.Height = 34f;
 
                 treeBox.Add(page);
                 pages.Add(page);

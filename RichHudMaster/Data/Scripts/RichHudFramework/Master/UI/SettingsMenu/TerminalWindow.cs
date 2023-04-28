@@ -18,7 +18,7 @@ namespace RichHudFramework
             /// <summary>
             /// Settings menu main window.
             /// </summary>
-            private class TerminalWindow : WindowBase
+            private class TerminalWindow : Window
             {
                 public override Color BorderColor
                 {
@@ -57,6 +57,7 @@ namespace RichHudFramework
                 {
                     HeaderBuilder.Format = TerminalFormatting.HeaderFormat;
                     HeaderBuilder.SetText("Rich HUD Terminal");
+                    header.background.Visible = false;
                     header.Height = 60f;
 
                     topDivider = new TexturedBox(header)
@@ -78,29 +79,24 @@ namespace RichHudFramework
                         Width = 26f,
                     };
 
-                    pageChain = new HudChain(false)
+                    pageChain = new HudChain(false, body)
                     {
+                        DimAlignment = DimAlignments.Size,
+                        Padding = new Vector2(40f, 80f),
+                        Offset = new Vector2(20f, 20f),
                         Spacing = 12f,
                         SizingMode = HudChainSizingModes.FitMembersOffAxis,
                         CollectionContainer = { modList, bodyDivider },
                     };
 
-                    bottomDivider = new TexturedBox()
+                    bottomDivider = new TexturedBox(body)
                     {
+                        ParentAlignment = ParentAlignments.InnerBottom,
+                        DimAlignment = DimAlignments.UnpaddedWidth,
                         Height = 1f,
-                        Padding = new Vector2(80f, 20f)
+                        Padding = new Vector2(80f, 0f),
+                        Offset = new Vector2(0f, 40f)
                     };
-
-                    var bodyLayout = new HudChain(true, body)
-                    {
-                        Padding = new Vector2(0f, 0f),
-                        DimAlignment = DimAlignments.UnpaddedSize,
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
-                        Spacing = 20f,
-                        CollectionContainer = { { pageChain, 1f }, bottomDivider }
-                    };
-
-                    body.Padding = new Vector2(0f, 40f);
 
                     closeButton = new Button(header)
                     {
@@ -121,7 +117,6 @@ namespace RichHudFramework
                     BodyColor = new Color(37, 46, 53);
                     BorderColor = new Color(84, 98, 107);
 
-                    Padding = new Vector2(80f, 40f);
                     MinimumSize = new Vector2(1044f, 500f);
                     Size = new Vector2(1044f, 850f);
 
@@ -190,7 +185,6 @@ namespace RichHudFramework
 
                     // Update color opacity
                     BodyColor = BodyColor.SetAlphaPct(HudMain.UiBkOpacity);
-                    header.Color = BodyColor;
                 }
 
                 protected override void HandleInput(Vector2 cursorPos)

@@ -252,7 +252,7 @@ namespace RichHudFramework
                     if (alignVertical)
                         Width = 334f;
                     else
-                        Height = 334f;
+                        Height = 328f;
                 }
 
                 public void Add(TMember tile)
