@@ -25,7 +25,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Default formatting used by the label.
         /// </summary>
-        public GlyphFormat Format { get { return _textBoard.Format; } set { _textBoard.Format = value; } }
+        public GlyphFormat Format { get { return _textBoard.Format; } set { _textBoard.SetFormatting(value); } }
 
         /// <summary>
         /// Line formatting mode used by the label.
