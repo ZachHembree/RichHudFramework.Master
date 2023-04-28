@@ -161,7 +161,7 @@ namespace RichHudFramework.UI
             Background = new TexturedBox(this)
             {
                 Color = TerminalFormatting.DarkSlateGrey,
-                DimAlignment = DimAlignments.Both,
+                DimAlignment = DimAlignments.Size,
                 ZOffset = -1,
             };
 
@@ -178,11 +178,18 @@ namespace RichHudFramework.UI
             Divider = new TexturedBox(ScrollBar) { Color = new Color(53, 66, 75) };
         }
 
-        public ScrollBox(HudParentBase parent) : this(false, parent)
+        public ScrollBox(HudParentBase parent) : this(true, parent)
         { }
 
-        public ScrollBox() : this(false, null)
+        public ScrollBox() : this(true, null)
         { }
+
+        public override Vector2 GetRangeSize(int start = 0, int end = -1)
+        {
+            Vector2 size = base.GetRangeSize(start, end);
+            size[offAxis] += scrollBarPadding;
+            return size;
+        }
 
         protected override void HandleInput(Vector2 cursorPos)
         {
@@ -241,10 +248,7 @@ namespace RichHudFramework.UI
                 if (TryGetVisibleRange(chainSize[alignAxis], chainSize[offAxis], out visCount, out elementSpanLength))
                 {
                     Vector2 startOffset, endOffset;
-                    float totalSpacing = Spacing * (visCount - 1f),
-                        rcpSpanLength = 1f / Math.Max(elementSpanLength, 1E-6f);
-
-                    elementSpanLength = Math.Min(elementSpanLength + totalSpacing, chainSize[alignAxis]);
+                    float rcpSpanLength = 1f / Math.Max(elementSpanLength, 1E-6f);
 
                     if (alignAxis == 1) // Vertical
                     {
@@ -276,7 +280,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Updates the range of visible members starting with the given start index.
         /// </summary>
-        private void UpdateElementRange(float length, out float totalEnabledLength, out float scrollOffset)
+        private void UpdateElementRange(float maxLength, out float totalEnabledLength, out float scrollOffset)
         {
             float spacing = Spacing,
                 scrollCurrent = ScrollBar.Current;
@@ -292,7 +296,7 @@ namespace RichHudFramework.UI
                 if (hudCollectionList[i].Enabled)
                 {
                     float elementSize = hudCollectionList[i].Element.Size[alignAxis],
-                        delta = totalEnabledLength + elementSize - scrollCurrent - length;
+                        delta = totalEnabledLength + elementSize - scrollCurrent - maxLength;
 
                     // Get first enabled element
                     if (firstEnabled == -1)
@@ -326,7 +330,7 @@ namespace RichHudFramework.UI
                 {
                     float elementSize = hudCollectionList[i].Element.Size[alignAxis];
 
-                    if (length >= elementSize)
+                    if (maxLength >= elementSize)
                     {
                         scrollOffset += elementSize + spacing;
                         _intStart = i;
@@ -335,20 +339,7 @@ namespace RichHudFramework.UI
                     else
                         break;
 
-                    length -= elementSize + spacing;
-                }
-            }
-
-            if (EnabledCount > VisCount)
-            {
-                // Move ending index up until minimum visible requirment is met
-                for (int n = _intEnd + 1; n < hudCollectionList.Count; n++)
-                {
-                    if (hudCollectionList[n].Enabled)
-                    {
-                        _intEnd = n;
-                        VisCount++;
-                    }
+                    maxLength -= elementSize + spacing;
                 }
             }
 
@@ -466,6 +457,9 @@ namespace RichHudFramework.UI
     {
         public ScrollBox(bool alignVertical, HudParentBase parent = null) : base(alignVertical, parent)
         { }
+
+        public ScrollBox(HudParentBase parent = null) : base(parent)
+        { }
     }
 
     /// <summary>
@@ -475,6 +469,9 @@ namespace RichHudFramework.UI
     public class ScrollBox : ScrollBox<ScrollBoxEntry>
     {
         public ScrollBox(bool alignVertical, HudParentBase parent = null) : base(alignVertical, parent)
+        { }
+
+        public ScrollBox(HudParentBase parent = null) : base(parent)
         { }
     }
 }
