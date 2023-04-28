@@ -9,9 +9,10 @@ namespace RichHudFramework.UI
     using Server;
 
     /// <summary>
-    /// Base type for HUD windows. Supports dragging/resizing like pretty much every other window ever.
+    /// Basic window type with a header, body and border. Supports dragging/resizing like pretty much every 
+    /// other window ever.
     /// </summary>
-    public abstract class WindowBase : HudElementBase, IClickableElement
+    public class Window : HudElementBase, IClickableElement
     {
         /// <summary>
         /// Window header text
@@ -39,7 +40,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Determines the color of the body of the window.
         /// </summary>
-        public virtual Color BodyColor { get { return bodyBg.Color; } set { bodyBg.Color = value; } }
+        public virtual Color BodyColor { get { return windowBg.Color; } set { windowBg.Color = value; } }
 
         /// <summary>
         /// Minimum allowable size for the window.
@@ -87,7 +88,7 @@ namespace RichHudFramework.UI
         public readonly BorderBox border;
 
         protected readonly MouseInputElement inputInner, resizeInput;
-        protected readonly TexturedBox bodyBg;
+        protected readonly TexturedBox windowBg;
 
         protected readonly Action<byte> LoseFocusCallback;
         protected float cornerSize = 16f;
@@ -95,28 +96,27 @@ namespace RichHudFramework.UI
         protected int resizeDir;
         protected Vector2 cursorOffset, minimumSize;
 
-        public WindowBase(HudParentBase parent) : base(parent)
+        public Window(HudParentBase parent) : base(parent)
         {
             header = new LabelBoxButton(this)
             {
                 DimAlignment = DimAlignments.Width,
                 Height = 32f,
-                ParentAlignment = ParentAlignments.Top | ParentAlignments.Inner,
+                ParentAlignment = ParentAlignments.InnerTop,
                 ZOffset = 1,
                 Format = GlyphFormat.White.WithAlignment(TextAlignment.Center),
                 HighlightEnabled = false,
                 AutoResize = false,
             };
 
-            body = new EmptyHudElement(header)
+            body = new EmptyHudElement(this)
             {
-                DimAlignment = DimAlignments.Width,
-                ParentAlignment = ParentAlignments.Bottom,
+                ParentAlignment = ParentAlignments.InnerBottom,
             };
 
-            bodyBg = new TexturedBox(body)
+            windowBg = new TexturedBox(this)
             {
-                DimAlignment = DimAlignments.UnpaddedSize,
+                DimAlignment = DimAlignments.Size,
                 ZOffset = -2,
             };
 
@@ -153,7 +153,8 @@ namespace RichHudFramework.UI
 
         protected override void Layout()
         {
-            body.Height = Height - header.Height;
+            body.Height = cachedSize.Y - cachedPadding.Y - header.Height;
+            body.Width = cachedSize.X - cachedPadding.X;
         }
 
         protected void Resize()
