@@ -146,7 +146,7 @@ namespace RichHudFramework
 
                         if ((element.State & HudElementStates.IsVisible) > 0)
                         {
-                            Vector2 elementSize = element.Size;
+                            Vector2 elementSize = element.UnpaddedSize + element.Padding;
 
                             if (newSize[alignAxis] != 0)
                                 elementSize[alignAxis] = newSize[alignAxis];
@@ -154,7 +154,7 @@ namespace RichHudFramework
                             if (newSize[offAxis] != 0)
                                 elementSize[offAxis] = newSize[offAxis];
 
-                            element.Size = elementSize;
+                            element.UnpaddedSize = elementSize - element.Padding;
                             listSize[offAxis] = Math.Max(listSize[offAxis], elementSize[offAxis]);
                             listSize[alignAxis] += elementSize[alignAxis];
                             visCount++;
@@ -186,7 +186,7 @@ namespace RichHudFramework
 
                         if ((element.State & HudElementStates.IsVisible) > 0)
                         {
-                            Vector2 elementSize = element.Size;
+                            Vector2 elementSize = element.UnpaddedSize + element.Padding;
                             listSize[offAxis] = Math.Max(listSize[offAxis], elementSize[offAxis]);
                             listSize[alignAxis] += elementSize[alignAxis];
                             visCount++;
@@ -280,7 +280,10 @@ namespace RichHudFramework
                         visCount++;
 
                         if (container.AlignAxisScale == 0f)
-                            constantSpanLength += container.Element.Size[alignAxis];
+                        {
+                            Vector2 size = container.Element.UnpaddedSize + container.Element.Padding;
+                            constantSpanLength += size[alignAxis];
+                        }
                     }
                 }
 
@@ -293,10 +296,11 @@ namespace RichHudFramework
                     for (int i = 0; i < hudCollectionList.Count; i++)
                     {
                         TElementContainer container = hudCollectionList[i];
+                        TElement element = container.Element;
 
-                        if ((container.Element.State & HudElementStates.IsVisible) > 0)
+                        if ((element.State & HudElementStates.IsVisible) > 0)
                         {
-                            Vector2 size = container.Element.Size;
+                            Vector2 size = element.UnpaddedSize + element.Padding;
 
                             if (container.AlignAxisScale != 0f && autoSizeLength > 0f)
                             {
@@ -311,7 +315,7 @@ namespace RichHudFramework
                                 size[offAxis] = Math.Min(size[offAxis], offAxisSize);
 
                             elementSpanLength += size[alignAxis];
-                            container.Element.Size = size;
+                            element.UnpaddedSize = size - element.Padding;
                         }
                     }
 

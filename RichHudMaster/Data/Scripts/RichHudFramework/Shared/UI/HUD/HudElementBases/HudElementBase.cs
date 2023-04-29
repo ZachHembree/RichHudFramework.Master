@@ -98,7 +98,7 @@ namespace RichHudFramework
             /// <summary>
             /// Element size without padding
             /// </summary>
-            public Vector2 UnpaddedSize { get; protected set; }
+            public Vector2 UnpaddedSize { get; set; }
 
             /// <summary>
             /// Starting position of the hud element.

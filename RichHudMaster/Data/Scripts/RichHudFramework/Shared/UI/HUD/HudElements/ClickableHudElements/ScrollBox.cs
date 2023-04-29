@@ -294,7 +294,8 @@ namespace RichHudFramework.UI
             {
                 if (hudCollectionList[i].Enabled)
                 {
-                    float elementSize = hudCollectionList[i].Element.Size[alignAxis],
+                    TElement element = hudCollectionList[i].Element;
+                    float elementSize = element.UnpaddedSize[alignAxis] + element.Padding[alignAxis],
                         delta = totalEnabledLength + elementSize - scrollCurrent - maxLength;
 
                     // Get first enabled element
@@ -327,7 +328,8 @@ namespace RichHudFramework.UI
             {
                 if (hudCollectionList[i].Enabled)
                 {
-                    float elementSize = hudCollectionList[i].Element.Size[alignAxis];
+                    TElement element = hudCollectionList[i].Element;
+                    float elementSize = element.UnpaddedSize[alignAxis] + element.Padding[alignAxis];
 
                     if (maxLength >= elementSize)
                     {
