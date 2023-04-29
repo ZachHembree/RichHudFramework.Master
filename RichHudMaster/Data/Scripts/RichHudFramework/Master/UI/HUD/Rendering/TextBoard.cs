@@ -172,7 +172,7 @@ namespace RichHudFramework
 
                         if (lines[index.X].Count > 0)
                         {
-                            UpdateCharOffsets();
+                            UpdateGlyphs();
 
                             if (index.X < lineRange.X || index.X > lineRange.Y)
                             {
@@ -357,9 +357,7 @@ namespace RichHudFramework
                     if (containment != ContainmentType.Disjoint)
                     {
                         if (AutoResize)
-                            _textOffset = Vector2.Zero;
-
-                        UpdateCharOffsets();
+                            _textOffset = Vector2.Zero;                        
 
                         // Check for changes in position, size or masking
                         if (lastBox != box || lastMask != mask)
@@ -375,6 +373,9 @@ namespace RichHudFramework
 
                         // Draw text from cached bb data
                         BillBoardUtils.AddTriangleData(bbCache, matrixRef);
+
+                        // Wait until after Draw to apply text changes
+                        UpdateGlyphs();
 
                         // Invoke update callback
                         if (isUpdateEventPending && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
@@ -447,9 +448,9 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Updates the position and range of visible characters as needed
+                /// Updates character position, visible range and regenerates glyph data as needed.
                 /// </summary>
-                private void UpdateCharOffsets()
+                private void UpdateGlyphs()
                 {
                     UpdateLineRange();
                     UpdateGlyphBoards();
