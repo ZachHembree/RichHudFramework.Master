@@ -113,7 +113,7 @@ namespace RichHudFramework
                 public CategoryScrollBox(bool alignVertical = true, HudParentBase parent = null) : base(alignVertical, parent)
                 {
                     Spacing = 30f;
-                    SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis;
                     Background.Visible = false;
                 }
 

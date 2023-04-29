@@ -37,7 +37,7 @@ namespace RichHudFramework
             /// <summary>
             /// Base class for windows used to contain the demo elements.
             /// </summary>
-            private abstract class TestWindow : WindowBase
+            private abstract class TestWindow : Window
             {
                 /// <summary>
                 /// Demo element instance

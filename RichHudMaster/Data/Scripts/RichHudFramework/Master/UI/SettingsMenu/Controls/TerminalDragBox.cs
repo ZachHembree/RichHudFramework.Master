@@ -129,7 +129,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Customized window with a confirm button used to specify a position on the screen.
         /// </summary>
-        private class DragWindow : WindowBase
+        private class DragWindow : Window
         {
             /// <summary>
             /// Invoked when the window's confirm button is clicked

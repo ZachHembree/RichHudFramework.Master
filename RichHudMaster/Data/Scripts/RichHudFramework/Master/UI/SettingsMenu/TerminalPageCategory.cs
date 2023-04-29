@@ -91,6 +91,7 @@ namespace RichHudFramework
             {
                 page.Element.TextBoard.AutoResize = false;
                 page.Element.Padding = new Vector2(20f, 6f);
+                page.Element.Height = 34f;
 
                 treeBox.Add(page);
                 pages.Add(page);
@@ -187,7 +188,6 @@ namespace RichHudFramework
             public PageCategoryNodeBox(HudParentBase parent) : base(parent)
             {
                 HeaderColor = new Color(40, 48, 55);
-                MemberMinSize = new Vector2(0f, 34f);
             }
 
             public PageCategoryNodeBox() : this(null)

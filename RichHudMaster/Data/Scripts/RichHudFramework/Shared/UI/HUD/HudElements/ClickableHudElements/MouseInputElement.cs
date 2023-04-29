@@ -15,27 +15,6 @@ namespace RichHudFramework.UI
     /// </summary>
     public class MouseInputElement : HudElementBase, IMouseInput
     {
-        public override bool Visible 
-        { 
-            set 
-            {
-                if (value)
-                    State |= HudElementStates.IsVisible;
-                else
-                    State &= elementNotVisible;
-
-                if (!value)
-                {
-                    IsLeftClicked = false;
-                    IsRightClicked = false;
-                    IsNewLeftClicked = false;
-                    IsNewRightClicked = false;
-                    IsLeftReleased = false;
-                    IsRightReleased = false;
-                }
-            }
-        }
-
         /// <summary>
         /// Invoked when the cursor enters the element's bounds
         /// </summary>
@@ -120,7 +99,7 @@ namespace RichHudFramework.UI
             UseCursor = true;
             ShareCursor = true;
             HasFocus = false;
-            DimAlignment = DimAlignments.Both | DimAlignments.IgnorePadding;
+            DimAlignment = DimAlignments.UnpaddedSize;
 
             LoseFocusCallback = LoseFocus;
         }

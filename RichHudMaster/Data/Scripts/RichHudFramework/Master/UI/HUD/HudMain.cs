@@ -146,8 +146,8 @@ namespace RichHudFramework
                     throw new Exception("Only one instance of HudMain can exist at any given time.");
 
                 _root = new HudRoot();
-                _highDpiRoot = new ScaledSpaceNode(_root) { UpdateScaleFunc = () => ResScale };
                 _cursor = new HudCursor(_root);
+                _highDpiRoot = new ScaledSpaceNode(_root) { UpdateScaleFunc = () => ResScale };
 
                 UpdateScreenScaling();
                 TreeManager.Init();
@@ -327,8 +327,6 @@ namespace RichHudFramework
             /// </summary>
             private sealed class HudRoot : HudParentBase, IReadOnlyHudSpaceNode
             {
-                public override bool Visible => true;
-
                 public bool DrawCursorInHudSpace { get; }
 
                 public Vector3 CursorPos { get; private set; }

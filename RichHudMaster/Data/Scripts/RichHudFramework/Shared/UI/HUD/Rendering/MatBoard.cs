@@ -108,8 +108,7 @@ namespace RichHudFramework
                             updateMatFit = false;
                         }
 
-                        if (containment != ContainmentType.Disjoint)
-                            minBoard.Draw(ref box, matrixRef);
+                        minBoard.Draw(ref box, matrixRef);
                     }
                 }     
             }

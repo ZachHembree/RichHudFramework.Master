@@ -61,7 +61,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Returns true if the cursor has been captured by a UI element
                 /// </summary>
-                public bool IsCaptured => CapturedElement != null;
+                public bool IsCaptured { get; private set; }
 
                 /// <summary>
                 /// Returns true if a tooltip has been registered
@@ -116,7 +116,7 @@ namespace RichHudFramework
                 /// Returns true if the given HUD space is being captured by the cursor
                 /// </summary>
                 public bool IsCapturingSpace(HudSpaceDelegate GetHudSpaceFunc) =>
-                    Visible && GetCapturedHudSpaceFunc == GetHudSpaceFunc;
+                    (State & NodeVisibleMask) == NodeVisibleMask && GetCapturedHudSpaceFunc == GetHudSpaceFunc;
 
                 /// <summary>
                 /// Attempts to capture the cursor at the given depth with the given HUD space. If drawInHudSpace
@@ -146,7 +146,7 @@ namespace RichHudFramework
                 /// Indicates whether the cursor is being captured by the given element.
                 /// </summary>
                 public bool IsCapturing(ApiMemberAccessor capturedElement) =>
-                    Visible && capturedElement == CapturedElement;
+                    (State & NodeVisibleMask) == NodeVisibleMask && capturedElement == CapturedElement;
 
                 /// <summary>
                 /// Attempts to capture the cursor with the given object
@@ -162,10 +162,13 @@ namespace RichHudFramework
                     if (capturedElement != null && CapturedElement == null)
                     {
                         CapturedElement = capturedElement;
+                        IsCaptured = CapturedElement != null;
                         return true;
                     }
                     else
+                    {
                         return false;
+                    }
                 }
 
                 /// <summary>
@@ -211,6 +214,7 @@ namespace RichHudFramework
                 public void Release()
                 {
                     CapturedElement = null;
+                    IsCaptured = false;
                     captureDepth = 0f;
                     GetCapturedHudSpaceFunc = null;
                 }
@@ -274,11 +278,6 @@ namespace RichHudFramework
                     layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     cursorBox.Offset = new Vector2(CursorPos.X, CursorPos.Y);
                     UpdateToolTip(boundTooltips, tooltipScale);
-                }
-
-                protected override void Draw()
-                {
-                    base.Draw();
                 }
 
                 protected override void HandleInput(Vector2 cursorPos)

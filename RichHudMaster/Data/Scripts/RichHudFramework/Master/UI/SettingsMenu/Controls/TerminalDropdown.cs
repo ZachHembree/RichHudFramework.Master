@@ -91,27 +91,9 @@ namespace RichHudFramework.UI.Server
             /// </summary>
             public ListBoxEntry<T> Selection => dropdown.Selection;
 
-            public override float Width
-            {
-                get { return hudChain.Width; }
-                set { hudChain.Width = value; }
-            }
-
-            public override float Height
-            {
-                get { return hudChain.Height; }
-            }
-
-            public override Vector2 Padding
-            {
-                get { return hudChain.Padding; }
-                set { hudChain.Padding = value; }
-            }
-
             public readonly Dropdown<T> dropdown;
 
             private readonly Label name;
-            private readonly HudChain hudChain;
 
             public NamedDropdown(HudParentBase parent = null) : base(parent)
             {
@@ -126,14 +108,14 @@ namespace RichHudFramework.UI.Server
                 dropdown = new Dropdown<T>()
                 {
                     Format = TerminalFormatting.ControlFormat,
-                    DropdownHeight = 172f,
-                    MinVisibleCount = 6
+                    DropdownHeight = 172f
                 };
 
-                hudChain = new HudChain(true, this)
+                var layout = new HudChain(true, this)
                 {
-                    SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                    CollectionContainer = { name, dropdown },
+                    DimAlignment = DimAlignments.UnpaddedSize,
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                    CollectionContainer = { { name, 0f }, { dropdown, 1f } },
                 };
 
                 Padding = new Vector2(20f, 0f);

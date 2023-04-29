@@ -97,7 +97,7 @@ namespace RichHudFramework
                 public BindGroupList(HudParentBase parent = null) : base(true, parent)
                 {
                     Spacing = 30f;
-                    SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis;
 
                     Background.Visible = false;
                 }
@@ -142,17 +142,6 @@ namespace RichHudFramework
                     }
                 }
 
-                public override bool Visible
-                {
-                    set
-                    {
-                        if (value == true && base.Visible != value)
-                            UpdateBindGroup();
-
-                        base.Visible = value;
-                    }
-                }
-
                 private readonly Label name;
                 private readonly BorderedButton resetButton;
                 private readonly ScrollBox<ScrollBoxEntry<BindBox>, BindBox> scrollBox;
@@ -175,7 +164,7 @@ namespace RichHudFramework
                     {
                         Text = "Defaults",
                         Size = new Vector2(234f, 44f),
-                        ParentAlignment = ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.Inner,
+                        ParentAlignment = ParentAlignments.InnerTopRight,
                         Visible = false,
                         BorderThickness = 1f,
                     };
@@ -184,7 +173,7 @@ namespace RichHudFramework
 
                     scrollBox = new ScrollBox<ScrollBoxEntry<BindBox>, BindBox>(true)
                     {
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainOffAxis | HudChainSizingModes.ClampChainAlignAxis,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
                         Spacing = 8f,
                     };
 
@@ -206,11 +195,11 @@ namespace RichHudFramework
 
                     layout = new HudChain(true, this)
                     {
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                        DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        DimAlignment = DimAlignments.UnpaddedSize,
                         Padding = new Vector2(20f, 0f),
                         Offset = new Vector2(-10f, 0f),
-                        CollectionContainer = { name, divider1, scrollBox, divider2 },
+                        CollectionContainer = { name, divider1, { scrollBox, 1f}, divider2 },
                     };
 
                     Height = 338f;
@@ -220,8 +209,6 @@ namespace RichHudFramework
                 {
                     SliderBar slider = scrollBox.ScrollBar.slide;
                     slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
-
-                    scrollBox.Height = _size.Y - (layout.Height - scrollBox.Height);
                 }
 
                 /// <summary>
@@ -276,8 +263,8 @@ namespace RichHudFramework
                         Format = GlyphFormat.Blueish,
                         AutoResize = false,
                         Size = new Vector2(150f, 44f),
-                        ParentAlignment = ParentAlignments.Left | ParentAlignments.InnerH,
-                        DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
+                        ParentAlignment = ParentAlignments.InnerLeft,
+                        DimAlignment = DimAlignments.UnpaddedHeight,
                     };
 
                     con1 = new BorderedButton()
@@ -315,11 +302,12 @@ namespace RichHudFramework
 
                     var layout = new HudChain(false, this)
                     {
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
                         Spacing = 13f,
+                        Width = 404f,
                         Padding = new Vector2(32f, 0f),
-                        ParentAlignment = ParentAlignments.Right | ParentAlignments.InnerH,
-                        DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
+                        ParentAlignment = ParentAlignments.InnerRight,
+                        DimAlignment = DimAlignments.UnpaddedHeight,
                         CollectionContainer = { con1, con2, con3 }
                     };
 
