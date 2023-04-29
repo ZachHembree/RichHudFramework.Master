@@ -142,17 +142,6 @@ namespace RichHudFramework
                     }
                 }
 
-                public override bool Visible
-                {
-                    set
-                    {
-                        if (value == true && base.Visible != value)
-                            UpdateBindGroup();
-
-                        base.Visible = value;
-                    }
-                }
-
                 private readonly Label name;
                 private readonly BorderedButton resetButton;
                 private readonly ScrollBox<ScrollBoxEntry<BindBox>, BindBox> scrollBox;

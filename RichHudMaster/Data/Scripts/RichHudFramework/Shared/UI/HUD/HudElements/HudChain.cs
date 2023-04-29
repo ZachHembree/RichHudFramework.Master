@@ -344,11 +344,13 @@ namespace RichHudFramework
 
                     if ((element.State & HudElementStates.IsVisible) > 0)
                     {
+                        Vector2 size = element.UnpaddedSize + element.Padding;
+                        
                         // Enforce alignment restrictions
                         element.ParentAlignment &= bitmask;
                         element.ParentAlignment |= ParentAlignments.Inner | ParentAlignments.UsePadding;
 
-                        float increment = element.Size[alignAxis] * rcpSpanLength;
+                        float increment = size[alignAxis] * rcpSpanLength;
                         element.Offset = Vector2.Lerp(startOffset, endOffset, j + (.5f * increment));
 
                         j += increment + spacingInc;

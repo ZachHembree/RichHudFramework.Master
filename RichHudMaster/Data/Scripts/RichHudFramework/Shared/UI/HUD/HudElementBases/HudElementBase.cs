@@ -17,18 +17,7 @@ namespace RichHudFramework
         public abstract class HudElementBase : HudNodeBase, IReadOnlyHudElement
         {
             protected const float minMouseBounds = 8f;
-            protected const HudElementStates elementNotVisible = ~(HudElementStates.IsVisible | HudElementStates.IsMousedOver | HudElementStates.IsMouseInBounds);
-
-            public override bool Visible
-            {
-                set
-                {
-                    if (value)
-                        State |= HudElementStates.IsVisible;
-                    else
-                        State &= elementNotVisible;
-                }
-            }
+            protected const HudElementStates elementVisible = (HudElementStates.IsVisible | HudElementStates.IsMousedOver | HudElementStates.IsMouseInBounds);
 
             /// <summary>
             /// Parent object of the node.
@@ -262,7 +251,7 @@ namespace RichHudFramework
             /// Updates input for the element and its children. Overriding this method is rarely necessary.
             /// If you need to update input, use HandleInput().
             /// </summary>
-            public override void BeginInput()
+            public sealed override void BeginInput()
             {
                 if (!ExceptionHandler.ClientsPaused)
                 {
@@ -270,15 +259,20 @@ namespace RichHudFramework
                     {
                         State &= ~(HudElementStates.IsMousedOver | HudElementStates.WasParentInputEnabled);
 
-                        if (_parent != null)
-                            State |= _parent.InputEnabled ? HudElementStates.WasParentInputEnabled : HudElementStates.None;
+                        if (_parent != null && (_parent.State & _parent.NodeInputMask) == _parent.NodeInputMask)
+                            State |= HudElementStates.WasParentInputEnabled;
 
-                        if (Visible && InputEnabled)
+                        bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask,
+                             isInputEnabled = (State & NodeInputMask) == NodeInputMask,
+                             canUseCursor = (State & HudElementStates.CanUseCursor) > 0,
+                             canShareCursor = (State & HudElementStates.CanShareCursor) > 0;
+
+                        if (isVisible && isInputEnabled)
                         {
                             Vector3 cursorPos = HudSpace.CursorPos;
                             bool mouseInBounds = (State & HudElementStates.IsMouseInBounds) > 0;
 
-                            if (UseCursor && mouseInBounds && !HudMain.Cursor.IsCaptured && HudMain.Cursor.IsCapturingSpace(HudSpace.GetHudSpaceFunc))
+                            if (canUseCursor && mouseInBounds && !HudMain.Cursor.IsCaptured && HudMain.Cursor.IsCapturingSpace(HudSpace.GetHudSpaceFunc))
                             {
                                 bool isMousedOver = mouseInBounds;
 
@@ -287,7 +281,7 @@ namespace RichHudFramework
 
                                 HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
 
-                                if (!ShareCursor)
+                                if (!canShareCursor)
                                     HudMain.Cursor.Capture(accessorDelegates.Item1);
                             }
                             else
@@ -313,11 +307,17 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
-                        ParentVisible = _parent?.Visible ?? false;
+                        State &= ~HudElementStates.WasParentVisible;
 
-                        if (Visible || refresh)
+                        if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
+                            State |= HudElementStates.WasParentVisible;
+
+                        bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
+
+                        if (isVisible)
                         {
+                            layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+
                             if (_parentFull != null)
                             {
                                 Origin = _parentFull.cachedPosition + originAlignment;
@@ -350,7 +350,8 @@ namespace RichHudFramework
                                 maskingBox = _parentFull?.maskingBox;
                             else
                                 maskingBox = null;
-                        }                        
+                        }
+
                     }
                     catch (Exception e)
                     {
@@ -369,7 +370,9 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        if (Visible)
+                        bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
+
+                        if (isVisible)
                         {
                             Draw();
                         }
