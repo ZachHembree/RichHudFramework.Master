@@ -86,7 +86,7 @@ namespace RichHudFramework.UI
         protected override void Draw()
         {
             if (AutoResize)
-                Width = checkbox.Width + name.Width + cachedPadding.X;
+                Width = checkbox.Width + name.Width + 17f + cachedPadding.X;
         }
 
         public NamedCheckBox() : this(null)
