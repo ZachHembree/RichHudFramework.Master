@@ -47,48 +47,58 @@ namespace RichHudFramework
             /// </summary>
             public Vector2 Size
             {
-                get { return new Vector2(Width, Height); }
-                set { Width = value.X; Height = value.Y; }
+                get { return unpaddedSize + Padding; }
+                set 
+                {
+                    if (value.X > Padding.X)
+                        value.X -= Padding.X;
+
+                    if (value.Y > Padding.Y)
+                        value.Y -= Padding.Y;
+
+                    unpaddedSize = value;
+                }
             }
 
             /// <summary>
             /// Width of the hud element. Units in pixels by default.
             /// </summary>
-            public virtual float Width
+            public float Width
             {
-                get { return _size.X + Padding.X; }
+                get { return unpaddedSize.X + Padding.X; }
                 set
                 {
                     if (value > Padding.X)
                         value -= Padding.X;
 
-                    _size.X = value;
+                    unpaddedSize.X = value;
                 }
             }
 
             /// <summary>
             /// Height of the hud element. Units in pixels by default.
             /// </summary>
-            public virtual float Height
+            public float Height
             {
-                get { return _size.Y + Padding.Y; }
+                get { return unpaddedSize.Y + Padding.Y; }
                 set
                 {
                     if (value > Padding.Y)
                         value -= Padding.Y;
 
-                    _size.Y = value;
+                    unpaddedSize.Y = value;
                 }
             }
 
             /// <summary>
             /// Border size. Included in total element size.
             /// </summary>
-            public virtual Vector2 Padding
-            {
-                get { return _padding; }
-                set { _padding = value; }
-            }
+            public Vector2 Padding { get; set; }
+
+            /// <summary>
+            /// Element size
+            /// </summary>
+            protected Vector2 unpaddedSize;
 
             /// <summary>
             /// Starting position of the hud element.
@@ -197,16 +207,6 @@ namespace RichHudFramework
             /// Indicates whether or not the element is capturing the cursor.
             /// </summary>
             public virtual bool IsMousedOver => (State & HudElementStates.IsMousedOver) > 0;
-
-            /// <summary>
-            /// Element size
-            /// </summary>
-            protected Vector2 _size;
-
-            /// <summary>
-            /// Element padding
-            /// </summary>
-            protected Vector2 _padding;
 
             /// <summary>
             /// Values used internally to minimize property calls. Should be treated as read only.

@@ -10,8 +10,6 @@ namespace RichHudFramework.UI
     /// </summary>
     public class NamedOnOffButton : HudElementBase, IClickableElement
     {
-        public override Vector2 Padding { get { return layout.Padding; } set { layout.Padding = value; } }
-
         /// <summary>
         /// The name of the control as it appears in the terminal.
         /// </summary>
@@ -84,7 +82,7 @@ namespace RichHudFramework.UI
                 CollectionContainer = { { name , 0f }, { onOffButton, 1f } }
             };
 
-            Padding = new Vector2(20f, 0f);
+            Padding = new Vector2(40f, 0f);
             Size = new Vector2(300f, 84f);
         }
 

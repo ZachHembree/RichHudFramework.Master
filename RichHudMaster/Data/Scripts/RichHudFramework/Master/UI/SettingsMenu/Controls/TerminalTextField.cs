@@ -81,31 +81,6 @@ namespace RichHudFramework.UI.Server
 
         private class NamedTextField : HudElementBase
         {
-            public override float Width
-            {
-                get { return textField.Width + Padding.X; }
-                set
-                {
-                    if (value > Padding.X)
-                        value -= Padding.X;
-
-                    textField.Width = value;
-                    name.Width = value;
-                }
-            }
-
-            public override float Height
-            {
-                get { return textField.Height + name.Height + Padding.Y; }
-                set
-                {
-                    if (value > Padding.Y)
-                        value -= Padding.Y;
-
-                    textField.Height = value - name.Height;
-                }
-            }
-
             public string Name { get { return name.TextBoard.ToString(); } set { name.Text = value; } }
 
             public string TextField { get{ return textField.TextBoard.ToString(); } set { textField.Text = value; } }
@@ -119,21 +94,26 @@ namespace RichHudFramework.UI.Server
 
             public NamedTextField(HudParentBase parent = null) : base(parent)
             {
-                name = new Label(this)
+                name = new Label()
                 {
                     Format = TerminalFormatting.ControlFormat,
                     Text = "NewTextField",
                     AutoResize = false,
                     Height = 22f,
                     Padding = new Vector2(0f, 2f),
-                    ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV | ParentAlignments.UsePadding
                 };
 
-                textField = new TextField(name) 
+                textField = new TextField();
+
+                var layout = new HudChain(true, this)
                 {
-                    ParentAlignment = ParentAlignments.Bottom,
+                    DimAlignment = DimAlignments.UnpaddedSize,
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                    CollectionContainer = { name, { textField, 1f } }
                 };
 
+                Width = 250f;
+                Height = name.Height + textField.Height;
                 Padding = new Vector2(40f, 0f);
             }
         }
