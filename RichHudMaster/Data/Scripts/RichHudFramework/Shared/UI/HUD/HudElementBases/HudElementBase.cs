@@ -47,7 +47,7 @@ namespace RichHudFramework
             /// </summary>
             public Vector2 Size
             {
-                get { return unpaddedSize + Padding; }
+                get { return UnpaddedSize + Padding; }
                 set 
                 {
                     if (value.X > Padding.X)
@@ -56,7 +56,7 @@ namespace RichHudFramework
                     if (value.Y > Padding.Y)
                         value.Y -= Padding.Y;
 
-                    unpaddedSize = value;
+                    UnpaddedSize = value;
                 }
             }
 
@@ -65,13 +65,13 @@ namespace RichHudFramework
             /// </summary>
             public float Width
             {
-                get { return unpaddedSize.X + Padding.X; }
+                get { return UnpaddedSize.X + Padding.X; }
                 set
                 {
                     if (value > Padding.X)
                         value -= Padding.X;
 
-                    unpaddedSize.X = value;
+                    UnpaddedSize = new Vector2(value, UnpaddedSize.Y);
                 }
             }
 
@@ -80,13 +80,13 @@ namespace RichHudFramework
             /// </summary>
             public float Height
             {
-                get { return unpaddedSize.Y + Padding.Y; }
+                get { return UnpaddedSize.Y + Padding.Y; }
                 set
                 {
                     if (value > Padding.Y)
                         value -= Padding.Y;
 
-                    unpaddedSize.Y = value;
+                    UnpaddedSize = new Vector2(UnpaddedSize.X, value);
                 }
             }
 
@@ -96,14 +96,14 @@ namespace RichHudFramework
             public Vector2 Padding { get; set; }
 
             /// <summary>
-            /// Element size
+            /// Element size without padding
             /// </summary>
-            protected Vector2 unpaddedSize;
+            public Vector2 UnpaddedSize { get; protected set; }
 
             /// <summary>
             /// Starting position of the hud element.
             /// </summary>
-            public Vector2 Origin => (_parentFull == null) ? Vector2.Zero : _parentFull.cachedPosition + originAlignment;
+            public Vector2 Origin { get; protected set; }
 
             /// <summary>
             /// Position of the element relative to its origin.
@@ -113,7 +113,7 @@ namespace RichHudFramework
             /// <summary>
             /// Current position of the hud element. Origin + Offset.
             /// </summary>
-            public Vector2 Position => Origin + Offset;
+            public Vector2 Position { get; protected set; }
 
             /// <summary>
             /// Determines the starting position of the hud element relative to its parent.
@@ -224,6 +224,10 @@ namespace RichHudFramework
             {
                 DimAlignment = DimAlignments.None;
                 ParentAlignment = ParentAlignments.Center;
+
+                Origin = Vector2.Zero;
+                Position = Vector2.Zero;
+                originAlignment = Vector2.Zero;
             }
 
             /// <summary>
@@ -314,12 +318,19 @@ namespace RichHudFramework
 
                         if (Visible || refresh)
                         {
-                            Vector2 lastSize = new Vector2(Width, Height),
-                                lastOffset = Offset;
+                            if (_parentFull != null)
+                            {
+                                Origin = _parentFull.cachedPosition + originAlignment;
+                            }
+                            else
+                            {
+                                Origin = Vector2.Zero;
+                                cachedPadding = Padding;
+                                cachedSize = UnpaddedSize + Padding;
+                                cachedPosition = Origin + Offset;
+                            }
 
-                            cachedPadding = Padding;
-                            cachedSize = lastSize;
-                            cachedPosition = cachedOrigin + lastOffset;
+                            Position = cachedPosition;
 
                             Layout();
 
@@ -384,8 +395,7 @@ namespace RichHudFramework
                     {
                         child.cachedPadding = child.Padding;
 
-                        float width = child.Width, 
-                            height = child.Height;
+                        Vector2 size = child.UnpaddedSize + child.Padding;
                         DimAlignments sizeFlags = child.DimAlignment;
 
                         if (sizeFlags != DimAlignments.None)
@@ -393,25 +403,24 @@ namespace RichHudFramework
                             if ((sizeFlags & DimAlignments.IgnorePadding) == DimAlignments.IgnorePadding)
                             {
                                 if ((sizeFlags & DimAlignments.Width) == DimAlignments.Width)
-                                    width = cachedSize.X - cachedPadding.X;
+                                    size.X = cachedSize.X - cachedPadding.X;
 
                                 if ((sizeFlags & DimAlignments.Height) == DimAlignments.Height)
-                                    height = cachedSize.Y - cachedPadding.Y;
+                                    size.Y = cachedSize.Y - cachedPadding.Y;
                             }
                             else
                             {
                                 if ((sizeFlags & DimAlignments.Width) == DimAlignments.Width)
-                                    width = cachedSize.X;
+                                    size.X = cachedSize.X;
 
                                 if ((sizeFlags & DimAlignments.Height) == DimAlignments.Height)
-                                    height = cachedSize.Y;
+                                    size.Y = cachedSize.Y;
                             }
 
-                            child.Width = width;
-                            child.Height = height;
+                            child.UnpaddedSize = size - child.Padding;
                         }
 
-                        child.cachedSize = new Vector2(width, height);
+                        child.cachedSize = size;
                     }
                 }
 

@@ -109,7 +109,7 @@ namespace RichHudFramework.UI
             set
             {
                 _barSize = value;
-                unpaddedSize = Vector2.Max(_barSize, _sliderSize);
+                UnpaddedSize = Vector2.Max(_barSize, _sliderSize);
             }
         }
 
@@ -122,7 +122,8 @@ namespace RichHudFramework.UI
             set 
             { 
                 _barSize.X = value;
-                unpaddedSize.X = Math.Max(_barSize.X, _sliderSize.X);
+                value = Math.Max(_barSize.X, _sliderSize.X);
+                UnpaddedSize = new Vector2(value, UnpaddedSize.Y);
             } 
         }
 
@@ -135,7 +136,8 @@ namespace RichHudFramework.UI
             set
             {
                 _barSize.Y = value;
-                unpaddedSize.Y = Math.Max(_barSize.Y, _sliderSize.Y);
+                value = Math.Max(_barSize.Y, _sliderSize.Y);
+                UnpaddedSize = new Vector2(UnpaddedSize.X, value);
             }
         }
 
@@ -148,7 +150,7 @@ namespace RichHudFramework.UI
             set
             {
                 _sliderSize = value;
-                unpaddedSize = Vector2.Max(_barSize, _sliderSize);
+                UnpaddedSize = Vector2.Max(_barSize, _sliderSize);
             }
         }
 
@@ -161,7 +163,8 @@ namespace RichHudFramework.UI
             set
             {
                 _sliderSize.X = value;
-                unpaddedSize.X = Math.Max(_barSize.X, _sliderSize.X);
+                value = Math.Max(_barSize.X, _sliderSize.X);
+                UnpaddedSize = new Vector2(value, UnpaddedSize.Y);
             }
         }
 
@@ -174,7 +177,8 @@ namespace RichHudFramework.UI
             set
             {
                 _sliderSize.Y = value;
-                unpaddedSize.Y = Math.Max(_barSize.Y, _sliderSize.Y);
+                value = Math.Max(_barSize.Y, _sliderSize.Y);
+                UnpaddedSize = new Vector2(UnpaddedSize.X, value);
             }
         }
 

@@ -50,7 +50,7 @@ namespace RichHudFramework.UI
             _textBoard = new TextBoard();
             _textBoard.Format = GlyphFormat.White;
             _textBoard.SetText("NewLabel");
-            unpaddedSize = _textBoard.Size;
+            UnpaddedSize = _textBoard.Size;
             TextBoard = _textBoard;
         }
 
@@ -70,7 +70,7 @@ namespace RichHudFramework.UI
 
             if (AutoResize)
             {
-                unpaddedSize = _textBoard.Size;
+                UnpaddedSize = _textBoard.Size;
             }
             else
             {
