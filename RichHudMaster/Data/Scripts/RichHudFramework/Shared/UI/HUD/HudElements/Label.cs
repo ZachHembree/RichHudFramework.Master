@@ -50,7 +50,6 @@ namespace RichHudFramework.UI
             _textBoard = new TextBoard();
             _textBoard.Format = GlyphFormat.White;
             _textBoard.SetText("NewLabel");
-            UnpaddedSize = _textBoard.Size;
             TextBoard = _textBoard;
         }
 
@@ -62,20 +61,18 @@ namespace RichHudFramework.UI
             Vector2 size = (CachedSize - Padding),
                 halfSize = .5f * size;
             BoundingBox2 box = new BoundingBox2(Position - halfSize, Position + halfSize);
+            bool autoResize = AutoResize;
+
+            if (!autoResize)
+                _textBoard.FixedSize = size;
 
             if (maskingBox != null)
                 _textBoard.Draw(box, maskingBox.Value, HudSpace.PlaneToWorldRef);
             else
                 _textBoard.Draw(box, CroppedBox.defaultMask, HudSpace.PlaneToWorldRef);
 
-            if (AutoResize)
-            {
-                UnpaddedSize = _textBoard.Size;
-            }
-            else
-            {
-                _textBoard.FixedSize = size;
-            }
+            if (autoResize)
+                UnpaddedSize = _textBoard.TextSize;
         }
     }
 }

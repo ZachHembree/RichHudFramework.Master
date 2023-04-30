@@ -145,7 +145,6 @@ namespace RichHudFramework
                 private readonly Label name;
                 private readonly BorderedButton resetButton;
                 private readonly ScrollBox<ScrollBoxEntry<BindBox>, BindBox> scrollBox;
-                private readonly HudChain layout;
 
                 private IBindGroup _bindGroup;
                 private BindDefinition[] defaultBinds;
@@ -193,7 +192,7 @@ namespace RichHudFramework
                         Height = 2f,
                     };
 
-                    layout = new HudChain(true, this)
+                    var layout = new HudChain(true, this)
                     {
                         SizingMode = HudChainSizingModes.FitMembersOffAxis,
                         DimAlignment = DimAlignments.UnpaddedSize,

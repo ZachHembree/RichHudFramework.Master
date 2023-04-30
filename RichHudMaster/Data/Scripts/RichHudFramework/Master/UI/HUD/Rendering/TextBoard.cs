@@ -367,6 +367,9 @@ namespace RichHudFramework
                             lastMask = mask;
                         }
 
+                        if (!AutoResize)
+                            UpdateGlyphs();
+
                         // Update bb data cache
                         if (isBbCacheStale)
                             UpdateBbCache(box, mask);
@@ -374,8 +377,10 @@ namespace RichHudFramework
                         // Draw text from cached bb data
                         BillBoardUtils.AddTriangleData(bbCache, matrixRef);
 
-                        // Wait until after Draw to apply text changes
-                        UpdateGlyphs();
+                        // If self-resizing, then defer glyph updates to allow the rest of the UI
+                        // time to catch up
+                        if (AutoResize) 
+                            UpdateGlyphs();
 
                         // Invoke update callback
                         if (isUpdateEventPending && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
