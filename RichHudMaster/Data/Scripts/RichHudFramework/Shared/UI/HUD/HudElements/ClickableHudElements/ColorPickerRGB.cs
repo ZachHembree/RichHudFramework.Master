@@ -57,20 +57,20 @@ namespace RichHudFramework.UI
         }
 
         // Header
-        private readonly Label name;
-        private readonly TexturedBox display;
-        private readonly HudChain headerChain;
+        protected readonly Label name;
+        protected readonly TexturedBox display;
+        protected readonly HudChain headerChain;
         // Slider text
-        private readonly Label[] sliderText;
-        private readonly HudChain<HudElementContainer<Label>, Label> colorNameColumn;
+        protected readonly Label[] sliderText;
+        protected readonly HudChain<HudElementContainer<Label>, Label> colorNameColumn;
         // Sliders
         public readonly SliderBox[] sliders;
-        private readonly HudChain<HudElementContainer<SliderBox>, SliderBox> colorSliderColumn;
+        protected readonly HudChain<HudElementContainer<SliderBox>, SliderBox> colorSliderColumn;
 
-        private readonly HudChain colorChain;
-        private readonly StringBuilder valueBuilder;
-        private Color _color;
-        private int focusedChannel;
+        protected readonly HudChain colorChain;
+        protected readonly StringBuilder valueBuilder;
+        protected Color _color;
+        protected int focusedChannel;
 
         public ColorPickerRGB(HudParentBase parent) : base(parent)
         {
