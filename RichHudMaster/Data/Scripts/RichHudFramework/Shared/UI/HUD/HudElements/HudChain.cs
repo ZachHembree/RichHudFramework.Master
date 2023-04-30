@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using VRage;
 using VRageMath;
 
@@ -28,11 +29,20 @@ namespace RichHudFramework
             /// </summary>
             FitMembersOffAxis = 0x2,
 
+            /// <summary>
+            /// Aligns the start of the chain to the left or top inner edge of the chain.
+            /// </summary>
             AlignMembersStart = 0x4,
 
+            /// <summary>
+            /// Aligns the start of the chain to the right or bottom inner edge of the chain.
+            /// </summary>
             AlignMembersEnd = 0x8,
 
-            AlignMembersCenter = 0x10
+            /// <summary>
+            /// Aligns the start of the chain to the center of the chain.
+            /// </summary>
+            AlignMembersCenter = 0x10,
         }
 
         /// <summary>
@@ -196,7 +206,7 @@ namespace RichHudFramework
                     listSize[alignAxis] += Spacing * (visCount - 1);
                 }
 
-                return listSize + cachedPadding;
+                return listSize + Padding;
             }
 
             protected override void Layout()

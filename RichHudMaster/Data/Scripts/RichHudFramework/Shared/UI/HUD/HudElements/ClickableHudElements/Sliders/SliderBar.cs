@@ -259,19 +259,6 @@ namespace RichHudFramework.UI
                 canMoveSlider = false;
             }
 
-            if (EnableHighlight && (IsMousedOver || canMoveSlider))
-            {
-                slider.Color = SliderHighlight;
-
-                if (BarHighlight != default(Color))
-                    bar.Color = BarHighlight;
-            }
-            else
-            {
-                slider.Color = SliderColor;
-                bar.Color = BarColor;
-            }
-
             if (canMoveSlider && (cursorPos - lastPos).LengthSquared() > 4f)
             {
                 float minOffset, maxOffset, pos;
@@ -301,6 +288,19 @@ namespace RichHudFramework.UI
         protected override void Layout()
         {
             slider.Visible = SliderVisible;
+
+            if (EnableHighlight && (IsMousedOver || canMoveSlider))
+            {
+                slider.Color = SliderHighlight;
+
+                if (BarHighlight != default(Color))
+                    bar.Color = BarHighlight;
+            }
+            else
+            {
+                slider.Color = SliderColor;
+                bar.Color = BarColor;
+            }
 
             Vector2 size = cachedSize - cachedPadding;
 

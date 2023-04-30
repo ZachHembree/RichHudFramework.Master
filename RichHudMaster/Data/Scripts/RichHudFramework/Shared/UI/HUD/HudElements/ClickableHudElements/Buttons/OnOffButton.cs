@@ -181,11 +181,17 @@ namespace RichHudFramework.UI
             Value = !Value;
         }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected override void Layout()
         {
-            if (mouseInput.HasFocus && SharedBinds.Space.IsNewPressed)
+            if (Value)
             {
-                mouseInput.OnLeftClick();
+                on.Color = SelectionColor;
+                off.Color = UnselectedColor;
+            }
+            else
+            {
+                off.Color = SelectionColor;
+                on.Color = UnselectedColor;
             }
 
             if (HighlightEnabled && mouseInput.IsMousedOver)
@@ -200,16 +206,13 @@ namespace RichHudFramework.UI
             {
                 background.Color = BackgroundColor;
             }
+        }
 
-            if (Value)
+        protected override void HandleInput(Vector2 cursorPos)
+        {
+            if (mouseInput.HasFocus && SharedBinds.Space.IsNewPressed)
             {
-                on.Color = SelectionColor;
-                off.Color = UnselectedColor;
-            }
-            else
-            {
-                off.Color = SelectionColor;
-                on.Color = UnselectedColor;
+                mouseInput.OnLeftClick();
             }
         }
     }
