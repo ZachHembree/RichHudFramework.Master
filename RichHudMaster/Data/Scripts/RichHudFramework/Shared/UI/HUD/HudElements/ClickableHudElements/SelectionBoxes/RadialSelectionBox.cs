@@ -139,7 +139,7 @@ namespace RichHudFramework.UI
             // Update entry positions
             int entrySize = polyBoard.Sides / effectiveMaxCount;
             Vector2I slice = new Vector2I(0, entrySize - 1);
-            Vector2 size = cachedSize - cachedPadding;
+            Vector2 size = CachedSize - Padding;
 
             for (int i = 0; i < hudCollectionList.Count; i++)
             {
@@ -225,10 +225,10 @@ namespace RichHudFramework.UI
 
         protected override void Draw()
         {
-            Vector2 size = cachedSize - cachedPadding;
+            Vector2 size = CachedSize - Padding;
             int entrySize = polyBoard.Sides / effectiveMaxCount;
             polyBoard.Color = BackgroundColor;
-            polyBoard.Draw(size, cachedPosition, HudSpace.PlaneToWorldRef);
+            polyBoard.Draw(size, Position, HudSpace.PlaneToWorldRef);
 
             if (SelectionIndex != -1 && selectionVisPos != -1 && entrySize > 0)
             {
@@ -236,7 +236,7 @@ namespace RichHudFramework.UI
 
                 Vector2I slice = new Vector2I(0, entrySize - 1) + (selectionVisPos * entrySize);
                 polyBoard.Color = HighlightColor;
-                polyBoard.Draw(size, cachedPosition, slice, HudSpace.PlaneToWorldRef);
+                polyBoard.Draw(size, Position, slice, HudSpace.PlaneToWorldRef);
             }
         }
     }

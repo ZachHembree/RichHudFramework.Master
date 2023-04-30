@@ -153,8 +153,8 @@ namespace RichHudFramework.UI
 
         protected override void Layout()
         {
-            body.Height = cachedSize.Y - cachedPadding.Y - header.Height;
-            body.Width = cachedSize.X - cachedPadding.X;
+            body.Height = CachedSize.Y - Padding.Y - header.Height;
+            body.Width = CachedSize.X - Padding.X;
         }
 
         protected void Resize()

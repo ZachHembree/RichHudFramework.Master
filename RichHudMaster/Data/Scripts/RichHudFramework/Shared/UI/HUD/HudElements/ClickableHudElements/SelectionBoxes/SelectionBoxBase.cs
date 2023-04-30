@@ -53,7 +53,7 @@ namespace RichHudFramework.UI
         public virtual bool UseSmoothScrolling { get { return hudChain.UseSmoothScrolling; } set { hudChain.UseSmoothScrolling = value; } }
 
         protected override float HighlightWidth =>
-            hudChain.Size.X - cachedPadding.X - hudChain.ScrollBar.Width - hudChain.Padding.X - HighlightPadding.X;
+            hudChain.Size.X - Padding.X - hudChain.ScrollBar.Width - hudChain.Padding.X - HighlightPadding.X;
 
         public ScrollSelectionBoxBase(HudParentBase parent) : base(parent)
         { }
@@ -194,7 +194,7 @@ namespace RichHudFramework.UI
         /// </summary>
         protected virtual Vector2 ListPos => hudChain.Position;
 
-        protected virtual float HighlightWidth => hudChain.Size.X - cachedPadding.X - hudChain.Padding.X - HighlightPadding.X;
+        protected virtual float HighlightWidth => hudChain.Size.X - Padding.X - hudChain.Padding.X - HighlightPadding.X;
 
         public readonly TChain hudChain;
 
@@ -272,7 +272,7 @@ namespace RichHudFramework.UI
         /// </summary>
         public virtual Vector2 GetRangeSize(int start = 0, int end = -1)
         {
-            return hudChain.GetRangeSize(start, end) + cachedPadding;
+            return hudChain.GetRangeSize(start, end) + Padding;
         }
 
         protected override void Layout()
@@ -416,18 +416,18 @@ namespace RichHudFramework.UI
             protected override void Draw()
             {
                 CroppedBox box = default(CroppedBox);
-                Vector2 size = (cachedSize - cachedPadding),
+                Vector2 size = (CachedSize - Padding),
                     halfSize = size * .5f;
 
-                box.bounds = new BoundingBox2(cachedPosition - halfSize, cachedPosition + halfSize);
+                box.bounds = new BoundingBox2(Position - halfSize, Position + halfSize);
                 box.mask = maskingBox;
 
                 if (hudBoard.Color.A > 0)
                     hudBoard.Draw(ref box, HudSpace.PlaneToWorldRef);
 
                 // Left align the tab
-                Vector2 tabPos = cachedPosition,
-                    tabSize = new Vector2(4f, size.Y - cachedPadding.Y);
+                Vector2 tabPos = Position,
+                    tabSize = new Vector2(4f, size.Y - Padding.Y);
                 tabPos.X += (-size.X + tabSize.X) * .5f;
                 tabSize *= .5f;
 

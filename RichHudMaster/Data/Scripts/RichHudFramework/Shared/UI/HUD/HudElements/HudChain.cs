@@ -174,7 +174,7 @@ namespace RichHudFramework
                     listSize[alignAxis] += Spacing * (visCount - 1);
                 }
 
-                return listSize + cachedPadding;
+                return listSize + Padding;
             }
 
             /// <summary>
@@ -211,7 +211,7 @@ namespace RichHudFramework
 
             protected override void Layout()
             {
-                Vector2 chainSize = cachedSize - cachedPadding;
+                Vector2 chainSize = CachedSize - Padding;
 
                 if (hudCollectionList.Count > 0 && (chainSize.X > 0f && chainSize.Y > 0f))
                 {

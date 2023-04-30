@@ -216,18 +216,18 @@ namespace RichHudFramework.UI
 
         protected override void Layout()
         {
-            Vector2 effectivePadding = cachedPadding;
+            Vector2 effectivePadding = Padding;
             scrollBarPadding = ScrollBar.Size[offAxis];
             effectivePadding[offAxis] += scrollBarPadding;
 
-            Vector2 chainSize = cachedSize - effectivePadding;
+            Vector2 chainSize = CachedSize - effectivePadding;
             float visRatio = 0f;
 
             if (hudCollectionList.Count > 0 && (chainSize.X > 0f && chainSize.Y > 0f))
             {
                 // Update visible range
                 float totalEnabledLength, scrollOffset,
-                    rangeLength = cachedSize[alignAxis] - cachedPadding[alignAxis];
+                    rangeLength = CachedSize[alignAxis] - Padding[alignAxis];
 
                 UpdateElementRange(rangeLength, out totalEnabledLength, out scrollOffset);
 
@@ -409,7 +409,7 @@ namespace RichHudFramework.UI
                     spacing = Spacing;
 
                 if (getEnd)
-                    offset -= cachedSize[alignAxis] - cachedPadding[alignAxis] + spacing;
+                    offset -= CachedSize[alignAxis] - Padding[alignAxis] + spacing;
                 else
                 {
                     index--;

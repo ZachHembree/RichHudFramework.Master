@@ -199,12 +199,12 @@ namespace RichHudFramework.UI.Server
 
                 if (AlignToEdge)
                 {
-                    if (cachedPosition.X > 0f)
+                    if (Position.X > 0f)
                         alignment.X = Width * .5f;
                     else
                         alignment.X = -Width * .5f;
 
-                    if (cachedPosition.Y > 0f)
+                    if (Position.Y > 0f)
                         alignment.Y = Height * .5f;
                     else
                         alignment.Y = -Height * .5f;

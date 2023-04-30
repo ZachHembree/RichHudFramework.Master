@@ -59,9 +59,9 @@ namespace RichHudFramework.UI
 
         protected override void Draw()
         {
-            Vector2 size = (cachedSize - cachedPadding),
+            Vector2 size = (CachedSize - Padding),
                 halfSize = .5f * size;
-            BoundingBox2 box = new BoundingBox2(cachedPosition - halfSize, cachedPosition + halfSize);
+            BoundingBox2 box = new BoundingBox2(Position - halfSize, Position + halfSize);
 
             if (maskingBox != null)
                 _textBoard.Draw(box, maskingBox.Value, HudSpace.PlaneToWorldRef);

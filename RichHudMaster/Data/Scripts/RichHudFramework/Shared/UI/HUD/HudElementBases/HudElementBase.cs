@@ -92,7 +92,7 @@ namespace RichHudFramework
             /// <summary>
             /// Starting position of the hud element.
             /// </summary>
-            public Vector2 Origin { get; protected set; }
+            public Vector2 Origin { get; private set; }
 
             /// <summary>
             /// Position of the element relative to its origin.
@@ -102,7 +102,7 @@ namespace RichHudFramework
             /// <summary>
             /// Current position of the hud element. Origin + Offset.
             /// </summary>
-            public Vector2 Position { get; protected set; }
+            public Vector2 Position { get; private set; }
 
             /// <summary>
             /// Determines the starting position of the hud element relative to its parent.
@@ -198,13 +198,17 @@ namespace RichHudFramework
             public virtual bool IsMousedOver => (State & HudElementStates.IsMousedOver) > 0;
 
             /// <summary>
-            /// Values used internally to minimize property calls. Should be treated as read only.
+            /// Values used internally to minimize property calls.
             /// </summary>
-            protected Vector2 cachedOrigin, cachedPosition, cachedSize, cachedPadding;
+            protected Vector2 CachedSize { get; private set; }
+
+            /// <summary>
+            /// Origin offset used internally for parent alignment
+            /// </summary>
+            protected Vector2 OriginAlignment { get; private set; }
 
             protected BoundingBox2? maskingBox;
             protected HudElementBase _parentFull;
-            private Vector2 originAlignment;
 
             /// <summary>
             /// Initializes a new hud element with cursor sharing enabled and scaling set to 1f.
@@ -216,7 +220,7 @@ namespace RichHudFramework
 
                 Origin = Vector2.Zero;
                 Position = Vector2.Zero;
-                originAlignment = Vector2.Zero;
+                OriginAlignment = Vector2.Zero;
             }
 
             /// <summary>
@@ -230,8 +234,8 @@ namespace RichHudFramework
                 if (HudMain.InputMode != HudInputMode.NoInput && (HudSpace?.IsFacingCamera ?? false))
                 {
                     Vector3 cursorPos = HudSpace.CursorPos;
-                    Vector2 halfSize = Vector2.Max(cachedSize, new Vector2(minMouseBounds)) * .5f;
-                    BoundingBox2 box = new BoundingBox2(cachedPosition - halfSize, cachedPosition + halfSize);
+                    Vector2 halfSize = Vector2.Max(CachedSize, new Vector2(minMouseBounds)) * .5f;
+                    BoundingBox2 box = new BoundingBox2(Position - halfSize, Position + halfSize);
                     bool mouseInBounds;
 
                     if (maskingBox == null)
@@ -257,15 +261,17 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        State &= ~(HudElementStates.IsMousedOver | HudElementStates.WasParentInputEnabled);
-
-                        if (_parent != null && (_parent.State & _parent.NodeInputMask) == _parent.NodeInputMask)
+                        if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
                             State |= HudElementStates.WasParentInputEnabled;
+                        else
+                            State &= ~HudElementStates.WasParentInputEnabled;
 
                         bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask,
                              isInputEnabled = (State & NodeInputMask) == NodeInputMask,
                              canUseCursor = (State & HudElementStates.CanUseCursor) > 0,
                              canShareCursor = (State & HudElementStates.CanShareCursor) > 0;
+
+                        State &= ~HudElementStates.IsMousedOver;
 
                         if (isVisible && isInputEnabled)
                         {
@@ -307,10 +313,10 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        State &= ~HudElementStates.WasParentVisible;
-
                         if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
                             State |= HudElementStates.WasParentVisible;
+                        else
+                            State &= ~HudElementStates.WasParentVisible;
 
                         bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
 
@@ -320,17 +326,15 @@ namespace RichHudFramework
 
                             if (_parentFull != null)
                             {
-                                Origin = _parentFull.cachedPosition + originAlignment;
+                                Origin = _parentFull.Position + OriginAlignment;
                             }
                             else
                             {
                                 Origin = Vector2.Zero;
-                                cachedPadding = Padding;
-                                cachedSize = UnpaddedSize + Padding;
-                                cachedPosition = Origin + Offset;
+                                Position = Offset;
+                                Padding = Padding;
+                                CachedSize = UnpaddedSize + Padding;
                             }
-
-                            Position = cachedPosition;
 
                             Layout();
 
@@ -396,7 +400,7 @@ namespace RichHudFramework
 
                     if (child != null && (child.State & (nodeVisible)) == nodeVisible)
                     {
-                        child.cachedPadding = child.Padding;
+                        child.Padding = child.Padding;
 
                         Vector2 size = child.UnpaddedSize + child.Padding;
                         DimAlignments sizeFlags = child.DimAlignment;
@@ -406,24 +410,24 @@ namespace RichHudFramework
                             if ((sizeFlags & DimAlignments.IgnorePadding) == DimAlignments.IgnorePadding)
                             {
                                 if ((sizeFlags & DimAlignments.Width) == DimAlignments.Width)
-                                    size.X = cachedSize.X - cachedPadding.X;
+                                    size.X = CachedSize.X - Padding.X;
 
                                 if ((sizeFlags & DimAlignments.Height) == DimAlignments.Height)
-                                    size.Y = cachedSize.Y - cachedPadding.Y;
+                                    size.Y = CachedSize.Y - Padding.Y;
                             }
                             else
                             {
                                 if ((sizeFlags & DimAlignments.Width) == DimAlignments.Width)
-                                    size.X = cachedSize.X;
+                                    size.X = CachedSize.X;
 
                                 if ((sizeFlags & DimAlignments.Height) == DimAlignments.Height)
-                                    size.Y = cachedSize.Y;
+                                    size.Y = CachedSize.Y;
                             }
 
                             child.UnpaddedSize = size - child.Padding;
                         }
 
-                        child.cachedSize = size;
+                        child.CachedSize = size;
                     }
                 }
 
@@ -435,41 +439,41 @@ namespace RichHudFramework
                     if (child != null && (child.State & (nodeVisible)) == nodeVisible)
                     {
                         ParentAlignments originFlags = child.ParentAlignment;
-                        Vector2 pos = Vector2.Zero,
-                            max = (cachedSize + child.cachedSize) * .5f,
+                        Vector2 delta = Vector2.Zero,
+                            max = (CachedSize + child.CachedSize) * .5f,
                             min = -max;
 
                         if ((originFlags & ParentAlignments.UsePadding) == ParentAlignments.UsePadding)
                         {
-                            min += cachedPadding * .5f;
-                            max -= cachedPadding * .5f;
+                            min += Padding * .5f;
+                            max -= Padding * .5f;
                         }
 
                         if ((originFlags & ParentAlignments.InnerV) == ParentAlignments.InnerV)
                         {
-                            min.Y += child.cachedSize.Y;
-                            max.Y -= child.cachedSize.Y;
+                            min.Y += child.CachedSize.Y;
+                            max.Y -= child.CachedSize.Y;
                         }
 
                         if ((originFlags & ParentAlignments.InnerH) == ParentAlignments.InnerH)
                         {
-                            min.X += child.cachedSize.X;
-                            max.X -= child.cachedSize.X;
+                            min.X += child.CachedSize.X;
+                            max.X -= child.CachedSize.X;
                         }
 
                         if ((originFlags & ParentAlignments.Bottom) == ParentAlignments.Bottom)
-                            pos.Y = min.Y;
+                            delta.Y = min.Y;
                         else if ((originFlags & ParentAlignments.Top) == ParentAlignments.Top)
-                            pos.Y = max.Y;
+                            delta.Y = max.Y;
 
                         if ((originFlags & ParentAlignments.Left) == ParentAlignments.Left)
-                            pos.X = min.X;
+                            delta.X = min.X;
                         else if ((originFlags & ParentAlignments.Right) == ParentAlignments.Right)
-                            pos.X = max.X;
+                            delta.X = max.X;
 
-                        child.originAlignment = pos;
-                        child.cachedOrigin = cachedPosition + pos;
-                        child.cachedPosition = child.cachedOrigin + child.Offset;
+                        child.OriginAlignment = delta;
+                        child.Origin = Position + delta;
+                        child.Position = child.Origin + child.Offset;
                     }
                 }
             }
@@ -488,10 +492,10 @@ namespace RichHudFramework
                 }
                 else if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
                 {
-                    Vector2 halfParent = .5f * _parentFull.cachedSize;
+                    Vector2 halfParent = .5f * _parentFull.CachedSize;
                     parentBox = new BoundingBox2(
-                        -halfParent + _parentFull.cachedPosition,
-                        halfParent + _parentFull.cachedPosition
+                        -halfParent + _parentFull.Position,
+                        halfParent + _parentFull.Position
                     );
 
                     if (_parentFull.maskingBox != null)
@@ -502,10 +506,10 @@ namespace RichHudFramework
 
                 if ((State & HudElementStates.IsMasking) > 0)
                 {
-                    Vector2 halfSize = .5f * cachedSize;
+                    Vector2 halfSize = .5f * CachedSize;
                     box = new BoundingBox2(
-                        -halfSize + cachedPosition,
-                        halfSize + cachedPosition
+                        -halfSize + Position,
+                        halfSize + Position
                     );
                 }
 

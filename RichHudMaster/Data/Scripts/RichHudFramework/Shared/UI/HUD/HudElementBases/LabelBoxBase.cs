@@ -60,7 +60,7 @@ namespace RichHudFramework
             {
                 if (!AutoResize)
                 {
-                    TextSize = Size - cachedPadding;
+                    TextSize = Size - Padding;
                 }
 
                 if (FitToTextElement)

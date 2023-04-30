@@ -218,9 +218,9 @@ namespace RichHudFramework.UI
         {
             if (ListOpen)
             {
-                selectionBox.Width = cachedSize.X - 2f * IndentSize - cachedPadding.X;
+                selectionBox.Width = CachedSize.X - 2f * IndentSize - Padding.X;
                 selectionBox.Offset = new Vector2(IndentSize, 0f);
-                selectionBox.Height = cachedSize.Y - cachedPadding.Y - labelButton.Height;
+                selectionBox.Height = CachedSize.Y - Padding.Y - labelButton.Height;
             }
         }
 
@@ -230,11 +230,11 @@ namespace RichHudFramework.UI
 
             if (ListOpen)
             {
-                Height = selectionBox.GetRangeSize().Y + labelButton.Height + cachedPadding.Y;
+                Height = selectionBox.GetRangeSize().Y + labelButton.Height + Padding.Y;
             }
             else
             {
-                Height = labelButton.Height + cachedPadding.Y;
+                Height = labelButton.Height + Padding.Y;
             }
         }
 
