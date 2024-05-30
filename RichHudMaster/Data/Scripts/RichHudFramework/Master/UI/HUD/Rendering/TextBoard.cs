@@ -460,20 +460,15 @@ namespace RichHudFramework
                     UpdateLineRange();
                     UpdateGlyphBoards();
 
-                    // Check for external resizing
+                    // Check for external resizing and offset changes
                     if (Vector2.DistanceSquared(lastFixedSize, _fixedSize) > .1f || 
-                        Vector2.DistanceSquared(lastTextSize, _textSize) > .1f
+                        Vector2.DistanceSquared(lastTextSize, _textSize) > .1f ||
+                        Vector2.DistanceSquared(lastTextOffset, _textOffset) > .1f
                     )
-                    {
-                        areOffsetsStale = true;
-                        isBbCacheStale = true;
-                    }
-
-                    // Check for offset changes
-                    if (Vector2.DistanceSquared(lastTextOffset, _textOffset) > .1f)
                     {
                         isLineRangeStale = true;
                         isBbCacheStale = true;
+                        areOffsetsStale = true;
                     }
 
                     if (isQuadCacheStale || areOffsetsStale || isLineRangeStale)
@@ -565,7 +560,6 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateVisibleRange()
                 {
-                    //_textSize = GetTextSize();
                     _size = AutoResize ? _textSize : _fixedSize;
                     isBbCacheStale = true;
 
