@@ -47,7 +47,7 @@ namespace RichHudFramework
                 /// Gets or sets the maximum line width before text will wrap to the next line. Word wrapping must be enabled for
                 /// this to apply.
                 /// </summary>
-                public float LineWrapWidth { get { return wrapWidth; } set { wrapWidth = value; SetWrapWidth(value); } }
+                public float LineWrapWidth { get { return _lineWrapWidth; } set { SetWrapWidth(value); } }
 
                 /// <summary>
                 /// Determines the formatting mode of the text.
@@ -74,7 +74,7 @@ namespace RichHudFramework
                             else if (value == TextBuilderModes.Wrapped)
                             {
                                 wrappedText = new WrappedText(lines);
-                                wrappedText.SetWrapWidth(wrapWidth);
+                                wrappedText.SetWrapWidth(_lineWrapWidth);
                                 newFormatter = wrappedText;
                             }
 
@@ -92,7 +92,7 @@ namespace RichHudFramework
 
                 private FormattedTextBase formatter;
                 private WrappedText wrappedText;
-                private float wrapWidth;
+                private float _lineWrapWidth;
 
                 private readonly ObjectPool<StringBuilder> sbPool;
                 private RichText lastText;
@@ -109,9 +109,11 @@ namespace RichHudFramework
                 protected virtual void AfterTextUpdate()
                 { }
 
-                protected void SetWrapWidth(float width)
+                protected virtual void SetWrapWidth(float width)
                 {
-                    if (BuilderMode == TextBuilderModes.Wrapped && (width < wrappedText.MaxLineWidth - 2f || width > wrappedText.MaxLineWidth + 4f))
+                    _lineWrapWidth = width;
+
+                    if (BuilderMode == TextBuilderModes.Wrapped && Math.Abs(width - wrappedText.MaxLineWidth) > 1f)
                     {
                         wrappedText.SetWrapWidth(width);
                         AfterTextUpdate();

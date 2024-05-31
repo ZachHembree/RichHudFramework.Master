@@ -159,6 +159,14 @@ namespace RichHudFramework
                     isBbCacheStale = true;
                 }
 
+                protected override void SetWrapWidth(float width)
+                {
+                    base.SetWrapWidth(width);
+
+                    if (builderMode == TextBuilderModes.Wrapped)
+                        _fixedSize.X = width;
+                }
+
                 /// <summary>
                 /// Calculates the minimum offset needed to ensure that the character at the specified index
                 /// is within the visible range.
