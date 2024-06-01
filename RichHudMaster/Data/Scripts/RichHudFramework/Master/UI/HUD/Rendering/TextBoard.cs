@@ -333,29 +333,6 @@ namespace RichHudFramework
                 /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
                 /// direction.
                 /// </summary>
-                public void Draw(Vector2 offset, ref MatrixD matrix)
-                {
-                    Vector2 halfSize = _size * .5f * Scale;
-                    BoundingBox2 box = new BoundingBox2(offset - halfSize, offset + halfSize);
-                    matRef[0] = matrix;
-
-                    Draw(box, CroppedBox.defaultMask, matRef);
-                }
-
-                /// <summary>
-                /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
-                /// direction.
-                /// </summary>
-                public void Draw(BoundingBox2 box, BoundingBox2 mask, ref MatrixD matrix)
-                {
-                    matRef[0] = matrix;
-                    Draw(box, mask, matRef);
-                }
-
-                /// <summary>
-                /// Draws the text board in world space on the XY plane of the matrix, facing in the +Z
-                /// direction.
-                /// </summary>
                 public void Draw(BoundingBox2 box, BoundingBox2 mask, MatrixD[] matrixRef)
                 {
                     ContainmentType containment;
