@@ -101,6 +101,8 @@ namespace RichHudFramework
                     /// </summary>
                     private bool canTextBeEqual;
 
+                    public bool isFormatStale;
+
                     /// <summary>
                     /// True if text size has changed since the last time the size was calculated
                     /// </summary>
@@ -127,6 +129,7 @@ namespace RichHudFramework
 
                         isQuadCacheStale = true;
                         canTextBeEqual = false;
+                        isFormatStale = true;
                         lastCount = 0;
                         Count = 0;
                         lastIndex = -1;
@@ -162,22 +165,17 @@ namespace RichHudFramework
 
                             if (!formatEqual)
                             {
-                                IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
-                                float fontSize = format.Data.Item2 * fontStyle.FontScale;
-                                Glyph glyph = fontStyle[chars[n]];
-                                Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
-
                                 formattedGlyphs[n] = new FormattedGlyph
                                 {
-                                    chSize = glyphSize,
                                     format = format,
-                                    glyph = glyph
+                                    glyph = null
                                 };
 
                                 canTextBeEqual = false;
+                                isFormatStale = true;
                                 isSizeStale = true;
                             }
-                        }                        
+                        }
                     }
 
                     /// <summary>
@@ -264,6 +262,7 @@ namespace RichHudFramework
                         {
                             chars[Count] = line.chars[index];
                             formattedGlyphs[Count] = line.formattedGlyphs[index];
+                            isFormatStale = true;
                         }
 
                         Count++;
@@ -314,19 +313,14 @@ namespace RichHudFramework
 
                                     if (!canTextBeEqual)
                                     {
-                                        IFontStyle fontStyle = FontManager.GetFontStyle(format.Data.Item3);
-                                        float fontSize = format.Data.Item2 * fontStyle.FontScale;
-                                        Glyph glyph = fontStyle[text[n]];
-                                        var glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
-                                        var fGlyph = new FormattedGlyph
+                                        chars[Count] = text[n];
+                                        formattedGlyphs[Count] = new FormattedGlyph
                                         {
-                                            chSize = glyphSize,
                                             format = format,
-                                            glyph = glyph
+                                            glyph = null
                                         };
 
-                                        chars[Count] = text[n];
-                                        formattedGlyphs[Count] = fGlyph;
+                                        isFormatStale = true;
                                     }
 
                                     Count++;
@@ -366,6 +360,7 @@ namespace RichHudFramework
 
                                 // Non-sequential update
                                 canTextBeEqual = false;
+                                isFormatStale = true;
                             }
 
                             if (canTextBeEqual)
@@ -378,6 +373,7 @@ namespace RichHudFramework
                                     if (src.chars[k] != chars[j])
                                     {
                                         canTextBeEqual = false;
+                                        isFormatStale = true;
                                         break;
                                     }
                                 }
@@ -417,6 +413,7 @@ namespace RichHudFramework
                             if (!canTextBeEqual)
                             {
                                 Array.Copy(src.formattedGlyphs, srcIndex, formattedGlyphs, dstIndex, srcCount);
+                                isFormatStale = true;
                             }
 
                             Count = newCount;
@@ -439,6 +436,7 @@ namespace RichHudFramework
                                 Array.Copy(formattedGlyphs, index + count, formattedGlyphs, index, Count - index);
 
                                 canTextBeEqual = false;
+                                isFormatStale = true;
                             }
 
                             if (Count == 0)
@@ -507,6 +505,9 @@ namespace RichHudFramework
 
                     public void RestartTextUpdate()
                     {
+                        if (isFormatStale)
+                            UpdateFormat();
+
                         if (isSizeStale)
                             UpdateSize();
 
@@ -514,9 +515,19 @@ namespace RichHudFramework
                             isQuadCacheStale = true;
 
                         canTextBeEqual = true;
+                        isFormatStale = false;
                         lastCount = Count;
 
                         TrimExcess();
+                    }
+
+                    public void UpdateFormat()
+                    {
+                        if (isFormatStale)
+                        {
+                            FontManager.SetFormattedGlyphs(chars, formattedGlyphs, 0, Count);
+                            isFormatStale = false;
+                        }
                     }
 
                     /// <summary>
@@ -524,6 +535,11 @@ namespace RichHudFramework
                     /// </summary>
                     public void UpdateSize()
                     {
+                        if (isFormatStale)
+                        {
+                            UpdateFormat();
+                        }
+
                         if (isSizeStale)
                         {
                             Vector2 newSize = Vector2.Zero;

@@ -176,6 +176,7 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 lineBuf.TrimExcess();
                 lineBuf.Clear();
+                charBuffer.UpdateFormat();
 
                 float wordWidth, spaceRemaining = MaxLineWidth;
                 int wordEnd, lastLineStart, lastLineEnd,
