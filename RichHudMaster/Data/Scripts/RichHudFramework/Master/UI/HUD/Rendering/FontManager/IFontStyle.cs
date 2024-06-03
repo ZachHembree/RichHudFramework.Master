@@ -53,6 +53,11 @@ namespace RichHudFramework
                 Glyph this[char ch] { get; }
 
                 /// <summary>
+                /// Char to Glyph dictionary
+                /// </summary>
+                IReadOnlyDictionary<char, Glyph> Glyphs { get; }
+
+                /// <summary>
                 /// Position of the base line starting from the origin
                 /// </summary>
                 float BaseLine { get; }

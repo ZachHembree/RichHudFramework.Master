@@ -107,6 +107,8 @@ namespace RichHudFramework
                     /// </summary>
                     public Vector2I BoldItalicUnderline { get; }
 
+                    public IReadOnlyList<IFontStyle> AtlasStyles { get; }
+
                     private readonly FontStyle[] styles;
 
                     /// <summary>
@@ -128,6 +130,7 @@ namespace RichHudFramework
 
                         BaseScale = 12f / ptSize;
                         styles = new FontStyle[2];
+                        AtlasStyles = styles;
                     }
 
                     /// <summary>

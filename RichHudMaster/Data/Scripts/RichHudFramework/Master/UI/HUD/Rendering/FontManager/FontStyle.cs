@@ -33,9 +33,9 @@ namespace RichHudFramework
                             {
                                 Glyph value;
 
-                                if (!glyphs.TryGetValue(ch, out value))
+                                if (!Glyphs.TryGetValue(ch, out value))
                                 {
-                                    glyphs.TryGetValue((char)0x25a1, out value);
+                                    Glyphs.TryGetValue((char)0x25a1, out value);
                                 };
 
                                 return value;
@@ -43,21 +43,28 @@ namespace RichHudFramework
                         }
 
                         public IFont Font { get; }
-                        public float PtSize => Font.PtSize;
-                        public float Height { get; }
-                        public float BaseLine { get; }
-                        public float FontScale => Font.BaseScale;
 
-                        private readonly Dictionary<char, Glyph> glyphs;
+                        public float PtSize { get; }
+
+                        public float Height { get; }
+
+                        public float BaseLine { get; }
+
+                        public float FontScale { get; }
+
+                        public IReadOnlyDictionary<char, Glyph> Glyphs { get; }
+
                         private readonly Dictionary<uint, float> kerningPairs;
 
                         public FontStyle(Font parent, float height, float baseline, Dictionary<char, Glyph> glyphs, Dictionary<uint, float> kerningPairs)
                         {
                             Font = parent;
+                            PtSize = Font.PtSize;
+                            FontScale = Font.BaseScale;
                             Height = height;
                             BaseLine = baseline;
-                            this.glyphs = glyphs;
                             this.kerningPairs = kerningPairs;
+                            Glyphs = glyphs;
                         }
 
                         /// <summary>
