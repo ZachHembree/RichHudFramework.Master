@@ -89,7 +89,7 @@ namespace RichHudFramework
                     cursorBox = new TexturedBox()
                     {
                         Material = new Material(MyStringId.GetOrCompute("MouseCursor"), new Vector2(64f)),
-                        Size = new Vector2(64f),
+                        Size = new Vector2(64f)
                     };
                     cursorBox.Register(this, true);
 
@@ -219,7 +219,7 @@ namespace RichHudFramework
                     GetCapturedHudSpaceFunc = null;
                 }
 
-                protected override void Layout()
+                public void UpdateCursorPos(ref MatrixD ptw)
                 {
                     // Reverse scaling due to differences between rendering resolution and
                     // desktop resolution when running the game in windowed mode
@@ -242,13 +242,15 @@ namespace RichHudFramework
                     screenPos += new Vector2(-ScreenWidth * .5f, ScreenHeight * .5f);
 
                     // Calculate position of the cursor in world space
-                    MatrixD ptw = HudMain.PixelToWorld;
                     Vector3D worldPos = new Vector3D(screenPos.X, screenPos.Y, 0d);
                     Vector3D.TransformNoProjection(ref worldPos, ref ptw, out worldPos);
 
                     WorldPos = worldPos;
                     ScreenPos = screenPos;
+                }
 
+                protected override void Layout()
+                {
                     // Update custom hud space and tooltips
                     HudSpaceData? hudSpaceData = GetCapturedHudSpaceFunc?.Invoke();
                     bool useCapturedHudSpace = hudSpaceData != null && hudSpaceData.Value.Item1;

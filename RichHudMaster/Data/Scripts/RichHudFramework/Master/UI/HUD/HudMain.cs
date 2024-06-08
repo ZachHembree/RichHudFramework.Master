@@ -230,6 +230,7 @@ namespace RichHudFramework
                 };
                 
                 PixelToWorldRef[0] *= MyAPIGateway.Session.Camera.WorldMatrix;
+                _cursor.UpdateCursorPos(ref PixelToWorldRef[0]);
             }
 
             /// <summary>
