@@ -48,6 +48,12 @@ namespace RichHudFramework
                     public bool Analog { get; set; }
 
                     /// <summary>
+                    /// Analog value of the bind, if it has one. Returns the sum of all analog values in
+                    /// key combo. Multiple analog controls per bind are not recommended.
+                    /// </summary>
+                    public float AnalogValue { get; set; }
+
+                    /// <summary>
                     /// True if currently pressed.
                     /// </summary>
                     public bool IsPressed { get; private set; }
@@ -101,6 +107,9 @@ namespace RichHudFramework
                     {
                         wasPressed = IsPressed;
                         IsPressed = isPressed;
+
+                        if (!isPressed)
+                            AnalogValue = 0f;
 
                         if (IsNewPressed)
                         {

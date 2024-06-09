@@ -122,7 +122,6 @@ namespace RichHudFramework
                 private HudSpaceDelegate GetCapturedHudSpaceFunc;
                 private readonly TexturedBox cursorBox;
                 private readonly LabelBox toolTip;
-                private Vector2 invMousePosScale;
 
                 public HudCursor()
                 {
@@ -272,19 +271,8 @@ namespace RichHudFramework
                     GetCapturedHudSpaceFunc = null;
                 }
 
-                public void UpdateCursorPos(ref MatrixD ptw)
+                public void UpdateCursorPos(Vector2 screenPos, ref MatrixD ptw)
                 {
-                    // Reverse scaling due to differences between rendering resolution and
-                    // desktop resolution when running the game in windowed mode
-                    Vector2 desktopSize = MyAPIGateway.Input.GetMouseAreaSize();
-                    invMousePosScale = new Vector2
-                    {
-                        X = ScreenWidth / desktopSize.X,
-                        Y = ScreenHeight / desktopSize.Y,
-                    };
-
-                    Vector2 screenPos = MyAPIGateway.Input.GetMousePosition() * invMousePosScale;
-
                     // Update world line
                     WorldLine = MyAPIGateway.Session.Camera.WorldLineFromScreen(screenPos);
 
@@ -416,7 +404,7 @@ namespace RichHudFramework
                         case HudCursorAccessors.WorldPos:
                             return WorldPos;
                         case HudCursorAccessors.WorldLine:
-                            return MyAPIGateway.Session.Camera.WorldLineFromScreen(MyAPIGateway.Input.GetMousePosition() * invMousePosScale);
+                            return WorldLine;
                     }
 
                     return null;
@@ -435,7 +423,7 @@ namespace RichHudFramework
                         case HudCursorAccessors.WorldPos:
                             return WorldPos;
                         case HudCursorAccessors.WorldLine:
-                            return MyAPIGateway.Session.Camera.WorldLineFromScreen(MyAPIGateway.Input.GetMousePosition() * invMousePosScale);
+                            return WorldLine;
                         case HudCursorAccessors.RegisterToolTip:
                             {
                                 if (!IsToolTipRegistered)

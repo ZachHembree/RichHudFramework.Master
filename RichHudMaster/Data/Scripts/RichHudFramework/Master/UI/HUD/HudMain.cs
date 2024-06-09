@@ -230,7 +230,37 @@ namespace RichHudFramework
                 };
                 
                 PixelToWorldRef[0] *= MyAPIGateway.Session.Camera.WorldMatrix;
-                _cursor.UpdateCursorPos(ref PixelToWorldRef[0]);
+                Vector2 screenPos;
+
+                if (MyAPIGateway.Input.IsJoystickLastUsed)
+                {
+                    Vector2 halfScreen = 0.5f * new Vector2(ScreenWidth, ScreenHeight);
+                    Vector2 gpDelta = new Vector2
+                    { 
+                        X = SharedBinds.RightStickX.AnalogValue, 
+                        Y = -SharedBinds.RightStickY.AnalogValue
+                    } * 10f * ResScale;
+
+                    screenPos = _cursor.ScreenPos + gpDelta;
+                    screenPos = Vector2.Clamp(screenPos, -halfScreen, halfScreen);
+                    screenPos -= new Vector2(-ScreenWidth * .5f, ScreenHeight * .5f);
+                    screenPos.Y *= -1f;
+                }
+                else
+                {
+                    // Reverse scaling due to differences between rendering resolution and
+                    // desktop resolution when running the game in windowed mode
+                    Vector2 desktopSize = MyAPIGateway.Input.GetMouseAreaSize(),
+                        invMousePosScale = new Vector2
+                        {
+                            X = ScreenWidth / desktopSize.X,
+                            Y = ScreenHeight / desktopSize.Y,
+                        };
+
+                    screenPos = MyAPIGateway.Input.GetMousePosition() * invMousePosScale;
+                }
+
+                _cursor.UpdateCursorPos(screenPos, ref PixelToWorldRef[0]);
             }
 
             /// <summary>

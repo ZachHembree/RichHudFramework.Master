@@ -147,6 +147,7 @@ namespace RichHudFramework
                         // If any used controls have new presses, stop releasing
                         bind.beingReleased = bind.beingReleased && !anyNewPresses;
                         bind.bindHits = 0;
+                        bind.AnalogValue = 0f;
                     }
 
                     foreach (Control con in usedControls)
@@ -156,6 +157,9 @@ namespace RichHudFramework
                             foreach (Bind bind in controlMap[con.Index])
                             {
                                 bind.bindHits++;
+
+                                if (con.Analog)
+                                    bind.AnalogValue += con.AnalogValue;
                             }
 
                             controlsPressed++;

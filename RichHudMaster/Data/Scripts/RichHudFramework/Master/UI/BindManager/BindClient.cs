@@ -315,6 +315,8 @@ namespace RichHudFramework
                             bind.ClearCombo(); break;
                         case BindAccesssors.ClearSubscribers:
                             bind.ClearSubscribers(); break;
+                        case BindAccesssors.Analogvalue:
+                            return bind.AnalogValue;
                     }
 
                     return null;
@@ -369,6 +371,8 @@ namespace RichHudFramework
                                 return control.IsReleased;
                             case ControlAccessors.Analog:
                                 return control.Analog;
+                            case ControlAccessors.AnalogValue:
+                                return control.AnalogValue;
                         }
                     }
 

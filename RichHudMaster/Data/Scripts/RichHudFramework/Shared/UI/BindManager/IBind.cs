@@ -23,6 +23,12 @@ namespace RichHudFramework
             bool Analog { get; }
 
             /// <summary>
+            /// Analog value of the bind, if it has one. Returns the sum of all analog values in
+            /// key combo. Multiple analog controls per bind are not recommended.
+            /// </summary>
+            float AnalogValue { get; }
+
+            /// <summary>
             /// True if just pressed.
             /// </summary>
             bool IsNewPressed { get; }
@@ -169,6 +175,11 @@ namespace RichHudFramework
             /// void
             /// </summary>
             ClearSubscribers = 15,
+
+            /// <summary>
+            /// out: float
+            /// </summary>
+            Analogvalue = 16
         }
 
     }

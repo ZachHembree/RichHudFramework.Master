@@ -35,6 +35,9 @@ namespace RichHudFramework.UI
         public static IBind PageDown { get { return Instance.sharedMain[17]; } }
         public static IBind Space { get { return Instance.sharedMain[18]; } }
 
+        public static IBind RightStickX { get {  return Instance.sharedMain[19]; } }
+        public static IBind RightStickY { get { return Instance.sharedMain[20]; } }
+
         public static IBind Control { get { return Instance.sharedModifiers[0]; } }
         public static IBind Shift { get { return Instance.sharedModifiers[1]; } }
         public static IBind Alt { get { return Instance.sharedModifiers[2]; } }
@@ -75,6 +78,9 @@ namespace RichHudFramework.UI
                 { "pageup", MyKeys.PageUp },
                 { "pagedown", MyKeys.PageDown },
                 { "space", MyKeys.Space },
+
+                { "rightstickx", RichHudControls.RightStickX },
+                { "rightsticky", RichHudControls.RightStickY },
             });
             sharedModifiers = BindManager.GetOrCreateGroup("SharedModifiers");
             sharedModifiers.RegisterBinds(new BindGroupInitializer
