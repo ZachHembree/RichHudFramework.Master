@@ -304,7 +304,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
                 /// </summary>
-                public IBind AddBind(string bindName, IReadOnlyList<ControlData> combo) =>
+                public IBind AddBind(string bindName, IReadOnlyList<ControlHandle> combo) =>
                     AddBind(bindName, GetCombo(combo));
 
                 /// <summary>

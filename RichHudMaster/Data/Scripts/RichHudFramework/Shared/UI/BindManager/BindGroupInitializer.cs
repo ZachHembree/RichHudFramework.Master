@@ -74,18 +74,18 @@ namespace RichHudFramework
             /// <summary>
             /// Adds a bind with the given name and the given key combo.
             /// </summary>
-            public void Add(string bindName, ControlData con1 = null, ControlData con2 = null, ControlData con3 = null)
+            public void Add(string bindName, ControlHandle? con1 = null, ControlHandle? con2 = null, ControlHandle? con3 = null)
             {
                 var indices = new List<int>();
 
                 if (con1 != null)
-                    indices.Add(con1);
+                    indices.Add(con1.Value);
 
                 if (con2 != null)
-                    indices.Add(con2);
+                    indices.Add(con2.Value);
 
                 if (con3 != null)
-                    indices.Add(con3);
+                    indices.Add(con3.Value);
 
                 bindData.Add(new MyTuple<string, IReadOnlyList<int>>(bindName, indices));
             }
@@ -109,30 +109,6 @@ namespace RichHudFramework
 
                 return definitions;
             }
-        }
-
-        public class ControlData
-        {
-            public readonly int index;
-
-            public ControlData(MyKeys key)
-            {
-                index = BindManager.GetControl(key).Index;
-            }
-
-            public ControlData(RichHudControls key)
-            {
-                index = BindManager.GetControl(key).Index;
-            }
-
-            public static implicit operator int(ControlData control) =>
-                control.index;
-
-            public static implicit operator ControlData(MyKeys key) =>
-                new ControlData(key);
-
-            public static implicit operator ControlData(RichHudControls key) =>
-                new ControlData(key);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Sandbox.ModAPI;
+﻿using RichHudFramework.Internal;
+using Sandbox.ModAPI;
 using System;
 using VRage.Input;
 
@@ -47,11 +48,17 @@ namespace RichHudFramework
                 public bool Analog { get; }
 
                 /// <summary>
+                /// Returns analog value of the control, if it has one
+                /// </summary>
+                public float AnalogValue { get; private set; }
+
+                /// <summary>
                 /// Index of the control in the bind manager
                 /// </summary>
                 public int Index { get; }
 
                 private readonly Func<bool> IsPressedFunc;
+                private readonly Func<float> GetAnalogValueFunc;
                 private bool wasPressed;
 
                 public Control(MyKeys seKey, int index, bool analog = false)
@@ -67,6 +74,19 @@ namespace RichHudFramework
                     Analog = analog;
                 }
 
+                public Control(MyJoystickButtonsEnum seKey, int index, bool analog = false)
+                {
+                    Name = seKey.ToString();
+                    DisplayName = MyAPIGateway.Input.GetName(seKey);
+
+                    if (DisplayName == null || DisplayName.Length == 0 || DisplayName[0] <= ' ')
+                        DisplayName = Name;
+
+                    Index = index;
+                    IsPressedFunc = () => MyAPIGateway.Input.IsJoystickButtonPressed(seKey);
+                    Analog = analog;
+                }
+
                 public Control(string name, string friendlyName, int index, Func<bool> IsPressed, bool analog = false)
                 {
                     Name = name;
@@ -77,11 +97,23 @@ namespace RichHudFramework
                     Analog = analog;
                 }
 
+                public Control(string name, string friendlyName, int index, Func<bool> IsPressed, Func<float> GetAnalogValue)
+                {
+                    Name = name;
+                    DisplayName = friendlyName;
+
+                    Index = index;
+                    IsPressedFunc = IsPressed;
+                    GetAnalogValueFunc = GetAnalogValue;
+                    Analog = true;
+                }
+
                 public void Update()
                 {
                     wasPressed = IsPressed;
                     IsPressed = IsPressedFunc();
                     IsNewPressed = IsPressed && (!wasPressed || Analog);
+                    AnalogValue = GetAnalogValueFunc?.Invoke() ?? 0f;
                 }
 
                 public void Reset()

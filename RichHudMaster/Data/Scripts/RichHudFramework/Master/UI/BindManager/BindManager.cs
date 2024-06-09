@@ -81,7 +81,7 @@ namespace RichHudFramework
             }
             private static BindManager _instance;
 
-            private static readonly HashSet<MyKeys> controlBlacklist = new HashSet<MyKeys>()
+            private static readonly HashSet<ControlHandle> controlBlacklist = new HashSet<ControlHandle>()
             {
                 MyKeys.None,
                 MyKeys.LeftAlt,
@@ -91,14 +91,15 @@ namespace RichHudFramework
                 MyKeys.LeftControl,
                 MyKeys.RightControl,
                 MyKeys.LeftWindows,
-                MyKeys.RightWindows
+                MyKeys.RightWindows,
+                MyJoystickButtonsEnum.None
             };
 
-            private static readonly Dictionary<MyKeys, MyKeys[]> controlAliases = new Dictionary<MyKeys, MyKeys[]>()
+            private static readonly Dictionary<ControlHandle, ControlHandle[]> controlAliases = new Dictionary<ControlHandle, ControlHandle[]>
             {
-                { MyKeys.Alt, new MyKeys[] { MyKeys.LeftAlt, MyKeys.RightAlt } },
-                { MyKeys.Shift, new MyKeys[] { MyKeys.LeftShift, MyKeys.RightShift } },
-                { MyKeys.Control, new MyKeys[] { MyKeys.LeftControl, MyKeys.RightControl } }
+                { MyKeys.Alt, new ControlHandle[] { MyKeys.LeftAlt, MyKeys.RightAlt } },
+                { MyKeys.Shift, new ControlHandle[] { MyKeys.LeftShift, MyKeys.RightShift } },
+                { MyKeys.Control, new ControlHandle[] { MyKeys.LeftControl, MyKeys.RightControl } }
             };
 
             private readonly Control[] controls;
@@ -114,12 +115,16 @@ namespace RichHudFramework
 
             private BindManager() : base(false, true)
             {
-                controlDict = new Dictionary<string, IControl>(300);
-                controlDictFriendly = new Dictionary<string, IControl>(300);
+                var kbmKeys = Enum.GetValues(typeof(MyKeys)) as MyKeys[];
+                var gpKeys = Enum.GetValues(typeof(MyJoystickButtonsEnum)) as MyJoystickButtonsEnum[];
+                int conCount = ControlHandle.GPKeysStart + (int)MyJoystickButtonsEnum.J16 + 1;
 
-                var keys = Enum.GetValues(typeof(MyKeys)) as MyKeys[];
-                controls = GenerateControls(keys);
-                GetControlStringIDs(keys, out seControlIDs, out seMouseControlIDs);
+                controls = new Control[conCount];
+                controlDict = new Dictionary<string, IControl>(conCount);
+                controlDictFriendly = new Dictionary<string, IControl>(conCount);
+
+                GenerateControls(controls, kbmKeys, gpKeys);
+                GetControlStringIDs(kbmKeys, out seControlIDs, out seMouseControlIDs);
 
                 bindClients = new List<Client>();
             }
@@ -175,11 +180,13 @@ namespace RichHudFramework
 
             private void UpdateControls()
             {
-                foreach (Control control in controls)
+                for (int i = 0; i < controls.Length; i++)
                 {
-                    if (control != Control.Default)
+                    var con = controls[i];
+
+                    if (con != Control.Default && con.Index == i)
                     {
-                        control.Update();
+                        con.Update();
                     }
                 }
             }
@@ -334,38 +341,30 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Returns the control associated with the given <see cref="MyKeys"/> enum.
+            /// Returns the control associated with the given <see cref="ControlHandle"/>.
             /// </summary>
-            public static IControl GetControl(MyKeys seKey) =>
-                Controls[(int)seKey];
-
-            /// <summary>
-            /// Returns the control associated with the given custom <see cref="RichHudControls"/> enum.
-            /// </summary>
-            public static IControl GetControl(RichHudControls rhdKey) =>
-                Controls[(int)rhdKey];
+            public static IControl GetControl(ControlHandle handle) =>
+                Controls[handle.id];
 
             /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
             /// </summary>
-            private Control[] GenerateControls(MyKeys[] keys)
+            private void GenerateControls(Control[] controls, MyKeys[] kbmKeys, MyJoystickButtonsEnum[] gpKeys)
             {
-                Control[] controls = new Control[258];
-
                 // Initialize control list to default
                 for (int i = 0; i < controls.Length; i++)
                     controls[i] = Control.Default;
                     
-                // Add controls
-                for (int i = 0; i < keys.Length; i++)
+                // Add kbd+mouse controls
+                for (int i = 0; i < kbmKeys.Length; i++)
                 {
-                    var index = (int)keys[i];
-                    var seKey = keys[i];
+                    var index = (int)kbmKeys[i];
+                    var seKey = kbmKeys[i];
 
                     if (!controlBlacklist.Contains(seKey))
                     {
                         Control con = new Control(seKey, index);
-                        string name = con.Name.ToLower(), disp = con.DisplayName.ToLower();
+                        string name = con.Name.ToLower();
 
                         if (!controlDict.ContainsKey(name))
                         {
@@ -378,28 +377,192 @@ namespace RichHudFramework
                         controls[index] = Control.Default;
                 }
 
-                controls[256] = new Control("MousewheelUp", "MwUp", 256,
-                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0, true);
+                // Add gamepad keys
+                for (int i = 0; i < gpKeys.Length; i++)
+                {
+                    var index = ControlHandle.GPKeysStart + (int)gpKeys[i];
+                    var seKey = gpKeys[i];
 
-                controls[257] = new Control("MousewheelDown", "MwDn", 257,
-                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() < 0, true);
+                    if (!controlBlacklist.Contains(seKey))
+                    {
+                        Control con = new Control(seKey, index);
+                        string name = con.Name.ToLower();
+
+                        if (!controlDict.ContainsKey(name))
+                        {
+                            controlDict.Add(name, con);
+                            controlDictFriendly.Add(name, con);
+                            controls[index] = con;
+                        }
+                    }
+                    else
+                        controls[index] = Control.Default;              
+                }
+
+                GenerateCustomControls(controls);
 
                 // Map control aliases to appropriate controls
-                foreach (KeyValuePair<MyKeys, MyKeys[]> controlAliasPair in controlAliases)
+                foreach (KeyValuePair<ControlHandle, ControlHandle[]> controlAliasPair in controlAliases)
                 {
-                    Control con = controls[(int)controlAliasPair.Key];
+                    Control con = controls[controlAliasPair.Key.id];
 
-                    foreach (MyKeys key in controlAliasPair.Value)
-                        controls[(int)key] = con;
-                }
+                    foreach (ControlHandle key in controlAliasPair.Value)
+                        controls[key.id] = con;
+                }                
+            }
+
+            private void GenerateCustomControls(Control[] controls)
+            {
+                controls[256] = new Control("MousewheelUp", "MwUp", 256,
+                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0, 
+                    () => Math.Abs(MyAPIGateway.Input.DeltaMouseScrollWheelValue())
+                );
+                controls[257] = new Control("MousewheelDown", "MwDn", 257,
+                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() < 0,
+                    () => Math.Abs(MyAPIGateway.Input.DeltaMouseScrollWheelValue())
+                );
 
                 controlDict.Add("mousewheelup", controls[256]);
                 controlDict.Add("mousewheeldown", controls[257]);
-
                 controlDictFriendly.Add("mwup", controls[256]);
                 controlDictFriendly.Add("mwdn", controls[257]);
 
-                return controls;
+                // Add gamepad axes
+                // Left X axis
+                controls[258] = new Control(
+                    "LeftStickX", "LeftX", 258,
+                    () => {
+                        float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xpos),
+                            xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xneg);
+
+                        return Math.Abs(xPos - xNeg) > .001f;
+                    },
+                    () => {
+                        float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xpos),
+                            xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xneg);
+
+                        return (xPos - xNeg);
+                    }
+                );
+
+                // Left Y axis
+                controls[259] = new Control(
+                    "LeftStickY", "LeftY", 259,
+                    () => {
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg);
+
+                        return Math.Abs(pos - neg) > .001f;
+                    },
+                    () => {
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg);
+
+                        return (pos - neg);
+                    }
+                );
+
+                controlDict.Add("LeftStickX".ToLower(), controls[258]);
+                controlDict.Add("LeftStickY".ToLower(), controls[259]);
+                controlDictFriendly.Add("LeftX".ToLower(), controls[258]);
+                controlDictFriendly.Add("LeftY".ToLower(), controls[259]);
+
+                // Right X axis
+                controls[260] = new Control(
+                    "RightStickX", "RightY", 260,
+                    () => {
+                        float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXpos),
+                            xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXneg);
+
+                        return Math.Abs(xPos - xNeg) > .001f;
+                    },
+                    () => {
+                        float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXpos),
+                            xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXneg);
+
+                        return (xPos - xNeg);
+                    }
+                );
+
+                // Right Y axis
+                controls[261] = new Control(
+                    "RightStickY", "RightY", 261,
+                    () => {
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg);
+
+                        return Math.Abs(pos - neg) > .001f;
+                    },
+                    () => {
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg);
+
+                        return (pos - neg);
+                    }
+                );
+
+                controlDict.Add("RightStickX".ToLower(), controls[260]);
+                controlDict.Add("RightStickY".ToLower(), controls[261]);
+                controlDictFriendly.Add("RightX".ToLower(), controls[260]);
+                controlDictFriendly.Add("RightY".ToLower(), controls[261]);
+
+                // Left trigger
+                controls[262] = new Control(
+                    "ZLeft", "LeftTrigger", 262,
+                    () => Math.Abs(MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZLeft)) > .001f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZLeft)
+                );
+
+                // Right trigger
+                controls[263] = new Control(
+                    "ZRight", "RightTrigger", 263,
+                    () => Math.Abs(MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZRight)) > .001f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZRight)
+                );
+
+                controlDict.Add("ZLeft".ToLower(), controls[262]);
+                controlDict.Add("ZRight".ToLower(), controls[263]);
+                controlDictFriendly.Add("LeftTrigger".ToLower(), controls[262]);
+                controlDictFriendly.Add("RightTrigger".ToLower(), controls[263]);
+
+                // Slider 1
+                controls[264] = new Control(
+                    "Slider1", "Slider1", 264,
+                    () => {
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1pos),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1neg);
+
+                        return Math.Abs(pos - neg) > .001f;
+                    },
+                    () => {
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1pos),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1neg);
+
+                        return (pos - neg);
+                    }
+                );
+
+                // Slider 2
+                controls[265] = new Control(
+                    "Slider2", "Slider2", 265,
+                    () => {
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2pos),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2neg);
+
+                        return Math.Abs(pos - neg) > .001f;
+                    },
+                    () => {
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2pos),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2neg);
+
+                        return (pos - neg);
+                    }
+                );
+
+                controlDict.Add("Slider1".ToLower(), controls[264]);
+                controlDict.Add("Slider2".ToLower(), controls[265]);
+                controlDictFriendly.Add("Slider1".ToLower(), controls[264]);
+                controlDictFriendly.Add("Slider2".ToLower(), controls[265]);
             }
 
             private void GetControlStringIDs(MyKeys[] keys, out string[] allControls, out string[] mouseControls)
@@ -482,7 +645,7 @@ namespace RichHudFramework
             /// <summary>
             /// Generates a combo array using the corresponding control indices.
             /// </summary>
-            public static IControl[] GetCombo(IReadOnlyList<ControlData> indices)
+            public static IControl[] GetCombo(IReadOnlyList<ControlHandle> indices)
             {
                 if (indices != null && indices.Count > 0)
                 {
@@ -518,12 +681,12 @@ namespace RichHudFramework
             /// <summary>
             /// Generates a list of control indices from a list of controls.
             /// </summary>
-            public static int[] GetComboIndices(IReadOnlyList<ControlData> controls)
+            public static int[] GetComboIndices(IReadOnlyList<ControlHandle> controls)
             {
                 int[] indices = new int[controls.Count];
 
                 for (int n = 0; n < controls.Count; n++)
-                    indices[n] = controls[n].index;
+                    indices[n] = controls[n].id;
 
                 return indices;
             }
