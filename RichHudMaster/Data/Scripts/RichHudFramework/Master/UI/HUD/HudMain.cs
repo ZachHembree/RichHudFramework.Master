@@ -146,8 +146,8 @@ namespace RichHudFramework
                     throw new Exception("Only one instance of HudMain can exist at any given time.");
 
                 _root = new HudRoot();
-                _cursor = new HudCursor(_root);
                 _highDpiRoot = new ScaledSpaceNode(_root) { UpdateScaleFunc = () => ResScale };
+                _cursor = new HudCursor();
 
                 UpdateScreenScaling();
                 TreeManager.Init();
@@ -353,9 +353,9 @@ namespace RichHudFramework
                     IsInFront = true;
                     IsFacingCamera = true;
 
-                    GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorld);
-                    GetNodeOriginFunc = () => PixelToWorld.Translation;
-                    PlaneToWorldRef = new MatrixD[1];
+                    GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorldRef[0]);
+                    GetNodeOriginFunc = () => PixelToWorldRef[0].Translation;
+                    PlaneToWorldRef = PixelToWorldRef;
                 }
 
                 protected override void Layout()

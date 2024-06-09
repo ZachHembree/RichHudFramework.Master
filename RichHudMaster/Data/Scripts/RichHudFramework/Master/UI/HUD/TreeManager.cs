@@ -325,6 +325,9 @@ namespace RichHudFramework
                     for (int n = 0; n < clients.Count; n++)
                         updateAccessors.AddRange(clients[n].UpdateAccessors);
 
+                    // Manually append cursor elements after all clients
+                    instance._cursor.GetUpdateAccessors(updateAccessors, 0);
+
                     if (updateAccessors.Capacity > updateAccessors.Count * 3 && updateAccessors.Count > 200)
                         updateAccessors.TrimExcess();
 

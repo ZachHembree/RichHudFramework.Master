@@ -33,14 +33,22 @@ namespace RichHudFramework
             /// <summary>
             /// Draws cursor shared by elements in the framework
             /// </summary>
-            public sealed class HudCursor : HudSpaceNodeBase, ICursor
+            public sealed class HudCursor : HudParentBase, IReadOnlyHudSpaceNode, ICursor
             {
                 /// <summary>
                 /// Returns true if the cursor is drawing
                 /// </summary>
                 public bool DrawCursor { get; set; }
 
+                /// <summary>
+                /// Indicates whether the cursor is currently visible
+                /// </summary>
                 bool ICursor.Visible => DrawCursor;
+
+                /// <summary>
+                /// Cursor position on the XY plane defined by the HUD space. Z == dist from screen.
+                /// </summary>
+                public Vector3 CursorPos { get; private set; }
 
                 /// <summary>
                 /// The position of the cursor in pixels in screen space
@@ -73,6 +81,42 @@ namespace RichHudFramework
                 /// </summary>
                 public ApiMemberAccessor CapturedElement { get; private set; }
 
+                /// <summary>
+                /// If true, then the cursor will be drawn using the PTW matrix of this HUD space when
+                /// captured by one of its children.
+                /// </summary>
+                public bool DrawCursorInHudSpace { get; }
+
+                /// <summary>
+                /// Delegate used to retrieve current hud space. Used for cursor depth testing.
+                /// </summary>
+                public HudSpaceDelegate GetHudSpaceFunc { get; }
+
+                /// <summary>
+                /// Returns the current draw matrix
+                /// </summary>
+                public MatrixD PlaneToWorld => PlaneToWorldRef[0];
+
+                /// <summary>
+                /// Returns the current draw matrix by reference as an array of length 1
+                /// </summary>
+                public MatrixD[] PlaneToWorldRef { get; }
+
+                /// <summary>
+                /// Returns the world space position of the node's origin.
+                /// </summary>
+                public Func<Vector3D> GetNodeOriginFunc { get; }
+
+                /// <summary>
+                /// True if the origin of the HUD space is in front of the camera
+                /// </summary>
+                public bool IsInFront { get; }
+
+                /// <summary>
+                /// True if the XY plane of the HUD space is in front and facing toward the camera
+                /// </summary>
+                public bool IsFacingCamera { get; }
+
                 private float captureDepth;
                 private Func<ToolTipMembers> GetToolTipFunc;
                 private HudSpaceDelegate GetCapturedHudSpaceFunc;
@@ -80,11 +124,20 @@ namespace RichHudFramework
                 private readonly LabelBox toolTip;
                 private Vector2 invMousePosScale;
 
-                public HudCursor(HudParentBase parent = null) : base(parent)
+                public HudCursor()
                 {
-                    GetHudSpaceFunc = () => new HudSpaceData(false, 1f, PlaneToWorldRef[0]);
-                    ZOffset = sbyte.MaxValue;
+                    HudSpace = this;
+                    IsInFront = true;
+                    IsFacingCamera = true;
+
+                    layerData.zOffset = sbyte.MaxValue;
                     layerData.zOffsetInner = byte.MaxValue;
+                    layerData.fullZOffset = ushort.MaxValue;
+                    State |= HudElementStates.CanPreload;
+
+                    GetHudSpaceFunc = () => new HudSpaceData(true, 1f, PlaneToWorldRef[0]);
+                    GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;
+                    PlaneToWorldRef = new MatrixD[1];
 
                     cursorBox = new TexturedBox()
                     {
@@ -253,11 +306,10 @@ namespace RichHudFramework
                 {
                     // Update custom hud space and tooltips
                     HudSpaceData? hudSpaceData = GetCapturedHudSpaceFunc?.Invoke();
-                    bool useCapturedHudSpace = hudSpaceData != null && hudSpaceData.Value.Item1;
+                    bool useCapturedHudSpace = hudSpaceData != null;// && hudSpaceData.Value.Item1;
                     bool boundTooltips = false, useScreenSpace = true;
                     float tooltipScale = 1f;
 
-                    #if false // Broken: Matrix out of sync
                     if (useCapturedHudSpace)
                     {
                         PlaneToWorldRef[0] = hudSpaceData.Value.Item3;
@@ -265,7 +317,6 @@ namespace RichHudFramework
                             PlaneToWorldRef[0].EqualsFast(ref HighDpiRoot.HudSpace.PlaneToWorldRef[0]) ||
                             PlaneToWorldRef[0].EqualsFast(ref Root.HudSpace.PlaneToWorldRef[0]);
                     }
-                    #endif
 
                     if (useScreenSpace)
                     {
@@ -274,10 +325,24 @@ namespace RichHudFramework
                         tooltipScale = ResScale;
                     }
 
-                    base.Layout();
+                    MatrixD worldToPlane;
+                    MatrixD.Invert(ref PlaneToWorldRef[0], out worldToPlane);
+                    LineD cursorLine = HudMain.Cursor.WorldLine;
+
+                    PlaneD plane = new PlaneD(PlaneToWorldRef[0].Translation, PlaneToWorldRef[0].Forward);
+                    Vector3D worldPos = plane.Intersection(ref cursorLine.From, ref cursorLine.Direction);
+
+                    Vector3D planePos;
+                    Vector3D.TransformNoProjection(ref worldPos, ref worldToPlane, out planePos);
+
+                    CursorPos = new Vector3()
+                    {
+                        X = (float)planePos.X,
+                        Y = (float)planePos.Y,
+                        Z = (float)Math.Round(Vector3D.DistanceSquared(worldPos, cursorLine.From), 6)
+                    };
 
                     cursorBox.Visible = DrawCursor && !MyAPIGateway.Gui.IsCursorVisible;
-                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
                     cursorBox.Offset = new Vector2(CursorPos.X, CursorPos.Y);
                     UpdateToolTip(boundTooltips, tooltipScale);
                 }
