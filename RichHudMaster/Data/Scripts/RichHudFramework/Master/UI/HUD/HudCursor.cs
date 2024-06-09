@@ -306,7 +306,7 @@ namespace RichHudFramework
                 {
                     // Update custom hud space and tooltips
                     HudSpaceData? hudSpaceData = GetCapturedHudSpaceFunc?.Invoke();
-                    bool useCapturedHudSpace = hudSpaceData != null;// && hudSpaceData.Value.Item1;
+                    bool useCapturedHudSpace = hudSpaceData != null && hudSpaceData.Value.Item1;
                     bool boundTooltips = false, useScreenSpace = true;
                     float tooltipScale = 1f;
 
