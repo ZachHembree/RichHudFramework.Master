@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using VRage;
+using VRageMath;
 using BindDefinitionData = VRage.MyTuple<string, string[]>;
 
 namespace RichHudFramework
@@ -28,7 +29,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Retrieves the bind at the specified index
                 /// </summary>
-                public IBind this[int index] => keyBinds[index];
+                public IBind this[int index] => binds[index];
 
                 /// <summary>
                 /// Retrieves the bind with the given name
@@ -38,7 +39,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Returns the number of binds in the group
                 /// </summary>
-                public int Count => keyBinds.Count;
+                public int Count => binds.Count;
 
                 /// <summary>
                 /// Index of the bind group in its associated client
@@ -50,11 +51,20 @@ namespace RichHudFramework
                 /// </summary>
                 public object ID => this;
 
-                private readonly List<Bind> keyBinds;
-                private readonly List<IBind>[] controlMap; // X = controls; Y = associated binds
-                private List<IControl> usedControls;
-                private List<List<IBind>> bindMap; // X = used controls; Y = associated binds
-                private readonly HashSet<IControl> comboHashSet;
+                // parallel
+                private readonly Control[] controls;
+                private readonly List<int>[] controlComboMap; // X = controls -> Y = associated combos
+
+                // parallel
+                private List<int> usedControls; // control indices
+                private List<List<int>> usedControlComboMap; // X = usedControls -> Y = KeyCombo indices
+
+                // parallel
+                private readonly List<Bind> binds;
+                private readonly List<List<int>> bindCombos; // x = bind -> y = combo/alias
+
+                private readonly List<KeyCombo> keyCombos;
+
                 private bool wasBindChanged;
 
                 public BindGroup(int index, string name)
@@ -62,15 +72,21 @@ namespace RichHudFramework
                     Name = name;
                     Index = index;
 
-                    controlMap = new List<IBind>[Controls.Count];
+                    controls = _instance.controls;
+                    controlComboMap = new List<int>[controls.Length];
 
-                    for (int n = 0; n < controlMap.Length; n++)
-                        controlMap[n] = new List<IBind>();
+                    for (int n = 0; n < controlComboMap.Length; n++)
+                        controlComboMap[n] = new List<int>();
 
-                    keyBinds = new List<Bind>();
-                    usedControls = new List<IControl>();
-                    bindMap = new List<List<IBind>>();
-                    comboHashSet = new HashSet<IControl>();
+                    usedControls = new List<int>();
+                    usedControlComboMap = new List<List<int>>();
+
+                    keyCombos = new List<KeyCombo>();
+
+                    binds = new List<Bind>();
+                    bindCombos = new List<List<int>>();
+
+                    wasBindChanged = false;
                 }
 
                 /// <summary>
@@ -78,7 +94,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void ClearSubscribers()
                 {
-                    foreach (Bind bind in keyBinds)
+                    foreach (Bind bind in binds)
                         bind.ClearSubscribers();
                 }
 
@@ -87,33 +103,37 @@ namespace RichHudFramework
                 /// </summary>
                 public void HandleInput()
                 {
-                    if (keyBinds.Count > 0)
+                    if (keyCombos.Count > 0)
                     {
                         int controlsPressed = GetPressedControls();
                         bool canUpdateBinds = true;
 
                         if (controlsPressed > 0)
                         {
-                            int bindsPressed = GetPressedBinds();
+                            int bindsPressed = GetPressedCombos();
 
                             if (bindsPressed > 1)
                                 DisambiguatePresses();
-
-                            int bindControlsPressed = 0;
-
-                            foreach (Bind bind in keyBinds)
-                            {
-                                if (bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased)
-                                    bindControlsPressed += bind.length;
-                            }
                         }
                         else
                             canUpdateBinds = false;
 
-                        foreach (Bind bind in keyBinds)
+                        // Update combos
+                        foreach (KeyCombo combo in keyCombos)
                         {
-                            bind.beingReleased = bind.beingReleased && bind.bindHits > 0;
-                            bind.UpdatePress(canUpdateBinds && (bind.length > 0 && bind.bindHits == bind.length && !bind.beingReleased));
+                            combo.beingReleased = combo.beingReleased && combo.bindHits > 0;
+                            combo.Update(canUpdateBinds && (combo.length > 0 && combo.bindHits == combo.length && !combo.beingReleased));
+                        }
+
+                        // Update binds
+                        for (int i = 0; i < binds.Count; i++)
+                        {
+                            foreach (int comboID in bindCombos[i])
+                            {
+                                // Stop after first combo with a state change
+                                if (binds[i].Update(keyCombos[comboID]))
+                                    break;
+                            }
                         }
 
                         if (wasBindChanged)
@@ -133,33 +153,36 @@ namespace RichHudFramework
                     int controlsPressed = 0;
                     bool anyNewPresses = false;
 
-                    foreach (Control con in usedControls)
+                    foreach (int conID in usedControls)
                     {
-                        if (con.IsNewPressed)
+                        if (controls[conID].IsNewPressed)
                         {
                             anyNewPresses = true;
                             break;
                         }
                     }
 
-                    foreach (Bind bind in keyBinds)
+                    foreach (KeyCombo combo in keyCombos)
                     {
                         // If any used controls have new presses, stop releasing
-                        bind.beingReleased = bind.beingReleased && !anyNewPresses;
-                        bind.bindHits = 0;
-                        bind.AnalogValue = 0f;
+                        combo.beingReleased = combo.beingReleased && !anyNewPresses;
+                        combo.bindHits = 0;
+                        combo.AnalogValue = 0f;
                     }
 
-                    foreach (Control con in usedControls)
+                    foreach (int conID in usedControls)
                     {
+                        var con = controls[conID];
+
                         if (con.IsPressed)
                         {
-                            foreach (Bind bind in controlMap[con.Index])
+                            foreach (int comboID in controlComboMap[conID])
                             {
-                                bind.bindHits++;
+                                var combo = keyCombos[comboID];
+                                combo.bindHits++;
 
                                 if (con.Analog)
-                                    bind.AnalogValue += con.AnalogValue;
+                                    combo.AnalogValue += con.AnalogValue;
                             }
 
                             controlsPressed++;
@@ -172,56 +195,59 @@ namespace RichHudFramework
                 /// <summary>
                 /// Finds and counts number of pressed key binds.
                 /// </summary>
-                private int GetPressedBinds()
+                private int GetPressedCombos()
                 {
                     int bindsPressed = 0;
 
                     // Partial presses on previously pressed binds count as full presses.
-                    foreach (Bind bind in keyBinds)
+                    foreach (KeyCombo combo in keyCombos)
                     {
-                        if (bind.IsPressed || bind.beingReleased)
+                        if (combo.IsPressed || combo.beingReleased)
                         {
-                            if (bind.bindHits > 0 && bind.bindHits < bind.length)
+                            if (combo.bindHits > 0 && combo.bindHits < combo.length)
                             {
-                                bind.bindHits = bind.length;
-                                bind.beingReleased = true;
+                                combo.bindHits = combo.length;
+                                combo.beingReleased = true;
                             }
                         }
 
-                        if (bind.length > 0 && bind.bindHits == bind.length)
+                        if (combo.length > 0 && combo.bindHits == combo.length)
                             bindsPressed++;
                         else
-                            bind.bindHits = 0;
+                            combo.bindHits = 0;
                     }
 
                     return bindsPressed;
                 }
 
                 /// <summary>
-                /// Resolves conflicts between pressed binds with shared controls.
+                /// Resolves conflicts between pressed combos with shared controls.
                 /// </summary>
                 private void DisambiguatePresses()
                 {
-                    Bind first, longest;
+                    KeyCombo first, longest;
                     int controlHits;
 
                     // If more than one pressed bind shares the same control, the longest
-                    // binds take precedence. Any binds shorter than the longest will not
+                    // combos take precedence. Any combos shorter than the longest will not
                     // be counted as being pressed.
-                    foreach (IControl con in usedControls)
+                    foreach (int conID in usedControls)
                     {
+                        var con = controls[conID];
                         first = null;
                         controlHits = 0;
-                        longest = GetLongestBindPressForControl(con);
+                        longest = GetLongestBindPressForControl(conID);
 
-                        foreach (Bind bind in controlMap[con.Index])
+                        foreach (int comboID in controlComboMap[conID])
                         {
-                            if (bind.bindHits > 0 && (bind != longest))
+                            var combo = keyCombos[comboID];
+
+                            if (combo.bindHits > 0 && (combo != longest))
                             {
                                 if (controlHits > 0)
-                                    bind.bindHits--;
+                                    combo.bindHits--;
                                 else if (controlHits == 0)
-                                    first = bind;
+                                    first = combo;
 
                                 controlHits++;
                             }
@@ -235,14 +261,21 @@ namespace RichHudFramework
                 /// <summary>
                 /// Determines the length of the longest bind pressed for a given control on the bind map.
                 /// </summary>
-                private Bind GetLongestBindPressForControl(IControl con)
+                private KeyCombo GetLongestBindPressForControl(int conID)
                 {
-                    Bind longest = null;
+                    KeyCombo longest = null;
 
-                    foreach (Bind bind in controlMap[con.Index])
+                    foreach (int comboID in controlComboMap[conID])
                     {
-                        if (bind.bindHits > 0 && (longest == null || bind.length > longest.length || (longest.beingReleased && !bind.beingReleased && longest.length == bind.length)))
-                            longest = bind;
+                        var combo = keyCombos[comboID];
+
+                        if (combo.bindHits > 0 && (
+                            longest == null || combo.length > longest.length ||
+                            (longest.beingReleased && !combo.beingReleased && longest.length == combo.length)
+                        ))
+                        {
+                            longest = combo;
+                        }
                     }
 
                     return longest;
@@ -334,79 +367,60 @@ namespace RichHudFramework
                 /// Tries to register a bind using the given name and the given key combo.
                 /// </summary>
                 public bool TryRegisterBind(string bindName, IReadOnlyList<int> combo, out IBind newBind) =>
-                    TryRegisterBind(bindName, out newBind, GetCombo(combo));
+                    TryRegisterBind(bindName, out newBind, combo);
+
+                /// <summary>
+                /// Tries to register a new bind using the given name and the given key combo.
+                /// </summary>
+                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<int> combo)
+                {
+                    var buf = _instance.conIDbuf;
+                    buf.Clear();
+                    buf.AddRange(combo);
+                    PruneConBuffer();
+
+                    return TryRegisterBindInternal(bindName, out newBind, buf);
+                }
 
                 /// <summary>
                 /// Tries to register a bind using the given name and the given key combo.
                 public bool TryRegisterBind(string bindName, out IBind newBind) =>
-                    TryRegisterBind(bindName, null, out newBind);
+                    TryRegisterBindInternal(bindName, out newBind, null);
 
                 /// <summary>
                 /// Tries to register a bind using the given name and the given key combo.
                 /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<int> combo) =>
-                    TryRegisterBind(bindName, out newBind, GetCombo(combo));
+                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<ControlHandle> combo) =>
+                    TryRegisterBindInternal(bindName, out newBind, GetComboIndices(combo));
 
                 /// <summary>
-                /// Tries to register a bind using the given name and the given key combo.
+                /// Tries to register a new bind using the given name and the given key combo.
                 /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind bind, IReadOnlyList<string> combo)
-                {
-                    string[] uniqueControls = combo?.GetUnique();
-                    IControl[] newCombo = null;
-                    bind = null;
-
-                    if (combo == null || TryGetCombo(uniqueControls, out newCombo))
-                        return TryRegisterBind(bindName, out bind, newCombo);
-
-                    return false;
-                }
-
-                /// <summary>
-                /// Tries to register a bind using the given name and the given key combo.
-                /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<IControl> combo)
-                {
-                    newBind = null;
-
-                    if (!DoesBindExist(bindName))
-                    {
-                        Bind bind = new Bind(bindName, keyBinds.Count, this);
-                        newBind = bind;
-                        keyBinds.Add(bind);
-
-                        if (combo != null && combo.Count > 0)
-                            return bind.TrySetCombo(combo, true, true);
-                        else
-                            return true;
-                    }
-
-                    return false;
-                }
+                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<IControl> controls) =>
+                    TryRegisterBindInternal(bindName, out newBind, GetComboIndices(controls));
 
                 /// <summary>
                 /// Replaces current bind combos with combos based on the given <see cref="BindDefinitionData"/>[]. Does not register new binds.
                 /// </summary>
                 public bool TryLoadBindData(IReadOnlyList<BindDefinitionData> bindData)
                 {
-                    List<IControl> oldUsedControls;
-                    List<List<IBind>> oldBindMap;
-                    bool bindError = false;
-
                     if (bindData != null && bindData.Count > 0)
                     {
-                        oldUsedControls = usedControls;
-                        oldBindMap = bindMap;
+                        List<int> oldUsedControls = usedControls;
+                        List<List<int>> oldControlComboMap = usedControlComboMap;
+                        bool bindError = false;
 
-                        UnregisterControls();
-                        usedControls = new List<IControl>(bindData.Count);
-                        bindMap = new List<List<IBind>>(bindData.Count);
+                        foreach (int conID in usedControls)
+                            controlComboMap[conID] = new List<int>();
+
+                        usedControls = new List<int>(bindData.Count);
+                        usedControlComboMap = new List<List<int>>(bindData.Count);
 
                         foreach (BindDefinitionData bindDef in bindData)
                         {
                             IBind bind = GetBind(bindDef.Item1);
 
-                            if (bind != null && !bind.TrySetCombo(bindDef.Item2, false, false))
+                            if (!TrySetBindInternal(bind.Index, GetComboIndices(bindDef.Item2)))
                             {
                                 bindError = true;
                                 break;
@@ -415,11 +429,11 @@ namespace RichHudFramework
 
                         if (bindError)
                         {
-                            UnregisterControls();
-
                             usedControls = oldUsedControls;
-                            bindMap = oldBindMap;
-                            ReregisterControls();
+                            usedControlComboMap = oldControlComboMap;
+
+                            for (int n = 0; n < usedControls.Count; n++)
+                                controlComboMap[usedControls[n]] = usedControlComboMap[n];
                         }
                         else
                             return true;
@@ -433,24 +447,23 @@ namespace RichHudFramework
                 /// </summary>
                 public bool TryLoadBindData(IReadOnlyList<BindDefinition> bindData)
                 {
-                    List<IControl> oldUsedControls;
-                    List<List<IBind>> oldBindMap;
-                    bool bindError = false;
-
                     if (bindData != null && bindData.Count > 0)
                     {
-                        oldUsedControls = usedControls;
-                        oldBindMap = bindMap;
+                        List<int> oldUsedControls = usedControls;
+                        List<List<int>> oldControlComboMap = usedControlComboMap;
+                        bool bindError = false;
 
-                        UnregisterControls();
-                        usedControls = new List<IControl>(bindData.Count);
-                        bindMap = new List<List<IBind>>(bindData.Count);
+                        foreach (int conID in usedControls)
+                            controlComboMap[conID] = new List<int>();
+
+                        usedControls = new List<int>(bindData.Count);
+                        usedControlComboMap = new List<List<int>>(bindData.Count);
 
                         foreach (BindDefinition bindDef in bindData)
                         {
                             IBind bind = GetBind(bindDef.name);
 
-                            if (bind != null && !bind.TrySetCombo(bindDef.controlNames, false, false))
+                            if (!TrySetBindInternal(bind.Index, GetComboIndices(bindDef.controlNames)))
                             {
                                 bindError = true;
                                 break;
@@ -459,11 +472,11 @@ namespace RichHudFramework
 
                         if (bindError)
                         {
-                            UnregisterControls();
-
                             usedControls = oldUsedControls;
-                            bindMap = oldBindMap;
-                            ReregisterControls();
+                            usedControlComboMap = oldControlComboMap;
+
+                            for (int n = 0; n < usedControls.Count; n++)
+                                controlComboMap[usedControls[n]] = usedControlComboMap[n];
                         }
                         else
                             return true;
@@ -472,79 +485,122 @@ namespace RichHudFramework
                     return false;
                 }
 
-                private void ReregisterControls()
+                /// <summary>
+                /// Tries to register a bind using the given name and the given key combo.
+                /// </summary>
+                public bool TryRegisterBind(string bindName, out IBind bind, IReadOnlyList<string> combo)
                 {
-                    for (int n = 0; n < usedControls.Count; n++)
-                        controlMap[usedControls[n].Index] = bindMap[n];
-                }
+                    IControl[] newCombo = null;
+                    bind = null;
 
-                private void UnregisterControls()
-                {
-                    foreach (IControl con in usedControls)
-                        controlMap[con.Index] = new List<IBind>();
+                    if (combo == null || TryGetCombo(combo, out newCombo))
+                        return TryRegisterBind(bindName, out bind, newCombo);
+
+                    return false;
                 }
 
                 /// <summary>
-                /// Unregisters a given bind from its current key combination and registers it to a
-                /// new one.
+                /// Tries to register a new bind using the given name and the given sanitized key combo
                 /// </summary>
-                private void RegisterBindToCombo(Bind bind, IReadOnlyList<IControl> newCombo)
+                private bool TryRegisterBindInternal(string bindName, out IBind newBind, IReadOnlyList<int> controls)
                 {
-                    if (bind != null && newCombo != null)
+                    newBind = null;
+
+                    if (!DoesBindExist(bindName))
                     {
-                        comboHashSet.Clear();
+                        Bind bind = new Bind(bindName, binds.Count, this);
 
-                        for (int i = 0; i < newCombo.Count && comboHashSet.Count < maxBindLength; i++)
-                            comboHashSet.Add(newCombo[i]);
+                        newBind = bind;
+                        binds.Add(bind);
+                        bindCombos.Add(new List<int>());
 
-                        UnregisterBindFromCombo(bind);
-
-                        foreach (IControl con in comboHashSet)
+                        if (controls != null && controls.Count > 0)
                         {
-                            List<IBind> registeredBinds = controlMap[con.Index];
+                            return TrySetBindInternal(bind.Index, controls);
+                        }
+                        else
+                            return true;
+                    }
 
-                            if (registeredBinds.Count == 0)
-                            {
-                                usedControls.Add(con);
-                                bindMap.Add(registeredBinds);
-                            }
+                    return false;
+                }
 
-                            registeredBinds.Add(bind);
+                private bool TrySetBindInternal(int bindID, IReadOnlyList<int> controls, int alias = 0)
+                {
+                    int comboID;
+                    alias = MathHelper.Clamp(alias, 0, bindCombos[bindID].Count);
 
-                            if (con.Analog)
-                                bind.Analog = true;
+                    if (alias < bindCombos[bindID].Count)
+                    {
+                        comboID = bindCombos[bindID][alias];
+                    }
+                    else
+                    {
+                        comboID = keyCombos.Count;
+                        keyCombos.Add(new KeyCombo());
+                        bindCombos[bindID].Add(comboID);
+                    }
+
+                    if (!DoesComboConflict(controls, comboID))
+                    {
+                        SetCombo(comboID, controls);
+                        return true;
+                    }
+                    else
+                        return false;
+                }
+
+                private void ResetBindInternal(int bindID)
+                {
+                    foreach (int comboID in bindCombos[bindID])
+                        ResetCombo(comboID);
+                }
+
+                /// <summary>
+                /// Registers the given combo using the given controlIDs and pairs it with the given bind
+                /// </summary>
+                private void SetCombo(int comboID, IReadOnlyList<int> uniqueKeys)
+                {
+                    ResetCombo(comboID);
+
+                    foreach (int conID in uniqueKeys)
+                    {
+                        List<int> assocComboIDs = controlComboMap[conID];
+
+                        if (assocComboIDs.Count == 0)
+                        {
+                            usedControls.Add(conID);
+                            usedControlComboMap.Add(assocComboIDs);
                         }
 
-                        bind.length = comboHashSet.Count;
-                        wasBindChanged = true;
+                        assocComboIDs.Add(comboID);
+
+                        if (controls[conID].Analog)
+                            keyCombos[comboID].Analog = true;
                     }
+
+                    keyCombos[comboID].length = uniqueKeys.Count;
+                    wasBindChanged = true;
                 }
 
                 /// <summary>
-                /// Unregisters a bind from its key combo if it has one.
+                /// Clears the controls from the given <see cref="KeyCombo"/> and resets it to its default
+                /// state
                 /// </summary>
-                private void UnregisterBindFromCombo(Bind bind)
+                private void ResetCombo(int comboID)
                 {
                     for (int i = usedControls.Count - 1; i >= 0; i--)
                     {
-                        List<IBind> registeredBinds = controlMap[usedControls[i].Index];
+                        usedControlComboMap[i].Remove(comboID);
 
-                        // Exhaustive remove, probably overkill
-                        for (int j = registeredBinds.Count - 1; j >= 0; j--)
+                        if (usedControlComboMap[i].Count == 0)
                         {
-                            if (registeredBinds[j] == bind)
-                                registeredBinds.RemoveAt(j);
-                        }
-
-                        if (registeredBinds.Count == 0)
-                        {
-                            bindMap.Remove(registeredBinds);
-                            usedControls.Remove(usedControls[i]);
+                            usedControlComboMap.RemoveAt(i);
+                            usedControls.RemoveAt(i);
                         }
                     }
 
-                    bind.Analog = false;
-                    bind.length = 0;
+                    keyCombos[comboID].Reset();
                     wasBindChanged = true;
                 }
 
@@ -555,11 +611,36 @@ namespace RichHudFramework
                 {
                     name = name.ToLower();
 
-                    foreach (Bind bind in keyBinds)
+                    foreach (Bind bind in binds)
                         if (bind.Name.ToLower() == name)
                             return bind;
 
                     return null;
+                }
+
+                private void GetBindCombo(List<int> controls, int bindID, int alias = 0)
+                {
+                    if (bindID >= bindCombos.Count || bindID < 0)
+                        throw new Exception($"Attempted to retrieve bind at invalid index {bindID} in group {Name}.");
+
+                    if (alias < bindCombos[bindID].Count)
+                    {
+                        // Get alias 0 controls
+                        int comboID = bindCombos[bindID][alias];
+                        controls.Clear();
+
+                        for (int j = 0; j < usedControls.Count; j++)
+                        {
+                            int conID = usedControls[j];
+
+                            if (usedControlComboMap[j].Contains(comboID))
+                                controls.Add(conID);
+                        }
+
+                        controls.Sort();
+                    }
+                    else
+                        throw new Exception($"Attempted to retrieve invalid bind alias for {Name}.{binds[bindID].Name}.");
                 }
 
                 /// <summary>
@@ -567,20 +648,27 @@ namespace RichHudFramework
                 /// </summary>
                 public BindDefinition[] GetBindDefinitions()
                 {
-                    BindDefinition[] bindData = new BindDefinition[keyBinds.Count];
-                    string[][] combos = new string[keyBinds.Count][];
+                    BindDefinition[] bindData = new BindDefinition[binds.Count];
+                    string[][] bindControls = new string[binds.Count][];
+                    var cBuf = _instance.conIDbuf;
 
-                    for (int x = 0; x < keyBinds.Count; x++)
+                    for (int bindID = 0; bindID < binds.Count; bindID++)
                     {
-                        List<IControl> combo = keyBinds[x].GetCombo();
-                        combos[x] = new string[combo.Count];
+                        if (bindCombos[bindID].Count > 0)
+                        {
+                            // Get alias 0 controls
+                            GetBindCombo(cBuf, bindID, 0);
 
-                        for (int y = 0; y < combo.Count; y++)
-                            combos[x][y] = combo[y].Name;
+                            // Retrieve names
+                            bindControls[bindID] = new string[cBuf.Count];
+
+                            for (int j = 0; j < cBuf.Count; j++)
+                                bindControls[bindID][j] = _instance.controls[cBuf[j]].Name;
+                        }
                     }
 
-                    for (int n = 0; n < keyBinds.Count; n++)
-                        bindData[n] = new BindDefinition(keyBinds[n].Name, combos[n]);
+                    for (int i = 0; i < binds.Count; i++)
+                        bindData[i] = new BindDefinition(binds[i].Name, bindControls[i]);
 
                     return bindData;
                 }
@@ -590,20 +678,27 @@ namespace RichHudFramework
                 /// </summary>
                 public BindDefinitionData[] GetBindData()
                 {
-                    BindDefinitionData[] bindData = new BindDefinitionData[keyBinds.Count];
-                    string[][] combos = new string[keyBinds.Count][];
+                    BindDefinitionData[] bindData = new BindDefinitionData[binds.Count];
+                    string[][] bindControls = new string[binds.Count][];
+                    var cBuf = _instance.conIDbuf;
 
-                    for (int x = 0; x < keyBinds.Count; x++)
+                    for (int bindID = 0; bindID < binds.Count; bindID++)
                     {
-                        List<IControl> combo = keyBinds[x].GetCombo();
-                        combos[x] = new string[combo.Count];
+                        if (bindCombos[bindID].Count > 0)
+                        {
+                            // Get alias 0 controls
+                            GetBindCombo(cBuf, bindID, 0);
 
-                        for (int y = 0; y < combo.Count; y++)
-                            combos[x][y] = combo[y].Name;
+                            // Retrieve names
+                            bindControls[bindID] = new string[cBuf.Count];
+
+                            for (int j = 0; j < cBuf.Count; j++)
+                                bindControls[bindID][j] = _instance.controls[cBuf[j]].Name;
+                        }
                     }
 
-                    for (int n = 0; n < keyBinds.Count; n++)
-                        bindData[n] = new BindDefinitionData(keyBinds[n].Name, combos[n]);
+                    for (int i = 0; i < binds.Count; i++)
+                        bindData[i] = new BindDefinitionData(binds[i].Name, bindControls[i]);
 
                     return bindData;
                 }
@@ -611,30 +706,34 @@ namespace RichHudFramework
                 /// <summary>
                 /// Returns true if the given list of controls conflicts with any existing binds.
                 /// </summary>
-                public bool DoesComboConflict(IReadOnlyList<IControl> newCombo, IBind exception = null) =>
-                    DoesComboConflict(BindManager.GetComboIndices(newCombo), (exception != null) ? exception.Index : -1);
+                public bool DoesComboConflict(IReadOnlyList<IControl> controls, IBind combo = null) =>
+                    DoesComboConflict(GetComboIndices(controls), (combo != null) ? combo.Index : -1);
 
                 /// <summary>
                 /// Determines if given combo is equivalent to any existing binds.
                 /// </summary>
-                public bool DoesComboConflict(IReadOnlyList<int> newCombo, int exception = -1)
+                public bool DoesComboConflict(IReadOnlyList<int> controls, int comboID = -1)
                 {
                     int matchCount;
 
-                    for (int n = 0; n < keyBinds.Count; n++)
-                        if (keyBinds[n].Index != exception && keyBinds[n].length == newCombo.Count)
+                    for (int i = 0; i < keyCombos.Count; i++)
+                    {
+                        if (i != comboID && keyCombos[i].length == controls.Count)
                         {
                             matchCount = 0;
 
-                            foreach (int con in newCombo)
-                                if (BindUsesControl(keyBinds[n], BindManager.Controls[con]))
+                            foreach (int conID in controls)
+                            {
+                                if (controlComboMap[conID].Contains(i))
                                     matchCount++;
                                 else
                                     break;
+                            }
 
-                            if (matchCount > 0 && matchCount == newCombo.Count)
+                            if (matchCount > 0 && matchCount == controls.Count)
                                 return true;
                         }
+                    }
 
                     return false;
                 }
@@ -646,24 +745,18 @@ namespace RichHudFramework
                 {
                     name = name.ToLower();
 
-                    foreach (Bind bind in keyBinds)
+                    foreach (Bind bind in binds)
                         if (bind.Name.ToLower() == name)
                             return true;
 
                     return false;
                 }
 
-                /// <summary>
-                /// Determines whether or not a bind with a given index uses a given control.
-                /// </summary>
-                private bool BindUsesControl(Bind bind, IControl con) =>
-                    controlMap[con.Index].Contains(bind);
-
                 public IEnumerator<IBind> GetEnumerator() =>
-                    keyBinds.GetEnumerator();
+                    binds.GetEnumerator();
 
                 IEnumerator IEnumerable.GetEnumerator() =>
-                    keyBinds.GetEnumerator();
+                    binds.GetEnumerator();
             }
         }
     }

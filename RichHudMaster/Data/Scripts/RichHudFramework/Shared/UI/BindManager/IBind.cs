@@ -179,7 +179,7 @@ namespace RichHudFramework
             /// <summary>
             /// out: float
             /// </summary>
-            Analogvalue = 16
+            AnalogValue = 16
         }
 
     }

@@ -96,13 +96,14 @@ namespace RichHudFramework
             public BindDefinition[] GetBindDefinitions()
             {
                 var definitions = new BindDefinition[bindData.Count];
+                IReadOnlyList<IControl> controls = BindManager.Controls;
 
                 for (int a = 0; a < definitions.Length; a++)
                 {
                     var controlNames = new string[bindData[a].Item2.Count];
 
                     for (int b = 0; b < controlNames.Length; b++)
-                        controlNames[b] = BindManager.Controls[bindData[a].Item2[b]].Name;
+                        controlNames[b] = controls[bindData[a].Item2[b]].Name;
 
                     definitions[a] = new BindDefinition(bindData[a].Item1, controlNames);
                 }

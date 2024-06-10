@@ -12,6 +12,7 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using VRageMath;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
+using VRage.GameServices;
 
 namespace RichHudFramework
 {
@@ -106,6 +107,7 @@ namespace RichHudFramework
             private readonly string[] seControlIDs, seMouseControlIDs;
             private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
             private readonly List<Client> bindClients;
+            private readonly List<int> conIDbuf;
 
             private Client mainClient;
             private bool areControlsBlacklisted, areMouseControlsBlacklisted;
@@ -127,6 +129,7 @@ namespace RichHudFramework
                 GetControlStringIDs(kbmKeys, out seControlIDs, out seMouseControlIDs);
 
                 bindClients = new List<Client>();
+                conIDbuf = new List<int>();
             }
 
             public static void Init()
@@ -330,11 +333,12 @@ namespace RichHudFramework
             /// </summary>
             public static IControl GetControl(string name)
             {
+                Init();
                 IControl con;
 
-                if (Instance.controlDict.TryGetValue(name.ToLower(), out con))
+                if (_instance.controlDict.TryGetValue(name.ToLower(), out con))
                     return con;
-                else if (Instance.controlDictFriendly.TryGetValue(name.ToLower(), out con))
+                else if (_instance.controlDictFriendly.TryGetValue(name.ToLower(), out con))
                     return con;
 
                 return null;
@@ -364,14 +368,17 @@ namespace RichHudFramework
                     if (!controlBlacklist.Contains(seKey))
                     {
                         Control con = new Control(seKey, index);
-                        string name = con.Name.ToLower();
+                        string name = con.Name.ToLower(),
+                            friendlyName = con.DisplayName.ToLower();
 
                         if (!controlDict.ContainsKey(name))
                         {
                             controlDict.Add(name, con);
-                            controlDictFriendly.Add(name, con);
                             controls[index] = con;
                         }
+
+                        if (!controlDictFriendly.ContainsKey(friendlyName))
+                            controlDictFriendly.Add(friendlyName, con);
                     }
                     else
                         controls[index] = Control.Default;
@@ -386,14 +393,17 @@ namespace RichHudFramework
                     if (!controlBlacklist.Contains(seKey))
                     {
                         Control con = new Control(seKey, index);
-                        string name = con.Name.ToLower();
+                        string name = con.Name.ToLower(),
+                            friendlyName = con.DisplayName.ToLower();
 
                         if (!controlDict.ContainsKey(name))
                         {
                             controlDict.Add(name, con);
-                            controlDictFriendly.Add(name, con);
                             controls[index] = con;
                         }
+
+                        if (!controlDictFriendly.ContainsKey(friendlyName))
+                            controlDictFriendly.Add(friendlyName, con);
                     }
                     else
                         controls[index] = Control.Default;              
@@ -598,10 +608,17 @@ namespace RichHudFramework
             /// </summary>
             public static IControl[] GetCombo(IReadOnlyList<string> names)
             {
-                IControl[] combo = new IControl[names.Count];
+                var buf = Instance.conIDbuf;
+                buf.Clear();
 
                 for (int n = 0; n < names.Count; n++)
-                    combo[n] = GetControl(names[n]);
+                    buf.Add(GetControl(names[n])?.Index ?? 0);
+
+                PruneConBuffer();
+                IControl[] combo = new IControl[buf.Count];
+
+                for (int i = 0; i < buf.Count; i++)
+                    combo[i] = _instance.controls[buf[i]];
 
                 return combo;
             }
@@ -611,12 +628,14 @@ namespace RichHudFramework
             /// </summary>
             public static int[] GetComboIndices(IReadOnlyList<string> names)
             {
-                int[] combo = new int[names.Count];
+                var buf = Instance.conIDbuf;
+                buf.Clear();
 
                 for (int n = 0; n < names.Count; n++)
-                    combo[n] = GetControl(names[n]).Index;
+                    buf.Add(GetControl(names[n])?.Index ?? 0);
 
-                return combo;
+                PruneConBuffer();
+                return buf.ToArray();
             }
 
             /// <summary>
@@ -626,14 +645,21 @@ namespace RichHudFramework
             {
                 if (indices != null && indices.Count > 0)
                 {
-                    IControl[] combo = new IControl[indices.Count];
+                    var buf = Instance.conIDbuf;
+                    buf.Clear();
 
-                    for (int n = 0; n < indices.Count; n++)
+                    for (int i = 0; i < indices.Count; i++)
                     {
-                        int index = indices[n];
+                        buf.Add(indices[i]);
+                    }
 
-                        if (index < Controls.Count)
-                            combo[n] = Controls[index];
+                    PruneConBuffer();
+                    IControl[] combo = new IControl[buf.Count];
+
+                    for (int n = 0; n < buf.Count; n++)
+                    {
+                        int index = buf[n];
+                        combo[n] = _instance.controls[index];
                     }
 
                     return combo;
@@ -649,14 +675,21 @@ namespace RichHudFramework
             {
                 if (indices != null && indices.Count > 0)
                 {
-                    IControl[] combo = new IControl[indices.Count];
+                    var buf = Instance.conIDbuf;
+                    buf.Clear();
 
-                    for (int n = 0; n < indices.Count; n++)
+                    for (int i= 0; i < indices.Count; i++)
                     {
-                        int index = indices[n];
+                        buf.Add(indices[i].id);
+                    }
 
-                        if (index < Controls.Count)
-                            combo[n] = Controls[index];
+                    PruneConBuffer();
+                    IControl[] combo = new IControl[buf.Count];
+
+                    for (int n = 0; n < buf.Count; n++)
+                    {
+                        int index = buf[n];
+                        combo[n] = _instance.controls[index];
                     }
 
                     return combo;
@@ -666,50 +699,79 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Generates a list of control indices from a list of controls.
+            /// Generates a list of unique control indices from a list of controls.
             /// </summary>
             public static int[] GetComboIndices(IReadOnlyList<IControl> controls)
             {
-                int[] indices = new int[controls.Count];
+                var buf = Instance.conIDbuf;
+                buf.Clear();
 
                 for (int n = 0; n < controls.Count; n++)
-                    indices[n] = controls[n].Index;
+                    buf.Add(controls[n].Index);
 
-                return indices;
+                PruneConBuffer();
+                return buf.ToArray();
             }
 
             /// <summary>
-            /// Generates a list of control indices from a list of controls.
+            /// Generates a list of unique control indices from a list of <see cref="ControlHandle"/>s.
             /// </summary>
             public static int[] GetComboIndices(IReadOnlyList<ControlHandle> controls)
             {
-                int[] indices = new int[controls.Count];
+                var buf = Instance.conIDbuf;
+                buf.Clear();
 
                 for (int n = 0; n < controls.Count; n++)
-                    indices[n] = controls[n].id;
+                    buf.Add(controls[n].id);
 
-                return indices;
+                PruneConBuffer();
+                return buf.ToArray();
             }
 
             /// <summary>
-            /// Tries to generate a combo from a list of control names.
+            /// Tries to generate a unique combo from a list of control names.
             /// </summary>
             public static bool TryGetCombo(IReadOnlyList<string> controlNames, out IControl[] newCombo)
             {
-                IControl con;
-                newCombo = new IControl[controlNames.Count];
+                var buf = Instance.conIDbuf;
+                buf.Clear();
+                newCombo = null;
 
                 for (int n = 0; n < controlNames.Count; n++)
                 {
-                    con = GetControl(controlNames[n].ToLower());
+                    IControl con = GetControl(controlNames[n].ToLower());
 
                     if (con != null)
-                        newCombo[n] = con;
+                        buf.Add(con.Index);
                     else
                         return false;
                 }
 
+                PruneConBuffer();
+                newCombo = new IControl[buf.Count];
+
+                for (int i = 0; i < buf.Count; i++)
+                {
+                    int conID = buf[i];
+                    newCombo[i] = _instance.controls[conID];
+                }
+
                 return true;
+            }
+
+            /// <summary>
+            /// Sorts ControlID buffer and removes duplicates
+            /// </summary>
+            private static void PruneConBuffer()
+            {
+                var buf = Instance.conIDbuf;
+                buf.Sort();
+
+                for (int i = buf.Count - 1; i > 0; i--)
+                {
+                    if (buf[i] == buf[i - 1] || buf[i] <= 0)
+                        buf.RemoveAt(i);
+                }
             }
         }
     }

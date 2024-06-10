@@ -12,6 +12,93 @@ namespace RichHudFramework
         {
             public partial class BindGroup
             {
+                private class KeyCombo
+                {
+                    /// <summary>
+                    /// True if any controls in the bind are marked analog. For these types of binds, IsPressed == IsNewPressed.
+                    /// </summary>
+                    public bool Analog { get; set; }
+
+                    /// <summary>
+                    /// Analog value of the bind, if it has one. Returns the sum of all analog values in
+                    /// key combo. Multiple analog controls per bind are not recommended.
+                    /// </summary>
+                    public float AnalogValue { get; set; }
+
+                    /// <summary>
+                    /// True if currently pressed.
+                    /// </summary>
+                    public bool IsPressed { get; private set; }
+
+                    /// <summary>
+                    /// True if just pressed.
+                    /// </summary>
+                    public bool IsNewPressed { get { return IsPressed && (!wasPressed || Analog); } }
+
+                    /// <summary>
+                    /// True after being held for more than 500ms.
+                    /// </summary>
+                    public bool IsPressedAndHeld { get; private set; }
+
+                    /// <summary>
+                    /// True if just released.
+                    /// </summary>
+                    public bool IsReleased { get { return !IsPressed && wasPressed; } }
+
+                    public bool beingReleased;
+
+                    /// <summary>
+                    /// Number of keys in the combo
+                    /// </summary>
+                    public int length;
+                    
+                    /// <summary>
+                    /// Number of keys last pressed in the combo
+                    /// </summary>
+                    public int bindHits;
+
+                    private bool wasPressed;
+                    private readonly Stopwatch stopwatch;
+
+                    public KeyCombo()
+                    {
+                        stopwatch = new Stopwatch();
+                        Reset();
+                    }
+
+                    public void Reset()
+                    {
+                        IsPressedAndHeld = false;
+                        wasPressed = false;
+
+                        Analog = false;
+                        beingReleased = false;
+                        bindHits = 0;
+                        length = 0;
+                    }
+
+                    public void Update(bool isPressed)
+                    {
+                        wasPressed = IsPressed;
+                        IsPressed = isPressed;
+
+                        if (!isPressed)
+                            AnalogValue = 0f;
+
+                        if (IsNewPressed)
+                        {
+                            stopwatch.Restart();
+                        }
+
+                        if (IsPressed && stopwatch.ElapsedTicks > holdTime)
+                        {
+                            IsPressedAndHeld = true;
+                        }
+                        else
+                            IsPressedAndHeld = false;
+                    }
+                }
+
                 /// <summary>
                 /// Logic and data for individual keybinds
                 /// </summary>
@@ -45,13 +132,13 @@ namespace RichHudFramework
                     /// <summary>
                     /// True if any controls in the bind are marked analog. For these types of binds, IsPressed == IsNewPressed.
                     /// </summary>
-                    public bool Analog { get; set; }
+                    public bool Analog { get; private set; }
 
                     /// <summary>
                     /// Analog value of the bind, if it has one. Returns the sum of all analog values in
                     /// key combo. Multiple analog controls per bind are not recommended.
                     /// </summary>
-                    public float AnalogValue { get; set; }
+                    public float AnalogValue { get; private set; }
 
                     /// <summary>
                     /// True if currently pressed.
@@ -61,7 +148,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// True if just pressed.
                     /// </summary>
-                    public bool IsNewPressed { get { return IsPressed && (!wasPressed || Analog); } }
+                    public bool IsNewPressed { get; private set; }
 
                     /// <summary>
                     /// True after being held for more than 500ms.
@@ -71,64 +158,46 @@ namespace RichHudFramework
                     /// <summary>
                     /// True if just released.
                     /// </summary>
-                    public bool IsReleased { get { return !IsPressed && wasPressed; } }
+                    public bool IsReleased { get; private set; }
 
-                    /// <summary>
-                    /// Used for for bind input disambiguation. Binds in the process of being released are
-                    /// counted as full presses for one tick, but only for bind disambiguation.
-                    /// </summary>
-                    public bool beingReleased;
-                    public int length, bindHits;
-
-                    private bool wasPressed;
-                    private readonly Stopwatch stopwatch;
                     private readonly BindGroup group;
 
                     public Bind(string name, int index, BindGroup group)
                     {
                         Name = name;
                         Index = index;
-                        stopwatch = new Stopwatch();
                         this.group = group;
 
+                        IsPressed = false;
+                        IsNewPressed = false;
                         IsPressedAndHeld = false;
-                        wasPressed = false;
-
-                        bindHits = 0;
+                        IsReleased = false;
                         Analog = false;
-                        beingReleased = false;
-                        length = 0;
+                        AnalogValue = 0f;
                     }
 
                     /// <summary>
                     /// Used to update the key bind with each tick of the Binds.Update function. 
                     /// </summary>
-                    public void UpdatePress(bool isPressed)
+                    public bool Update(KeyCombo combo)
                     {
-                        wasPressed = IsPressed;
-                        IsPressed = isPressed;
-
-                        if (!isPressed)
-                            AnalogValue = 0f;
+                        Analog = combo.Analog;
+                        AnalogValue = combo.AnalogValue;
+                        IsPressed = combo.IsPressed;
+                        IsNewPressed = combo.IsNewPressed;
+                        IsPressedAndHeld = combo.IsPressedAndHeld;
+                        IsReleased = combo.IsReleased;
 
                         if (IsNewPressed)
-                        {
                             NewPressed?.Invoke(this, EventArgs.Empty);
-                            stopwatch.Restart();
-                        }
-
-                        if (IsPressed && stopwatch.ElapsedTicks > holdTime)
-                        {
-                            if (!IsPressedAndHeld)
-                                PressedAndHeld?.Invoke(this, EventArgs.Empty);
-
-                            IsPressedAndHeld = true;
-                        }
-                        else
-                            IsPressedAndHeld = false;
 
                         if (IsReleased)
                             Released?.Invoke(this, EventArgs.Empty);
+
+                        if (IsPressedAndHeld)
+                            PressedAndHeld?.Invoke(this, EventArgs.Empty);
+
+                        return combo.IsPressed || combo.IsNewPressed || combo.IsReleased || combo.IsPressedAndHeld;
                     }
 
                     /// <summary>
@@ -136,30 +205,19 @@ namespace RichHudFramework
                     /// </summary>
                     public List<IControl> GetCombo()
                     {
-                        List<IControl> combo = new List<IControl>();
+                        group.GetBindCombo(_instance.conIDbuf, Index, 0);
+                        var controls = new List<IControl>(_instance.conIDbuf.Count);
 
-                        foreach (IControl con in group.usedControls)
-                        {
-                            if (group.BindUsesControl(this, con))
-                                combo.Add(con);
-                        }
+                        foreach (int conID in _instance.conIDbuf)
+                            controls.Add(_instance.controls[conID]);
 
-                        combo.Sort((a, b) => a.Index.CompareTo(b.Index));
-                        return combo;
+                        return controls;
                     }
 
                     public List<int> GetComboIndices()
                     {
-                        List<int> combo = new List<int>();
-
-                        foreach (IControl con in group.usedControls)
-                        {
-                            if (group.BindUsesControl(this, con))
-                                combo.Add(con.Index);
-                        }
-
-                        combo.Sort();
-                        return combo;
+                        group.GetBindCombo(_instance.conIDbuf, Index, 0);
+                        return new List<int>(_instance.conIDbuf);
                     }
 
                     /// <summary>
@@ -184,10 +242,10 @@ namespace RichHudFramework
 
                         for (int i = 0; i < combo.Count; i++)
                         {
-                            if (combo[i] == null)
+                            if (combo[i] == null || combo[i] == Control.Default)
                             {
                                 if (!silent)
-                                    ExceptionHandler.SendChatMessage($"Invalid bind for {group.Name}.{Name}. Control supplied at index {i} does not exist.");
+                                    ExceptionHandler.SendChatMessage($"Invalid bind for {group.Name}.{Name}. Key name not recognised.");
 
                                 return false;
                             }
@@ -197,7 +255,7 @@ namespace RichHudFramework
                         {
                             if (!strict || !group.DoesComboConflict(combo, this))
                             {
-                                group.RegisterBindToCombo(this, combo);
+                                group.TrySetBindInternal(Index, BindManager.GetComboIndices(combo));
                                 return true;
                             }
                             else if (!silent)
@@ -218,7 +276,7 @@ namespace RichHudFramework
                     /// Clears all controls from the bind.
                     /// </summary>
                     public void ClearCombo() =>
-                        group.UnregisterBindFromCombo(this);
+                        group.ResetBindInternal(Index);
 
                     /// <summary>
                     /// Clears all even subscribers from the bind.

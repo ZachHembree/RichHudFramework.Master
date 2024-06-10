@@ -285,7 +285,7 @@ namespace RichHudFramework
                                     bind.PressedAndHeld += (sender, args) => eventData.Item2();
                                 else
                                     bind.PressedAndHeld -= (sender, args) => eventData.Item2();
-
+                                    
                                 break;
                             }
                         case BindAccesssors.OnRelease:
@@ -315,7 +315,7 @@ namespace RichHudFramework
                             bind.ClearCombo(); break;
                         case BindAccesssors.ClearSubscribers:
                             bind.ClearSubscribers(); break;
-                        case BindAccesssors.Analogvalue:
+                        case BindAccesssors.AnalogValue:
                             return bind.AnalogValue;
                     }
 
