@@ -624,7 +624,7 @@ namespace RichHudFramework
                         float textSize = formattedGlyph.format.TextSize,
                             formatScale = textSize * fontStyle.FontScale,
                             // Quick fix for CJK characters in Space Engineers font data
-                            cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && ch >= 0x4E00) ? (-4f * textSize) : 0f;
+                            cjkOffset = (formattedGlyph.format.StyleIndex.X == 0 && ch >= 0x4E00 && ch < 0xE001) ? (-4f * textSize) : 0f;
 
                         // Kerning adjustment
                         if (left >= 0)

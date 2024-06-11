@@ -14,7 +14,7 @@
 			<IgnoreDepth>false</IgnoreDepth>
 			<NeedSort>false</NeedSort>
 			<SoftParticleDistanceScale>0</SoftParticleDistanceScale>
-			<Texture>Fonts\white\FontDataPA-0.dds</Texture>
+			<Texture>Fonts\white\FontData-0.dds</Texture>
 			<Reflectivity>0</Reflectivity>
 			<UseAtlas>false</UseAtlas>
 			<UVOffset>
