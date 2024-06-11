@@ -606,7 +606,7 @@ namespace RichHudFramework
             /// <summary>
             /// Generates a list of controls from a list of control names.
             /// </summary>
-            public static IControl[] GetCombo(IReadOnlyList<string> names)
+            public static IControl[] GetCombo(IReadOnlyList<string> names, bool sanitize = true)
             {
                 var buf = Instance.conIDbuf;
                 buf.Clear();
@@ -614,7 +614,9 @@ namespace RichHudFramework
                 for (int n = 0; n < names.Count; n++)
                     buf.Add(GetControl(names[n])?.Index ?? 0);
 
-                PruneConBuffer();
+                if (sanitize)
+                    SanitizeCombo(buf);
+
                 IControl[] combo = new IControl[buf.Count];
 
                 for (int i = 0; i < buf.Count; i++)
@@ -626,22 +628,21 @@ namespace RichHudFramework
             /// <summary>
             /// Generates a list of control indices using a list of control names.
             /// </summary>
-            public static int[] GetComboIndices(IReadOnlyList<string> names)
+            public static void GetComboIndices(IReadOnlyList<string> names, List<int> indices, bool sanitize = true)
             {
-                var buf = Instance.conIDbuf;
-                buf.Clear();
+                indices.Clear();
 
                 for (int n = 0; n < names.Count; n++)
-                    buf.Add(GetControl(names[n])?.Index ?? 0);
+                    indices.Add(GetControl(names[n])?.Index ?? 0);
 
-                PruneConBuffer();
-                return buf.ToArray();
+                if (sanitize)
+                    SanitizeCombo(indices);
             }
 
             /// <summary>
             /// Generates a combo array using the corresponding control indices.
             /// </summary>
-            public static IControl[] GetCombo(IReadOnlyList<int> indices)
+            public static IControl[] GetCombo(IReadOnlyList<int> indices, bool sanitize = true)
             {
                 if (indices != null && indices.Count > 0)
                 {
@@ -653,7 +654,9 @@ namespace RichHudFramework
                         buf.Add(indices[i]);
                     }
 
-                    PruneConBuffer();
+                    if (sanitize)
+                        SanitizeCombo(buf);
+
                     IControl[] combo = new IControl[buf.Count];
 
                     for (int n = 0; n < buf.Count; n++)
@@ -671,7 +674,7 @@ namespace RichHudFramework
             /// <summary>
             /// Generates a combo array using the corresponding control indices.
             /// </summary>
-            public static IControl[] GetCombo(IReadOnlyList<ControlHandle> indices)
+            public static IControl[] GetCombo(IReadOnlyList<ControlHandle> indices, bool sanitize = true)
             {
                 if (indices != null && indices.Count > 0)
                 {
@@ -683,7 +686,9 @@ namespace RichHudFramework
                         buf.Add(indices[i].id);
                     }
 
-                    PruneConBuffer();
+                    if (sanitize)
+                        SanitizeCombo(buf);
+
                     IControl[] combo = new IControl[buf.Count];
 
                     for (int n = 0; n < buf.Count; n++)
@@ -699,39 +704,37 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Generates a list of unique control indices from a list of controls.
+            /// Generates a list of control indices from a list of controls.
             /// </summary>
-            public static int[] GetComboIndices(IReadOnlyList<IControl> controls)
+            public static void GetComboIndices(IReadOnlyList<IControl> controls, List<int> combo, bool sanitize = true)
             {
-                var buf = Instance.conIDbuf;
-                buf.Clear();
+                combo.Clear();
 
                 for (int n = 0; n < controls.Count; n++)
-                    buf.Add(controls[n].Index);
+                    combo.Add(controls[n].Index);
 
-                PruneConBuffer();
-                return buf.ToArray();
+                if (sanitize)
+                    SanitizeCombo(combo);
             }
 
             /// <summary>
-            /// Generates a list of unique control indices from a list of <see cref="ControlHandle"/>s.
+            /// Generates a list of control indices from a list of <see cref="ControlHandle"/>s.
             /// </summary>
-            public static int[] GetComboIndices(IReadOnlyList<ControlHandle> controls)
+            public static void GetComboIndices(IReadOnlyList<ControlHandle> controls, List<int> combo, bool sanitize = true)
             {
-                var buf = Instance.conIDbuf;
-                buf.Clear();
+                combo.Clear();
 
                 for (int n = 0; n < controls.Count; n++)
-                    buf.Add(controls[n].id);
+                    combo.Add(controls[n].id);
 
-                PruneConBuffer();
-                return buf.ToArray();
+                if (sanitize)
+                    SanitizeCombo(combo);
             }
 
             /// <summary>
             /// Tries to generate a unique combo from a list of control names.
             /// </summary>
-            public static bool TryGetCombo(IReadOnlyList<string> controlNames, out IControl[] newCombo)
+            public static bool TryGetCombo(IReadOnlyList<string> controlNames, out IControl[] newCombo, bool sanitize = true)
             {
                 var buf = Instance.conIDbuf;
                 buf.Clear();
@@ -747,7 +750,9 @@ namespace RichHudFramework
                         return false;
                 }
 
-                PruneConBuffer();
+                if (sanitize)
+                    SanitizeCombo(buf);
+
                 newCombo = new IControl[buf.Count];
 
                 for (int i = 0; i < buf.Count; i++)
@@ -760,18 +765,20 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Sorts ControlID buffer and removes duplicates
+            /// Sorts ControlID buffer and removes duplicates and invalid indices
             /// </summary>
-            private static void PruneConBuffer()
+            private static void SanitizeCombo(List<int> combo)
             {
-                var buf = Instance.conIDbuf;
-                buf.Sort();
+                combo.Sort();
 
-                for (int i = buf.Count - 1; i > 0; i--)
+                for (int i = combo.Count - 1; i > 0; i--)
                 {
-                    if (buf[i] == buf[i - 1] || buf[i] <= 0)
-                        buf.RemoveAt(i);
+                    if (combo[i] == combo[i - 1] || combo[i] <= 0)
+                        combo.RemoveAt(i);
                 }
+
+                if (combo.Count > 0 && combo[0] == 0)
+                    combo.RemoveAt(0);
             }
         }
     }

@@ -5,6 +5,9 @@ namespace RichHudFramework
 {
     namespace UI
     {
+        /// <summary>
+        /// Interface representing an input tied to one or more key combinations in a <see cref="IBindGroup"/>
+        /// </summary>
         public interface IBind
         {
             /// <summary>
@@ -64,29 +67,29 @@ namespace RichHudFramework
             event EventHandler Released;
 
             /// <summary>
-            /// Returns a list of the current key combo for this bind.
+            /// Returns a list of controls representing the key combinaton for the bind
             /// </summary>
             List<IControl> GetCombo();
 
             /// <summary>
-            /// Returns a list of control indices for the current bind combo
+            /// Returns a list of control indices representing the key combinaton for the bind
             /// </summary>
             List<int> GetComboIndices();
 
             /// <summary>
             /// Attempts to set the binds combo to the given controls. Returns true if successful.
             /// </summary>
-            bool TrySetCombo(IReadOnlyList<IControl> combo, bool strict = true, bool silent = true);
+            bool TrySetCombo(IReadOnlyList<IControl> combo, bool isStrict = true, bool isSilent = true);
 
             /// <summary>
             /// Attempts to set the binds combo to the given controls. Returns true if successful.
             /// </summary>
-            bool TrySetCombo(IReadOnlyList<int> combo, bool strict = true, bool silent = true);
+            bool TrySetCombo(IReadOnlyList<int> combo, bool isStrict = true, bool isSilent = true);
 
             /// <summary>
             /// Attempts to set the binds combo to the given controls. Returns true if successful.
             /// </summary>
-            bool TrySetCombo(IReadOnlyList<string> combo, bool strict = true, bool silent = true);
+            bool TrySetCombo(IReadOnlyList<string> combo, bool isStrict = true, bool isSilent = true);
 
             /// <summary>
             /// Clears the current key combination.

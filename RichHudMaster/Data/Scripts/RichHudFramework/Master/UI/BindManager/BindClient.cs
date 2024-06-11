@@ -149,7 +149,11 @@ namespace RichHudFramework
                         case BindClientAccessors.GetBindGroup:
                             return GetBindGroup(data as string)?.Index ?? -1;
                         case BindClientAccessors.GetComboIndices:
-                            return BindManager.GetComboIndices(data as IReadOnlyList<string>);
+                            {
+                                var indices = new List<int>();
+                                GetComboIndices(data as IReadOnlyList<string>, indices);
+                                return indices;
+                            }
                         case BindClientAccessors.GetControlByName:
                             return BindManager.GetControl(data as string)?.Index ?? -1;
                         case BindClientAccessors.ClearBindGroups:

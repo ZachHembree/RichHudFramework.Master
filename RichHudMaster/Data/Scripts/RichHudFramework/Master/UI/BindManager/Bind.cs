@@ -2,7 +2,6 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace RichHudFramework
 {
@@ -12,95 +11,8 @@ namespace RichHudFramework
         {
             public partial class BindGroup
             {
-                private class KeyCombo
-                {
-                    /// <summary>
-                    /// True if any controls in the bind are marked analog. For these types of binds, IsPressed == IsNewPressed.
-                    /// </summary>
-                    public bool Analog { get; set; }
-
-                    /// <summary>
-                    /// Analog value of the bind, if it has one. Returns the sum of all analog values in
-                    /// key combo. Multiple analog controls per bind are not recommended.
-                    /// </summary>
-                    public float AnalogValue { get; set; }
-
-                    /// <summary>
-                    /// True if currently pressed.
-                    /// </summary>
-                    public bool IsPressed { get; private set; }
-
-                    /// <summary>
-                    /// True if just pressed.
-                    /// </summary>
-                    public bool IsNewPressed { get { return IsPressed && (!wasPressed || Analog); } }
-
-                    /// <summary>
-                    /// True after being held for more than 500ms.
-                    /// </summary>
-                    public bool IsPressedAndHeld { get; private set; }
-
-                    /// <summary>
-                    /// True if just released.
-                    /// </summary>
-                    public bool IsReleased { get { return !IsPressed && wasPressed; } }
-
-                    public bool beingReleased;
-
-                    /// <summary>
-                    /// Number of keys in the combo
-                    /// </summary>
-                    public int length;
-                    
-                    /// <summary>
-                    /// Number of keys last pressed in the combo
-                    /// </summary>
-                    public int bindHits;
-
-                    private bool wasPressed;
-                    private readonly Stopwatch stopwatch;
-
-                    public KeyCombo()
-                    {
-                        stopwatch = new Stopwatch();
-                        Reset();
-                    }
-
-                    public void Reset()
-                    {
-                        IsPressedAndHeld = false;
-                        wasPressed = false;
-
-                        Analog = false;
-                        beingReleased = false;
-                        bindHits = 0;
-                        length = 0;
-                    }
-
-                    public void Update(bool isPressed)
-                    {
-                        wasPressed = IsPressed;
-                        IsPressed = isPressed;
-
-                        if (!isPressed)
-                            AnalogValue = 0f;
-
-                        if (IsNewPressed)
-                        {
-                            stopwatch.Restart();
-                        }
-
-                        if (IsPressed && stopwatch.ElapsedTicks > holdTime)
-                        {
-                            IsPressedAndHeld = true;
-                        }
-                        else
-                            IsPressedAndHeld = false;
-                    }
-                }
-
                 /// <summary>
-                /// Logic and data for individual keybinds
+                /// Input tied to one or more key combinations
                 /// </summary>
                 private class Bind : IBind
                 {
@@ -177,16 +89,17 @@ namespace RichHudFramework
                     }
 
                     /// <summary>
-                    /// Used to update the key bind with each tick of the Binds.Update function. 
+                    /// Updates the state of the bind
                     /// </summary>
                     public bool Update(KeyCombo combo)
                     {
-                        Analog = combo.Analog;
-                        AnalogValue = combo.AnalogValue;
                         IsPressed = combo.IsPressed;
                         IsNewPressed = combo.IsNewPressed;
                         IsPressedAndHeld = combo.IsPressedAndHeld;
                         IsReleased = combo.IsReleased;
+
+                        Analog = combo.Analog;
+                        AnalogValue = combo.AnalogValue;
 
                         if (IsNewPressed)
                             NewPressed?.Invoke(this, EventArgs.Empty);
@@ -197,11 +110,11 @@ namespace RichHudFramework
                         if (IsPressedAndHeld)
                             PressedAndHeld?.Invoke(this, EventArgs.Empty);
 
-                        return combo.IsPressed || combo.IsNewPressed || combo.IsReleased || combo.IsPressedAndHeld;
+                        return IsPressed || IsNewPressed || IsPressedAndHeld || IsReleased;
                     }
 
                     /// <summary>
-                    /// Returns a list of the current key combo for this bind.
+                    /// Returns a list of controls representing the binds key combo
                     /// </summary>
                     public List<IControl> GetCombo()
                     {
@@ -223,53 +136,91 @@ namespace RichHudFramework
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IReadOnlyList<int> combo, bool strict = true, bool silent = true) =>
-                        TrySetCombo(BindManager.GetCombo(combo), strict, silent);
-
-                    /// <summary>
-                    /// Tries to update a key bind using the given control combination.
-                    /// </summary>
-                    public bool TrySetCombo(IReadOnlyList<string> combo, bool strict = true, bool silent = true) =>
-                        TrySetCombo(BindManager.GetCombo(combo), strict, silent);
-
-                    /// <summary>
-                    /// Tries to update a key bind using the given control combination.
-                    /// </summary>
-                    public bool TrySetCombo(IReadOnlyList<IControl> combo, bool strict = true, bool silent = true)
+                    public bool TrySetCombo(IReadOnlyList<int> combo, bool isStrict = true, bool isSilent = true)
                     {
-                        if (combo == null)
-                            combo = new IControl[0];
+                        var controls = _instance.controls;
 
                         for (int i = 0; i < combo.Count; i++)
                         {
-                            if (combo[i] == null || combo[i] == Control.Default)
+                            if (combo[i] == 0 || combo[i] < 0 || combo[i] >= controls.Length)
                             {
-                                if (!silent)
-                                    ExceptionHandler.SendChatMessage($"Invalid bind for {group.Name}.{Name}. Key name not recognised.");
+                                if (!isSilent)
+                                    ExceptionHandler.SendChatMessage(
+                                        $"Invalid key bind for {group.Name}.{Name}. " +
+                                        $"Key in position {i + 1} not recognised.");
 
                                 return false;
                             }
                         }
 
-                        if (combo.Count <= maxBindLength && (!strict || combo.Count > 0))
+                        var buf = _instance.conIDbuf;
+
+                        if (buf != combo)
                         {
-                            if (!strict || !group.DoesComboConflict(combo, this))
-                            {
-                                group.TrySetBindInternal(Index, BindManager.GetComboIndices(combo));
-                                return true;
-                            }
-                            else if (!silent)
-                                ExceptionHandler.SendChatMessage($"Invalid bind for {group.Name}.{Name}. One or more of the given controls conflict with existing binds.");
+                            buf.Clear();
+                            buf.AddRange(combo);
                         }
-                        else if (!silent)
+
+                        SanitizeCombo(buf);
+
+                        if (buf.Count <= maxBindLength && (!isStrict || buf.Count > 0))
                         {
-                            if (combo.Count > 0)
-                                ExceptionHandler.SendChatMessage($"Invalid key bind. No more than {maxBindLength} keys in a bind are allowed.");
+                            bool success = group.TrySetBindInternal(Index, buf, 0, isStrict);
+
+                            if (!success && !isSilent)
+                                ExceptionHandler.SendChatMessage($"Invalid key bind for {group.Name}.{Name}. " +
+                                $"One or more of the given controls conflict with existing binds.");
+
+                            return success;
+                        }
+                        else if (!isSilent)
+                        {
+                            if (buf.Count > 0)
+                            {
+                                ExceptionHandler.SendChatMessage(
+                                    $"Invalid key bind. No more than {maxBindLength} keys in a bind are allowed.");
+                            }
                             else
-                                ExceptionHandler.SendChatMessage("Invalid key bind. There must be at least one control in a key bind.");
+                            {
+                                ExceptionHandler.SendChatMessage(
+                                    "Invalid key bind. There must be at least one control in a key bind.");
+                            }
                         }
 
                         return false;
+                    }
+
+                    /// <summary>
+                    /// Tries to update a key bind using the given control combination.
+                    /// </summary>
+                    public bool TrySetCombo(IReadOnlyList<string> combo, bool isStrict = true, bool isSilent = true)
+                    {
+                        var buf = _instance.conIDbuf;
+                        BindManager.GetComboIndices(combo, buf, false);
+
+                        for (int i = 0; i < combo.Count; i++)
+                        {
+                            if (buf[i] == 0)
+                            {
+                                ExceptionHandler.SendChatMessage(
+                                    $"Invalid key bind for {group.Name}.{Name}. " +
+                                    $"Key name '{combo[i]}' not recognised.");
+
+                                return false;
+                            }
+                        }
+
+                        return TrySetCombo(buf, isStrict, isSilent);
+                    }
+                        
+                    /// <summary>
+                    /// Tries to update a key bind using the given control combination.
+                    /// </summary>
+                    public bool TrySetCombo(IReadOnlyList<IControl> combo, bool isStrict = true, bool isSilent = true)
+                    {
+                        var buf = _instance.conIDbuf;
+                        BindManager.GetComboIndices(combo, buf, false);
+                        return TrySetCombo(buf, isStrict, isSilent);
                     }
 
                     /// <summary>

@@ -64,7 +64,6 @@ namespace RichHudFramework
                 private readonly List<List<int>> bindCombos; // x = bind -> y = combo/alias
 
                 private readonly List<KeyCombo> keyCombos;
-
                 private bool wasBindChanged;
 
                 public BindGroup(int index, string name)
@@ -130,7 +129,7 @@ namespace RichHudFramework
                         {
                             foreach (int comboID in bindCombos[i])
                             {
-                                // Stop after first combo with a state change
+                                // Stop after first combo with an update
                                 if (binds[i].Update(keyCombos[comboID]))
                                     break;
                             }
@@ -377,7 +376,7 @@ namespace RichHudFramework
                     var buf = _instance.conIDbuf;
                     buf.Clear();
                     buf.AddRange(combo);
-                    PruneConBuffer();
+                    SanitizeCombo(buf);
 
                     return TryRegisterBindInternal(bindName, out newBind, buf);
                 }
@@ -390,15 +389,23 @@ namespace RichHudFramework
                 /// <summary>
                 /// Tries to register a bind using the given name and the given key combo.
                 /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<ControlHandle> combo) =>
-                    TryRegisterBindInternal(bindName, out newBind, GetComboIndices(combo));
-
+                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<ControlHandle> combo)
+                {
+                    var buf = _instance.conIDbuf;
+                    GetComboIndices(combo, buf);
+                    return TryRegisterBindInternal(bindName, out newBind, buf);
+                }
+                    
                 /// <summary>
                 /// Tries to register a new bind using the given name and the given key combo.
                 /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<IControl> controls) =>
-                    TryRegisterBindInternal(bindName, out newBind, GetComboIndices(controls));
-
+                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<IControl> controls)
+                {
+                    var buf = _instance.conIDbuf;
+                    GetComboIndices(controls, buf);
+                    return TryRegisterBindInternal(bindName, out newBind, buf);
+                }
+                    
                 /// <summary>
                 /// Replaces current bind combos with combos based on the given <see cref="BindDefinitionData"/>[]. Does not register new binds.
                 /// </summary>
@@ -406,6 +413,7 @@ namespace RichHudFramework
                 {
                     if (bindData != null && bindData.Count > 0)
                     {
+                        var buf = _instance.conIDbuf;
                         List<int> oldUsedControls = usedControls;
                         List<List<int>> oldControlComboMap = usedControlComboMap;
                         bool bindError = false;
@@ -419,8 +427,9 @@ namespace RichHudFramework
                         foreach (BindDefinitionData bindDef in bindData)
                         {
                             IBind bind = GetBind(bindDef.Item1);
+                            GetComboIndices(bindDef.Item2, buf);
 
-                            if (!TrySetBindInternal(bind.Index, GetComboIndices(bindDef.Item2)))
+                            if (!TrySetBindInternal(bind.Index, buf))
                             {
                                 bindError = true;
                                 break;
@@ -449,6 +458,7 @@ namespace RichHudFramework
                 {
                     if (bindData != null && bindData.Count > 0)
                     {
+                        var buf = _instance.conIDbuf;
                         List<int> oldUsedControls = usedControls;
                         List<List<int>> oldControlComboMap = usedControlComboMap;
                         bool bindError = false;
@@ -462,8 +472,9 @@ namespace RichHudFramework
                         foreach (BindDefinition bindDef in bindData)
                         {
                             IBind bind = GetBind(bindDef.name);
+                            GetComboIndices(bindDef.controlNames, buf);
 
-                            if (!TrySetBindInternal(bind.Index, GetComboIndices(bindDef.controlNames)))
+                            if (!TrySetBindInternal(bind.Index, buf))
                             {
                                 bindError = true;
                                 break;
@@ -525,7 +536,7 @@ namespace RichHudFramework
                     return false;
                 }
 
-                private bool TrySetBindInternal(int bindID, IReadOnlyList<int> controls, int alias = 0)
+                private bool TrySetBindInternal(int bindID, IReadOnlyList<int> controls, int alias = 0, bool isStrict = true)
                 {
                     int comboID;
                     alias = MathHelper.Clamp(alias, 0, bindCombos[bindID].Count);
@@ -541,7 +552,7 @@ namespace RichHudFramework
                         bindCombos[bindID].Add(comboID);
                     }
 
-                    if (!DoesComboConflict(controls, comboID))
+                    if (!isStrict || !DoesComboConflict(controls, comboID))
                     {
                         SetCombo(comboID, controls);
                         return true;
@@ -706,8 +717,12 @@ namespace RichHudFramework
                 /// <summary>
                 /// Returns true if the given list of controls conflicts with any existing binds.
                 /// </summary>
-                public bool DoesComboConflict(IReadOnlyList<IControl> controls, IBind combo = null) =>
-                    DoesComboConflict(GetComboIndices(controls), (combo != null) ? combo.Index : -1);
+                public bool DoesComboConflict(IReadOnlyList<IControl> controls, IBind combo = null)
+                {
+                    var buf = _instance.conIDbuf;
+                    GetComboIndices(controls, buf);
+                    return DoesComboConflict(buf, (combo != null) ? combo.Index : -1);
+                }
 
                 /// <summary>
                 /// Determines if given combo is equivalent to any existing binds.

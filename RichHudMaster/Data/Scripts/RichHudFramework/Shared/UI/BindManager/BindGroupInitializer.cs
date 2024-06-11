@@ -49,7 +49,9 @@ namespace RichHudFramework
                 if (con3 != null)
                     names.Add(con3);
 
-                bindData.Add(new MyTuple<string, IReadOnlyList<int>>(bindName, BindManager.GetComboIndices(names)));
+                var indices = new List<int>();
+                BindManager.GetComboIndices(names, indices);
+                bindData.Add(new MyTuple<string, IReadOnlyList<int>>(bindName, indices));
             }
 
             /// <summary>
