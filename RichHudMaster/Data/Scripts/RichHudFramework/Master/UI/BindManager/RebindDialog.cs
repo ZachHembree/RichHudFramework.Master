@@ -121,7 +121,7 @@ namespace RichHudFramework.UI.Server
                 else
                     combo.Add(newControl);
 
-                bind.TrySetCombo(combo, false);
+                bind.TrySetCombo(combo, 0, false);
                 Exit();
             }
         }

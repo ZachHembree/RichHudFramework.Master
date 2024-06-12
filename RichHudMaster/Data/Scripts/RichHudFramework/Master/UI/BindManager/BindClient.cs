@@ -176,7 +176,7 @@ namespace RichHudFramework
 
                 private object GetOrSetGroupMember(int index, object data, int memberEnum)
                 {
-                    IBindGroup group = bindGroups[index];
+                    BindGroup group = bindGroups[index];
 
                     switch ((BindGroupAccessors)memberEnum)
                     {
@@ -308,12 +308,12 @@ namespace RichHudFramework
                         case BindAccesssors.TrySetComboWithIndices:
                             {
                                 var comboData = (MyTuple<IReadOnlyList<int>, bool, bool>)data;
-                                return bind.TrySetCombo(comboData.Item1, comboData.Item2, comboData.Item3);
+                                return bind.TrySetCombo(comboData.Item1, 0, comboData.Item2, comboData.Item3);
                             }
                         case BindAccesssors.TrySetComboWithNames:
                             {
                                 var comboData = (MyTuple<IReadOnlyList<string>, bool, bool>)data;
-                                return bind.TrySetCombo(comboData.Item1, comboData.Item2, comboData.Item3);
+                                return bind.TrySetCombo(comboData.Item1, 0, comboData.Item2, comboData.Item3);
                             }
                         case BindAccesssors.ClearCombo:
                             bind.ClearCombo(); break;

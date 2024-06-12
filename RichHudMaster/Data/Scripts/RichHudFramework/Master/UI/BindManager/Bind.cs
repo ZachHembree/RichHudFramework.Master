@@ -118,7 +118,7 @@ namespace RichHudFramework
                     /// </summary>
                     public List<IControl> GetCombo()
                     {
-                        group.GetBindCombo(_instance.conIDbuf, Index, 0);
+                        group.TryGetBindCombo(_instance.conIDbuf, Index, 0);
                         var controls = new List<IControl>(_instance.conIDbuf.Count);
 
                         foreach (int conID in _instance.conIDbuf)
@@ -129,14 +129,14 @@ namespace RichHudFramework
 
                     public List<int> GetComboIndices()
                     {
-                        group.GetBindCombo(_instance.conIDbuf, Index, 0);
+                        group.TryGetBindCombo(_instance.conIDbuf, Index, 0);
                         return new List<int>(_instance.conIDbuf);
                     }
 
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IReadOnlyList<int> combo, bool isStrict = true, bool isSilent = true)
+                    public bool TrySetCombo(IReadOnlyList<int> combo, int alias = 0, bool isStrict = true, bool isSilent = true)
                     {
                         var controls = _instance.controls;
 
@@ -165,7 +165,7 @@ namespace RichHudFramework
 
                         if (buf.Count <= maxBindLength && (!isStrict || buf.Count > 0))
                         {
-                            bool success = group.TrySetBindInternal(Index, buf, 0, isStrict);
+                            bool success = group.TrySetBindInternal(Index, buf, alias, isStrict);
 
                             if (!success && !isSilent)
                                 ExceptionHandler.SendChatMessage($"Invalid key bind for {group.Name}.{Name}. " +
@@ -193,7 +193,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IReadOnlyList<string> combo, bool isStrict = true, bool isSilent = true)
+                    public bool TrySetCombo(IReadOnlyList<string> combo, int alias = 0, bool isStrict = true, bool isSilent = true)
                     {
                         var buf = _instance.conIDbuf;
                         BindManager.GetComboIndices(combo, buf, false);
@@ -210,17 +210,17 @@ namespace RichHudFramework
                             }
                         }
 
-                        return TrySetCombo(buf, isStrict, isSilent);
+                        return TrySetCombo(buf, alias, isStrict, isSilent);
                     }
                         
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IReadOnlyList<IControl> combo, bool isStrict = true, bool isSilent = true)
+                    public bool TrySetCombo(IReadOnlyList<IControl> combo, int alias = 0, bool isStrict = true, bool isSilent = true)
                     {
                         var buf = _instance.conIDbuf;
                         BindManager.GetComboIndices(combo, buf, false);
-                        return TrySetCombo(buf, isStrict, isSilent);
+                        return TrySetCombo(buf, alias, isStrict, isSilent);
                     }
 
                     /// <summary>

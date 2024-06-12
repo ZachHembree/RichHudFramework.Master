@@ -108,6 +108,7 @@ namespace RichHudFramework
             private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
             private readonly List<Client> bindClients;
             private readonly List<int> conIDbuf;
+            private readonly List<BindDefinition> bindDefBuf;
 
             private Client mainClient;
             private bool areControlsBlacklisted, areMouseControlsBlacklisted;
@@ -130,6 +131,7 @@ namespace RichHudFramework
 
                 bindClients = new List<Client>();
                 conIDbuf = new List<int>();
+                bindDefBuf = new List<BindDefinition>();
             }
 
             public static void Init()

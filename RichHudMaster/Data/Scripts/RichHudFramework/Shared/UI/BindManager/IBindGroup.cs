@@ -47,11 +47,6 @@ namespace RichHudFramework
             bool DoesComboConflict(IReadOnlyList<int> newCombo, int exception = -1);
 
             /// <summary>
-            /// Replaces current bind combos with combos based on the given <see cref="BindDefinition"/>[]. Does not register new binds.
-            /// </summary>
-            bool TryLoadBindData(IReadOnlyList<BindDefinitionData> bindData);
-
-            /// <summary>
             /// Attempts to load bind combinations from bind data. Will not register new binds.
             /// </summary>
             bool TryLoadBindData(IReadOnlyList<BindDefinition> bindData);

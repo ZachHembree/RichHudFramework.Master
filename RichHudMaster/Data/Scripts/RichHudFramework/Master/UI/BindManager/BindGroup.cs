@@ -413,39 +413,14 @@ namespace RichHudFramework
                 {
                     if (bindData != null && bindData.Count > 0)
                     {
-                        var buf = _instance.conIDbuf;
-                        List<int> oldUsedControls = usedControls;
-                        List<List<int>> oldControlComboMap = usedControlComboMap;
-                        bool bindError = false;
+                        var buf = _instance.bindDefBuf;
+                        buf.Clear();
+                        buf.EnsureCapacity(bindData.Count);
 
-                        foreach (int conID in usedControls)
-                            controlComboMap[conID] = new List<int>();
+                        foreach (BindDefinitionData bind in bindData)
+                            buf.Add(bind);
 
-                        usedControls = new List<int>(bindData.Count);
-                        usedControlComboMap = new List<List<int>>(bindData.Count);
-
-                        foreach (BindDefinitionData bindDef in bindData)
-                        {
-                            IBind bind = GetBind(bindDef.Item1);
-                            GetComboIndices(bindDef.Item2, buf);
-
-                            if (!TrySetBindInternal(bind.Index, buf))
-                            {
-                                bindError = true;
-                                break;
-                            }
-                        }
-
-                        if (bindError)
-                        {
-                            usedControls = oldUsedControls;
-                            usedControlComboMap = oldControlComboMap;
-
-                            for (int n = 0; n < usedControls.Count; n++)
-                                controlComboMap[usedControls[n]] = usedControlComboMap[n];
-                        }
-                        else
-                            return true;
+                        return TryLoadBindData(buf);
                     }
 
                     return false;
@@ -458,10 +433,8 @@ namespace RichHudFramework
                 {
                     if (bindData != null && bindData.Count > 0)
                     {
-                        var buf = _instance.conIDbuf;
                         List<int> oldUsedControls = usedControls;
                         List<List<int>> oldControlComboMap = usedControlComboMap;
-                        bool bindError = false;
 
                         foreach (int conID in usedControls)
                             controlComboMap[conID] = new List<int>();
@@ -469,31 +442,73 @@ namespace RichHudFramework
                         usedControls = new List<int>(bindData.Count);
                         usedControlComboMap = new List<List<int>>(bindData.Count);
 
-                        foreach (BindDefinition bindDef in bindData)
-                        {
-                            IBind bind = GetBind(bindDef.name);
-                            GetComboIndices(bindDef.controlNames, buf);
-
-                            if (!TrySetBindInternal(bind.Index, buf))
-                            {
-                                bindError = true;
-                                break;
-                            }
-                        }
-
-                        if (bindError)
+                        if (!TryLoadMainCombos(bindData) || !TryLoadBindAliases(bindData))
                         {
                             usedControls = oldUsedControls;
                             usedControlComboMap = oldControlComboMap;
 
                             for (int n = 0; n < usedControls.Count; n++)
                                 controlComboMap[usedControls[n]] = usedControlComboMap[n];
+
+                            return false;
                         }
                         else
                             return true;
                     }
+                    else
+                        return false;
+                }
 
-                    return false;
+                /// <summary>
+                /// Attempts to assign main bind combos from serialized data
+                /// </summary>
+                private bool TryLoadMainCombos(IReadOnlyList<BindDefinition> bindData)
+                {
+                    var buf = _instance.conIDbuf;
+
+                    foreach (BindDefinition bindDef in bindData)
+                    {
+                        IBind bind = GetBind(bindDef.name);
+                        GetComboIndices(bindDef.controlNames, buf);
+
+                        if (!TrySetBindInternal(bind.Index, buf, 0))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+
+                /// <summary>
+                /// Attempts to assign bind aliases from serialized data
+                /// </summary>
+                private bool TryLoadBindAliases(IReadOnlyList<BindDefinition> bindData)
+                {
+                    var buf = _instance.conIDbuf;
+
+                    foreach (BindDefinition bindDef in bindData)
+                    {
+                        if (bindDef.aliases != null)
+                        {
+                            IBind bind = GetBind(bindDef.name);
+
+                            for (int i = 0; i < bindDef.aliases.Length; i++)
+                            {
+                                var bindAlias = bindDef.aliases[i];
+
+                                if (bindAlias.controlNames != null)
+                                {
+                                    GetComboIndices(bindAlias.controlNames, buf);
+
+                                    if (!TrySetBindInternal(bind.Index, buf, i + 1))
+                                        return false;
+                                }
+                            }
+                        }
+                    }
+
+                    return true;
                 }
 
                 /// <summary>
@@ -538,6 +553,12 @@ namespace RichHudFramework
 
                 private bool TrySetBindInternal(int bindID, IReadOnlyList<int> controls, int alias = 0, bool isStrict = true)
                 {
+                    if (controls == null || controls.Count == 0)
+                    {
+                        ResetCombo(bindID);
+                        return true;
+                    }
+
                     int comboID;
                     alias = MathHelper.Clamp(alias, 0, bindCombos[bindID].Count);
 
@@ -611,7 +632,9 @@ namespace RichHudFramework
                         }
                     }
 
-                    keyCombos[comboID].Reset();
+                    if (comboID < keyCombos.Count)
+                        keyCombos[comboID].Reset();
+
                     wasBindChanged = true;
                 }
 
@@ -629,11 +652,8 @@ namespace RichHudFramework
                     return null;
                 }
 
-                private void GetBindCombo(List<int> controls, int bindID, int alias = 0)
+                private bool TryGetBindCombo(List<int> controls, int bindID, int alias = 0)
                 {
-                    if (bindID >= bindCombos.Count || bindID < 0)
-                        throw new Exception($"Attempted to retrieve bind at invalid index {bindID} in group {Name}.");
-
                     if (alias < bindCombos[bindID].Count)
                     {
                         // Get alias 0 controls
@@ -649,9 +669,10 @@ namespace RichHudFramework
                         }
 
                         controls.Sort();
+                        return true;
                     }
                     else
-                        throw new Exception($"Attempted to retrieve invalid bind alias for {Name}.{binds[bindID].Name}.");
+                        return false;
                 }
 
                 /// <summary>
@@ -660,26 +681,44 @@ namespace RichHudFramework
                 public BindDefinition[] GetBindDefinitions()
                 {
                     BindDefinition[] bindData = new BindDefinition[binds.Count];
-                    string[][] bindControls = new string[binds.Count][];
                     var cBuf = _instance.conIDbuf;
+                    var controls = _instance.controls;
 
                     for (int bindID = 0; bindID < binds.Count; bindID++)
                     {
+                        string[] mainCombo = null;
+                        BindAliasDefinition[] aliases = null;
+
                         if (bindCombos[bindID].Count > 0)
                         {
-                            // Get alias 0 controls
-                            GetBindCombo(cBuf, bindID, 0);
+                            // Get main combo
+                            TryGetBindCombo(cBuf, bindID, 0);
 
-                            // Retrieve names
-                            bindControls[bindID] = new string[cBuf.Count];
+                            // Retrieve control names
+                            mainCombo = new string[cBuf.Count];
 
                             for (int j = 0; j < cBuf.Count; j++)
-                                bindControls[bindID][j] = _instance.controls[cBuf[j]].Name;
-                        }
-                    }
+                                mainCombo[j] = controls[cBuf[j]].Name;
 
-                    for (int i = 0; i < binds.Count; i++)
-                        bindData[i] = new BindDefinition(binds[i].Name, bindControls[i]);
+                            // Get aliases
+                            int aliasCount = Math.Max(0, bindCombos.Count - 1);
+                            aliases = new BindAliasDefinition[aliasCount];
+
+                            for (int j = 0; j < aliasCount; j++)
+                            {
+                                if (TryGetBindCombo(cBuf, bindID, j + 1))
+                                {
+                                    // Get control names
+                                    aliases[j].controlNames = new string[cBuf.Count];
+
+                                    for (int k = 0; k < cBuf.Count; k++)
+                                        aliases[j].controlNames[k] = controls[cBuf[k]].Name;
+                                }
+                            }
+                        }
+
+                        bindData[bindID] = new BindDefinition(binds[bindID].Name, mainCombo, aliases);
+                    }
 
                     return bindData;
                 }
@@ -690,26 +729,27 @@ namespace RichHudFramework
                 public BindDefinitionData[] GetBindData()
                 {
                     BindDefinitionData[] bindData = new BindDefinitionData[binds.Count];
-                    string[][] bindControls = new string[binds.Count][];
                     var cBuf = _instance.conIDbuf;
+                    var controls = _instance.controls;
 
                     for (int bindID = 0; bindID < binds.Count; bindID++)
                     {
+                        string[] mainCombo = null;
+
                         if (bindCombos[bindID].Count > 0)
                         {
-                            // Get alias 0 controls
-                            GetBindCombo(cBuf, bindID, 0);
+                            // Get main combo
+                            TryGetBindCombo(cBuf, bindID, 0);
 
-                            // Retrieve names
-                            bindControls[bindID] = new string[cBuf.Count];
+                            // Retrieve control names
+                            mainCombo = new string[cBuf.Count];
 
                             for (int j = 0; j < cBuf.Count; j++)
-                                bindControls[bindID][j] = _instance.controls[cBuf[j]].Name;
+                                mainCombo[j] = controls[cBuf[j]].Name;
                         }
-                    }
 
-                    for (int i = 0; i < binds.Count; i++)
-                        bindData[i] = new BindDefinitionData(binds[i].Name, bindControls[i]);
+                        bindData[bindID] = new BindDefinitionData(binds[bindID].Name, mainCombo);
+                    }
 
                     return bindData;
                 }

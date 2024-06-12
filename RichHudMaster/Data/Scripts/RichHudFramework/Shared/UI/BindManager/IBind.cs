@@ -79,17 +79,17 @@ namespace RichHudFramework
             /// <summary>
             /// Attempts to set the binds combo to the given controls. Returns true if successful.
             /// </summary>
-            bool TrySetCombo(IReadOnlyList<IControl> combo, bool isStrict = true, bool isSilent = true);
+            bool TrySetCombo(IReadOnlyList<IControl> combo, int alias = 0, bool isStrict = true, bool isSilent = true);
 
             /// <summary>
             /// Attempts to set the binds combo to the given controls. Returns true if successful.
             /// </summary>
-            bool TrySetCombo(IReadOnlyList<int> combo, bool isStrict = true, bool isSilent = true);
+            bool TrySetCombo(IReadOnlyList<int> combo, int alias = 0, bool isStrict = true, bool isSilent = true);
 
             /// <summary>
             /// Attempts to set the binds combo to the given controls. Returns true if successful.
             /// </summary>
-            bool TrySetCombo(IReadOnlyList<string> combo, bool isStrict = true, bool isSilent = true);
+            bool TrySetCombo(IReadOnlyList<string> combo, int alias = 0, bool isStrict = true, bool isSilent = true);
 
             /// <summary>
             /// Clears the current key combination.

@@ -373,7 +373,7 @@ namespace RichHudFramework
                             else
                             {
                                 combo.RemoveAt(index);
-                                bind.TrySetCombo(combo, false);
+                                bind.TrySetCombo(combo, 0, false);
                             }
                         }
                     }
