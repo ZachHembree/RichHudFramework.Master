@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using VRage;
-using VRage.Input.Keyboard;
 using VRage.Input;
+using RichHudFramework.UI.Server;
+using RichHudFramework.UI.Client;
 
 namespace RichHudFramework
 {
@@ -19,27 +18,47 @@ namespace RichHudFramework
             RightStickX = 260,
             RightStickY = 261,
 
+            /// <summary>
+            /// Left trigger
+            /// </summary>
             ZLeft = 262,
+
+            /// <summary>
+            /// Right trigger
+            /// </summary>
             ZRight = 263,
 
             Slider1 = 264,
-            Slider2 = 265
+            Slider2 = 265,
+
+            ReservedEnd = 383
         }
 
         /// <summary>
-        /// Universal interop container for various control enum types
+        /// Universal interop container for <see cref="MyKeys"/>, <see cref="RichHudControls"/> and
+        /// <see cref="MyJoystickButtonsEnum"/>
         /// </summary>
         public struct ControlHandle
         {
             /// <summary>
             /// Index of the first gamepad key
             /// </summary>
-            public const int GPKeysStart = (int)RichHudControls.Slider2 + 1;
+            public const int GPKeysStart = (int)RichHudControls.ReservedEnd + 1;
+
+            /// <summary>
+            /// Returns interface to underlying <see cref="IControl"/>
+            /// </summary>
+            public IControl Control => BindManager.GetControl(this);
 
             /// <summary>
             /// Unique RHF control ID
             /// </summary>
             public readonly int id;
+
+            public ControlHandle(string controlName)
+            {
+                this.id = BindManager.GetControl(controlName).Index;
+            }
 
             public ControlHandle(MyKeys id)
             {
@@ -54,6 +73,11 @@ namespace RichHudFramework
             public ControlHandle(MyJoystickButtonsEnum id)
             {
                 this.id = GPKeysStart + (int)id;
+            }
+
+            public static implicit operator ControlHandle(string controlName)
+            {
+                return new ControlHandle(controlName);
             }
 
             public static implicit operator ControlHandle(MyKeys id)

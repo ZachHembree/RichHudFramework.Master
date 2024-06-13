@@ -21,6 +21,12 @@ namespace RichHudFramework
             int Index { get; }
 
             /// <summary>
+            /// Number of key combinations registered to the given bind. If AliasCount == 1, then only
+            /// the main combo is set. If greater, then it is aliased.
+            /// </summary>
+            int AliasCount { get; }
+
+            /// <summary>
             /// True if any controls in the bind are marked analog. For these types of binds, IsPressed == IsNewPressed.
             /// </summary>
             bool Analog { get; }
@@ -69,12 +75,12 @@ namespace RichHudFramework
             /// <summary>
             /// Returns a list of controls representing the key combinaton for the bind
             /// </summary>
-            List<IControl> GetCombo();
+            List<IControl> GetCombo(int alias = 0);
 
             /// <summary>
             /// Returns a list of control indices representing the key combinaton for the bind
             /// </summary>
-            List<int> GetComboIndices();
+            List<int> GetComboIndices(int alias = 0);
 
             /// <summary>
             /// Attempts to set the binds combo to the given controls. Returns true if successful.
@@ -94,7 +100,7 @@ namespace RichHudFramework
             /// <summary>
             /// Clears the current key combination.
             /// </summary>
-            void ClearCombo();
+            void ClearCombo(int alias = 0);
 
             /// <summary>
             /// Clears all event subscibers for this bind.
@@ -182,7 +188,12 @@ namespace RichHudFramework
             /// <summary>
             /// out: float
             /// </summary>
-            AnalogValue = 16
+            AnalogValue = 16,
+
+            /// <summary>
+            /// out: int
+            /// </summary>
+            AliasCount = 17
         }
 
     }

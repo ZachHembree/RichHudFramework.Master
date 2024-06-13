@@ -42,6 +42,12 @@ namespace RichHudFramework
                     public int Index { get; }
 
                     /// <summary>
+                    /// Number of key combinations registered to the given bind. If AliasCount == 1, then only
+                    /// the main combo is set. If greater, then it is aliased.
+                    /// </summary>
+                    public int AliasCount => group.bindCombos[Index].Count;
+
+                    /// <summary>
                     /// True if any controls in the bind are marked analog. For these types of binds, IsPressed == IsNewPressed.
                     /// </summary>
                     public bool Analog { get; private set; }
@@ -116,9 +122,9 @@ namespace RichHudFramework
                     /// <summary>
                     /// Returns a list of controls representing the binds key combo
                     /// </summary>
-                    public List<IControl> GetCombo()
+                    public List<IControl> GetCombo(int alias = 0)
                     {
-                        group.TryGetBindCombo(_instance.conIDbuf, Index, 0);
+                        group.TryGetBindCombo(_instance.conIDbuf, Index, alias);
                         var controls = new List<IControl>(_instance.conIDbuf.Count);
 
                         foreach (int conID in _instance.conIDbuf)
@@ -127,9 +133,9 @@ namespace RichHudFramework
                         return controls;
                     }
 
-                    public List<int> GetComboIndices()
+                    public List<int> GetComboIndices(int alias = 0)
                     {
-                        group.TryGetBindCombo(_instance.conIDbuf, Index, 0);
+                        group.TryGetBindCombo(_instance.conIDbuf, Index, alias);
                         return new List<int>(_instance.conIDbuf);
                     }
 
@@ -153,32 +159,23 @@ namespace RichHudFramework
                             }
                         }
 
-                        var buf = _instance.conIDbuf;
+                        combo = GetSanitizedComboTemp(combo);
 
-                        if (buf != combo)
+                        if (combo.Count <= MaxBindLength && (!isStrict || combo.Count > 0))
                         {
-                            buf.Clear();
-                            buf.AddRange(combo);
-                        }
-
-                        SanitizeCombo(buf);
-
-                        if (buf.Count <= maxBindLength && (!isStrict || buf.Count > 0))
-                        {
-                            bool success = group.TrySetBindInternal(Index, buf, alias, isStrict);
+                            bool success = group.TrySetBindInternal(Index, combo, alias, isStrict);
 
                             if (!success && !isSilent)
-                                ExceptionHandler.SendChatMessage($"Invalid key bind for {group.Name}.{Name}. " +
-                                $"One or more of the given controls conflict with existing binds.");
+                                ExceptionHandler.SendChatMessage($"Invalid key combo for {group.Name}.{Name}.");
 
                             return success;
                         }
                         else if (!isSilent)
                         {
-                            if (buf.Count > 0)
+                            if (combo.Count > 0)
                             {
                                 ExceptionHandler.SendChatMessage(
-                                    $"Invalid key bind. No more than {maxBindLength} keys in a bind are allowed.");
+                                    $"Invalid key bind. No more than {MaxBindLength} keys in a bind are allowed.");
                             }
                             else
                             {
@@ -226,8 +223,8 @@ namespace RichHudFramework
                     /// <summary>
                     /// Clears all controls from the bind.
                     /// </summary>
-                    public void ClearCombo() =>
-                        group.ResetBindInternal(Index);
+                    public void ClearCombo(int alias = 0) =>
+                        group.ResetBindInternal(Index, alias);
 
                     /// <summary>
                     /// Clears all even subscribers from the bind.

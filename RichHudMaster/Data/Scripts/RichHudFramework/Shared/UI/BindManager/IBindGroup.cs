@@ -57,24 +57,9 @@ namespace RichHudFramework
             void RegisterBinds(BindGroupInitializer bindData);
 
             /// <summary>
-            /// Registers a list of binds using the names given paired with associated control indices.
-            /// </summary>
-            void RegisterBinds(IReadOnlyList<MyTuple<string, IReadOnlyList<int>>> bindData);
-
-            /// <summary>
             /// Registers a list of binds using the names given.
             /// </summary>
             void RegisterBinds(IReadOnlyList<string> bindNames);
-
-            /// <summary>
-            /// Registers and loads bind combinations from BindDefinitions.
-            /// </summary>
-            void RegisterBinds(IReadOnlyList<BindDefinition> bindData);
-
-            /// <summary>
-            /// Registers and loads bind combinations from BindDefinitionData.
-            /// </summary>
-            void RegisterBinds(IReadOnlyList<BindDefinitionData> bindData);
 
             /// <summary>
             /// Returns the bind with the name given, if it exists.
@@ -84,22 +69,12 @@ namespace RichHudFramework
             /// <summary>
             /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
             /// </summary>
-            IBind AddBind(string bindName, IReadOnlyList<string> combo);
+            IBind AddBind(string bindName, IReadOnlyList<ControlHandle> combo, IReadOnlyList<IReadOnlyList<ControlHandle>> aliases = null);
 
             /// <summary>
             /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
             /// </summary>
-            IBind AddBind(string bindName, IReadOnlyList<ControlHandle> combo = null);
-
-            /// <summary>
-            /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
-            /// </summary>
-            IBind AddBind(string bindName, IReadOnlyList<int> combo);
-
-            /// <summary>
-            /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
-            /// </summary>
-            IBind AddBind(string bindName, IReadOnlyList<IControl> combo = null);
+            IBind AddBind(string bindName, IReadOnlyList<int> combo, IReadOnlyList<IReadOnlyList<int>> aliases = null);
 
             /// <summary>
             /// Tries to register an empty bind using the given name.
@@ -109,22 +84,12 @@ namespace RichHudFramework
             /// <summary>
             /// Tries to register a bind using the given name and the given key combo.
             /// </summary>
-            bool TryRegisterBind(string bindName, IReadOnlyList<int> combo, out IBind newBind);
+            bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<int> combo, IReadOnlyList<IReadOnlyList<int>> aliases = null);
 
             /// <summary>
             /// Tries to register a bind using the given name and the given key combo.
             /// </summary>
-            bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<int> combo);
-
-            /// <summary>
-            /// Tries to register a bind using the given name and the given key combo.
-            /// </summary>
-            bool TryRegisterBind(string bindName, out IBind bind, IReadOnlyList<string> combo);
-
-            /// <summary>
-            /// Tries to register a bind using the given name and the given key combo.
-            /// </summary>
-            bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<IControl> combo);
+            bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<ControlHandle> combo, IReadOnlyList<IReadOnlyList<ControlHandle>> aliases = null);
 
             /// <summary>
             /// Retrieves the set of key binds as an array of BindDefinition

@@ -12,7 +12,6 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using VRageMath;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
-using VRage.GameServices;
 
 namespace RichHudFramework
 {
@@ -108,6 +107,7 @@ namespace RichHudFramework
             private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
             private readonly List<Client> bindClients;
             private readonly List<int> conIDbuf;
+            private readonly MyTuple<List<int>, List<List<int>>> cHandleBuf;
             private readonly List<BindDefinition> bindDefBuf;
 
             private Client mainClient;
@@ -131,6 +131,7 @@ namespace RichHudFramework
 
                 bindClients = new List<Client>();
                 conIDbuf = new List<int>();
+                cHandleBuf = new MyTuple<List<int>, List<List<int>>>(new List<int>(), new List<List<int>>());
                 bindDefBuf = new List<BindDefinition>();
             }
 
@@ -634,43 +635,11 @@ namespace RichHudFramework
             {
                 indices.Clear();
 
-                for (int n = 0; n < names.Count; n++)
+                for (int n = 0; n < (names?.Count ?? 0); n++)
                     indices.Add(GetControl(names[n])?.Index ?? 0);
 
                 if (sanitize)
                     SanitizeCombo(indices);
-            }
-
-            /// <summary>
-            /// Generates a combo array using the corresponding control indices.
-            /// </summary>
-            public static IControl[] GetCombo(IReadOnlyList<int> indices, bool sanitize = true)
-            {
-                if (indices != null && indices.Count > 0)
-                {
-                    var buf = Instance.conIDbuf;
-                    buf.Clear();
-
-                    for (int i = 0; i < indices.Count; i++)
-                    {
-                        buf.Add(indices[i]);
-                    }
-
-                    if (sanitize)
-                        SanitizeCombo(buf);
-
-                    IControl[] combo = new IControl[buf.Count];
-
-                    for (int n = 0; n < buf.Count; n++)
-                    {
-                        int index = buf[n];
-                        combo[n] = _instance.controls[index];
-                    }
-
-                    return combo;
-                }
-
-                return null;
             }
 
             /// <summary>
@@ -733,37 +702,55 @@ namespace RichHudFramework
                     SanitizeCombo(combo);
             }
 
-            /// <summary>
-            /// Tries to generate a unique combo from a list of control names.
-            /// </summary>
-            public static bool TryGetCombo(IReadOnlyList<string> controlNames, out IControl[] newCombo, bool sanitize = true)
+            private static void AddHandlesToConBuf(IReadOnlyList<ControlHandle> combo = null, 
+                IReadOnlyList<IReadOnlyList<ControlHandle>> aliases = null)
             {
-                var buf = Instance.conIDbuf;
-                buf.Clear();
-                newCombo = null;
+                var hBuf = _instance.cHandleBuf;
+                var cBuf = hBuf.Item1;
+                var aliasBuf = hBuf.Item2;
 
-                for (int n = 0; n < controlNames.Count; n++)
+                foreach (ControlHandle con in combo)
+                    cBuf.Add(con.id);
+
+                for (int i = 0; i < aliases.Count; i++)
                 {
-                    IControl con = GetControl(controlNames[n].ToLower());
+                    List<int> aliasCons;
+                    var alias = aliases[i];
 
-                    if (con != null)
-                        buf.Add(con.Index);
+                    if (i >= aliasBuf.Count)
+                    {
+                        aliasCons = new List<int>();
+                        aliasBuf.Add(aliasCons);
+                    }
                     else
-                        return false;
+                        aliasCons = aliasBuf[i];
+
+                    foreach (ControlHandle con in alias)
+                        aliasCons.Add(con.id);
                 }
+            }
 
-                if (sanitize)
-                    SanitizeCombo(buf);
+            public static void ResetConHandleBuf()
+            {
+                var hBuf = _instance.cHandleBuf;
+                hBuf.Item1.Clear();
 
-                newCombo = new IControl[buf.Count];
+                foreach (var combo in hBuf.Item2)
+                    combo.Clear();
+            }
 
-                for (int i = 0; i < buf.Count; i++)
+            private static IReadOnlyList<int> GetSanitizedComboTemp(IEnumerable<int> combo)
+            {
+                var buf = _instance.conIDbuf;
+
+                if (buf != combo)
                 {
-                    int conID = buf[i];
-                    newCombo[i] = _instance.controls[conID];
+                    buf.Clear();
+                    buf.AddRange(combo);
                 }
 
-                return true;
+                SanitizeCombo(buf);
+                return buf;
             }
 
             /// <summary>

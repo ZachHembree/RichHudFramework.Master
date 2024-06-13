@@ -55,8 +55,8 @@ namespace RichHudFramework.UI
             sharedMain = BindManager.GetOrCreateGroup("SharedBinds");
             sharedMain.RegisterBinds(new BindGroupInitializer
             {
-                { "leftbutton", MyKeys.LeftButton },
-                { "rightbutton", MyKeys.RightButton },
+                { "leftbutton", MyKeys.LeftButton, new KeyComboInit { RichHudControls.ZLeft } },
+                { "rightbutton", MyKeys.RightButton, new KeyComboInit { RichHudControls.ZRight } },
                 { "mousewheelup", RichHudControls.MousewheelUp },
                 { "mousewheeldown", RichHudControls.MousewheelDown },
 

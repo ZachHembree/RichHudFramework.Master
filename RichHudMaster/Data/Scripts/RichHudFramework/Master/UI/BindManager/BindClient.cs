@@ -225,10 +225,12 @@ namespace RichHudFramework
                             }
                         case BindGroupAccessors.TryRegisterBindWithNames:
                             {
-                                var args = (MyTuple<string, IReadOnlyList<string>>)data;
-
                                 IBind bind;
-                                bool success = group.TryRegisterBind(args.Item1, out bind, args.Item2);
+                                var args = (MyTuple<string, IReadOnlyList<string>>)data;
+                                var buf = _instance.conIDbuf;
+
+                                GetComboIndices(args.Item2, buf, false);
+                                bool success = group.TryRegisterBind(args.Item1, out bind, buf);
 
                                 return success ? bind.Index : -1;
                             }

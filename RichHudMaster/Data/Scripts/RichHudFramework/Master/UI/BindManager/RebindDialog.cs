@@ -13,7 +13,7 @@ namespace RichHudFramework.UI.Server
     {
         public static bool Open 
         { 
-            get { return instance.open; } 
+            get { return instance?.open ?? false; } 
             private set 
             { 
                 instance.menu.Visible = value;

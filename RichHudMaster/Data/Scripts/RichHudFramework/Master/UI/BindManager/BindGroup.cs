@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
+using RichHudFramework.Internal;
 using BindDefinitionData = VRage.MyTuple<string, string[]>;
+using System.CodeDom;
 
 namespace RichHudFramework
 {
@@ -11,12 +13,13 @@ namespace RichHudFramework
     {
         public sealed partial class BindManager
         {
+            public const int MaxBindLength = 3;
+
             /// <summary>
             /// A collection of unique keybinds.
             /// </summary>
             public partial class BindGroup : IBindGroup
             {
-                public const int maxBindLength = 3;
                 private const long holdTime = TimeSpan.TicksPerMillisecond * 500;
 
                 public event EventHandler BindChanged;
@@ -75,7 +78,10 @@ namespace RichHudFramework
                     controlComboMap = new List<int>[controls.Length];
 
                     for (int n = 0; n < controlComboMap.Length; n++)
-                        controlComboMap[n] = new List<int>();
+                    {
+                        if (controls[n].Index != 0)
+                            controlComboMap[n] = new List<int>();
+                    }
 
                     usedControls = new List<int>();
                     usedControlComboMap = new List<List<int>>();
@@ -285,10 +291,8 @@ namespace RichHudFramework
                 /// </summary>
                 public void RegisterBinds(IReadOnlyList<string> bindNames)
                 {
-                    IBind newBind;
-
                     foreach (string name in bindNames)
-                        TryRegisterBind(name, out newBind);
+                        AddBindInternal(name);
                 }
 
                 /// <summary>
@@ -297,7 +301,21 @@ namespace RichHudFramework
                 public void RegisterBinds(BindGroupInitializer bindData)
                 {
                     foreach (var bind in bindData)
-                        AddBind(bind.Item1, bind.Item2);
+                        AddBindInternal(bind.Item1, bind.Item2, bind.Item3);
+                }
+
+                /// <summary>
+                /// Attempts to register a set of binds with the given names.
+                /// </summary>
+                public void RegisterBinds(IReadOnlyList<BindDefinitionData> bindData)
+                {
+                    var buf = _instance.conIDbuf;
+
+                    foreach (var bind in bindData)
+                    {
+                        GetComboIndices(bind.Item2, buf, false);
+                        AddBindInternal(bind.Item1, buf);
+                    }
                 }
 
                 /// <summary>
@@ -306,106 +324,85 @@ namespace RichHudFramework
                 public void RegisterBinds(IReadOnlyList<MyTuple<string, IReadOnlyList<int>>> bindData)
                 {
                     foreach (var bind in bindData)
-                        AddBind(bind.Item1, bind.Item2);
-                }
-
-                /// <summary>
-                /// Attempts to register a set of binds using the names and controls specified in the definitions.
-                /// </summary>
-                public void RegisterBinds(IReadOnlyList<BindDefinition> bindData)
-                {
-                    IBind newBind;
-
-                    foreach (BindDefinition bind in bindData)
-                        TryRegisterBind(bind.name, out newBind, bind.controlNames);
-                }
-
-                /// <summary>
-                /// Attempts to register a set of binds using the names and controls specified in the definitions.
-                /// </summary>
-                public void RegisterBinds(IReadOnlyList<BindDefinitionData> bindData)
-                {
-                    IBind newBind;
-
-                    foreach (BindDefinitionData bind in bindData)
-                        TryRegisterBind(bind.Item1, out newBind, bind.Item2);
+                        AddBindInternal(bind.Item1, bind.Item2);
                 }
 
                 /// <summary>
                 /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
                 /// </summary>
-                public IBind AddBind(string bindName, IReadOnlyList<string> combo) =>
-                    AddBind(bindName, GetCombo(combo));
-
-                /// <summary>
-                /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
-                /// </summary>
-                public IBind AddBind(string bindName, IReadOnlyList<ControlHandle> combo) =>
-                    AddBind(bindName, GetCombo(combo));
-
-                /// <summary>
-                /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
-                /// </summary>
-                public IBind AddBind(string bindName, IReadOnlyList<int> combo) =>
-                    AddBind(bindName, GetCombo(combo));
-
-                /// <summary>
-                /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
-                /// </summary>
-                public IBind AddBind(string bindName, IReadOnlyList<IControl> combo = null)
-                {
-                    IBind bind;
-
-                    if (TryRegisterBind(bindName, out bind, combo))
-                        return bind;
-                    else
-                        throw new Exception($"Bind {Name}.{bindName} is invalid. Bind names and key combinations must be unique.");
-                }
-
-                /// <summary>
-                /// Tries to register a bind using the given name and the given key combo.
-                /// </summary>
-                public bool TryRegisterBind(string bindName, IReadOnlyList<int> combo, out IBind newBind) =>
-                    TryRegisterBind(bindName, out newBind, combo);
-
-                /// <summary>
-                /// Tries to register a new bind using the given name and the given key combo.
-                /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<int> combo)
+                public IBind AddBind(string bindName, IReadOnlyList<string> combo = null)
                 {
                     var buf = _instance.conIDbuf;
-                    buf.Clear();
-                    buf.AddRange(combo);
-                    SanitizeCombo(buf);
+                    GetComboIndices(combo, buf, false);
+                    return AddBindInternal(bindName, buf);
+                }
 
-                    return TryRegisterBindInternal(bindName, out newBind, buf);
+                /// <summary>
+                /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
+                /// </summary>
+                public IBind AddBind(string bindName, IReadOnlyList<ControlHandle> combo = null, IReadOnlyList<IReadOnlyList<ControlHandle>> aliases = null)
+                {
+                    var hBuf = _instance.cHandleBuf;
+
+                    ResetConHandleBuf();
+                    AddHandlesToConBuf(combo, aliases);
+
+                    return AddBindInternal(bindName, hBuf.Item1, hBuf.Item2);
+                }
+
+                /// <summary>
+                /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
+                /// </summary>
+                public IBind AddBind(string bindName, IReadOnlyList<int> combo, IReadOnlyList<IReadOnlyList<int>> aliases = null) =>
+                    AddBindInternal(bindName, combo, aliases);
+
+                /// <summary>
+                /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
+                /// </summary>
+                private IBind AddBindInternal(string bindName, IReadOnlyList<int> combo = null, IReadOnlyList<IReadOnlyList<int>> aliases = null)
+                {
+                    IBind bind = null;
+
+                    if (TryRegisterBindInternal(bindName, out bind, combo, aliases))
+                        return bind;
+                    else
+                        throw new Exception($"Attempted to add an invalid bind '{bindName}' to group {Name}.");
                 }
 
                 /// <summary>
                 /// Tries to register a bind using the given name and the given key combo.
                 public bool TryRegisterBind(string bindName, out IBind newBind) =>
-                    TryRegisterBindInternal(bindName, out newBind, null);
+                    TryRegisterBindInternal(bindName, out newBind);
+
+                /// <summary>
+                /// Tries to register a new bind using the given name and the given key combo.
+                /// </summary>
+                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<int> combo, IReadOnlyList<IReadOnlyList<int>> aliases = null) =>                    
+                    TryRegisterBindInternal(bindName, out newBind, combo, aliases);
 
                 /// <summary>
                 /// Tries to register a bind using the given name and the given key combo.
                 /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<ControlHandle> combo)
+                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<ControlHandle> combo, IReadOnlyList<IReadOnlyList<ControlHandle>> aliases = null)
                 {
-                    var buf = _instance.conIDbuf;
-                    GetComboIndices(combo, buf);
-                    return TryRegisterBindInternal(bindName, out newBind, buf);
+                    var cBuf = new List<int>(combo.Count);
+                    var aliasBuf = new List<List<int>>(aliases.Count);
+
+                    foreach (ControlHandle con in combo)
+                        cBuf.Add(con.id);
+
+                    foreach (var alias in aliases)
+                    {
+                        var aliasCons = new List<int>();
+                        aliasBuf.Add(aliasCons);
+
+                        foreach (ControlHandle con in alias)
+                            aliasCons.Add(con.id);
+                    }
+
+                    return TryRegisterBindInternal(bindName, out newBind, cBuf, aliasBuf);
                 }
-                    
-                /// <summary>
-                /// Tries to register a new bind using the given name and the given key combo.
-                /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind newBind, IReadOnlyList<IControl> controls)
-                {
-                    var buf = _instance.conIDbuf;
-                    GetComboIndices(controls, buf);
-                    return TryRegisterBindInternal(bindName, out newBind, buf);
-                }
-                    
+                  
                 /// <summary>
                 /// Replaces current bind combos with combos based on the given <see cref="BindDefinitionData"/>[]. Does not register new binds.
                 /// </summary>
@@ -442,7 +439,9 @@ namespace RichHudFramework
                         usedControls = new List<int>(bindData.Count);
                         usedControlComboMap = new List<List<int>>(bindData.Count);
 
-                        if (!TryLoadMainCombos(bindData) || !TryLoadBindAliases(bindData))
+                        if (TrySetBinds(bindData))
+                            return true;
+                        else
                         {
                             usedControls = oldUsedControls;
                             usedControlComboMap = oldControlComboMap;
@@ -452,17 +451,15 @@ namespace RichHudFramework
 
                             return false;
                         }
-                        else
-                            return true;
                     }
                     else
                         return false;
                 }
 
                 /// <summary>
-                /// Attempts to assign main bind combos from serialized data
+                /// Attempts to assign bind combos from serialized data
                 /// </summary>
-                private bool TryLoadMainCombos(IReadOnlyList<BindDefinition> bindData)
+                private bool TrySetBinds(IReadOnlyList<BindDefinition> bindData)
                 {
                     var buf = _instance.conIDbuf;
 
@@ -471,38 +468,35 @@ namespace RichHudFramework
                         IBind bind = GetBind(bindDef.name);
                         GetComboIndices(bindDef.controlNames, buf);
 
-                        if (!TrySetBindInternal(bind.Index, buf, 0))
+                        if (bind == null)
                         {
+                            ExceptionHandler.WriteToLog(
+                                $"Bind load error. '{bindDef.name}' in group {Name} was not recognised.");
+
                             return false;
                         }
-                    }
-
-                    return true;
-                }
-
-                /// <summary>
-                /// Attempts to assign bind aliases from serialized data
-                /// </summary>
-                private bool TryLoadBindAliases(IReadOnlyList<BindDefinition> bindData)
-                {
-                    var buf = _instance.conIDbuf;
-
-                    foreach (BindDefinition bindDef in bindData)
-                    {
-                        if (bindDef.aliases != null)
+                        else if (!TrySetBindInternal(bind.Index, buf, 0))
                         {
-                            IBind bind = GetBind(bindDef.name);
+                            ExceptionHandler.WriteToLog(
+                                $"Bind load error. {Name}.{bind.Name} could not be set.");
 
-                            for (int i = 0; i < bindDef.aliases.Length; i++)
+                            return false;
+                        }
+
+                        for (int i = 0; i < (bindDef.aliases?.Length ?? 0); i++)
+                        {
+                            var bindAlias = bindDef.aliases[i];
+
+                            if (bindAlias.controlNames != null)
                             {
-                                var bindAlias = bindDef.aliases[i];
+                                GetComboIndices(bindAlias.controlNames, buf);
 
-                                if (bindAlias.controlNames != null)
+                                if (!TrySetBindInternal(bind.Index, buf, i + 1))
                                 {
-                                    GetComboIndices(bindAlias.controlNames, buf);
+                                    ExceptionHandler.WriteToLog(
+                                        $"Bind load error. {Name}.{bind.Name} alias {i + 1} could not be set.");
 
-                                    if (!TrySetBindInternal(bind.Index, buf, i + 1))
-                                        return false;
+                                    return false;
                                 }
                             }
                         }
@@ -512,23 +506,12 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Tries to register a bind using the given name and the given key combo.
-                /// </summary>
-                public bool TryRegisterBind(string bindName, out IBind bind, IReadOnlyList<string> combo)
-                {
-                    IControl[] newCombo = null;
-                    bind = null;
-
-                    if (combo == null || TryGetCombo(combo, out newCombo))
-                        return TryRegisterBind(bindName, out bind, newCombo);
-
-                    return false;
-                }
-
-                /// <summary>
                 /// Tries to register a new bind using the given name and the given sanitized key combo
                 /// </summary>
-                private bool TryRegisterBindInternal(string bindName, out IBind newBind, IReadOnlyList<int> controls)
+                private bool TryRegisterBindInternal(
+                    string bindName, out IBind newBind, 
+                    IReadOnlyList<int> controls = null, 
+                    IReadOnlyList<IReadOnlyList<int>> aliasControls = null)
                 {
                     newBind = null;
 
@@ -542,7 +525,26 @@ namespace RichHudFramework
 
                         if (controls != null && controls.Count > 0)
                         {
-                            return TrySetBindInternal(bind.Index, controls);
+                            if (TrySetBindInternal(bind.Index, controls, 0))
+                            {
+                                if (aliasControls != null)
+                                {
+                                    for (int i = 0; i < aliasControls.Count; i++)
+                                    {
+                                        if (!TrySetBindInternal(bind.Index, aliasControls[i], i + 1))
+                                        {
+                                            ExceptionHandler.WriteToLog($"Invalid alias for {Name}.{bind.Name}.");
+                                            return false;
+                                        }
+                                    }
+                                }
+
+                                return true;
+                            }
+                            else
+                            {
+                                ExceptionHandler.WriteToLog($"Invalid key combo for {Name}.{bind.Name}.");
+                            }
                         }
                         else
                             return true;
@@ -553,14 +555,16 @@ namespace RichHudFramework
 
                 private bool TrySetBindInternal(int bindID, IReadOnlyList<int> controls, int alias = 0, bool isStrict = true)
                 {
+                    alias = MathHelper.Clamp(alias, 0, bindCombos?[bindID].Count ?? 0);
+                    controls = GetSanitizedComboTemp(controls);
+
                     if (controls == null || controls.Count == 0)
                     {
-                        ResetCombo(bindID);
+                        ResetBindInternal(bindID);
                         return true;
                     }
 
                     int comboID;
-                    alias = MathHelper.Clamp(alias, 0, bindCombos[bindID].Count);
 
                     if (alias < bindCombos[bindID].Count)
                     {
@@ -582,10 +586,17 @@ namespace RichHudFramework
                         return false;
                 }
 
-                private void ResetBindInternal(int bindID)
+                private void ResetBindInternal(int bindID, int alias = -1)
                 {
-                    foreach (int comboID in bindCombos[bindID])
-                        ResetCombo(comboID);
+                    if (alias == -1)
+                    {
+                        foreach (int comboID in bindCombos[bindID])
+                            ResetCombo(comboID);
+                    }
+                    else if (alias < (bindCombos?[bindID].Count ?? 0))
+                    {
+                        ResetCombo(bindCombos[bindID][alias]);
+                    }
                 }
 
                 /// <summary>
