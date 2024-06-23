@@ -176,13 +176,10 @@ namespace RichHudFramework.Server
             MasterConfig.Save();
             MasterConfig.ClearSubscribers();
 
-            if (ExceptionHandler.Reloading)
-            {
-                for (int n = clients.Count - 1; n >= 0; n--)
-                    clients[n].Unregister();
+            for (int n = clients.Count - 1; n >= 0; n--)
+                clients[n].Unregister();
 
-                clients.Clear();
-            }
+            clients.Clear();
         }
 
         public override void Close()
