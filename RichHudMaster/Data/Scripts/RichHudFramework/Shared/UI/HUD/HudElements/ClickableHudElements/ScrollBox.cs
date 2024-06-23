@@ -158,6 +158,8 @@ namespace RichHudFramework.UI
 
         public ScrollBox(bool alignVertical, HudParentBase parent = null) : base(alignVertical, parent)
         {
+            ScrollBar = new ScrollBar(this);
+            Divider = new TexturedBox(ScrollBar) { Color = new Color(53, 66, 75) };
             Background = new TexturedBox(this)
             {
                 Color = TerminalFormatting.DarkSlateGrey,
@@ -170,12 +172,36 @@ namespace RichHudFramework.UI
             EnableScrolling = true;
             UseSmoothScrolling = true;
             ZOffset = 1;
-        }
+            ScrollBar.Vertical = alignVertical;
 
-        protected override void Init()
-        {
-            ScrollBar = new ScrollBar(this);
-            Divider = new TexturedBox(ScrollBar) { Color = new Color(53, 66, 75) };
+            if (alignVertical)
+            {
+                ScrollBar.DimAlignment = DimAlignments.Height;
+                Divider.DimAlignment = DimAlignments.Height;
+
+                ScrollBar.ParentAlignment = ParentAlignments.Right | ParentAlignments.InnerH;
+                Divider.ParentAlignment = ParentAlignments.Left | ParentAlignments.InnerH;
+
+                Divider.Padding = new Vector2(2f, 0f);
+                Divider.Width = 1f;
+
+                ScrollBar.Padding = new Vector2(30f, 10f);
+                ScrollBar.Width = 43f;
+            }
+            else
+            {
+                ScrollBar.DimAlignment = DimAlignments.Width;
+                Divider.DimAlignment = DimAlignments.Width;
+
+                ScrollBar.ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV;
+                Divider.ParentAlignment = ParentAlignments.Bottom | ParentAlignments.InnerV;
+
+                Divider.Padding = new Vector2(16f, 2f);
+                Divider.Height = 1f;
+
+                ScrollBar.Padding = new Vector2(16f);
+                ScrollBar.Height = 24f;
+            }
         }
 
         public ScrollBox(HudParentBase parent) : this(true, parent)
@@ -189,6 +215,34 @@ namespace RichHudFramework.UI
             Vector2 size = base.GetRangeSize(start, end);
             size[offAxis] += scrollBarPadding;
             return size;
+        }
+
+        public int GetRangeEnd(int count, int start = 0)
+        {
+            start = MathHelper.Clamp(start, 0, hudCollectionList.Count - 1);
+            count = MathHelper.Clamp(count, 0, hudCollectionList.Count - start);
+
+            if ((start + count) <= hudCollectionList.Count)
+            {
+                int end = start,
+                    enCount = 0;
+
+                for (int i = start; i < hudCollectionList.Count; i++)
+                {
+                    if (hudCollectionList[i].Enabled)
+                    {
+                        end = i;
+                        enCount++;
+                    }
+
+                    if (enCount >= count)
+                        break;
+                }
+
+                return end;
+            }
+
+            return -1;
         }
 
         protected override void HandleInput(Vector2 cursorPos)
@@ -223,7 +277,7 @@ namespace RichHudFramework.UI
             Vector2 chainSize = CachedSize - effectivePadding;
             float visRatio = 0f;
 
-            if (hudCollectionList.Count > 0 && (chainSize.X > 0f && chainSize.Y > 0f))
+            if (hudCollectionList.Count > 0)
             {
                 // Update visible range
                 float totalEnabledLength, scrollOffset,
