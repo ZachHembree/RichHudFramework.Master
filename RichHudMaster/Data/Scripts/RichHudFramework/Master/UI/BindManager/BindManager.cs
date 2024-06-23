@@ -97,14 +97,14 @@ namespace RichHudFramework
                 MyJoystickButtonsEnum.None
             };
 
-            private static readonly Dictionary<ControlHandle, ControlHandle[]> controlAliases = new Dictionary<ControlHandle, ControlHandle[]>
+            private static readonly IReadOnlyDictionary<ControlHandle, ControlHandle[]> controlAliases = new Dictionary<ControlHandle, ControlHandle[]>
             {
                 { MyKeys.Alt, new ControlHandle[] { MyKeys.LeftAlt, MyKeys.RightAlt } },
                 { MyKeys.Shift, new ControlHandle[] { MyKeys.LeftShift, MyKeys.RightShift } },
                 { MyKeys.Control, new ControlHandle[] { MyKeys.LeftControl, MyKeys.RightControl } }
             };
 
-            private static readonly Dictionary<MyJoystickButtonsEnum, string> gamepadBtnCodes = new Dictionary<MyJoystickButtonsEnum, string>
+            private static readonly IReadOnlyDictionary<MyJoystickButtonsEnum, string> gamepadBtnCodes = new Dictionary<MyJoystickButtonsEnum, string>
             {
                 { MyJoystickButtonsEnum.J01, ((char)0xE001).ToString() }, // A
                 { MyJoystickButtonsEnum.J02, ((char)0xE003).ToString() }, // B
@@ -123,7 +123,7 @@ namespace RichHudFramework
                 { MyJoystickButtonsEnum.JDDown, ((char)0xE013).ToString() }, // D-Pad Down
             };
 
-            public static readonly Dictionary<RichHudControls, string> customConNames = new Dictionary<RichHudControls, string>
+            public static readonly IReadOnlyDictionary<RichHudControls, string> customConNames = new Dictionary<RichHudControls, string>
             { 
                 { RichHudControls.MousewheelUp, "MwUp" },
                 { RichHudControls.MousewheelDown, "MwDn" },
@@ -172,7 +172,7 @@ namespace RichHudFramework
                 controlDict = new Dictionary<string, IControl>(conCount);
                 controlDictFriendly = new Dictionary<string, IControl>(conCount);
 
-                GenerateControls(controls, kbmKeys, gpKeys);
+                GenerateControls(kbmKeys, gpKeys);
                 GetControlStringIDs(kbmKeys, out seControlIDs, out seMouseControlIDs);
 
                 bindClients = new List<Client>();
@@ -402,7 +402,7 @@ namespace RichHudFramework
             /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
             /// </summary>
-            private void GenerateControls(Control[] controls, MyKeys[] kbmKeys, MyJoystickButtonsEnum[] gpKeys)
+            private void GenerateControls(MyKeys[] kbmKeys, MyJoystickButtonsEnum[] gpKeys)
             {
                 // Initialize control list to default
                 for (int i = 0; i < controls.Length; i++)
@@ -458,7 +458,7 @@ namespace RichHudFramework
                         controls[index] = Control.Default;              
                 }
 
-                GenerateCustomControls(controls);
+                GenerateCustomControls();
 
                 // Map control aliases to appropriate controls
                 foreach (KeyValuePair<ControlHandle, ControlHandle[]> controlAliasPair in controlAliases)
@@ -478,7 +478,7 @@ namespace RichHudFramework
                 controlDictFriendly.Add(con.DisplayName.ToLower(), con);
             }
 
-            private void GenerateCustomControls(Control[] controls)
+            private void GenerateCustomControls()
             {
                 AddCustomControl(RichHudControls.MousewheelUp,
                     () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0,

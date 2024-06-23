@@ -55,29 +55,29 @@ namespace RichHudFramework.UI
             sharedMain = BindManager.GetOrCreateGroup("SharedBinds");
             sharedMain.RegisterBinds(new BindGroupInitializer
             {
-                { "leftbutton", MyKeys.LeftButton, new KeyComboInit { RichHudControls.LeftBumper } },
-                { "rightbutton", MyKeys.RightButton, new KeyComboInit { RichHudControls.RightBumper } },
+                { "leftbutton", RichHudControls.LeftButton, new KeyComboInit { RichHudControls.LeftBumper } },
+                { "rightbutton", RichHudControls.RightButton, new KeyComboInit { RichHudControls.RightBumper } },
                 { "mousewheelup", RichHudControls.MousewheelUp },
                 { "mousewheeldown", RichHudControls.MousewheelDown },
 
-                { "enter", MyKeys.Enter },
-                { "back", MyKeys.Back },
-                { "delete", MyKeys.Delete },
-                { "escape", MyKeys.Escape, new KeyComboInit { RichHudControls.GpadB }  },
+                { "enter", RichHudControls.Enter },
+                { "back", RichHudControls.Back },
+                { "delete", RichHudControls.Delete },
+                { "escape", RichHudControls.Escape, new KeyComboInit { RichHudControls.GpadB }  },
 
-                { "selectall", MyKeys.Control, MyKeys.A },
-                { "copy", MyKeys.Control, MyKeys.C },
-                { "cut", MyKeys.Control, MyKeys.X },
-                { "paste", MyKeys.Control, MyKeys.V },
+                { "selectall", RichHudControls.Control, RichHudControls.A },
+                { "copy", RichHudControls.Control, RichHudControls.C },
+                { "cut", RichHudControls.Control, RichHudControls.X },
+                { "paste", RichHudControls.Control, RichHudControls.V },
 
-                { "uparrow", MyKeys.Up },
-                { "downarrow", MyKeys.Down },
-                { "leftarrow", MyKeys.Left },
-                { "rightarrow", MyKeys.Right },
+                { "uparrow", RichHudControls.Up },
+                { "downarrow", RichHudControls.Down },
+                { "leftarrow", RichHudControls.Left },
+                { "rightarrow", RichHudControls.Right },
                 
-                { "pageup", MyKeys.PageUp },
-                { "pagedown", MyKeys.PageDown },
-                { "space", MyKeys.Space },
+                { "pageup", RichHudControls.PageUp },
+                { "pagedown", RichHudControls.PageDown },
+                { "space", RichHudControls.Space },
 
                 { "rightstickx", RichHudControls.RightStickX },
                 { "rightsticky", RichHudControls.RightStickY },
@@ -85,9 +85,9 @@ namespace RichHudFramework.UI
             sharedModifiers = BindManager.GetOrCreateGroup("SharedModifiers");
             sharedModifiers.RegisterBinds(new BindGroupInitializer
             {
-                { "shift", MyKeys.Shift },
-                { "control", MyKeys.Control },
-                { "alt", MyKeys.Alt },
+                { "shift", RichHudControls.Shift },
+                { "control", RichHudControls.Control },
+                { "alt", RichHudControls.Alt },
             });
         }
 
