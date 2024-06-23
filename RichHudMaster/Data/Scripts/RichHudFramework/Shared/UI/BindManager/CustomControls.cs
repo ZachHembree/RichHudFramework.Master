@@ -12,37 +12,48 @@ namespace RichHudFramework
             MousewheelUp = 256,
             MousewheelDown = 257,
 
-            LeftStickX = 258,
-            LeftStickY = 259,
+            LeftStickLeft = 258,
+            LeftStickRight = 259,
+            LeftStickUp = 260,
+            LeftStickDown = 261,
 
-            RightStickX = 260,
-            RightStickY = 261,
+            LeftStickX = 262,
+            LeftStickY = 263,
 
-            /// <summary>
-            /// Left trigger
-            /// </summary>
-            ZLeft = 262,
+            RightStickLeft = 264,
+            RightStickRight = 265,
+            RightStickUp = 266,
+            RightStickDown = 267,
 
-            /// <summary>
-            /// Right trigger
-            /// </summary>
-            ZRight = 263,
+            RightStickX = 268,
+            RightStickY = 269,
 
-            Slider1 = 264,
+            LeftTrigger = 270,
+            RightTrigger = 271,
 
-            Slider2 = 265,
+            Slider1 = 272,
+            Slider2 = 273,
 
             ReservedEnd = 383,
 
             DPadLeft = ReservedEnd + MyJoystickButtonsEnum.JDLeft,
-
             DPadRight = ReservedEnd + MyJoystickButtonsEnum.JDRight,
-
             DPadUp = ReservedEnd + MyJoystickButtonsEnum.JDUp,
-
             DPadDown = ReservedEnd + MyJoystickButtonsEnum.JDDown,
 
             GpadA = ReservedEnd + MyJoystickButtonsEnum.J01,
+            GpadB = ReservedEnd + MyJoystickButtonsEnum.J02,
+            GpadX = ReservedEnd + MyJoystickButtonsEnum.J03,
+            GpadY = ReservedEnd + MyJoystickButtonsEnum.J04,
+
+            LeftBumper = ReservedEnd + MyJoystickButtonsEnum.J05,
+            RightBumper = ReservedEnd + MyJoystickButtonsEnum.J06,
+
+            GpadView = ReservedEnd + MyJoystickButtonsEnum.J07,
+            GpadMenu = ReservedEnd + MyJoystickButtonsEnum.J08,
+
+            LeftStickBtn = ReservedEnd + MyJoystickButtonsEnum.J09,
+            RightStickBtn = ReservedEnd + MyJoystickButtonsEnum.J10,
         }
 
         /// <summary>

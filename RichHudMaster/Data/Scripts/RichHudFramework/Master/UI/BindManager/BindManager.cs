@@ -107,8 +107,8 @@ namespace RichHudFramework
             private static readonly Dictionary<MyJoystickButtonsEnum, string> gamepadBtnCodes = new Dictionary<MyJoystickButtonsEnum, string>
             {
                 { MyJoystickButtonsEnum.J01, ((char)0xE001).ToString() }, // A
-                { MyJoystickButtonsEnum.J03, ((char)0xE002).ToString() }, // X
                 { MyJoystickButtonsEnum.J02, ((char)0xE003).ToString() }, // B
+                { MyJoystickButtonsEnum.J03, ((char)0xE002).ToString() }, // X
                 { MyJoystickButtonsEnum.J04, ((char)0xE004).ToString() }, // Y
                 { MyJoystickButtonsEnum.J05, ((char)0xE005).ToString() }, // LB
                 { MyJoystickButtonsEnum.J06, ((char)0xE006).ToString() }, // RB
@@ -128,14 +128,24 @@ namespace RichHudFramework
                 { RichHudControls.MousewheelUp, "MwUp" },
                 { RichHudControls.MousewheelDown, "MwDn" },
 
-                { RichHudControls.LeftStickX, "LeftX" },
-                { RichHudControls.LeftStickY, "LeftY" },
+                { RichHudControls.LeftStickLeft, ((char)0xE015).ToString() },
+                { RichHudControls.LeftStickRight, ((char)0xE016).ToString() },
+                { RichHudControls.LeftStickUp, ((char)0xE017).ToString() },
+                { RichHudControls.LeftStickDown, ((char)0xE014).ToString() },
 
-                { RichHudControls.RightStickX, "RightX" },
-                { RichHudControls.RightStickY, "RightY" },
+                { RichHudControls.LeftStickX, ((char)0xE022).ToString() },
+                { RichHudControls.LeftStickY, ((char)0xE023).ToString() },
 
-                { RichHudControls.ZRight, ((char)0xE007).ToString() }, // RT
-                { RichHudControls.ZLeft, ((char)0xE008).ToString() }, // LT
+                { RichHudControls.RightStickLeft, ((char)0xE019).ToString() },
+                { RichHudControls.RightStickRight, ((char)0xE020).ToString() },
+                { RichHudControls.RightStickUp, ((char)0xE021).ToString() },
+                { RichHudControls.RightStickDown, ((char)0xE018).ToString() },
+
+                { RichHudControls.RightStickX, ((char)0xE024).ToString() },
+                { RichHudControls.RightStickY, ((char)0xE025).ToString() },
+
+                { RichHudControls.RightTrigger, ((char)0xE007).ToString() },
+                { RichHudControls.LeftTrigger, ((char)0xE008).ToString() },
             };
 
             private readonly Control[] controls;
@@ -426,7 +436,7 @@ namespace RichHudFramework
                 // Add gamepad keys
                 for (int i = 0; i < gpKeys.Length; i++)
                 {
-                    var index = ControlHandle.GPKeysStart + (int)gpKeys[i];
+                    var index = ControlHandle.GPKeysStart + (int)gpKeys[i] - 1;
                     var seKey = gpKeys[i];
 
                     if (!controlBlacklist.Contains(seKey))
@@ -480,6 +490,26 @@ namespace RichHudFramework
                 );
 
                 // Add gamepad axes
+                // Left Stick
+
+                // Left Stick Directions
+                AddCustomControl(RichHudControls.LeftStickLeft,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xneg) > .01f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xneg)
+                );
+                AddCustomControl(RichHudControls.LeftStickRight,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xpos) > .01f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xpos)
+                );
+                AddCustomControl(RichHudControls.LeftStickUp,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg) > .01f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg)
+                );
+                AddCustomControl(RichHudControls.LeftStickDown,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos) > .01f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos)
+                );
+
                 // Left X axis
                 AddCustomControl(RichHudControls.LeftStickX,
                     () => {
@@ -499,17 +529,35 @@ namespace RichHudFramework
                 // Left Y axis
                 AddCustomControl(RichHudControls.LeftStickY,
                     () => {
-                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos),
-                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg);
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos);
 
                         return Math.Abs(pos - neg) > .001f;
                     },
                     () => {
-                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos),
-                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg);
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos);
 
                         return (pos - neg);
                     }
+                );
+
+                // Right Stick Directions
+                AddCustomControl(RichHudControls.RightStickLeft,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXneg) > .01f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXneg)
+                );
+                AddCustomControl(RichHudControls.RightStickRight,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXpos) > .01f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXpos)
+                );
+                AddCustomControl(RichHudControls.RightStickUp,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg) > .01f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg)
+                );
+                AddCustomControl(RichHudControls.RightStickDown,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos) > .01f,
+                    () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos)
                 );
 
                 // Right X axis
@@ -531,27 +579,27 @@ namespace RichHudFramework
                 // Right Y axis
                 AddCustomControl(RichHudControls.RightStickY,
                     () => {
-                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos),
-                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg);
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos);
 
                         return Math.Abs(pos - neg) > .001f;
                     },
                     () => {
-                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos),
-                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg);
+                        float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg),
+                            neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos);
 
                         return (pos - neg);
                     }
                 );
 
                 // Left trigger
-                AddCustomControl(RichHudControls.ZLeft,
+                AddCustomControl(RichHudControls.LeftTrigger,
                     () => Math.Abs(MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZLeft)) > .001f,
                     () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZLeft)
                 );
 
                 // Right trigger
-                AddCustomControl(RichHudControls.ZRight,
+                AddCustomControl(RichHudControls.RightTrigger,
                     () => Math.Abs(MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZRight)) > .001f,
                     () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZRight)
                 );

@@ -240,7 +240,7 @@ namespace RichHudFramework
                     Vector2 gpDelta = new Vector2
                     { 
                         X = SharedBinds.RightStickX.AnalogValue, 
-                        Y = -SharedBinds.RightStickY.AnalogValue
+                        Y = SharedBinds.RightStickY.AnalogValue
                     } * 10f * ResScale;
 
                     screenPos = _cursor.ScreenPos + gpDelta;
