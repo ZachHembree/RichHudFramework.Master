@@ -1,7 +1,9 @@
 ﻿using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
+using System.Collections.Generic;
 using VRage.Input;
+using VRage.Utils;
 
 namespace RichHudFramework
 {
@@ -77,7 +79,11 @@ namespace RichHudFramework
                 public Control(MyJoystickButtonsEnum seKey, int index, bool analog = false)
                 {
                     Name = seKey.ToString();
-                    DisplayName = MyAPIGateway.Input.GetName(seKey);
+
+                    if (gamepadBtnCodes.ContainsKey(seKey))
+                        DisplayName = gamepadBtnCodes[seKey];
+                    else
+                        DisplayName = MyAPIGateway.Input.GetName(seKey);
 
                     if (DisplayName == null || DisplayName.Length == 0 || DisplayName[0] <= ' ')
                         DisplayName = Name;
@@ -97,12 +103,16 @@ namespace RichHudFramework
                     Analog = analog;
                 }
 
-                public Control(string name, string friendlyName, int index, Func<bool> IsPressed, Func<float> GetAnalogValue)
+                public Control(RichHudControls con, Func<bool> IsPressed, Func<float> GetAnalogValue)
                 {
-                    Name = name;
-                    DisplayName = friendlyName;
+                    Name = con.ToString();
 
-                    Index = index;
+                    if (customConNames.ContainsKey(con))
+                        DisplayName = customConNames[con];
+                    else
+                        DisplayName = Name;
+
+                    Index = (int)con;
                     IsPressedFunc = IsPressed;
                     GetAnalogValueFunc = GetAnalogValue;
                     Analog = true;

@@ -29,9 +29,20 @@ namespace RichHudFramework
             ZRight = 263,
 
             Slider1 = 264,
+
             Slider2 = 265,
 
-            ReservedEnd = 383
+            ReservedEnd = 383,
+
+            DPadLeft = ReservedEnd + MyJoystickButtonsEnum.JDLeft,
+
+            DPadRight = ReservedEnd + MyJoystickButtonsEnum.JDRight,
+
+            DPadUp = ReservedEnd + MyJoystickButtonsEnum.JDUp,
+
+            DPadDown = ReservedEnd + MyJoystickButtonsEnum.JDDown,
+
+            GpadA = ReservedEnd + MyJoystickButtonsEnum.J01,
         }
 
         /// <summary>

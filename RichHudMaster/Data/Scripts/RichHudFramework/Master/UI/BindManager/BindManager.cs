@@ -3,6 +3,7 @@ using RichHudFramework.Server;
 using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
+using System.Text;
 using System.Diagnostics;
 using System.Collections.Generic;
 using VRage;
@@ -12,6 +13,7 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using VRageMath;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
+using VRage.ModAPI;
 
 namespace RichHudFramework
 {
@@ -100,6 +102,40 @@ namespace RichHudFramework
                 { MyKeys.Alt, new ControlHandle[] { MyKeys.LeftAlt, MyKeys.RightAlt } },
                 { MyKeys.Shift, new ControlHandle[] { MyKeys.LeftShift, MyKeys.RightShift } },
                 { MyKeys.Control, new ControlHandle[] { MyKeys.LeftControl, MyKeys.RightControl } }
+            };
+
+            private static readonly Dictionary<MyJoystickButtonsEnum, string> gamepadBtnCodes = new Dictionary<MyJoystickButtonsEnum, string>
+            {
+                { MyJoystickButtonsEnum.J01, ((char)0xE001).ToString() }, // A
+                { MyJoystickButtonsEnum.J03, ((char)0xE002).ToString() }, // X
+                { MyJoystickButtonsEnum.J02, ((char)0xE003).ToString() }, // B
+                { MyJoystickButtonsEnum.J04, ((char)0xE004).ToString() }, // Y
+                { MyJoystickButtonsEnum.J05, ((char)0xE005).ToString() }, // LB
+                { MyJoystickButtonsEnum.J06, ((char)0xE006).ToString() }, // RB
+                { MyJoystickButtonsEnum.J07, ((char)0xE00D).ToString() }, // View
+                { MyJoystickButtonsEnum.J08, ((char)0xE00E).ToString() }, // Menu
+                { MyJoystickButtonsEnum.J09, ((char)0xE00B).ToString() }, // Left Stick Btn
+                { MyJoystickButtonsEnum.J10, ((char)0xE00C).ToString() }, // Right Stick Btn
+
+                { MyJoystickButtonsEnum.JDUp, ((char)0xE011).ToString() }, // D-Pad Up
+                { MyJoystickButtonsEnum.JDLeft, ((char)0xE010).ToString() }, // D-Pad Left
+                { MyJoystickButtonsEnum.JDRight, ((char)0xE012).ToString() }, // D-Pad Right
+                { MyJoystickButtonsEnum.JDDown, ((char)0xE013).ToString() }, // D-Pad Down
+            };
+
+            public static readonly Dictionary<RichHudControls, string> customConNames = new Dictionary<RichHudControls, string>
+            { 
+                { RichHudControls.MousewheelUp, "MwUp" },
+                { RichHudControls.MousewheelDown, "MwDn" },
+
+                { RichHudControls.LeftStickX, "LeftX" },
+                { RichHudControls.LeftStickY, "LeftY" },
+
+                { RichHudControls.RightStickX, "RightX" },
+                { RichHudControls.RightStickY, "RightY" },
+
+                { RichHudControls.ZRight, ((char)0xE007).ToString() }, // RT
+                { RichHudControls.ZLeft, ((char)0xE008).ToString() }, // LT
             };
 
             private readonly Control[] controls;
@@ -424,26 +460,28 @@ namespace RichHudFramework
                 }                
             }
 
+            private void AddCustomControl(RichHudControls conEnum, Func<bool> IsPressed, Func<float> GetAnalogValue)
+            {
+                var con = new Control(conEnum, IsPressed, GetAnalogValue);
+                controls[con.Index] = con;
+                controlDict.Add(con.Name.ToLower(), con);
+                controlDictFriendly.Add(con.DisplayName.ToLower(), con);
+            }
+
             private void GenerateCustomControls(Control[] controls)
             {
-                controls[256] = new Control("MousewheelUp", "MwUp", 256,
-                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0, 
+                AddCustomControl(RichHudControls.MousewheelUp,
+                    () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0,
                     () => Math.Abs(MyAPIGateway.Input.DeltaMouseScrollWheelValue())
                 );
-                controls[257] = new Control("MousewheelDown", "MwDn", 257,
+                AddCustomControl(RichHudControls.MousewheelDown,
                     () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() < 0,
                     () => Math.Abs(MyAPIGateway.Input.DeltaMouseScrollWheelValue())
                 );
 
-                controlDict.Add("mousewheelup", controls[256]);
-                controlDict.Add("mousewheeldown", controls[257]);
-                controlDictFriendly.Add("mwup", controls[256]);
-                controlDictFriendly.Add("mwdn", controls[257]);
-
                 // Add gamepad axes
                 // Left X axis
-                controls[258] = new Control(
-                    "LeftStickX", "LeftX", 258,
+                AddCustomControl(RichHudControls.LeftStickX,
                     () => {
                         float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xpos),
                             xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xneg);
@@ -459,8 +497,7 @@ namespace RichHudFramework
                 );
 
                 // Left Y axis
-                controls[259] = new Control(
-                    "LeftStickY", "LeftY", 259,
+                AddCustomControl(RichHudControls.LeftStickY,
                     () => {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg);
@@ -475,14 +512,8 @@ namespace RichHudFramework
                     }
                 );
 
-                controlDict.Add("LeftStickX".ToLower(), controls[258]);
-                controlDict.Add("LeftStickY".ToLower(), controls[259]);
-                controlDictFriendly.Add("LeftX".ToLower(), controls[258]);
-                controlDictFriendly.Add("LeftY".ToLower(), controls[259]);
-
                 // Right X axis
-                controls[260] = new Control(
-                    "RightStickX", "RightY", 260,
+                AddCustomControl(RichHudControls.RightStickX,
                     () => {
                         float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXpos),
                             xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXneg);
@@ -498,8 +529,7 @@ namespace RichHudFramework
                 );
 
                 // Right Y axis
-                controls[261] = new Control(
-                    "RightStickY", "RightY", 261,
+                AddCustomControl(RichHudControls.RightStickY,
                     () => {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg);
@@ -514,33 +544,20 @@ namespace RichHudFramework
                     }
                 );
 
-                controlDict.Add("RightStickX".ToLower(), controls[260]);
-                controlDict.Add("RightStickY".ToLower(), controls[261]);
-                controlDictFriendly.Add("RightX".ToLower(), controls[260]);
-                controlDictFriendly.Add("RightY".ToLower(), controls[261]);
-
                 // Left trigger
-                controls[262] = new Control(
-                    "ZLeft", "LeftTrigger", 262,
+                AddCustomControl(RichHudControls.ZLeft,
                     () => Math.Abs(MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZLeft)) > .001f,
                     () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZLeft)
                 );
 
                 // Right trigger
-                controls[263] = new Control(
-                    "ZRight", "RightTrigger", 263,
+                AddCustomControl(RichHudControls.ZRight,
                     () => Math.Abs(MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZRight)) > .001f,
                     () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.ZRight)
                 );
 
-                controlDict.Add("ZLeft".ToLower(), controls[262]);
-                controlDict.Add("ZRight".ToLower(), controls[263]);
-                controlDictFriendly.Add("LeftTrigger".ToLower(), controls[262]);
-                controlDictFriendly.Add("RightTrigger".ToLower(), controls[263]);
-
                 // Slider 1
-                controls[264] = new Control(
-                    "Slider1", "Slider1", 264,
+                AddCustomControl(RichHudControls.Slider1,
                     () => {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1pos),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1neg);
@@ -556,8 +573,7 @@ namespace RichHudFramework
                 );
 
                 // Slider 2
-                controls[265] = new Control(
-                    "Slider2", "Slider2", 265,
+                AddCustomControl(RichHudControls.Slider2,
                     () => {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2pos),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2neg);
@@ -571,11 +587,6 @@ namespace RichHudFramework
                         return (pos - neg);
                     }
                 );
-
-                controlDict.Add("Slider1".ToLower(), controls[264]);
-                controlDict.Add("Slider2".ToLower(), controls[265]);
-                controlDictFriendly.Add("Slider1".ToLower(), controls[264]);
-                controlDictFriendly.Add("Slider2".ToLower(), controls[265]);
             }
 
             private void GetControlStringIDs(MyKeys[] keys, out string[] allControls, out string[] mouseControls)
