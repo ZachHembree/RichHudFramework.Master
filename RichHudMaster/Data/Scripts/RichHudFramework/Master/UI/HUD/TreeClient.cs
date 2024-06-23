@@ -137,12 +137,12 @@ namespace RichHudFramework
                         Registered = TreeManager.RegisterClient(this);
                     }
 
-                    public void Update(int tick)
+                    public void Update(int tick, bool forceRefresh)
                     {
                         if (RefreshDrawList || apiVersion > 7)
                             refreshRequested = true;
 
-                        if (!treeManager.UpdatingTree && refreshRequested && (tick % treeRefreshRate) == 0)
+                        if (forceRefresh || (refreshRequested && (tick % treeRefreshRate) == 0))
                         {
                             updateAccessors.Clear();
                             GetUpdateAccessors?.Invoke(updateAccessors, 0);

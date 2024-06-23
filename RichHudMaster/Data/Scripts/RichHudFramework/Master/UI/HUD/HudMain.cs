@@ -174,16 +174,18 @@ namespace RichHudFramework
             /// </summary>
             public override void Draw()
             {
-                UpdateCache();
-                treeManager.Draw();
+                EnqueueAction(() => 
+                {
+                    UpdateCache();
+                    treeManager.Draw();
+                    drawTick++;
 
-                drawTick++;
+                    if (drawTick == tickResetInterval)
+                        drawTick = 0;
 
-                if (drawTick == tickResetInterval)
-                    drawTick = 0;
-
-                if (SharedBinds.Escape.IsNewPressed)
-                    LoseInputFocusCallback?.Invoke();
+                    if (SharedBinds.Escape.IsNewPressed)
+                        LoseInputFocusCallback?.Invoke();
+                });
             }
 
             public override void HandleInput()
@@ -324,7 +326,7 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Converts from a position in absolute screen space coordinates to a position in pixels.
+            /// Converts from a position in normalized screen space coordinates to a position in pixels.
             /// </summary>
             public static Vector2 GetPixelVector(Vector2 scaledVec)
             {
@@ -339,7 +341,7 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Converts from a coordinate given in pixels to a position in absolute units.
+            /// Converts from a coordinate given in pixels to a position in normalized units.
             /// </summary>
             public static Vector2 GetAbsoluteVector(Vector2 pixelVec)
             {
