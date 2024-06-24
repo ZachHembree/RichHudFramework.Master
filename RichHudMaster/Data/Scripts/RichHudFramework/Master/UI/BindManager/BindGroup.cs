@@ -5,7 +5,6 @@ using VRage;
 using VRageMath;
 using RichHudFramework.Internal;
 using BindDefinitionData = VRage.MyTuple<string, string[]>;
-using System.CodeDom;
 
 namespace RichHudFramework
 {
@@ -766,19 +765,60 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Returns true if the given list of controls conflicts with any existing binds.
+                /// Returns true if the specified alias conflicts with other combos
                 /// </summary>
-                public bool DoesComboConflict(IReadOnlyList<IControl> controls, IBind combo = null)
+                public bool DoesComboConflict(int bindID, int alias = 0)
                 {
-                    var buf = _instance.conIDbuf;
-                    GetComboIndices(controls, buf);
-                    return DoesComboConflict(buf, (combo != null) ? combo.Index : -1);
+                    return DoesComboConflict(binds[bindID], alias);
                 }
 
                 /// <summary>
-                /// Determines if given combo is equivalent to any existing binds.
+                /// Returns true if the specified alias conflicts with other combos
                 /// </summary>
-                public bool DoesComboConflict(IReadOnlyList<int> controls, int comboID = -1)
+                public bool DoesComboConflict(IBind bind, int alias = 0)
+                {
+                    int comboID;
+
+                    if (bind != null && alias < bind.AliasCount)
+                        comboID = bindCombos[bind.Index][alias];
+                    else
+                        return true;
+
+                    var buf = _instance.conIDbuf;
+
+                    if (TryGetBindCombo(buf, bind.Index, alias))
+                        return DoesComboConflict(buf, comboID);
+                    else
+                        return true;
+                }
+
+                /// <summary>
+                /// Returns true if the given list of controls conflicts with any existing combos
+                /// </summary>
+                public bool DoesComboConflict(IReadOnlyList<IControl> controls, IBind bind = null, int alias = 0)
+                {
+                    var buf = _instance.conIDbuf;
+                    GetComboIndices(controls, buf);
+                    return DoesComboConflict(buf, bind, alias);
+                }
+
+                /// <summary>
+                /// Returns true if the given list of controls conflicts with any existing combos
+                /// </summary>
+                public bool DoesComboConflict(IReadOnlyList<int> controls, IBind bind = null, int alias = 0)
+                {
+                    int comboID = -1;
+
+                    if (bind != null && alias < bind.AliasCount)
+                        comboID = bindCombos[bind.Index][alias];
+
+                    return DoesComboConflict(controls, comboID);
+                }
+
+                /// <summary>
+                /// Determines if given combo is equivalent to any existing combos
+                /// </summary>
+                private bool DoesComboConflict(IReadOnlyList<int> controls, int comboID = -1)
                 {
                     int matchCount;
 

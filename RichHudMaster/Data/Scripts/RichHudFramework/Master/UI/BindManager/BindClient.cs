@@ -205,7 +205,7 @@ namespace RichHudFramework
                         case BindGroupAccessors.DoesComboConflict:
                             {
                                 var args = (MyTuple<IReadOnlyList<int>, int>)data;
-                                return group.DoesComboConflict(args.Item1, args.Item2);
+                                return group.DoesComboConflict(args.Item1, group[args.Item2]);
                             }
                         case BindGroupAccessors.TryRegisterBindName:
                             {

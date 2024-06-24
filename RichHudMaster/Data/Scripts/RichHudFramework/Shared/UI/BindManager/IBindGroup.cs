@@ -37,14 +37,19 @@ namespace RichHudFramework
             bool DoesBindExist(string name);
 
             /// <summary>
-            /// Returns true if the given list of controls conflicts with any existing binds.
+            /// Returns true if the specified alias conflicts with other combos
             /// </summary>
-            bool DoesComboConflict(IReadOnlyList<IControl> newCombo, IBind exception = null);
+            bool DoesComboConflict(IBind bind, int alias = 0);
 
             /// <summary>
-            /// Determines if given combo is equivalent to any existing binds.
+            /// Returns true if the given list of controls conflicts with any existing combos
             /// </summary>
-            bool DoesComboConflict(IReadOnlyList<int> newCombo, int exception = -1);
+            bool DoesComboConflict(IReadOnlyList<IControl> newCombo, IBind currentBind = null, int alias = 0);
+
+            /// <summary>
+            /// Determines if given combo is equivalent to any existing combos
+            /// </summary>
+            bool DoesComboConflict(IReadOnlyList<int> newCombo, IBind currentBind = null, int alias = 0);
 
             /// <summary>
             /// Attempts to load bind combinations from bind data. Will not register new binds.

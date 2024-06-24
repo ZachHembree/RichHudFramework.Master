@@ -106,6 +106,11 @@ namespace RichHudFramework
             /// Clears all event subscibers for this bind.
             /// </summary>
             void ClearSubscribers();
+
+            /// <summary>
+            /// Returns the bind's combo as a string
+            /// </summary>
+            string ToString(int alias, bool includeName = true);
         }
 
         public enum BindAccesssors : int
@@ -193,7 +198,12 @@ namespace RichHudFramework
             /// <summary>
             /// out: int
             /// </summary>
-            AliasCount = 17
+            AliasCount = 17,
+
+            /// <summary>
+            /// in: int & bool, out: string
+            /// </summary>
+            ToString = 18,
         }
 
     }

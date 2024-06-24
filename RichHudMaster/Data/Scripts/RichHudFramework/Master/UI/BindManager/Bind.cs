@@ -236,24 +236,42 @@ namespace RichHudFramework
                         Released = null;
                     }
 
-                    public override string ToString()
+                    public string ToString(int alias, bool includeName = true)
                     {
                         var sb = new StringBuilder();
-                        var combo = GetCombo();
+                        var buf = _instance.conIDbuf;
+                        var cons = _instance.controls;
 
-                        sb.Append(Name);
-                        sb.Append(": ");
+                        buf.Clear();
 
-                        if (combo.Count > 0)
-                            sb.Append(combo[0].ToString());
+                        if (alias < AliasCount)
+                            group.TryGetBindCombo(buf, Index, alias);
 
-                        for (int i = 1; i < combo.Count; i++)
+                        if (includeName)
                         {
-                            sb.Append(", ");
-                            sb.Append(combo[i].ToString());                       
+                            sb.Append(Name);
+                            sb.Append(": ");
                         }
 
+                        if (buf.Count > 0)
+                        {
+                            sb.Append(cons[buf[0]].DisplayName);
+
+                            for (int i = 1; i < buf.Count; i++)
+                            {
+                                sb.Append(" + ");
+                                sb.Append(cons[buf[i]].DisplayName);
+                            }
+                        }
+                        else
+                            sb.Append("none");
+
                         return sb.ToString();
+                    }
+
+                    public override string ToString()
+                    {
+                        return ToString(0);
                     }
                 }
             }
