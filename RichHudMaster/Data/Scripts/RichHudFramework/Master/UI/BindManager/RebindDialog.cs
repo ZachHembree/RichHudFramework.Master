@@ -3,50 +3,47 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using VRageMath;
 using System;
+using VRage.Utils;
+using System.Linq;
 
 namespace RichHudFramework.UI.Server
 {
     /// <summary>
-    /// GUI used to change binds in <see cref="BindManager.Group"/>s.
+    /// GUI used to change binds in <see cref="BindManager.Group"/>s
     /// </summary>
     public sealed class RebindDialog : RichHudComponentBase
     {
-        public static bool Open 
-        { 
-            get { return instance?.open ?? false; } 
-            private set 
-            { 
-                instance.menu.Visible = value;
-                instance.open = value;
-            } 
-        }
+        public static bool Open { get; private set; }
 
         private static RebindDialog instance;
-        private const long inputWaitTime = 200;
+        private const long comboConfirmDelayMS = 1000;
 
-        private readonly List<int> blacklist;
-        private readonly RebindHud menu;
-        private readonly Stopwatch stopwatch;
+        private readonly RebindHud popup;
+        private readonly IReadOnlyList<int> blacklist;
+        private readonly IControl escape;
+
+        private List<int> pressedControls, lastPressedControls;
+        private bool didComboChange;
+        private readonly Stopwatch comboConfirmTimer;
 
         private IBind bind;
-        private List<IControl> combo;
-        private IControl newControl;
-
+        private int alias;
         private Action CallbackFunc;
-        private int controlIndex;
-        private bool open;
 
         private RebindDialog() : base(false, true)
         {
-            stopwatch = new Stopwatch();
-            menu = new RebindHud(HudMain.HighDpiRoot) { Visible = false };
-
+            popup = new RebindHud(HudMain.HighDpiRoot) { Visible = false };
+            escape = BindManager.GetControl(RichHudControls.Escape);
             blacklist = new List<int>
             {
-                BindManager.GetControl("escape").Index,
+                BindManager.GetControl(RichHudControls.Escape).Index
             };
 
-            SharedBinds.Escape.NewPressed += (sender, args) => Exit();
+            comboConfirmTimer = new Stopwatch();
+            pressedControls = new List<int>();
+            lastPressedControls = new List<int>();
+            didComboChange = false;
+            Open = false;
         }
 
         public static void Init()
@@ -64,47 +61,62 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Opens the rebind dialog for the control at the specified position.
         /// </summary>
-        public static void UpdateBind(IBind bind, int bindPos, Action CallbackFunc = null) =>
-            instance.UpdateBindInternal(bind, bindPos, CallbackFunc);
+        public static void UpdateBind(IBind bind, int alias, Action CallbackFunc = null) =>
+            instance.UpdateBindInternal(bind, alias, CallbackFunc);
 
         /// <summary>
         /// Opens the rebind dialog for the control at the specified position.
         /// </summary>
-        private void UpdateBindInternal(IBind bind, int bindPos, Action CallbackFunc = null)
+        private void UpdateBindInternal(IBind bind, int alias, Action CallbackFunc = null)
         {
-            BindManager.BlacklistMode = SeBlacklistModes.AllKeys;
-            HudMain.EnableCursor = true;
-
-            stopwatch.Restart();
-            Open = true;
-            newControl = null;
-
             this.bind = bind;
+            this.alias = alias;
             this.CallbackFunc = CallbackFunc;
 
-            combo = bind.GetCombo();
-            controlIndex = MathHelper.Clamp(bindPos, 0, combo.Count);
+            BindManager.BlacklistMode = SeBlacklistModes.Full;
+            comboConfirmTimer.Restart();
+            popup.Visible = true;
+            Open = true;
         }
 
         public override void HandleInput()
         {
-            if (stopwatch.IsRunning && stopwatch.ElapsedMilliseconds > inputWaitTime)
-                stopwatch.Stop();
-
-            if ((stopwatch.ElapsedMilliseconds > inputWaitTime) && bind != null)
+            if (Open && bind != null)
             {
-                for (int n = 0; (n < BindManager.Controls.Count && newControl == null); n++)
+                if (escape.IsPressed)
                 {
-                    if (BindManager.Controls[n] != null && BindManager.Controls[n].IsPressed)
+                    Exit();
+                }
+                else
+                {
+                    IReadOnlyList<IControl> controls = BindManager.Controls;
+                    pressedControls.Clear();
+
+                    for (int i = 0; i < controls.Count; i++)
                     {
-                        if (!blacklist.Contains(BindManager.Controls[n].Index))
+                        if (BindManager.Controls[i].Index == i && BindManager.Controls[i].IsPressed)
                         {
-                            newControl = BindManager.Controls[n];
+                            if (!blacklist.Contains(i))
+                                pressedControls.Add(i);
+                        }
+                    }
+
+                    didComboChange = !pressedControls.SequenceEqual(lastPressedControls);
+                    MyUtils.Swap(ref pressedControls, ref lastPressedControls);
+
+                    if (!didComboChange && pressedControls.Count > 0)
+                    {
+                        if (comboConfirmTimer.ElapsedMilliseconds > comboConfirmDelayMS)
+                        {
                             Confirm();
                         }
-                        else if (combo.Contains(BindManager.Controls[n]))
-                            Exit();
                     }
+                    else
+                    {
+                        comboConfirmTimer.Restart();
+                    }
+
+                    popup.ComboProgress = (float)(comboConfirmTimer.ElapsedMilliseconds / (double)comboConfirmDelayMS);
                 }
             }
         }
@@ -114,14 +126,9 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         private void Confirm()
         {
-            if (Open && newControl != null)
+            if (Open)
             {
-                if (controlIndex < combo.Count)
-                    combo[controlIndex] = newControl;
-                else
-                    combo.Add(newControl);
-
-                bind.TrySetCombo(combo, 0, false);
+                bind.TrySetCombo(pressedControls, alias, false);
                 Exit();
             }
         }
@@ -133,8 +140,7 @@ namespace RichHudFramework.UI.Server
         {
             if (Open)
             {
-                BindManager.BlacklistMode = SeBlacklistModes.None;
-                HudMain.EnableCursor = false;
+                popup.Visible = false;
                 Open = false;
                 CallbackFunc?.Invoke();
                 CallbackFunc = null;
@@ -143,11 +149,13 @@ namespace RichHudFramework.UI.Server
         }
 
         /// <summary>
-        /// Generates the UI for the <see cref="RebindDialog"/>
+        /// Popup for the <see cref="RebindDialog"/>
         /// </summary>
         private class RebindHud : HudElementBase
         {
-            public readonly TexturedBox background;
+            public float ComboProgress { get; set; }
+
+            public readonly TexturedBox background, divider, progressBar;
             public readonly BorderBox border;
             public readonly Label header, subheader;
 
@@ -161,7 +169,7 @@ namespace RichHudFramework.UI.Server
 
                 border = new BorderBox(this)
                 {
-                    Thickness = 1f,
+                    Thickness = 2f,
                     Color = new Color(53, 66, 75),
                     DimAlignment = DimAlignments.Size,
                 };
@@ -174,10 +182,10 @@ namespace RichHudFramework.UI.Server
                     ParentAlignment = ParentAlignments.PaddedInnerTop,
                     Offset = new Vector2(0f, -42f),
                     Format = new GlyphFormat(Color.White, TextAlignment.Center, 1.25f),
-                    Text = "SELECT CONTROL",
+                    Text = "REBIND COMBO",
                 };
 
-                var divider = new TexturedBox(header)
+                divider = new TexturedBox(header)
                 {
                     DimAlignment = DimAlignments.Width,
                     Height = 1f,
@@ -185,7 +193,14 @@ namespace RichHudFramework.UI.Server
                     Offset = new Vector2(0f, -10f),
                     Color = new Color(84, 98, 111),
                 };
-                
+
+                progressBar = new TexturedBox(divider)
+                {
+                    Height = 3f,
+                    Width = 0f,
+                    Color = TerminalFormatting.Mint,
+                };
+
                 subheader = new Label(divider)
                 {
                     AutoResize = false,
@@ -194,7 +209,7 @@ namespace RichHudFramework.UI.Server
                     ParentAlignment = ParentAlignments.Bottom,
                     Offset = new Vector2(0f, -41f),
                     Format = new GlyphFormat(GlyphFormat.Blueish.Color, TextAlignment.Center, 1.25f),
-                    Text = "Please press a key",
+                    Text = "Press and hold new combo",
                 };
 
                 Padding = new Vector2(372f, 0f);
@@ -206,7 +221,9 @@ namespace RichHudFramework.UI.Server
 
             protected override void Layout()
             {
-                background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity * .95f);
+                background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
+                ComboProgress = MathHelper.Clamp(ComboProgress, 0f, 1f);
+                progressBar.Width = ComboProgress * divider.Width;
             }
         }
     }

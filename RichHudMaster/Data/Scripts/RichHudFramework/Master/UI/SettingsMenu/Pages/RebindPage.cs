@@ -4,15 +4,10 @@ using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
-using RichHudFramework.UI.Rendering;
-using ApiMemberAccessor = System.Func<object, int, object>;
-using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 using BindDefinitionData = VRage.MyTuple<string, string[]>;
 
 namespace RichHudFramework
 {
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
-
     namespace UI.Server
     {
         /// <summary>
@@ -262,7 +257,7 @@ namespace RichHudFramework
             private class BindBox : HudElementBase
             {
                 private readonly Label bindName;
-                private readonly BorderedButton con1, con2, con3;
+                private readonly BorderedButton[] combos;
 
                 private IBind bind;
                 private IBindGroup group;
@@ -279,7 +274,8 @@ namespace RichHudFramework
                         DimAlignment = DimAlignments.UnpaddedHeight,
                     };
 
-                    con1 = new BorderedButton()
+                    combos = new BorderedButton[3];
+                    combos[0] = new BorderedButton()
                     {
                         Text = "none",
                         Padding = new Vector2(),
@@ -287,10 +283,10 @@ namespace RichHudFramework
                         BorderThickness = btnBorderThickness,
                     };
 
-                    con1.MouseInput.LeftClicked += (sender, args) => GetNewControl(0);
-                    con1.MouseInput.RightClicked += (sender, args) => RemoveControl(0);
+                    combos[0].MouseInput.LeftClicked += (sender, args) => GetNewControl(0);
+                    combos[0].MouseInput.RightClicked += (sender, args) => RemoveControl(0);
 
-                    con2 = new BorderedButton()
+                    combos[1] = new BorderedButton()
                     {
                         Text = "none",
                         Padding = new Vector2(),
@@ -298,10 +294,10 @@ namespace RichHudFramework
                         BorderThickness = btnBorderThickness,
                     };
 
-                    con2.MouseInput.LeftClicked += (sender, args) => GetNewControl(1);
-                    con2.MouseInput.RightClicked += (sender, args) => RemoveControl(1);
+                    combos[1].MouseInput.LeftClicked += (sender, args) => GetNewControl(1);
+                    combos[1].MouseInput.RightClicked += (sender, args) => RemoveControl(1);
 
-                    con3 = new BorderedButton()
+                    combos[2] = new BorderedButton()
                     {
                         Text = "none",
                         Padding = new Vector2(),
@@ -309,8 +305,8 @@ namespace RichHudFramework
                         BorderThickness = btnBorderThickness,
                     };
 
-                    con3.MouseInput.LeftClicked += (sender, args) => GetNewControl(2);
-                    con3.MouseInput.RightClicked += (sender, args) => RemoveControl(2);
+                    combos[2].MouseInput.LeftClicked += (sender, args) => GetNewControl(2);
+                    combos[2].MouseInput.RightClicked += (sender, args) => RemoveControl(2);
 
                     var layout = new HudChain(false, this)
                     {
@@ -318,7 +314,7 @@ namespace RichHudFramework
                         Padding = new Vector2(bindPadding, 0f),
                         DimAlignment = DimAlignments.UnpaddedSize,
                         SizingMode = HudChainSizingModes.FitMembersOffAxis,
-                        CollectionContainer = { { bindName, 1f }, { con1, 0f }, { con2, 0f }, { con3, 0f } }
+                        CollectionContainer = { { bindName, 1f }, { combos[0], 0f }, { combos[1], 0f }, { combos[2], 0f } }
                     };
 
                     Height = lineHeight;
@@ -396,33 +392,34 @@ namespace RichHudFramework
                 private void UpdateBindText()
                 {
                     bindName.Text = bind.Name;
-                    List<IControl> combo = bind.GetCombo();
 
-                    if (combo != null && combo.Count > 0)
+                    if (bind.AliasCount > 0)
                     {
-                        if (!group.DoesComboConflict(combo, bind))
-                            bindName.TextBoard.SetFormatting(GlyphFormat.Blueish);
-                        else
+                        bool isConflicting = false;
+
+                        for (int i = 0; i < bind.AliasCount; i++)
+                        {
+                            if (group.DoesComboConflict(bind, i))
+                            {
+                                isConflicting = true;
+                                break;
+                            }
+                        }
+
+                        if (isConflicting)
                             bindName.TextBoard.SetFormatting(TerminalFormatting.WarningFormat);
-
-                        con1.Text = combo[0].DisplayName;
-
-                        if (combo.Count > 1)
-                            con2.Text = combo[1].DisplayName;
                         else
-                            con2.Text = "none";
+                            bindName.TextBoard.SetFormatting(GlyphFormat.Blueish);
 
-                        if (combo.Count > 2)
-                            con3.Text = combo[2].DisplayName;
-                        else
-                            con3.Text = "none";
+                        for (int i = 0; i < 3; i++)
+                            combos[i].Text = bind.ToString(i, false);
                     }
                     else
                     {
                         bindName.TextBoard.SetFormatting(TerminalFormatting.WarningFormat);
-                        con1.Text = "none";
-                        con2.Text = "none";
-                        con3.Text = "none";
+
+                        for (int i = 0; i < 3; i++)
+                            combos[i].Text = "none";
                     }
                 }
             }
