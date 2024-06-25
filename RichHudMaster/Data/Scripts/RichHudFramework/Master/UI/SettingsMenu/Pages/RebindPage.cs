@@ -22,7 +22,9 @@ namespace RichHudFramework
                 lineHeight = 44f,
                 dividerHeight = 1f,
                 bindPadding = 32f,
-                btnBorderThickness = 1f;
+                btnBorderThickness = 1f,
+                resetBtnWidth = 234f,
+                comboBtnWidth = 200f;
             private static readonly Color dividerColor = new Color(53, 66, 75);
             
             /// <summary>
@@ -169,7 +171,7 @@ namespace RichHudFramework
                     resetButton = new BorderedButton(this)
                     {
                         Text = "Defaults",
-                        Size = new Vector2(234f, lineHeight),
+                        Size = new Vector2(resetBtnWidth, lineHeight),
                         Padding = new Vector2(0f),
                         Offset = new Vector2(0f, -(dividerHeight + lineSpacing)),
                         ParentAlignment = ParentAlignments.InnerTopRight,
@@ -274,39 +276,28 @@ namespace RichHudFramework
                         DimAlignment = DimAlignments.UnpaddedHeight,
                     };
 
-                    combos = new BorderedButton[3];
+                    combos = new BorderedButton[2];
                     combos[0] = new BorderedButton()
                     {
                         Text = "none",
                         Padding = new Vector2(),
-                        Size = new Vector2(126f, lineHeight),
+                        Size = new Vector2(comboBtnWidth, lineHeight),
                         BorderThickness = btnBorderThickness,
                     };
 
-                    combos[0].MouseInput.LeftClicked += (sender, args) => GetNewControl(0);
-                    combos[0].MouseInput.RightClicked += (sender, args) => RemoveControl(0);
+                    combos[0].MouseInput.LeftClicked += (sender, args) => GetNewCombo(0);
+                    combos[0].MouseInput.RightClicked += (sender, args) => bind.ClearCombo(0);
 
                     combos[1] = new BorderedButton()
                     {
                         Text = "none",
                         Padding = new Vector2(),
-                        Size = new Vector2(126f, lineHeight),
+                        Size = new Vector2(comboBtnWidth, lineHeight),
                         BorderThickness = btnBorderThickness,
                     };
 
-                    combos[1].MouseInput.LeftClicked += (sender, args) => GetNewControl(1);
-                    combos[1].MouseInput.RightClicked += (sender, args) => RemoveControl(1);
-
-                    combos[2] = new BorderedButton()
-                    {
-                        Text = "none",
-                        Padding = new Vector2(),
-                        Size = new Vector2(126f, lineHeight),
-                        BorderThickness = btnBorderThickness,
-                    };
-
-                    combos[2].MouseInput.LeftClicked += (sender, args) => GetNewControl(2);
-                    combos[2].MouseInput.RightClicked += (sender, args) => RemoveControl(2);
+                    combos[1].MouseInput.LeftClicked += (sender, args) => GetNewCombo(1);
+                    combos[1].MouseInput.RightClicked += (sender, args) => bind.ClearCombo(1);
 
                     var layout = new HudChain(false, this)
                     {
@@ -314,7 +305,7 @@ namespace RichHudFramework
                         Padding = new Vector2(bindPadding, 0f),
                         DimAlignment = DimAlignments.UnpaddedSize,
                         SizingMode = HudChainSizingModes.FitMembersOffAxis,
-                        CollectionContainer = { { bindName, 1f }, { combos[0], 0f }, { combos[1], 0f }, { combos[2], 0f } }
+                        CollectionContainer = { { bindName, 1f }, { combos[0], 0f }, { combos[1], 0f } }
                     };
 
                     Height = lineHeight;
@@ -346,12 +337,12 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Opens the rebind dialog for the given bind for the control specified
+                /// Opens the rebind dialog for the given bind alias
                 /// </summary>
-                private void GetNewControl(int index)
+                private void GetNewCombo(int alias)
                 {
                     RichHudTerminal.CloseMenu();
-                    RebindDialog.UpdateBind(bind, index, DialogClosed);
+                    RebindDialog.UpdateBind(bind, alias, DialogClosed);
                 }
 
                 /// <summary>
@@ -360,30 +351,6 @@ namespace RichHudFramework
                 private void DialogClosed()
                 {
                     RichHudTerminal.OpenMenu();
-                }
-
-                /// <summary>
-                /// Removes the control at the index specified.
-                /// </summary>
-                private void RemoveControl(int index)
-                {
-                    if (index < 3)
-                    {
-                        List<ControlHandle> combo = bind.GetCombo();
-
-                        if (index < combo.Count)
-                        {
-                            if (index == 0 && combo.Count == 1)
-                            {
-                                bind.ClearCombo();
-                            }
-                            else
-                            {
-                                combo.RemoveAt(index);
-                                bind.TrySetCombo(combo, 0, false);
-                            }
-                        }
-                    }
                 }
 
                 /// <summary>
@@ -411,14 +378,14 @@ namespace RichHudFramework
                         else
                             bindName.TextBoard.SetFormatting(GlyphFormat.Blueish);
 
-                        for (int i = 0; i < 3; i++)
+                        for (int i = 0; i < combos.Length; i++)
                             combos[i].Text = bind.ToString(i, false);
                     }
                     else
                     {
                         bindName.TextBoard.SetFormatting(TerminalFormatting.WarningFormat);
 
-                        for (int i = 0; i < 3; i++)
+                        for (int i = 0; i < combos.Length; i++)
                             combos[i].Text = "none";
                     }
                 }
