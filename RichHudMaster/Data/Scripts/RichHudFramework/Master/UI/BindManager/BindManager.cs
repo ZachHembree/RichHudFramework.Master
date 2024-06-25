@@ -1,19 +1,15 @@
 using RichHudFramework.Internal;
 using RichHudFramework.Server;
-using Sandbox.Game;
 using Sandbox.ModAPI;
+using Sandbox.ModAPI.Interfaces.Terminal;
 using System;
-using System.Text;
-using System.Diagnostics;
 using System.Collections.Generic;
 using VRage;
+using VRage.Game.ModAPI;
 using VRage.Input;
 using VRage.Utils;
-using VRage.Game;
-using VRage.Game.ModAPI;
 using VRageMath;
 using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
-using VRage.ModAPI;
 
 namespace RichHudFramework
 {
@@ -27,22 +23,22 @@ namespace RichHudFramework
             /// <summary>
             /// Read-only collection of bind groups registered to the main client
             /// </summary>
-            public static IReadOnlyList<IBindGroup> Groups => Instance.mainClient.Groups;
+            public static IReadOnlyList<IBindGroup> Groups => _instance?.mainClient.Groups;
 
             /// <summary>
             /// Read-only collection of all available controls for use with key binds
             /// </summary>
-            public static IReadOnlyList<IControl> Controls => Instance.controls;
+            public static IReadOnlyList<ControlHandle> Controls => _instance?.controlHandles;
 
             /// <summary>
             /// Read-only list of registered bind clients
             /// </summary>
-            public static IReadOnlyList<Client> Clients => Instance.bindClients;
+            public static IReadOnlyList<Client> Clients => _instance?.bindClients;
 
             /// <summary>
             /// Bind client used by RHM
             /// </summary>
-            public static Client MainClient => Instance.mainClient;
+            public static Client MainClient => _instance?.mainClient;
 
             /// <summary>
             /// Specifies blacklist mode for SE controls
@@ -124,7 +120,7 @@ namespace RichHudFramework
             };
 
             public static readonly IReadOnlyDictionary<RichHudControls, string> customConNames = new Dictionary<RichHudControls, string>
-            { 
+            {
                 { RichHudControls.MousewheelUp, "MwUp" },
                 { RichHudControls.MousewheelDown, "MwDn" },
 
@@ -149,6 +145,7 @@ namespace RichHudFramework
             };
 
             private readonly Control[] controls;
+            private readonly List<ControlHandle> controlHandles;
             private readonly string[] seControlIDs, seMouseControlIDs;
             private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
             private readonly List<Client> bindClients;
@@ -174,6 +171,14 @@ namespace RichHudFramework
 
                 GenerateControls(kbmKeys, gpKeys);
                 GetControlStringIDs(kbmKeys, out seControlIDs, out seMouseControlIDs);
+
+                controlHandles = new List<ControlHandle>(conCount);
+
+                for (int i = 0; i < controls.Length; i++)
+                {
+                    if (i == controls[i].Index)
+                        controlHandles.Add(new ControlHandle(i));
+                }
 
                 bindClients = new List<Client>();
                 conIDbuf = new List<int>();
@@ -204,7 +209,7 @@ namespace RichHudFramework
                 {
                     for (int n = 0; n < bindClients.Count; n++)
                         bindClients[n].HandleInput();
-                }                
+                }
 
                 // Synchronize with actual value every second or so
                 if (chatInputTick == 0)
@@ -397,7 +402,7 @@ namespace RichHudFramework
             /// Returns the control associated with the given <see cref="ControlHandle"/>.
             /// </summary>
             public static IControl GetControl(ControlHandle handle) =>
-                Controls[handle.id];
+                _instance?.controls[handle.id];
 
             /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
@@ -407,7 +412,7 @@ namespace RichHudFramework
                 // Initialize control list to default
                 for (int i = 0; i < controls.Length; i++)
                     controls[i] = Control.Default;
-                    
+
                 // Add kbd+mouse controls
                 for (int i = 0; i < kbmKeys.Length; i++)
                 {
@@ -455,7 +460,7 @@ namespace RichHudFramework
                             controlDictFriendly.Add(friendlyName, con);
                     }
                     else
-                        controls[index] = Control.Default;              
+                        controls[index] = Control.Default;
                 }
 
                 GenerateCustomControls();
@@ -467,7 +472,7 @@ namespace RichHudFramework
 
                     foreach (ControlHandle key in controlAliasPair.Value)
                         controls[key.id] = con;
-                }                
+                }
             }
 
             private void AddCustomControl(RichHudControls conEnum, Func<bool> IsPressed, Func<float> GetAnalogValue)
@@ -512,13 +517,15 @@ namespace RichHudFramework
 
                 // Left X axis
                 AddCustomControl(RichHudControls.LeftStickX,
-                    () => {
+                    () =>
+                    {
                         float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xpos),
                             xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xneg);
 
                         return Math.Abs(xPos - xNeg) > .001f;
                     },
-                    () => {
+                    () =>
+                    {
                         float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xpos),
                             xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xneg);
 
@@ -528,13 +535,15 @@ namespace RichHudFramework
 
                 // Left Y axis
                 AddCustomControl(RichHudControls.LeftStickY,
-                    () => {
+                    () =>
+                    {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos);
 
                         return Math.Abs(pos - neg) > .001f;
                     },
-                    () => {
+                    () =>
+                    {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Yneg),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Ypos);
 
@@ -562,13 +571,15 @@ namespace RichHudFramework
 
                 // Right X axis
                 AddCustomControl(RichHudControls.RightStickX,
-                    () => {
+                    () =>
+                    {
                         float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXpos),
                             xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXneg);
 
                         return Math.Abs(xPos - xNeg) > .001f;
                     },
-                    () => {
+                    () =>
+                    {
                         float xPos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXpos),
                             xNeg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationXneg);
 
@@ -578,13 +589,15 @@ namespace RichHudFramework
 
                 // Right Y axis
                 AddCustomControl(RichHudControls.RightStickY,
-                    () => {
+                    () =>
+                    {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos);
 
                         return Math.Abs(pos - neg) > .001f;
                     },
-                    () => {
+                    () =>
+                    {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYneg),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.RotationYpos);
 
@@ -606,13 +619,15 @@ namespace RichHudFramework
 
                 // Slider 1
                 AddCustomControl(RichHudControls.Slider1,
-                    () => {
+                    () =>
+                    {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1pos),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1neg);
 
                         return Math.Abs(pos - neg) > .001f;
                     },
-                    () => {
+                    () =>
+                    {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1pos),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider1neg);
 
@@ -622,13 +637,15 @@ namespace RichHudFramework
 
                 // Slider 2
                 AddCustomControl(RichHudControls.Slider2,
-                    () => {
+                    () =>
+                    {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2pos),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2neg);
 
                         return Math.Abs(pos - neg) > .001f;
                     },
-                    () => {
+                    () =>
+                    {
                         float pos = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2pos),
                             neg = MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Slider2neg);
 
@@ -711,7 +728,7 @@ namespace RichHudFramework
                     var buf = Instance.conIDbuf;
                     buf.Clear();
 
-                    for (int i= 0; i < indices.Count; i++)
+                    for (int i = 0; i < indices.Count; i++)
                     {
                         buf.Add(indices[i].id);
                     }
@@ -761,7 +778,7 @@ namespace RichHudFramework
                     SanitizeCombo(combo);
             }
 
-            private static void AddHandlesToConBuf(IReadOnlyList<ControlHandle> combo = null, 
+            private static void AddHandlesToConBuf(IReadOnlyList<ControlHandle> combo = null,
                 IReadOnlyList<IReadOnlyList<ControlHandle>> aliases = null)
             {
                 var hBuf = _instance.cHandleBuf;

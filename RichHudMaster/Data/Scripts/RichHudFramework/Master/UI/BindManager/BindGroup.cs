@@ -360,7 +360,7 @@ namespace RichHudFramework
                 /// </summary>
                 private IBind AddBindInternal(string bindName, IReadOnlyList<int> combo = null, IReadOnlyList<IReadOnlyList<int>> aliases = null)
                 {
-                    IBind bind = null;
+                    IBind bind;
 
                     if (TryRegisterBindInternal(bindName, out bind, combo, aliases))
                         return bind;
@@ -795,7 +795,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Returns true if the given list of controls conflicts with any existing combos
                 /// </summary>
-                public bool DoesComboConflict(IReadOnlyList<IControl> controls, IBind bind = null, int alias = 0)
+                public bool DoesComboConflict(IReadOnlyList<ControlHandle> controls, IBind bind = null, int alias = 0)
                 {
                     var buf = _instance.conIDbuf;
                     GetComboIndices(controls, buf);

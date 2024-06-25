@@ -75,17 +75,17 @@ namespace RichHudFramework
             /// <summary>
             /// Returns a list of controls representing the key combinaton for the bind
             /// </summary>
-            List<IControl> GetCombo(int alias = 0);
+            List<ControlHandle> GetCombo(int alias = 0);
 
             /// <summary>
             /// Returns a list of control indices representing the key combinaton for the bind
             /// </summary>
-            List<int> GetComboIndices(int alias = 0);
+            List<int> GetConIDs(int alias = 0);
 
             /// <summary>
             /// Attempts to set the binds combo to the given controls. Returns true if successful.
             /// </summary>
-            bool TrySetCombo(IReadOnlyList<IControl> combo, int alias = 0, bool isStrict = true, bool isSilent = true);
+            bool TrySetCombo(IReadOnlyList<ControlHandle> combo, int alias = 0, bool isStrict = true, bool isSilent = true);
 
             /// <summary>
             /// Attempts to set the binds combo to the given controls. Returns true if successful.

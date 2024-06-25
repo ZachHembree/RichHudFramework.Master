@@ -369,7 +369,7 @@ namespace RichHudFramework
                 {
                     if (index < 3)
                     {
-                        List<IControl> combo = bind.GetCombo();
+                        List<ControlHandle> combo = bind.GetCombo();
 
                         if (index < combo.Count)
                         {

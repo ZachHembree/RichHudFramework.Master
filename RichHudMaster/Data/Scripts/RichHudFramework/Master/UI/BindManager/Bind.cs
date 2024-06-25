@@ -122,18 +122,18 @@ namespace RichHudFramework
                     /// <summary>
                     /// Returns a list of controls representing the binds key combo
                     /// </summary>
-                    public List<IControl> GetCombo(int alias = 0)
+                    public List<ControlHandle> GetCombo(int alias = 0)
                     {
                         group.TryGetBindCombo(_instance.conIDbuf, Index, alias);
-                        var controls = new List<IControl>(_instance.conIDbuf.Count);
+                        var controls = new List<ControlHandle>(_instance.conIDbuf.Count);
 
                         foreach (int conID in _instance.conIDbuf)
-                            controls.Add(_instance.controls[conID]);
+                            controls.Add(new ControlHandle(conID));
 
                         return controls;
                     }
 
-                    public List<int> GetComboIndices(int alias = 0)
+                    public List<int> GetConIDs(int alias = 0)
                     {
                         group.TryGetBindCombo(_instance.conIDbuf, Index, alias);
                         return new List<int>(_instance.conIDbuf);
@@ -213,10 +213,10 @@ namespace RichHudFramework
                     /// <summary>
                     /// Tries to update a key bind using the given control combination.
                     /// </summary>
-                    public bool TrySetCombo(IReadOnlyList<IControl> combo, int alias = 0, bool isStrict = true, bool isSilent = true)
+                    public bool TrySetCombo(IReadOnlyList<ControlHandle> combo, int alias = 0, bool isStrict = true, bool isSilent = true)
                     {
                         var buf = _instance.conIDbuf;
-                        BindManager.GetComboIndices(combo, buf, false);
+                        GetComboIndices(combo, buf, false);
                         return TrySetCombo(buf, alias, isStrict, isSilent);
                     }
 

@@ -16,13 +16,13 @@ namespace RichHudFramework.UI.Server
         public static bool Open { get; private set; }
 
         private static RebindDialog instance;
-        private const long comboConfirmDelayMS = 1000;
+        private const long comboConfirmDelayMS = 500;
 
         private readonly RebindHud popup;
-        private readonly IReadOnlyList<int> blacklist;
+        private readonly IReadOnlyList<ControlHandle> blacklist;
         private readonly IControl escape;
 
-        private List<int> pressedControls, lastPressedControls;
+        private List<ControlHandle> pressedControls, lastPressedControls;
         private bool didComboChange;
         private readonly Stopwatch comboConfirmTimer;
 
@@ -34,14 +34,14 @@ namespace RichHudFramework.UI.Server
         {
             popup = new RebindHud(HudMain.HighDpiRoot) { Visible = false };
             escape = BindManager.GetControl(RichHudControls.Escape);
-            blacklist = new List<int>
+            blacklist = new List<ControlHandle>
             {
-                BindManager.GetControl(RichHudControls.Escape).Index
+                RichHudControls.Escape
             };
 
             comboConfirmTimer = new Stopwatch();
-            pressedControls = new List<int>();
-            lastPressedControls = new List<int>();
+            pressedControls = new List<ControlHandle>();
+            lastPressedControls = new List<ControlHandle>();
             didComboChange = false;
             Open = false;
         }
@@ -89,15 +89,15 @@ namespace RichHudFramework.UI.Server
                 }
                 else
                 {
-                    IReadOnlyList<IControl> controls = BindManager.Controls;
+                    IReadOnlyList<ControlHandle> controls = BindManager.Controls;
                     pressedControls.Clear();
 
-                    for (int i = 0; i < controls.Count; i++)
+                    foreach (ControlHandle con in controls)
                     {
-                        if (BindManager.Controls[i].Index == i && BindManager.Controls[i].IsPressed)
+                        if (con.Control.IsPressed)
                         {
-                            if (!blacklist.Contains(i))
-                                pressedControls.Add(i);
+                            if (!blacklist.Contains(con))
+                                pressedControls.Add(con);
                         }
                     }
 

@@ -28,11 +28,6 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<IBindGroup> Groups => bindGroups;
 
-                /// <summary>
-                /// Read-only collection of all available controls for use with key binds
-                /// </summary>
-                public IReadOnlyList<IControl> Controls => BindManager.Instance.controls;
-
                 public SeBlacklistModes RequestBlacklistMode 
                 { 
                     get { return _requestBlacklistMode | tmpBlacklist; } 
@@ -306,7 +301,7 @@ namespace RichHudFramework
                                 break;
                             }
                         case BindAccesssors.GetCombo:
-                            return bind.GetComboIndices();
+                            return bind.GetConIDs();
                         case BindAccesssors.TrySetComboWithIndices:
                             {
                                 var comboData = (MyTuple<IReadOnlyList<int>, bool, bool>)data;

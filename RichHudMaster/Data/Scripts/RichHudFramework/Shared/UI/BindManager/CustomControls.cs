@@ -95,8 +95,7 @@ namespace RichHudFramework
             X = 88,
             Y = 89,
             Z = 90,
-            LeftWindows = 91,
-            RightWindows = 92,
+
             Apps = 93,
             Sleep = 95,
             NumPad0 = 96,
@@ -147,12 +146,7 @@ namespace RichHudFramework
             Fujitsu_Touroku = 148,
             Fujitsu_Loya = 149,
             Fujitsu_Roya = 150,
-            LeftShift = 160,
-            RightShift = 161,
-            LeftControl = 162,
-            RightControl = 163,
-            LeftAlt = 164,
-            RightAlt = 165,
+
             BrowserBack = 166,
             BrowserForward = 167,
             BrowserRefresh = 168,
@@ -272,7 +266,7 @@ namespace RichHudFramework
         }
 
         /// <summary>
-        /// Universal interop container for <see cref="MyKeys"/>, <see cref="RichHudControls"/> and
+        /// Interop container for <see cref="MyKeys"/>, <see cref="RichHudControls"/> and
         /// <see cref="MyJoystickButtonsEnum"/>
         /// </summary>
         public struct ControlHandle
@@ -288,6 +282,11 @@ namespace RichHudFramework
             public IControl Control => BindManager.GetControl(this);
 
             /// <summary>
+            /// Returns enum corresponding to the handle
+            /// </summary>
+            public RichHudControls ControlEnum => (RichHudControls)id;
+
+            /// <summary>
             /// Unique RHF control ID
             /// </summary>
             public readonly int id;
@@ -297,9 +296,19 @@ namespace RichHudFramework
                 this.id = BindManager.GetControl(controlName).Index;
             }
 
+            public ControlHandle(int id)
+            { 
+                this.id = id; 
+            }
+
             public ControlHandle(MyKeys id)
             {
                 this.id = (int)id;
+            }
+
+            public ControlHandle(IControl con)
+            {
+                this.id = con.Index;
             }
 
             public ControlHandle(RichHudControls id)
@@ -310,6 +319,11 @@ namespace RichHudFramework
             public ControlHandle(MyJoystickButtonsEnum id)
             {
                 this.id = GPKeysStart + (int)id;
+            }
+
+            public static explicit operator ControlHandle(int con) 
+            {
+                return new ControlHandle(con);
             }
 
             public static implicit operator ControlHandle(string controlName)

@@ -44,12 +44,12 @@ namespace RichHudFramework
             /// <summary>
             /// Returns true if the given list of controls conflicts with any existing combos
             /// </summary>
-            bool DoesComboConflict(IReadOnlyList<IControl> newCombo, IBind currentBind = null, int alias = 0);
+            bool DoesComboConflict(IReadOnlyList<ControlHandle> newCombo, IBind currentBind = null, int alias = 0);
 
             /// <summary>
             /// Determines if given combo is equivalent to any existing combos
             /// </summary>
-            bool DoesComboConflict(IReadOnlyList<int> newCombo, IBind currentBind = null, int alias = 0);
+            bool DoesComboConflict(IReadOnlyList<int> newConIDs, IBind currentBind = null, int alias = 0);
 
             /// <summary>
             /// Attempts to load bind combinations from bind data. Will not register new binds.
@@ -79,7 +79,7 @@ namespace RichHudFramework
             /// <summary>
             /// Adds a bind with the given name and the given key combo. Throws an exception if the bind is invalid.
             /// </summary>
-            IBind AddBind(string bindName, IReadOnlyList<int> combo, IReadOnlyList<IReadOnlyList<int>> aliases = null);
+            IBind AddBind(string bindName, IReadOnlyList<int> newConIDs, IReadOnlyList<IReadOnlyList<int>> aliases = null);
 
             /// <summary>
             /// Tries to register an empty bind using the given name.
