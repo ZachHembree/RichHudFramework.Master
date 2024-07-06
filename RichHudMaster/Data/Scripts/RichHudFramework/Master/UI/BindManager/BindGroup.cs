@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using RichHudFramework.Internal;
-using BindDefinitionData = VRage.MyTuple<string, string[]>;
 
 namespace RichHudFramework
 {
+    using BindDefinitionDataOld = MyTuple<string, string[]>;
+    using BindDefinitionData = MyTuple<string, string[], string[][]>;
+
     namespace UI.Server
     {
         public sealed partial class BindManager
@@ -306,7 +308,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Attempts to register a set of binds with the given names.
                 /// </summary>
-                public void RegisterBinds(IReadOnlyList<BindDefinitionData> bindData)
+                public void RegisterBinds(IReadOnlyList<BindDefinitionDataOld> bindData)
                 {
                     var buf = _instance.conIDbuf;
 
@@ -403,6 +405,26 @@ namespace RichHudFramework
                 }
                   
                 /// <summary>
+                /// Replaces current bind combos with combos based on the given <see cref="BindDefinitionDataOld"/>[]. Does not register new binds.
+                /// </summary>
+                public bool TryLoadBindData(IReadOnlyList<BindDefinitionDataOld> bindData)
+                {
+                    if (bindData != null && bindData.Count > 0)
+                    {
+                        var buf = _instance.bindDefBuf;
+                        buf.Clear();
+                        buf.EnsureCapacity(bindData.Count);
+
+                        foreach (BindDefinitionDataOld bind in bindData)
+                            buf.Add(bind);
+
+                        return TryLoadBindData(buf);
+                    }
+
+                    return false;
+                }
+
+                /// <summary>
                 /// Replaces current bind combos with combos based on the given <see cref="BindDefinitionData"/>[]. Does not register new binds.
                 /// </summary>
                 public bool TryLoadBindData(IReadOnlyList<BindDefinitionData> bindData)
@@ -414,7 +436,7 @@ namespace RichHudFramework
                         buf.EnsureCapacity(bindData.Count);
 
                         foreach (BindDefinitionData bind in bindData)
-                            buf.Add(bind);
+                            buf.Add((BindDefinition)bind);
 
                         return TryLoadBindData(buf);
                     }
@@ -745,6 +767,54 @@ namespace RichHudFramework
                     for (int bindID = 0; bindID < binds.Count; bindID++)
                     {
                         string[] mainCombo = null;
+                        string[][] aliases = null;
+
+                        if (bindCombos[bindID].Count > 0)
+                        {
+                            // Get main combo
+                            TryGetBindCombo(cBuf, bindID, 0);
+
+                            // Retrieve control names
+                            mainCombo = new string[cBuf.Count];
+
+                            for (int j = 0; j < cBuf.Count; j++)
+                                mainCombo[j] = controls[cBuf[j]].Name;
+
+                            // Get aliases
+                            int aliasCount = Math.Max(0, bindCombos.Count - 1);
+                            aliases = new string[aliasCount][];
+
+                            for (int j = 0; j < aliasCount; j++)
+                            {
+                                if (TryGetBindCombo(cBuf, bindID, j + 1))
+                                {
+                                    // Get control names
+                                    aliases[j] = new string[cBuf.Count];
+
+                                    for (int k = 0; k < cBuf.Count; k++)
+                                        aliases[j][k] = controls[cBuf[k]].Name;
+                                }
+                            }
+                        }
+
+                        bindData[bindID] = new BindDefinitionData(binds[bindID].Name, mainCombo, aliases);
+                    }
+
+                    return bindData;
+                }
+
+                /// <summary>
+                /// Retrieves the set of key binds as an array of BindDefinition
+                /// </summary>
+                public BindDefinitionDataOld[] GetBindDataOld()
+                {
+                    BindDefinitionDataOld[] bindData = new BindDefinitionDataOld[binds.Count];
+                    var cBuf = _instance.conIDbuf;
+                    var controls = _instance.controls;
+
+                    for (int bindID = 0; bindID < binds.Count; bindID++)
+                    {
+                        string[] mainCombo = null;
 
                         if (bindCombos[bindID].Count > 0)
                         {
@@ -758,7 +828,7 @@ namespace RichHudFramework
                                 mainCombo[j] = controls[cBuf[j]].Name;
                         }
 
-                        bindData[bindID] = new BindDefinitionData(binds[bindID].Name, mainCombo);
+                        bindData[bindID] = new BindDefinitionDataOld(binds[bindID].Name, mainCombo);
                     }
 
                     return bindData;

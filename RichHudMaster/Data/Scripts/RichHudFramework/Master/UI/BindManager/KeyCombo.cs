@@ -8,7 +8,7 @@ namespace RichHudFramework
         {
             public partial class BindGroup
             {
-                private class KeyCombo
+                public class KeyCombo
                 {
                     /// <summary>
                     /// True if any controls in the bind are marked analog. For these types of binds, IsPressed == IsNewPressed.

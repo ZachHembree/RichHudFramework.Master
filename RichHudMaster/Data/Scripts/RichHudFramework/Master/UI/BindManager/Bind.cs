@@ -14,7 +14,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Input tied to one or more key combinations
                 /// </summary>
-                private class Bind : IBind
+                public class Bind : IBind
                 {
                     /// <summary>
                     /// Invoked when the bind is first pressed.

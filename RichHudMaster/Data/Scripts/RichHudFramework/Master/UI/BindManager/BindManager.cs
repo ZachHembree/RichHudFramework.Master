@@ -385,17 +385,17 @@ namespace RichHudFramework
             /// <summary>
             /// Returns the control associated with the given name.
             /// </summary>
-            public static IControl GetControl(string name)
+            public static ControlHandle GetControl(string name)
             {
                 Init();
                 IControl con;
 
                 if (_instance.controlDict.TryGetValue(name.ToLower(), out con))
-                    return con;
+                    return new ControlHandle(con.Index);
                 else if (_instance.controlDictFriendly.TryGetValue(name.ToLower(), out con))
-                    return con;
+                    return new ControlHandle(con.Index);
 
-                return null;
+                return new ControlHandle(0);
             }
 
             /// <summary>
@@ -683,28 +683,6 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Generates a list of controls from a list of control names.
-            /// </summary>
-            public static IControl[] GetCombo(IReadOnlyList<string> names, bool sanitize = true)
-            {
-                var buf = Instance.conIDbuf;
-                buf.Clear();
-
-                for (int n = 0; n < names.Count; n++)
-                    buf.Add(GetControl(names[n])?.Index ?? 0);
-
-                if (sanitize)
-                    SanitizeCombo(buf);
-
-                IControl[] combo = new IControl[buf.Count];
-
-                for (int i = 0; i < buf.Count; i++)
-                    combo[i] = _instance.controls[buf[i]];
-
-                return combo;
-            }
-
-            /// <summary>
             /// Generates a list of control indices using a list of control names.
             /// </summary>
             public static void GetComboIndices(IReadOnlyList<string> names, List<int> indices, bool sanitize = true)
@@ -712,56 +690,10 @@ namespace RichHudFramework
                 indices.Clear();
 
                 for (int n = 0; n < (names?.Count ?? 0); n++)
-                    indices.Add(GetControl(names[n])?.Index ?? 0);
+                    indices.Add(GetControl(names[n]));
 
                 if (sanitize)
                     SanitizeCombo(indices);
-            }
-
-            /// <summary>
-            /// Generates a combo array using the corresponding control indices.
-            /// </summary>
-            public static IControl[] GetCombo(IReadOnlyList<ControlHandle> indices, bool sanitize = true)
-            {
-                if (indices != null && indices.Count > 0)
-                {
-                    var buf = Instance.conIDbuf;
-                    buf.Clear();
-
-                    for (int i = 0; i < indices.Count; i++)
-                    {
-                        buf.Add(indices[i].id);
-                    }
-
-                    if (sanitize)
-                        SanitizeCombo(buf);
-
-                    IControl[] combo = new IControl[buf.Count];
-
-                    for (int n = 0; n < buf.Count; n++)
-                    {
-                        int index = buf[n];
-                        combo[n] = _instance.controls[index];
-                    }
-
-                    return combo;
-                }
-
-                return null;
-            }
-
-            /// <summary>
-            /// Generates a list of control indices from a list of controls.
-            /// </summary>
-            public static void GetComboIndices(IReadOnlyList<IControl> controls, List<int> combo, bool sanitize = true)
-            {
-                combo.Clear();
-
-                for (int n = 0; n < controls.Count; n++)
-                    combo.Add(controls[n].Index);
-
-                if (sanitize)
-                    SanitizeCombo(combo);
             }
 
             /// <summary>
@@ -806,7 +738,7 @@ namespace RichHudFramework
                 }
             }
 
-            public static void ResetConHandleBuf()
+            private static void ResetConHandleBuf()
             {
                 var hBuf = _instance.cHandleBuf;
                 hBuf.Item1.Clear();

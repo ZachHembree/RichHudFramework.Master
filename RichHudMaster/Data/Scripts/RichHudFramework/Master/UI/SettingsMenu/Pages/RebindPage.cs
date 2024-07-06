@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
-using BindDefinitionData = VRage.MyTuple<string, string[]>;
 
 namespace RichHudFramework
 {
+    using BindDefinitionDataOld = MyTuple<string, string[]>;
+    using BindDefinitionData = MyTuple<string, string[], string[][]>;
+
     namespace UI.Server
     {
         /// <summary>
@@ -79,14 +81,28 @@ namespace RichHudFramework
                     {
                         case RebindPageAccessors.Add:
                             {
-                                var args = (MyTuple<object, BindDefinitionData[]>)data;
-                                BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
+                                if (data is MyTuple<object, BindDefinitionDataOld[]>)
+                                {
+                                    var args = (MyTuple<object, BindDefinitionDataOld[]>)data;
+                                    BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
 
-                                for (int n = 0; n < defaults.Length; n++)
-                                    defaults[n] = args.Item2[n];
+                                    for (int n = 0; n < defaults.Length; n++)
+                                        defaults[n] = args.Item2[n];
 
-                                Add(args.Item1 as IBindGroup, defaults);
-                                break;
+                                    Add(args.Item1 as IBindGroup, defaults);
+                                    break;
+                                }
+                                else
+                                {
+                                    var args = (MyTuple<object, BindDefinitionData[]>)data;
+                                    BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
+
+                                    for (int n = 0; n < defaults.Length; n++)
+                                        defaults[n] = (BindDefinition)args.Item2[n];
+
+                                    Add(args.Item1 as IBindGroup, defaults);
+                                    break;
+                                }
                             }
                     }
 
@@ -261,8 +277,8 @@ namespace RichHudFramework
                 private readonly Label bindName;
                 private readonly BorderedButton[] combos;
 
-                private IBind bind;
-                private IBindGroup group;
+                private BindManager.BindGroup.Bind bind;
+                private BindManager.BindGroup group;
 
                 public BindBox(HudParentBase parent = null) : base(parent)
                 {                    
@@ -313,9 +329,7 @@ namespace RichHudFramework
 
                 public void Reset()
                 {
-                    var fullGroup = group as BindManager.BindGroup;
-                    fullGroup.BindChanged -= OnBindChanged;
-
+                    group.BindChanged -= OnBindChanged;
                     bindName.TextBoard.Clear();
                     bind = null;
                     group = null;
@@ -323,12 +337,11 @@ namespace RichHudFramework
 
                 public void SetBind(IBind bind, IBindGroup group)
                 {
-                    this.bind = bind;
-                    this.group = group;
+                    this.bind = bind as BindManager.BindGroup.Bind;
+                    this.group = group as BindManager.BindGroup;
                     UpdateBindText();
 
-                    var fullGroup = group as BindManager.BindGroup;
-                    fullGroup.BindChanged += OnBindChanged;
+                    this.group.BindChanged += OnBindChanged;
                 }
 
                 private void OnBindChanged(object sender, EventArgs args)
