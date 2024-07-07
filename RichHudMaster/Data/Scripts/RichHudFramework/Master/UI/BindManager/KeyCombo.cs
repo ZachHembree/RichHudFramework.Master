@@ -29,7 +29,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// True if just pressed.
                     /// </summary>
-                    public bool IsNewPressed { get { return IsPressed && (!wasPressed || Analog); } }
+                    public bool IsNewPressed { get; private set; }
 
                     /// <summary>
                     /// True after being held for more than 500ms.
@@ -39,12 +39,17 @@ namespace RichHudFramework
                     /// <summary>
                     /// True if just released.
                     /// </summary>
-                    public bool IsReleased { get { return !IsPressed && wasPressed; } }
+                    public bool IsReleased { get; private set; }
 
                     /// <summary>
                     /// True if the bind was pressed, but now only partly pressed
                     /// </summary>
-                    public bool beingReleased;
+                    public bool isBeingReleased;
+
+                    /// <summary>
+                    /// True if any keys in combo are newly pressed
+                    /// </summary>
+                    public bool hasNewPresses;
 
                     /// <summary>
                     /// Number of keys in the combo
@@ -71,7 +76,7 @@ namespace RichHudFramework
                         wasPressed = false;
 
                         Analog = false;
-                        beingReleased = false;
+                        isBeingReleased = false;
                         bindHits = 0;
                         length = 0;
                     }
@@ -80,6 +85,8 @@ namespace RichHudFramework
                     {
                         wasPressed = IsPressed;
                         IsPressed = isPressed;
+                        IsNewPressed = IsPressed && hasNewPresses;
+                        IsReleased = !IsPressed && wasPressed;
 
                         if (!isPressed)
                             AnalogValue = 0f;

@@ -128,8 +128,10 @@ namespace RichHudFramework
                         // Update combos
                         foreach (KeyCombo combo in keyCombos)
                         {
-                            combo.beingReleased = combo.beingReleased && combo.bindHits > 0;
-                            combo.Update(canUpdateBinds && (combo.length > 0 && combo.bindHits == combo.length && !combo.beingReleased));
+                            combo.isBeingReleased = combo.isBeingReleased && combo.bindHits > 0;
+                            bool isPressed = (combo.length > 0 && combo.bindHits == combo.length && !combo.isBeingReleased);
+
+                            combo.Update(canUpdateBinds && isPressed);
                         }
 
                         // Update binds
@@ -172,7 +174,8 @@ namespace RichHudFramework
                     foreach (KeyCombo combo in keyCombos)
                     {
                         // If any used controls have new presses, stop releasing
-                        combo.beingReleased = combo.beingReleased && !anyNewPresses;
+                        combo.isBeingReleased = combo.isBeingReleased && !anyNewPresses;
+                        combo.hasNewPresses = false;
                         combo.bindHits = 0;
                         combo.AnalogValue = 0f;
                     }
@@ -187,6 +190,9 @@ namespace RichHudFramework
                             {
                                 var combo = keyCombos[comboID];
                                 combo.bindHits++;
+
+                                if (con.IsNewPressed)
+                                    combo.hasNewPresses = true;
 
                                 if (con.Analog)
                                     combo.AnalogValue += con.AnalogValue;
@@ -209,12 +215,12 @@ namespace RichHudFramework
                     // Partial presses on previously pressed binds count as full presses.
                     foreach (KeyCombo combo in keyCombos)
                     {
-                        if (combo.IsPressed || combo.beingReleased)
+                        if (combo.IsPressed || combo.isBeingReleased)
                         {
                             if (combo.bindHits > 0 && combo.bindHits < combo.length)
                             {
                                 combo.bindHits = combo.length;
-                                combo.beingReleased = true;
+                                combo.isBeingReleased = true;
                             }
                         }
 
@@ -278,7 +284,7 @@ namespace RichHudFramework
 
                         if (combo.bindHits > 0 && (
                             longest == null || combo.length > longest.length ||
-                            (longest.beingReleased && !combo.beingReleased && longest.length == combo.length)
+                            (longest.isBeingReleased && !combo.isBeingReleased && longest.length == combo.length)
                         ))
                         {
                             longest = combo;
