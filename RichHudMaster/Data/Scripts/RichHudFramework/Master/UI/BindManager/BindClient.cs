@@ -146,7 +146,7 @@ namespace RichHudFramework
                                 return indices;
                             }
                         case BindClientAccessors.GetControlByName:
-                            return BindManager.GetControl(data as string).id;
+                            return GetControl(data as string).id;
                         case BindClientAccessors.ClearBindGroups:
                             ClearBindGroups(); break;
                         case BindClientAccessors.Unload:
@@ -160,6 +160,10 @@ namespace RichHudFramework
                             }
                         case BindClientAccessors.IsChatOpen:
                             return IsChatOpen;
+                        case BindClientAccessors.GetControlName:
+                            return GetControlName((int)data);
+                        case BindClientAccessors.GetControlNames:
+                            return GetControlNames(data as IReadOnlyList<int>);
                     }
 
                     return null;

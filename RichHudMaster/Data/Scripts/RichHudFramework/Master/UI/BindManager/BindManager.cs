@@ -1,7 +1,6 @@
 using RichHudFramework.Internal;
 using RichHudFramework.Server;
 using Sandbox.ModAPI;
-using Sandbox.ModAPI.Interfaces.Terminal;
 using System;
 using System.Collections.Generic;
 using VRage;
@@ -403,6 +402,52 @@ namespace RichHudFramework
             /// </summary>
             public static IControl GetControl(ControlHandle handle) =>
                 _instance?.controls[handle.id];
+
+            /// <summary>
+            /// Returns control name for the corresponding handle
+            /// </summary>
+            public static string GetControlName(ControlHandle con)
+            {
+                return _instance?.controls?[con.id]?.Name;
+            }
+
+            /// <summary>
+            /// Returns control names for the corresponding handle list
+            /// </summary>
+            public static string[] GetControlNames(IReadOnlyList<ControlHandle> cons)
+            {
+                var combo = new string[cons.Count];
+
+                for (int i = 0; i < cons.Count; i++)
+                {
+                    combo[i] = _instance?.controls?[cons[i].id]?.Name;
+                }
+
+                return combo;
+            }
+
+            /// <summary>
+            /// Returns control name for the corresponding int ID
+            /// </summary>
+            public static string GetControlName(int conID)
+            {
+                return _instance?.controls?[conID]?.Name;
+            }
+
+            /// <summary>
+            /// Returns control names for the corresponding int IDs
+            /// </summary>
+            public static string[] GetControlNames(IReadOnlyList<int> conIDs)
+            {
+                var combo = new string[conIDs.Count];
+
+                for (int i = 0; i < conIDs.Count; i++)
+                {
+                    combo[i] = _instance?.controls?[conIDs[i]]?.Name;
+                }
+
+                return combo;
+            }
 
             /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
