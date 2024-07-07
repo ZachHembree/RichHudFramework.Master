@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using RichHudFramework.Internal;
+using System.Diagnostics;
 
 namespace RichHudFramework
 {
@@ -733,7 +734,7 @@ namespace RichHudFramework
                                 mainCombo[j] = controls[cBuf[j]].Name;
 
                             // Get aliases
-                            int aliasCount = Math.Max(0, bindCombos.Count - 1);
+                            int aliasCount = Math.Max(0, bindCombos[bindID].Count - 1);
                             aliases = new BindAliasDefinition[aliasCount];
 
                             for (int j = 0; j < aliasCount; j++)
@@ -781,7 +782,7 @@ namespace RichHudFramework
                                 mainCombo[j] = controls[cBuf[j]].Name;
 
                             // Get aliases
-                            int aliasCount = Math.Max(0, bindCombos.Count - 1);
+                            int aliasCount = Math.Max(0, bindCombos[bindID].Count - 1);
                             aliases = new string[aliasCount][];
 
                             for (int j = 0; j < aliasCount; j++)

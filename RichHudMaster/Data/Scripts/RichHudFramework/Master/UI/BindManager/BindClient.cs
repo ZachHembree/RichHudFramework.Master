@@ -271,7 +271,16 @@ namespace RichHudFramework
                                 }
                             }
                         case BindGroupAccessors.GetBindData:
-                            return group.GetBindDataOld();
+                            {
+                                if (modClient.apiVersionID < 11)
+                                {
+                                    return group.GetBindDataOld();
+                                }
+                                else
+                                {
+                                    return group.GetBindData();
+                                }
+                            }
                         case BindGroupAccessors.ClearSubscribers:
                             group.ClearSubscribers();
                             break;
