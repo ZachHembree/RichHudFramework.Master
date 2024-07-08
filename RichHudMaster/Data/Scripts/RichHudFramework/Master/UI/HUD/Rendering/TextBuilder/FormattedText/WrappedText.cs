@@ -354,6 +354,8 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 for (int n = start; n < charBuffer.Count; n++)
                 {
+                    width += charBuffer.FormattedGlyphs[n].chSize.X;
+
                     if (n == (charBuffer.Count - 1) || charBuffer.Chars[n + 1] == '\n')
                     {
                         wordEnd = n;
@@ -366,8 +368,6 @@ namespace RichHudFramework.UI.Rendering.Server
                         bool isWordBreak =
                             (left == ' ' || left == '-' || left == '_') &&
                             !(right == ' ' || right == '-' || right == '_');
-
-                        width += charBuffer.FormattedGlyphs[n].chSize.X;
 
                         if (isWordBreak)
                         {
