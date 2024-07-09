@@ -247,7 +247,7 @@ namespace RichHudFramework
                     };
 
                     HeaderText = "NewSettingsCategory";
-                    SubheaderText = "Subheading\nLine 1\nLine 2\nLine 3\nLine 4";
+                    SubheaderText = "Subheading";
 
                     if (alignVertical)
                         Width = 334f;

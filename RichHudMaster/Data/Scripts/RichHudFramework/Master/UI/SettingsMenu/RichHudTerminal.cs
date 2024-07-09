@@ -211,6 +211,8 @@ namespace RichHudFramework
                             return new TerminalTextField().GetApiData();
                         case MenuControls.DragBox:
                             return new TerminalDragBox().GetApiData();
+                        case MenuControls.Label:
+                            return new TerminalLabel().GetApiData();
                     }
 
                     return default(ControlMembers);

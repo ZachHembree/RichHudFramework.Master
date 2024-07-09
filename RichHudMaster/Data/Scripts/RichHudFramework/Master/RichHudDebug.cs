@@ -115,8 +115,6 @@ namespace RichHudFramework.Server
                     }
                 }
             };
-
-            RichHudTerminal.Root.Add(pageCategory);
         }
 
         public static void Init()
@@ -133,6 +131,11 @@ namespace RichHudFramework.Server
         public static void UpdateDisplay()
         {
             instance.UpdateDisplayInternal();
+        }
+
+        public static TerminalPageCategory GetDebugPageGroup()
+        {
+            return instance.pageCategory;
         }
 
         private void UpdateDisplayInternal()

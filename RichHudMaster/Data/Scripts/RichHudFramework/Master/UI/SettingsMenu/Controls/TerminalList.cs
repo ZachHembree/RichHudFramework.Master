@@ -121,7 +121,7 @@ namespace RichHudFramework.UI.Server
                     Spacing = 2f
                 };
 
-                Padding = new Vector2(10f, 0f);
+                Padding = new Vector2(0f, 0f);
                 Size = new Vector2(250f, 200f);
             }
 
