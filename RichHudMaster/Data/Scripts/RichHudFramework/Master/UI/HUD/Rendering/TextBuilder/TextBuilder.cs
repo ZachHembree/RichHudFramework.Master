@@ -54,10 +54,10 @@ namespace RichHudFramework
                 /// </summary>
                 public TextBuilderModes BuilderMode
                 {
-                    get { return builderMode; }
+                    get { return _builderMode; }
                     set
                     {
-                        if (value != builderMode)
+                        if (value != _builderMode)
                         {
                             FormattedTextBase newFormatter = null;
 
@@ -82,13 +82,13 @@ namespace RichHudFramework
                                 AfterTextUpdate();
 
                             formatter = newFormatter;
-                            builderMode = value;
+                            _builderMode = value;
                         }
                     }
                 }
 
                 protected readonly LinePool lines;
-                protected TextBuilderModes builderMode;
+                protected TextBuilderModes _builderMode;
 
                 private FormattedTextBase formatter;
                 private WrappedText wrappedText;
@@ -113,7 +113,7 @@ namespace RichHudFramework
                 {
                     _lineWrapWidth = width;
 
-                    if (BuilderMode == TextBuilderModes.Wrapped && Math.Abs(width - wrappedText.MaxLineWidth) > 1f)
+                    if (BuilderMode == TextBuilderModes.Wrapped)
                     {
                         wrappedText.SetWrapWidth(width);
                         AfterTextUpdate();

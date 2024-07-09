@@ -163,7 +163,7 @@ namespace RichHudFramework
                 {
                     base.SetWrapWidth(width);
 
-                    if (builderMode == TextBuilderModes.Wrapped)
+                    if (_builderMode == TextBuilderModes.Wrapped)
                         _fixedSize.X = width;
                 }
 
@@ -351,6 +351,9 @@ namespace RichHudFramework
                             lastBox = box;
                             lastMask = mask;
                         }
+
+                        if (_builderMode == TextBuilderModes.Wrapped)
+                            base.SetWrapWidth(_fixedSize.X);
 
                         if (!AutoResize)
                             UpdateGlyphs();

@@ -28,7 +28,7 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             public void SetWrapWidth(float width)
             {
-                if (width < MaxLineWidth - 2f || width > MaxLineWidth + 4f)
+                if (Math.Abs(width - MaxLineWidth) > 1f)
                 {
                     MaxLineWidth = width;
                     Rewrap();
