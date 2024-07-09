@@ -113,13 +113,14 @@ namespace RichHudFramework.UI.Server
 
                 var layout = new HudChain(true, this)
                 {
-                    DimAlignment = DimAlignments.UnpaddedSize,
+                    DimAlignment = DimAlignments.Size,
                     SizingMode = HudChainSizingModes.FitMembersOffAxis,
                     CollectionContainer = { { name, 0f }, { dropdown, 1f } },
                 };
 
-                Padding = new Vector2(20f, 0f);
-                Size = new Vector2(250f, 66f);
+                Padding = Vector2.Zero;
+                Height = 66f;
+                DimAlignment = DimAlignments.UnpaddedWidth;
             }
 
             public void SetSelection(ListBoxEntry<T> entry) =>

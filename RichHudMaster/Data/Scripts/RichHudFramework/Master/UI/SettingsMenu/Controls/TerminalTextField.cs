@@ -141,9 +141,9 @@ namespace RichHudFramework.UI.Server
                     CollectionContainer = { name, { textField, 1f } }
                 };
 
-                Width = 250f;
                 Height = name.Height + textField.Height;
-                Padding = new Vector2(40f, 0f);
+                Padding = Vector2.Zero;
+                DimAlignment = DimAlignments.UnpaddedWidth;
             }
         }
     }

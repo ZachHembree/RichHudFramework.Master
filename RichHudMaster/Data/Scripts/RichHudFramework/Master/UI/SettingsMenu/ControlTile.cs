@@ -138,7 +138,7 @@ namespace RichHudFramework
                         Spacing = 12f,
                     };
                     
-                    Padding = new Vector2(16f);
+                    Padding = new Vector2(54f);
                     Size = new Vector2(300f, 250f);
                     IsMasking = true;
                 }

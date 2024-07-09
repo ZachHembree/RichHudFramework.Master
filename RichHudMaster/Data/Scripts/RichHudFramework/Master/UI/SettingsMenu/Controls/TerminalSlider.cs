@@ -1,16 +1,11 @@
-﻿using RichHudFramework.UI.Rendering;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Text;
 using VRage;
-using ApiMemberAccessor = System.Func<object, int, object>;
-using EventAccessor = VRage.MyTuple<bool, System.Action>;
+using VRageMath;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework.UI.Server
 {
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
-
     public enum SliderSettingsAccessors : int
     {
         /// <summary>
@@ -43,7 +38,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// The name of the control as rendred in the terminal.
         /// </summary>
-        public override string Name { get { return sliderBox.Name.ToString(); } set { sliderBox.Name =value; } }
+        public override string Name { get { return sliderBox.Name.ToString(); } set { sliderBox.Name = value; } }
 
         /// <summary>
         /// Text indicating the current value of the slider. Does not automatically reflect changes to the slider value.
@@ -79,7 +74,7 @@ namespace RichHudFramework.UI.Server
 
         public TerminalSlider()
         {
-            sliderBox = new NamedSliderBox();
+            sliderBox = new NamedSliderBox() { Padding = Vector2.Zero };
             SetElement(sliderBox);
         }
 

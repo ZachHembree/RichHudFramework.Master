@@ -1,15 +1,11 @@
-﻿using RichHudFramework.UI.Rendering;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Text;
 using VRage;
-using ApiMemberAccessor = System.Func<object, int, object>;
+using VRageMath;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework.UI.Server
 {
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
-
     public enum OnOffButtonAccessors : int
     {
         OnText = 16,
@@ -50,7 +46,7 @@ namespace RichHudFramework.UI.Server
 
         public TerminalOnOffButton()
         {
-            onOffButton = new NamedOnOffButton();
+            onOffButton = new NamedOnOffButton() { Padding = Vector2.Zero };
             SetElement(onOffButton);
         }
 

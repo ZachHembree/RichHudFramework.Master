@@ -58,8 +58,8 @@ namespace RichHudFramework.UI.Server
             openButton = new BorderedButton()
             {
                 Text = "NewDragBox",
-                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
-                Size = new Vector2(253f, 50f)
+                DimAlignment = DimAlignments.UnpaddedWidth,
+                Padding = Vector2.Zero
             };
             SetElement(openButton);
 
