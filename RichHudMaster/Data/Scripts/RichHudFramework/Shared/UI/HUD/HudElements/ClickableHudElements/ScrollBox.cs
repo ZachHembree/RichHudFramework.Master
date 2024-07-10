@@ -1,4 +1,4 @@
-﻿using VRageMath;
+using VRageMath;
 using VRage;
 using System;
 using System.Collections.Generic;
@@ -322,7 +322,7 @@ namespace RichHudFramework.UI
             }
 
             Vector2 sliderSize = ScrollBar.slide.BarSize;
-            sliderSize[alignAxis] = (chainSize[alignAxis] - ScrollBar.Padding[alignAxis]) * sliderVisRatio;
+            sliderSize[alignAxis] = sliderSize[alignAxis] * sliderVisRatio;
             ScrollBar.slide.SliderSize = sliderSize;
         }
 
