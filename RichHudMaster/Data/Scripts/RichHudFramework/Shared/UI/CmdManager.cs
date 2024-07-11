@@ -10,22 +10,49 @@ using VRage.Game.Components;
 
 namespace RichHudFramework.UI
 {
-    public interface ICommandGroup: IIndexedCollection<IChatCommand>
+    /// <summary>
+    /// Interface representing a group of <see cref="IChatCommand"/>
+    /// </summary>
+    public interface ICommandGroup : IIndexedCollection<IChatCommand>
     {
+        /// <summary>
+        /// Prefix used by commands in the group, eg. /modName cmd arg1, arg2
+        /// </summary>
         string Prefix { get; }
 
+        /// <summary>
+        /// Attempts to add a new <see cref="IChatCommand"/> to the group. Commands within
+        /// groups must be unique.
+        /// </summary>
         bool TryAdd(string name, Action<string[]> callback = null, int argsRequired = 0);
+
+        /// <summary>
+        /// Adds a set of new <see cref="IChatCommand"/>s to the group, defined in the initializer
+        /// </summary>
         void AddCommands(CmdGroupInitializer newCommands);
     }
 
     public interface IChatCommand
     {
+        /// <summary>
+        /// Callback delegate. Invoked when the command is used
+        /// </summary>
         event Action<string[]> CommandInvoked;
 
+        /// <summary>
+        /// Name of the command within the group
+        /// </summary>
         string CmdName { get; }
+
+        /// <summary>
+        /// Number of args required for a valid command
+        /// </summary>
         int ArgsRequired { get; }
     }
 
+    /// <summary>
+    /// Intermediate container to simplify creation of <see cref="ICommandGroup"/> for chat commands
+    /// </summary>
     public class CmdGroupInitializer : IReadOnlyList<MyTuple<string, Action<string[]>, int>>
     {
         public MyTuple<string, Action<string[]>, int> this[int index] => data[index];
@@ -38,6 +65,9 @@ namespace RichHudFramework.UI
             data = new List<MyTuple<string, Action<string[]>, int>>(capacity);
         }
 
+        /// <summary>
+        /// Add command name, following group prefix, and callback delegate.
+        /// </summary>
         public void Add(string cmdName, Action<string[]> callback = null, int argsRequrired = 0)
         {
             data.Add(new MyTuple<string, Action<string[]>, int>(cmdName, callback, argsRequrired));
@@ -85,6 +115,10 @@ namespace RichHudFramework.UI
             instance = null;
         }
 
+        /// <summary>
+        /// Returns a <see cref="ICommandGroup"/> with the given name, or creates a new group using a
+        /// <see cref="CmdGroupInitializer"/>
+        /// </summary>
         public static ICommandGroup GetOrCreateGroup(string prefix, CmdGroupInitializer groupInitializer = null)
         {
             prefix = prefix.ToLower();
