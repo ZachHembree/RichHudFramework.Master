@@ -223,6 +223,7 @@ namespace RichHudFramework.UI
 
             _barSize = new Vector2(100f, 12f);
             _sliderSize = new Vector2(6f, 12f);
+            UnpaddedSize = _barSize;
             SliderVisible = true;
 
             bar.Size = _barSize;
