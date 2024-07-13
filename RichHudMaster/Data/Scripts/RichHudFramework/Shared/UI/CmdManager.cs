@@ -16,6 +16,11 @@ namespace RichHudFramework.UI
     public interface ICommandGroup : IIndexedCollection<IChatCommand>
     {
         /// <summary>
+        /// Returns the command with the given name
+        /// </summary>
+        IChatCommand this[string name] { get; }
+
+        /// <summary>
         /// Prefix used by commands in the group, eg. /modName cmd arg1, arg2
         /// </summary>
         string Prefix { get; }
@@ -172,6 +177,7 @@ namespace RichHudFramework.UI
         private class CommandGroup : ICommandGroup
         {
             public IChatCommand this[int index] => commands[index];
+            public IChatCommand this[string name] => commands.Find(x => x.CmdName.ToLower() == name.ToLower());
             public int Count => commands.Count;
             public ICommandGroup Commands => this;
             public string Prefix { get; }
