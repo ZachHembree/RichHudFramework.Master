@@ -118,6 +118,7 @@ namespace RichHudFramework
                     {
                         Spacing = 16f,
                         SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        IsMasking = true,
                         CollectionContainer = { { typeColumn, 1f }, { instanceColumn, 1f } },
                     };
 
