@@ -14,166 +14,184 @@ namespace RichHudFramework.Server
     {
         private void InitSettingsMenu()
         {
+            var debugCategory = RichHudDebug.GetDebugCategory();
+
             RichHudTerminal.Root.Enabled = true;
-            RichHudTerminal.Root.AddRange(new TerminalPageBase[] 
+            RichHudTerminal.Root.AddRange(new IModRootMember[] 
             {
                 new RebindPage()
                 {
                     Name = "Binds",
                     GroupContainer = { { MasterBinds.BindGroup, BindsConfig.DefaultBinds } }
                 },
+                demoCategory,
+                debugCategory
             });
 
-            var debugGroup = RichHudDebug.GetDebugPageGroup();
-            RichHudTerminal.Root.Add(debugGroup);
+            _commands["toggleDebug"].CommandInvoked += x => 
+            { 
+                demoCategory.Enabled = RichHudDebug.EnableDebug;
+                debugCategory.Enabled = RichHudDebug.EnableDebug;
+            };
 
-            debugGroup.AddRange(new TerminalPageBase[]
+            demoCategory.AddRange(new TerminalPageBase[]
             {
+                new DemoPage() { Name = "UI Library" },
                 new ControlPage()
                 {
-                    Name = "All Controls",
+                    Name = "Term Controls",
                     CategoryContainer =
                     {
                         new ControlCategory()
                         {
-                            new ControlTile()
+                            HeaderText = "ControlCategory",
+                            SubheaderText = "Contains terminal controls grouped into ControlTiles",
+                            TileContainer = 
                             {
-                                new TerminalCheckbox()
+                                new ControlTile()
                                 {
-                                    Name = "Checkbox",
-                                    ControlChangedHandler = (obj, args) =>
+                                    new TerminalCheckbox()
                                     {
-                                        var checkbox = obj as TerminalCheckbox;
-                                        ExceptionHandler.SendChatMessage($"{checkbox.Name} = {checkbox.Value}");
+                                        Name = "TerminalCheckbox",
+                                        ControlChangedHandler = (obj, args) =>
+                                        {
+                                            var checkbox = obj as TerminalCheckbox;
+                                            ExceptionHandler.SendChatMessage($"{checkbox.Name} = {checkbox.Value}");
+                                        },
+                                        ToolTip = "Sets a binary value. Fires an event when toggled."
                                     },
-                                    ToolTip = "Sets a binary value. Fires an event when toggled."
+                                    new TerminalButton()
+                                    {
+                                        Name = "TerminalButton",
+                                        ControlChangedHandler = (obj, args) =>
+                                        {
+                                            var btn = obj as TerminalButton;
+                                            ExceptionHandler.SendChatMessage($"{btn.Name} pressed");
+                                        },
+                                        ToolTip = "Simple button. Fires an event when clicked."
+                                    },
+                                    new TerminalTextField()
+                                    {
+                                        Name = "TerminalTextField",
+                                        ControlChangedHandler = (obj, args) =>
+                                        {
+                                            var field = obj as TerminalTextField;
+                                            ExceptionHandler.SendChatMessage($"New text: {field.Value}");
+                                        },
+                                        ToolTip = "One-line text field"
+                                    }
                                 },
-                                new TerminalButton()
+                                new ControlTile()
                                 {
-                                    Name = "Button",
-                                    ControlChangedHandler = (obj, args) =>
+                                    new TerminalColorPicker()
                                     {
-                                        var btn = obj as TerminalButton;
-                                        ExceptionHandler.SendChatMessage($"{btn.Name} pressed");
-                                    },
-                                    ToolTip = "Simple button. Fires an event when clicked."
+                                        Name = "TerminalColorPicker",
+                                        ControlChangedHandler = (obj, args) =>
+                                        {
+                                            var picker = obj as TerminalColorPicker;
+                                            ExceptionHandler.SendChatMessage($"Color = ({picker.Value.R}, {picker.Value.G}, {picker.Value.B})");
+                                        },
+                                        ToolTip = "Sets a simple 24-bit RGB color, 0-255/8-bits per channel."
+                                    }
                                 },
-                                new TerminalTextField()
+                                new ControlTile()
                                 {
-                                    Name = "TextField",
-                                    ControlChangedHandler = (obj, args) =>
+                                    new TerminalLabel()
                                     {
-                                        var field = obj as TerminalTextField;
-                                        ExceptionHandler.SendChatMessage($"New text: {field.Value}");
+                                        Name = "TerminalLabel",
                                     },
-                                    ToolTip = "One-line text field"
-                                }
-                            },
-                            new ControlTile()
-                            {
-                                new TerminalColorPicker()
-                                {
-                                    Name = "Color Picker",
-                                    ControlChangedHandler = (obj, args) =>
+                                    new TerminalDragBox()
                                     {
-                                        var picker = obj as TerminalColorPicker;
-                                        ExceptionHandler.SendChatMessage($"Color = ({picker.Value.R}, {picker.Value.G}, {picker.Value.B})");
+                                        Name = "TerminalDragBox",
+                                        ControlChangedHandler = (obj, args) =>
+                                        {
+                                            var box = obj as TerminalDragBox;
+                                            ExceptionHandler.SendChatMessage($"New box position: {box.Value}");
+                                        },
+                                        ToolTip = "Spawns a draggable window for setting fixed position on the HUD.\nUseful for user-configurable" +
+                                        " UI layout."
                                     },
-                                    ToolTip = "Sets a simple 24-bit RGB color, 0-255/8-bits per channel."
-                                }
-                            },
-                            new ControlTile()
-                            {
-                                new TerminalLabel()
-                                {
-                                    Name = "Tile Label",
-                                },
-                                new TerminalDragBox()
-                                {
-                                    Name = "Drag Box",
-                                    ControlChangedHandler = (obj, args) =>
+                                    new TerminalDropdown<float>()
                                     {
-                                        var box = obj as TerminalDragBox;
-                                        ExceptionHandler.SendChatMessage($"New box position: {box.Value}");
-                                    },
-                                    ToolTip = "Spawns a draggable window for setting fixed position on the HUD.\nUseful for user-configurable" +
-                                    " UI layout."
-                                },
-                                new TerminalDropdown<float>()
-                                {
-                                    Name = "Dropdown",
-                                    List =
-                                    {
-                                        { "Entry 1", 0f },
-                                        { "Entry 2", 1f },
-                                        { "Entry 3", 1f },
-                                        { "Entry 4", 2f },
-                                        { "Entry 5", 3f },
-                                        { "Entry 6", 5f },
-                                        { "Entry 7", 8f },
-                                        { "Entry 8", 13f },
-                                    },
-                                    ControlChangedHandler = (obj, args) =>
-                                    {
-                                        var list = obj as TerminalDropdown<float>;
-                                        ExceptionHandler.SendChatMessage($"Selected: {list.Value.Element.TextBoard} = {list.Value.AssocMember}");
-                                    },
-                                    ToolTip = "A generic dropdown list with custom labels associated with arbitrary values."
+                                        Name = "TerminalDropdown",
+                                        List =
+                                        {
+                                            { "Entry 1", 0f },
+                                            { "Entry 2", 1f },
+                                            { "Entry 3", 1f },
+                                            { "Entry 4", 2f },
+                                            { "Entry 5", 3f },
+                                            { "Entry 6", 5f },
+                                            { "Entry 7", 8f },
+                                            { "Entry 8", 13f },
+                                        },
+                                        ControlChangedHandler = (obj, args) =>
+                                        {
+                                            var list = obj as TerminalDropdown<float>;
+                                            ExceptionHandler.SendChatMessage($"Selected: {list.Value.Element.TextBoard} = {list.Value.AssocMember}");
+                                        },
+                                        ToolTip = "A generic dropdown list with custom labels associated with arbitrary values."
+                                    }
                                 }
                             }
                         },
                         new ControlCategory()
                         {
-                            new ControlTile()
+                            HeaderText = "ControlCategory",
+                            SubheaderText = "Contains terminal controls grouped into ControlTiles",
+                            TileContainer =
                             {
-                                new TerminalList<float>()
+                                new ControlTile()
                                 {
-                                    Name = "List",
-                                    List =
+                                    new TerminalList<float>()
                                     {
-                                        { "Entry 1", 21f },
-                                        { "Entry 2", 34f },
-                                        { "Entry 3", 55f },
-                                        { "Entry 4", 89f },
-                                        { "Entry 5", 144f },
-                                        { "Entry 6", 233f },
-                                        { "Entry 7", 377f },
-                                        { "Entry 8", 610f },
-                                    },
-                                    ControlChangedHandler = (obj, args) =>
-                                    {
-                                        var list = obj as TerminalList<float>;
-                                        ExceptionHandler.SendChatMessage($"Selected: {list.Value.Element.TextBoard} = {list.Value.AssocMember}");
-                                    },
-                                    ToolTip = "Fixed-size scrolling list with custom labels associated with arbitrary values."
-                                }
-                            },
-                            new ControlTile()
-                            {
-                                new TerminalOnOffButton()
-                                {
-                                    Name = "On/Off Toggle",
-                                    ControlChangedHandler = (obj, args) =>
-                                    {
-                                        var toggle = obj as TerminalOnOffButton;
-                                        ExceptionHandler.SendChatMessage($"{toggle.Name} = {toggle.Value}");
-                                    },
-                                    ToolTip = "Alternative to checkbox. Functionally identical."
+                                        Name = "TerminalList",
+                                        List =
+                                        {
+                                            { "Entry 1", 21f },
+                                            { "Entry 2", 34f },
+                                            { "Entry 3", 55f },
+                                            { "Entry 4", 89f },
+                                            { "Entry 5", 144f },
+                                            { "Entry 6", 233f },
+                                            { "Entry 7", 377f },
+                                            { "Entry 8", 610f },
+                                        },
+                                        ControlChangedHandler = (obj, args) =>
+                                        {
+                                            var list = obj as TerminalList<float>;
+                                            ExceptionHandler.SendChatMessage($"Selected: {list.Value.Element.TextBoard} = {list.Value.AssocMember}");
+                                        },
+                                        ToolTip = "Fixed-size scrolling list with custom labels associated with arbitrary values."
+                                    }
                                 },
-                                new TerminalSlider()
+                                new ControlTile()
                                 {
-                                    Name = "Slider",
-                                    ValueText = "0",
-                                    Min = 0f, Max = 100f, Value = 0f,
-                                    ControlChangedHandler = (obj, args) =>
+                                    new TerminalOnOffButton()
                                     {
-                                        var slider = obj as TerminalSlider;
-                                        slider.ValueText = $"{slider.Value:G4}";
-                                        ExceptionHandler.SendChatMessage($"Slider value changed: {slider.Value:G3}");
+                                        Name = "TerminalOnOffButton",
+                                        ControlChangedHandler = (obj, args) =>
+                                        {
+                                            var toggle = obj as TerminalOnOffButton;
+                                            ExceptionHandler.SendChatMessage($"{toggle.Name} = {toggle.Value}");
+                                        },
+                                        ToolTip = "Alternative to checkbox. Functionally identical."
                                     },
-                                    ToolTip = "Slider based on 32-bit float value with customizable value text."
+                                    new TerminalSlider()
+                                    {
+                                        Name = "TerminalSlider",
+                                        ValueText = "0",
+                                        Min = 0f, Max = 100f, Value = 0f,
+                                        ControlChangedHandler = (obj, args) =>
+                                        {
+                                            var slider = obj as TerminalSlider;
+                                            slider.ValueText = $"{slider.Value:G4}";
+                                            ExceptionHandler.SendChatMessage($"Slider value changed: {slider.Value:G3}");
+                                        },
+                                        ToolTip = "Slider based on 32-bit float value with customizable value text."
+                                    },
                                 },
-                            },
+                            }
                         },
                     }
                 }
