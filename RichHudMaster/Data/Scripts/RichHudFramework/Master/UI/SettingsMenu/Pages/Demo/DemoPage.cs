@@ -100,8 +100,8 @@ namespace RichHudFramework
                     transformCol1.Size = transformCol1.GetRangeSize();
 
                     // Column 2
-                    resScaleToggle = new NamedCheckBox() { Name = "Res Scaling" };
-                    scaleBar = new NamedSliderBox() { Name = "Scale", Padding = new Vector2(40f, 0f), Min = 0.001f, Max = 1f };
+                    resScaleToggle = new NamedCheckBox() { Name = "High DPI Scaling" };
+                    scaleBar = new NamedSliderBox() { Name = "Scale", Padding = new Vector2(40f, 0f), Min = 0.01f, Max = 2f };
                     xPosBar = new NamedSliderBox() { Name = "PosX", Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f };
                     yPosBar = new NamedSliderBox() { Name = "PosY", Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f };
                     zPosBar = new NamedSliderBox() { Name = "PosZ", Padding = new Vector2(40f, 0f), Min = -2f, Max = 0f };
@@ -163,6 +163,40 @@ namespace RichHudFramework
 
                         // Translation
                         node.TransformOffset = new Vector3D(xPosBar.Current, yPosBar.Current, zPosBar.Current);
+                    }
+
+                    if (screenSpaceToggle.MouseInput.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Compensates for FOV and resolution scaling");
+                    }
+                    if (xAxisBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Quaternion rotation axis, X-component");
+                    }
+                    if (yAxisBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Quaternion rotation axis, Y-component");
+                    }
+                    if (zAxisBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Quaternion rotation axis, Z-component");
+                    }
+
+                    if (angleBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Rotation around the axis, seen above, from -pi to +pi");
+                    }
+                    if (xPosBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in meters. X-direction");
+                    }
+                    if (yPosBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in meters. Y-direction");
+                    }
+                    if (zPosBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in meters. Z-direction");
                     }
                 }
 

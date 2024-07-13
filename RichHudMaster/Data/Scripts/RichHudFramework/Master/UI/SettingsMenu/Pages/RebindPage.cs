@@ -17,22 +17,24 @@ namespace RichHudFramework
         /// </summary>
         public class RebindPage : TerminalPageBase, IRebindPage
         {
-            private const float 
+            private const float
                 listPaddingH = 20f,
                 listPaddingV = 8f,
                 lineSpacing = 8f,
                 lineHeight = 44f,
                 dividerHeight = 1f,
-                bindPadding = 32f,
+                bindPadding = 0f,
                 btnBorderThickness = 1f,
                 resetBtnWidth = 234f,
                 comboBtnWidth = 200f;
             private static readonly Color dividerColor = new Color(53, 66, 75);
-            
+
             /// <summary>
             /// List of bind groups registered to the page
             /// </summary>
             public IReadOnlyList<IBindGroup> BindGroups { get; }
+
+            public bool IsAliased { get; set; }
 
             public RebindPage GroupContainer => this;
 
@@ -44,7 +46,7 @@ namespace RichHudFramework
 
                 BindGroups = new ReadOnlyCollectionData<IBindGroup>
                 (
-                    x => bindGroups.Collection[x].Element.BindGroup, 
+                    x => bindGroups.Collection[x].Element.BindGroup,
                     () => bindGroups.Collection.Count
                 );
             }
@@ -54,7 +56,7 @@ namespace RichHudFramework
             /// </summary>
             public void Add(IBindGroup bindGroup)
             {
-                var bindBox = new BindGroupBox(bindGroup);
+                var bindBox = new BindGroupBox(IsAliased, bindGroup);
                 bindGroups.Add(bindBox);
             }
 
@@ -63,7 +65,7 @@ namespace RichHudFramework
             /// </summary>
             public void Add(IBindGroup bindGroup, BindDefinition[] defaultBinds)
             {
-                var bindBox = new BindGroupBox(bindGroup, defaultBinds);
+                var bindBox = new BindGroupBox(IsAliased, bindGroup, defaultBinds);
                 bindGroups.Add(bindBox);
             }
 
@@ -74,7 +76,7 @@ namespace RichHudFramework
                 BindGroups.GetEnumerator();
 
             protected override object GetOrSetMember(object data, int memberEnum)
-            {              
+            {
                 if (memberEnum > 9)
                 {
                     switch ((RebindPageAccessors)memberEnum)
@@ -101,6 +103,16 @@ namespace RichHudFramework
                                         defaults[n] = (BindDefinition)args.Item2[n];
 
                                     Add(args.Item1 as IBindGroup, defaults);
+                                    break;
+                                }
+                            }
+                        case RebindPageAccessors.GetOrSetIsAliased:
+                            {
+                                if (data == null)
+                                    return IsAliased;
+                                else
+                                {
+                                    IsAliased = (bool)data;
                                     break;
                                 }
                             }
@@ -162,8 +174,7 @@ namespace RichHudFramework
                 private readonly Label name;
                 private readonly BorderedButton resetButton;
                 private readonly int bindOffset;
-
-                public BindGroupBox(IBindGroup group, BindDefinition[] defaults = null) : base(null)
+                public BindGroupBox(bool isAliased, IBindGroup group, BindDefinition[] defaults = null) : base(null)
                 {
                     AlignVertical = true;
                     SizingMode = HudChainSizingModes.FitMembersOffAxis;
@@ -186,13 +197,13 @@ namespace RichHudFramework
 
                     resetButton = new BorderedButton(this)
                     {
-                        Text = "Defaults",
-                        Size = new Vector2(resetBtnWidth, lineHeight),
-                        Padding = new Vector2(0f),
+                        Text = "Reset",
+                        Padding = Vector2.Zero,
+                        Size = new Vector2(comboBtnWidth, lineHeight),
+                        BorderThickness = btnBorderThickness,
                         Offset = new Vector2(0f, -(dividerHeight + lineSpacing)),
                         ParentAlignment = ParentAlignments.InnerTopRight,
                         Visible = false,
-                        BorderThickness = btnBorderThickness,
                     };
 
                     resetButton.MouseInput.LeftClicked += ResetBinds;
@@ -205,7 +216,7 @@ namespace RichHudFramework
                     Add(divider2);
                     bindOffset = Count;
 
-                    SetGroup(group);
+                    SetGroup(group, isAliased);
                     DefaultBinds = defaults;
                 }
 
@@ -215,7 +226,7 @@ namespace RichHudFramework
                     base.Layout();
                 }
 
-                private void SetGroup(IBindGroup group)
+                private void SetGroup(IBindGroup group, bool isAliased)
                 {
                     if (group != null)
                     {
@@ -228,7 +239,7 @@ namespace RichHudFramework
                             {
                                 // Individual inserts should be nicer than this
                                 var container = new HudElementContainer();
-                                container.SetElement(new BindBox());
+                                container.SetElement(new BindBox(isAliased));
                                 Insert(Count, container);
                             }
                         }
@@ -280,8 +291,8 @@ namespace RichHudFramework
                 private BindManager.BindGroup.Bind bind;
                 private BindManager.BindGroup group;
 
-                public BindBox(HudParentBase parent = null) : base(parent)
-                {                    
+                public BindBox(bool isAliased) : base(null)
+                {
                     bindName = new Label()
                     {
                         Text = "NewBindBox",
@@ -296,7 +307,7 @@ namespace RichHudFramework
                     combos[0] = new BorderedButton()
                     {
                         Text = "none",
-                        Padding = new Vector2(),
+                        Padding = Vector2.Zero,
                         Size = new Vector2(comboBtnWidth, lineHeight),
                         BorderThickness = btnBorderThickness,
                     };
@@ -307,9 +318,10 @@ namespace RichHudFramework
                     combos[1] = new BorderedButton()
                     {
                         Text = "none",
-                        Padding = new Vector2(),
+                        Padding = Vector2.Zero,
                         Size = new Vector2(comboBtnWidth, lineHeight),
                         BorderThickness = btnBorderThickness,
+                        Visible = isAliased
                     };
 
                     combos[1].MouseInput.LeftClicked += (sender, args) => GetNewCombo(1);
@@ -342,6 +354,18 @@ namespace RichHudFramework
                     UpdateBindText();
 
                     this.group.BindChanged += OnBindChanged;
+                }
+
+                protected override void HandleInput(Vector2 cursorPos)
+                {
+                    if (combos[0].IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Click to set main key combo");
+                    }
+                    else if (combos[1].IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Click to set alias key combo");
+                    }
                 }
 
                 private void OnBindChanged(object sender, EventArgs args)

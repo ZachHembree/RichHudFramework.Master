@@ -22,7 +22,7 @@ namespace RichHudFramework.UI.Server
 
         private readonly RebindHud popup;
         private readonly IReadOnlyList<ControlHandle> blacklist;
-        private readonly IControl escape;
+        private readonly IControl escape, back;
 
         private readonly List<ControlHandle> pressedControls;
         private readonly List<ControlHandle> lastPressedControls;
@@ -39,6 +39,7 @@ namespace RichHudFramework.UI.Server
         {
             popup = new RebindHud();
             escape = BindManager.GetControl(RichHudControls.Escape);
+            back = BindManager.GetControl(RichHudControls.Back);
             blacklist = new List<ControlHandle>
             {
                 RichHudControls.Escape,
@@ -94,7 +95,7 @@ namespace RichHudFramework.UI.Server
             {
                 BindManager.RequestTempBlacklist(SeBlacklistModes.Full);
 
-                if (escape.IsPressed)
+                if (escape.IsPressed || back.IsPressed)
                 {
                     Exit();
                 }
