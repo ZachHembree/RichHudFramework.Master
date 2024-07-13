@@ -299,8 +299,6 @@ namespace RichHudFramework
                         if (sortTick == 3)
                             sortTick = 0;
 
-                        UpdatingTree = false;
-
                         if (sortTick == 0)
                         {
                             instance.EnqueueAction(FinishAccessorUpdate);
@@ -315,7 +313,7 @@ namespace RichHudFramework
                     if (sortTick % 3 == 0 || isImmediateUpdateReq)
                     {
                         RebuildUpdateLists();
-                        UpdateDistMap();
+                        instance.EnqueueAction(UpdateDistMap);
                     }
 
                     if (sortTick % 3 == 1 || isImmediateUpdateReq)
@@ -327,9 +325,8 @@ namespace RichHudFramework
                     if (sortTick % 3 == 2 || isImmediateUpdateReq)
                     {
                         BuildSortedUpdateLists();
+                        treeTimer.Stop();
                     }
-
-                    treeTimer.Stop();
                 }
 
                 private void FinishAccessorUpdate()
@@ -372,14 +369,7 @@ namespace RichHudFramework
                 private void UpdateDistMap()
                 {
                     distMap.Clear();
-
-                    // Update distance for each unique position delegate
-                    // Max distance: 655.35m; Precision: 1cm/unit
-                    //
-                    // This should help keep profiler overhead for this part to a minimum by reducing the
-                    // number of delegate calls to a small handful. This also means the cost difference between
-                    // using Distance() and DistanceSquared() will be negligible.
-                    Vector3D camPos = MyAPIGateway.Session.Camera.WorldMatrix.Translation;
+                    Vector3D camPos = PixelToWorldRef[0].Translation;
 
                     foreach (Func<Vector3D> OriginFunc in uniqueOriginFuncs)
                     {
@@ -390,6 +380,7 @@ namespace RichHudFramework
                     }
 
                     HudSpacesRegistered = distMap.Count;
+                    UpdatingTree = false;
                 }
 
                 /// <summary>
@@ -432,6 +423,8 @@ namespace RichHudFramework
                     inputActionBuffer.EnsureCapacity(updateAccessors.Count);
                     drawActionBuffer.EnsureCapacity(updateAccessors.Count);
                     layoutActionBuffer.EnsureCapacity(updateAccessors.Count);
+
+                    UpdatingTree = false;
                 }
 
                 /// <summary>
@@ -483,6 +476,8 @@ namespace RichHudFramework
                         drawActionBuffer.TrimExcess();
                         layoutActionBuffer.TrimExcess();
                     }
+
+                    UpdatingTree = false;
                 }
             }
         }
