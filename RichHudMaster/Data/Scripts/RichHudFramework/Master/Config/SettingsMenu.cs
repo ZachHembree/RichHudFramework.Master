@@ -14,6 +14,7 @@ namespace RichHudFramework.Server
     {
         private void InitSettingsMenu()
         {
+            demoCategory = new TerminalPageCategory() { Name = "Demo", Enabled = false };
             var debugCategory = RichHudDebug.GetDebugCategory();
 
             RichHudTerminal.Root.Enabled = true;

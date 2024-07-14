@@ -40,7 +40,7 @@ namespace RichHudFramework.Server
         public static ICommandGroup Commands => Instance._commands;
 
         private readonly List<ModClient> clients;
-        private readonly TerminalPageCategory demoCategory;
+        private TerminalPageCategory demoCategory;
         private ICommandGroup _commands;
 
         public RichHudMaster() : base(true, true)
@@ -57,7 +57,6 @@ namespace RichHudFramework.Server
             ExceptionHandler.ModName = "Rich HUD Master";
 
             clients = new List<ModClient>();
-            demoCategory = new TerminalPageCategory() { Name = "Demo", Enabled = false };
         }
 
         protected override void AfterLoadData()
