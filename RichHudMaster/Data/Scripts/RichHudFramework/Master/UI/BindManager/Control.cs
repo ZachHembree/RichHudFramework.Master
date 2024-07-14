@@ -1,6 +1,9 @@
-﻿using Sandbox.ModAPI;
+﻿using RichHudFramework.Internal;
+using Sandbox.ModAPI;
 using System;
+using System.Collections.Generic;
 using VRage.Input;
+using VRage.Utils;
 
 namespace RichHudFramework
 {
@@ -47,11 +50,17 @@ namespace RichHudFramework
                 public bool Analog { get; }
 
                 /// <summary>
+                /// Returns analog value of the control, if it has one
+                /// </summary>
+                public float AnalogValue { get; private set; }
+
+                /// <summary>
                 /// Index of the control in the bind manager
                 /// </summary>
                 public int Index { get; }
 
                 private readonly Func<bool> IsPressedFunc;
+                private readonly Func<float> GetAnalogValueFunc;
                 private bool wasPressed;
 
                 public Control(MyKeys seKey, int index, bool analog = false)
@@ -67,6 +76,23 @@ namespace RichHudFramework
                     Analog = analog;
                 }
 
+                public Control(MyJoystickButtonsEnum seKey, int index, bool analog = false)
+                {
+                    Name = seKey.ToString();
+
+                    if (gamepadBtnCodes.ContainsKey(seKey))
+                        DisplayName = gamepadBtnCodes[seKey];
+                    else
+                        DisplayName = MyAPIGateway.Input.GetName(seKey);
+
+                    if (DisplayName == null || DisplayName.Length == 0 || DisplayName[0] <= ' ')
+                        DisplayName = Name;
+
+                    Index = index;
+                    IsPressedFunc = () => MyAPIGateway.Input.IsJoystickButtonPressed(seKey);
+                    Analog = analog;
+                }
+
                 public Control(string name, string friendlyName, int index, Func<bool> IsPressed, bool analog = false)
                 {
                     Name = name;
@@ -77,11 +103,27 @@ namespace RichHudFramework
                     Analog = analog;
                 }
 
+                public Control(RichHudControls con, Func<bool> IsPressed, Func<float> GetAnalogValue)
+                {
+                    Name = con.ToString();
+
+                    if (customConNames.ContainsKey(con))
+                        DisplayName = customConNames[con];
+                    else
+                        DisplayName = Name;
+
+                    Index = (int)con;
+                    IsPressedFunc = IsPressed;
+                    GetAnalogValueFunc = GetAnalogValue;
+                    Analog = true;
+                }
+
                 public void Update()
                 {
                     wasPressed = IsPressed;
                     IsPressed = IsPressedFunc();
                     IsNewPressed = IsPressed && (!wasPressed || Analog);
+                    AnalogValue = GetAnalogValueFunc?.Invoke() ?? 0f;
                 }
 
                 public void Reset()

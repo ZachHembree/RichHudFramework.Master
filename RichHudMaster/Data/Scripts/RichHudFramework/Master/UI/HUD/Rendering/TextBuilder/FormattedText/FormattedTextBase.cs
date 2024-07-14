@@ -81,26 +81,26 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             /// <param name="start">Position of the first character being formatted.</param>
             /// <param name="end">Position of the last character being formatted.</param>
-            public virtual void SetFormatting(Vector2I start, Vector2I end, GlyphFormat formatting, bool onlyChangeColor)
+            public virtual void SetFormatting(Vector2I start, Vector2I end, GlyphFormat formatting)
             {
                 if (lines.Count > 0)
                 {
                     if (end.X > start.X)
                     {
-                        lines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting, onlyChangeColor);
+                        lines.PooledLines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting);
 
                         for (int x = start.X + 1; x < end.X; x++)
-                            lines[x].SetFormatting(formatting, onlyChangeColor);
+                            lines.PooledLines[x].SetFormatting(formatting);
 
-                        lines[end.X].SetFormatting(0, end.Y, formatting, onlyChangeColor);
+                        lines.PooledLines[end.X].SetFormatting(0, end.Y, formatting);
                     }
                     else
                     {
-                        lines[start.X].SetFormatting(start.Y, end.Y, formatting, onlyChangeColor);
+                        lines.PooledLines[start.X].SetFormatting(start.Y, end.Y, formatting);
                     }
 
                     for (int n = start.X; n <= end.X; n++)
-                        lines[n].UpdateSize();
+                        lines.PooledLines[n].UpdateSize();
                 }
             }
 
@@ -117,8 +117,8 @@ namespace RichHudFramework.UI.Rendering.Server
                             lines.RemoveAt(end.X);
                         else
                         {
-                            lines[end.X].RemoveRange(0, lines[end.X].Count - end.Y);
-                            lines[end.X].UpdateSize();
+                            lines.PooledLines[end.X].RemoveRange(0, lines[end.X].Count - end.Y);
+                            lines.PooledLines[end.X].UpdateSize();
                         }
 
                         if (start.X + 1 < end.X)
@@ -128,8 +128,8 @@ namespace RichHudFramework.UI.Rendering.Server
                             lines.RemoveAt(start.X);
                         else
                         {
-                            lines[start.X].RemoveRange(start.Y, lines[start.X].Count - start.Y);
-                            lines[start.X].UpdateSize();
+                            lines.PooledLines[start.X].RemoveRange(start.Y, lines[start.X].Count - start.Y);
+                            lines.PooledLines[start.X].UpdateSize();
                         }
                     }
                     else
@@ -138,81 +138,23 @@ namespace RichHudFramework.UI.Rendering.Server
                             lines.RemoveAt(start.X);
                         else
                         {
-                            lines[start.X].RemoveRange(start.Y, end.Y - start.Y + 1);
-                            lines[start.X].UpdateSize();
+                            lines.PooledLines[start.X].RemoveRange(start.Y, end.Y - start.Y + 1);
+                            lines.PooledLines[start.X].UpdateSize();
                         }
                     }
                 }
             }
 
             /// <summary>
-            /// Builds a list of <see cref="Line.RichChar"/>s from RichString data.
-            /// </summary>
-            protected static void GetRichChars(RichStringMembers richString, Line charBuffer, bool allowSpecialChars)
-            {
-                StringBuilder text = richString.Item1;
-                GlyphFormatMembers formatData = richString.Item2;
-                Color lastColor = default(Color);
-                Vector4 bbColor = default(Vector4);
-
-                charBuffer.EnsureCapacity(charBuffer.Count + text.Length);
-
-                for (int n = 0; n < text.Length; n++)
-                {
-                    if (formatData.Item4 != lastColor)
-                    {
-                        lastColor = formatData.Item4;
-                        bbColor = BillBoardUtils.GetBillBoardBoardColor(formatData.Item4);
-                    }
-
-                    if (text[n] >= ' ' || allowSpecialChars && (text[n] == '\n' || text[n] == '\t'))
-                        charBuffer.InsertNew(charBuffer.Chars.Count, text[n], new GlyphFormat(formatData), bbColor);
-                }
-            }
-
-            /// <summary>
-            /// Returns the glyph formatting of the character immediately preceding the one
-            /// at the index given, if it exists.
-            /// </summary>
-            protected GlyphFormat? GetPreviousFormat(Vector2I i)
-            {
-                if (lines.TryGetLastIndex(i, out i))
-                    return lines[i.X].FormattedGlyphs[i.Y].format;
-                else
-                    return null;
-            }
-
-            /// <summary>
-            /// Clamps the given index within the range of valid indices.
+            /// Clamps the given index within the range of valid indices. Char indicies == char count are used to
+            /// indicated appends.
             /// </summary>
             protected Vector2I ClampIndex(Vector2I index)
             {
-                index.X = MathHelper.Clamp(index.X, 0, lines.Count);
-                index.Y = MathHelper.Clamp(index.Y, 0, (lines.Count > 0) ? lines[index.X].Count : 0);
+                index.X = MathHelper.Clamp(index.X, 0, lines.PooledLines.Count - 1);
+                index.Y = MathHelper.Clamp(index.Y, 0, (index.X < lines.PooledLines.Count) ? lines.PooledLines[index.X].Count : 0);
 
                 return index;
-            }
-
-            /// <summary>
-            /// Determines whether the two characters at the indices provided indicate a word break.
-            /// </summary>
-            protected bool IsWordBreak(Vector2I iLeft, Vector2I iRight)
-            {
-                char left = lines[iLeft.X].Chars[iLeft.Y], 
-                    right = lines[iRight.X].Chars[iRight.Y];
-
-                return (left == ' ' || left == '-' || left == '_') && !(right == ' ' || right == '-' || right == '_');
-            }
-
-            /// <summary>
-            /// Determines whether the two characters at the charBuffer indices provided indicate a word break.
-            /// </summary>
-            protected bool IsWordBreak(int iLeft, int iRight)
-            {
-                char left = charBuffer.Chars[iLeft],
-                    right = charBuffer.Chars[iRight];
-
-                return (left == ' ' || left == '-' || left == '_') && !(right == ' ' || right == '-' || right == '_');
             }
         }
     }

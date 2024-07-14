@@ -47,17 +47,17 @@ namespace RichHudFramework
                 /// Gets or sets the maximum line width before text will wrap to the next line. Word wrapping must be enabled for
                 /// this to apply.
                 /// </summary>
-                public float LineWrapWidth { get { return wrapWidth; } set { wrapWidth = value; SetWrapWidth(value); } }
+                public float LineWrapWidth { get { return _lineWrapWidth; } set { SetWrapWidth(value); } }
 
                 /// <summary>
                 /// Determines the formatting mode of the text.
                 /// </summary>
                 public TextBuilderModes BuilderMode
                 {
-                    get { return builderMode; }
+                    get { return _builderMode; }
                     set
                     {
-                        if (value != builderMode)
+                        if (value != _builderMode)
                         {
                             FormattedTextBase newFormatter = null;
 
@@ -74,25 +74,25 @@ namespace RichHudFramework
                             else if (value == TextBuilderModes.Wrapped)
                             {
                                 wrappedText = new WrappedText(lines);
-                                wrappedText.SetWrapWidth(wrapWidth);
+                                wrappedText.SetWrapWidth(_lineWrapWidth);
                                 newFormatter = wrappedText;
                             }
 
                             if (formatter != null)
-                                AfterFullTextUpdate();
+                                AfterTextUpdate();
 
                             formatter = newFormatter;
-                            builderMode = value;
+                            _builderMode = value;
                         }
                     }
                 }
 
                 protected readonly LinePool lines;
-                protected TextBuilderModes builderMode;
+                protected TextBuilderModes _builderMode;
 
                 private FormattedTextBase formatter;
                 private WrappedText wrappedText;
-                private float wrapWidth;
+                private float _lineWrapWidth;
 
                 private readonly ObjectPool<StringBuilder> sbPool;
                 private RichText lastText;
@@ -101,23 +101,22 @@ namespace RichHudFramework
                 public TextBuilder()
                 {
                     lines = new LinePool(this);
-                    sbPool = new ObjectPool<StringBuilder>(new StringBuilderPoolPolicy());
+                    sbPool = StringBuilderPoolPolicy.GetNewPool();
                     BuilderMode = TextBuilderModes.Unlined;
                     Format = GlyphFormat.White;
                 }
 
-                protected virtual void AfterFullTextUpdate()
+                protected virtual void AfterTextUpdate()
                 { }
 
-                protected virtual void AfterColorUpdate()
-                { }
-
-                protected void SetWrapWidth(float width)
+                protected virtual void SetWrapWidth(float width)
                 {
-                    if (BuilderMode == TextBuilderModes.Wrapped && (width < wrappedText.MaxLineWidth - 2f || width > wrappedText.MaxLineWidth + 4f))
+                    _lineWrapWidth = width;
+
+                    if (BuilderMode == TextBuilderModes.Wrapped)
                     {
                         wrappedText.SetWrapWidth(width);
-                        AfterFullTextUpdate();
+                        AfterTextUpdate();
                     }
                 }
 
@@ -175,12 +174,9 @@ namespace RichHudFramework
 
                     lastTextData = text as List<RichStringMembers>;
 
-                    if (!GetIsTextEqual(lastTextData))
-                    {
-                        Clear();
-                        formatter.Append(text);
-                        AfterFullTextUpdate();
-                    }
+                    formatter.Clear();
+                    formatter.Append(text);
+                    AfterTextUpdate();
                 }
 
                 /// <summary>
@@ -246,7 +242,7 @@ namespace RichHudFramework
                     }
 
                     formatter.Append(text);
-                    AfterFullTextUpdate();
+                    AfterTextUpdate();
                 }
 
                 /// <summary>
@@ -312,7 +308,7 @@ namespace RichHudFramework
                     }
 
                     formatter.Insert(text, start);
-                    AfterFullTextUpdate();
+                    AfterTextUpdate();
                 }
 
                 /// <summary>
@@ -337,15 +333,10 @@ namespace RichHudFramework
                     bool isOtherEqual, isColorEqual;
                     GetIsFormatEqual(format, start, end, out isOtherEqual, out isColorEqual);
 
-                    if (isOtherEqual && !isColorEqual)
+                    if (!isOtherEqual || !isColorEqual)
                     {
-                        formatter.SetFormatting(start, end, new GlyphFormat(format), true);
-                        AfterColorUpdate();
-                    }
-                    else if (!isOtherEqual)
-                    {
-                        formatter.SetFormatting(start, end, new GlyphFormat(format), false);
-                        AfterFullTextUpdate();
+                        formatter.SetFormatting(start, end, new GlyphFormat(format));
+                        AfterTextUpdate();
                     }
                 }
 
@@ -367,7 +358,7 @@ namespace RichHudFramework
                             nextTextData = lastTextData;
 
                         if (lastText == null || nextTextData != lastText.apiData)
-                            lastText = new RichText(lastText.apiData);
+                            lastText = new RichText(lastText?.apiData);
 
                         return lastText;
                     }
@@ -396,15 +387,15 @@ namespace RichHudFramework
 
                     if (end.X > start.X)
                     {
-                        lines[start.X].GetRangeString(text, start.Y, lines[start.X].Count - 1);
+                        lines.PooledLines[start.X].GetRangeString(text, start.Y, lines[start.X].Count - 1);
 
                         for (int line = start.X + 1; line <= end.X - 1; line++)
-                            lines[line].GetRangeString(text, 0, lines[line].Count - 1);
+                            lines.PooledLines[line].GetRangeString(text, 0, lines[line].Count - 1);
 
-                        lines[end.X].GetRangeString(text, 0, end.Y);
+                        lines.PooledLines[end.X].GetRangeString(text, 0, end.Y);
                     }
                     else
-                        lines[start.X].GetRangeString(text, start.Y, end.Y);
+                        lines.PooledLines[start.X].GetRangeString(text, start.Y, end.Y);
 
                     return text;
                 }
@@ -418,7 +409,7 @@ namespace RichHudFramework
                 public void RemoveRange(Vector2I start, Vector2I end)
                 {
                     formatter.RemoveRange(start, end);
-                    AfterFullTextUpdate();
+                    AfterTextUpdate();
                 }
 
                 /// <summary>
@@ -429,7 +420,7 @@ namespace RichHudFramework
                     if (lines.Count > 0)
                     {
                         formatter.Clear();
-                        AfterFullTextUpdate();
+                        AfterTextUpdate();
                     }
                 }
 
@@ -462,7 +453,11 @@ namespace RichHudFramework
                             if (!isOtherEqual)
                                 break;
 
-                            lines.TryGetNextIndex(i, out i);
+                            // Increment idnex
+                            if (i.X < Count && i.Y + 1 < lines[i.X].Count)
+                                i.Y++;
+                            else if (i.X + 1 < Count)
+                                i = new Vector2I(i.X + 1, 0);
 
                             if (i.X > start.X || i.Y > end.Y)
                                 break;
@@ -475,7 +470,7 @@ namespace RichHudFramework
                 /// </summary>
                 protected bool GetIsTextEqual(IReadOnlyList<RichStringMembers> text)
                 {
-                    if (GetIsTextLengthEqual(text))
+                    if (text != null && GetIsTextLengthEqual(text))
                     {
                         Vector2I i = Vector2I.Zero;
 
@@ -505,7 +500,11 @@ namespace RichHudFramework
                                     if (ch != newChars[y])
                                         return false;
 
-                                    lines.TryGetNextIndex(i, out i);
+                                    // Increment index
+                                    if (i.X < Count && i.Y + 1 < lines[i.X].Count)
+                                        i.Y++;
+                                    else if (i.X + 1 < Count)
+                                        i = new Vector2I(i.X + 1, 0);
                                 }
                             }
                         }
@@ -541,7 +540,7 @@ namespace RichHudFramework
                     }
 
                     for (int n = 0; n < lines.Count; n++)
-                        currentLength += lines[n].Chars.Count;
+                        currentLength += lines[n].Count;
 
                     return newTextLength == currentLength;
                 }
@@ -615,11 +614,11 @@ namespace RichHudFramework
                     switch ((LineAccessors)memberEnum)
                     {
                         case LineAccessors.Count:
-                            return lines[index].Count;
+                            return lines.PooledLines[index].Count;
                         case LineAccessors.Size:
-                            return lines[index].Size;
+                            return lines.PooledLines[index].Size;
                         case LineAccessors.VerticalOffset:
-                            return lines[index].VerticalOffset;
+                            return lines.PooledLines[index].VerticalOffset;
                     }
 
                     return null;
@@ -630,16 +629,21 @@ namespace RichHudFramework
                 /// </summary>
                 protected object GetRichCharMember(Vector2I i, int memberEnum)
                 {
+                    Line ln = lines.PooledLines[i.X];
+
                     switch ((RichCharAccessors)memberEnum)
                     {
                         case RichCharAccessors.Ch:
-                            return lines[i.X].Chars[i.Y];
+                            return ln.Chars[i.Y];
                         case RichCharAccessors.Format:
-                            return lines[i.X].FormattedGlyphs[i.Y].format.Data;
+                            return ln.FormattedGlyphs[i.Y].format.Data;
                         case RichCharAccessors.Offset:
-                            return lines[i.X].GlyphBoards[i.Y].bounds.Center * Scale;
+                            {
+                                ln.UpdateGlyphBoards();
+                                return ln.GlyphBoards[i.Y].bounds.Center * Scale;
+                            }
                         case RichCharAccessors.Size:
-                            return lines[i.X].FormattedGlyphs[i.Y].chSize * Scale;
+                            return ln.FormattedGlyphs[i.Y].chSize * Scale;
                     }
 
                     return null;
@@ -666,14 +670,14 @@ namespace RichHudFramework
                     int charCount = 0;
 
                     for (int i = 0; i < lines.Count; i++)
-                        charCount += lines[i].Chars.Count;
+                        charCount += lines[i].Count;
 
                     StringBuilder sb = new StringBuilder();
                     sb.EnsureCapacity(charCount);
 
                     for (int i = 0; i < lines.Count; i++)
                     {
-                        for (int j = 0; j < lines[i].Chars.Count; j++)
+                        for (int j = 0; j < lines[i].Count; j++)
                             sb.Append(lines[i].Chars[j]);
                     }
 

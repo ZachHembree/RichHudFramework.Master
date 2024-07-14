@@ -4,26 +4,37 @@ using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
-using RichHudFramework.UI.Rendering;
-using ApiMemberAccessor = System.Func<object, int, object>;
-using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
-using BindDefinitionData = VRage.MyTuple<string, string[]>;
 
 namespace RichHudFramework
 {
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
+    using BindDefinitionDataOld = MyTuple<string, string[]>;
+    using BindDefinitionData = MyTuple<string, string[], string[][]>;
 
     namespace UI.Server
     {
         /// <summary>
-        /// Scrollable list of bind group controls.
+        /// Control panel for viewing/modifying a collection of <see cref="IBindGroup"/> binds
         /// </summary>
         public class RebindPage : TerminalPageBase, IRebindPage
         {
+            private const float
+                listPaddingH = 20f,
+                listPaddingV = 8f,
+                lineSpacing = 8f,
+                lineHeight = 44f,
+                dividerHeight = 1f,
+                bindPadding = 0f,
+                btnBorderThickness = 1f,
+                resetBtnWidth = 234f,
+                comboBtnWidth = 200f;
+            private static readonly Color dividerColor = new Color(53, 66, 75);
+
             /// <summary>
-            /// List of bind groups registered to the page.
+            /// List of bind groups registered to the page
             /// </summary>
             public IReadOnlyList<IBindGroup> BindGroups { get; }
+
+            public bool IsAliased { get; set; }
 
             public RebindPage GroupContainer => this;
 
@@ -35,26 +46,26 @@ namespace RichHudFramework
 
                 BindGroups = new ReadOnlyCollectionData<IBindGroup>
                 (
-                    x => bindGroups.Collection[x].Element.BindGroup, 
+                    x => bindGroups.Collection[x].Element.BindGroup,
                     () => bindGroups.Collection.Count
                 );
             }
 
             /// <summary>
-            /// Adds the given bind group to the page.
+            /// Adds the given bind group to the page
             /// </summary>
             public void Add(IBindGroup bindGroup)
             {
-                var bindBox = new BindGroupBox() { BindGroup = bindGroup };
+                var bindBox = new BindGroupBox(IsAliased, bindGroup);
                 bindGroups.Add(bindBox);
             }
 
             /// <summary>
-            /// Adds the given bind group to the page along with its associated default configuration.
+            /// Adds the given bind group to the page along with its associated default configuration
             /// </summary>
             public void Add(IBindGroup bindGroup, BindDefinition[] defaultBinds)
             {
-                var bindBox = new BindGroupBox() { BindGroup = bindGroup, DefaultBinds = defaultBinds };
+                var bindBox = new BindGroupBox(IsAliased, bindGroup, defaultBinds);
                 bindGroups.Add(bindBox);
             }
 
@@ -65,21 +76,45 @@ namespace RichHudFramework
                 BindGroups.GetEnumerator();
 
             protected override object GetOrSetMember(object data, int memberEnum)
-            {              
+            {
                 if (memberEnum > 9)
                 {
                     switch ((RebindPageAccessors)memberEnum)
                     {
                         case RebindPageAccessors.Add:
                             {
-                                var args = (MyTuple<object, BindDefinitionData[]>)data;
-                                BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
+                                if (data is MyTuple<object, BindDefinitionDataOld[]>)
+                                {
+                                    var args = (MyTuple<object, BindDefinitionDataOld[]>)data;
+                                    BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
 
-                                for (int n = 0; n < defaults.Length; n++)
-                                    defaults[n] = args.Item2[n];
+                                    for (int n = 0; n < defaults.Length; n++)
+                                        defaults[n] = args.Item2[n];
 
-                                Add(args.Item1 as IBindGroup, defaults);
-                                break;
+                                    Add(args.Item1 as IBindGroup, defaults);
+                                    break;
+                                }
+                                else
+                                {
+                                    var args = (MyTuple<object, BindDefinitionData[]>)data;
+                                    BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
+
+                                    for (int n = 0; n < defaults.Length; n++)
+                                        defaults[n] = (BindDefinition)args.Item2[n];
+
+                                    Add(args.Item1 as IBindGroup, defaults);
+                                    break;
+                                }
+                            }
+                        case RebindPageAccessors.GetOrSetIsAliased:
+                            {
+                                if (data == null)
+                                    return IsAliased;
+                                else
+                                {
+                                    IsAliased = (bool)data;
+                                    break;
+                                }
                             }
                     }
 
@@ -96,14 +131,24 @@ namespace RichHudFramework
             {
                 public BindGroupList(HudParentBase parent = null) : base(true, parent)
                 {
-                    Spacing = 30f;
-                    SizingMode = HudChainSizingModes.ClampChainBoth | HudChainSizingModes.FitMembersOffAxis;
-
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis;
                     Background.Visible = false;
+
+                    Spacing = lineSpacing;
+                    Padding = new Vector2(listPaddingH, listPaddingV);
                 }
 
                 protected override void Layout()
                 {
+                    foreach (var groupBoxEntry in Collection)
+                    {
+                        if (groupBoxEntry.Enabled && groupBoxEntry.Element.Visible)
+                        {
+                            BindGroupBox bgBox = groupBoxEntry.Element;
+                            bgBox.Size = bgBox.GetRangeSize();
+                        }
+                    }
+
                     base.Layout();
 
                     SliderBar slider = ScrollBar.slide;
@@ -112,120 +157,118 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Scrollable list of keybinds. Supports, at most, three controls per bind.
+            /// Non-scrollable list of keybinds representing a <see cref="IBindGroup"/>
             /// </summary>
-            private class BindGroupBox : HudElementBase
+            private class BindGroupBox : HudChain
             {
                 /// <summary>
-                /// Bind group associated with the control.
+                /// Bind group associated with the control
                 /// </summary>
-                public IBindGroup BindGroup
-                {
-                    get { return _bindGroup; }
-                    set
-                    {
-                        _bindGroup = value;
-                        UpdateBindGroup();
-                    }
-                }
+                public IBindGroup BindGroup { get; private set; }
 
                 /// <summary>
-                /// Default configuration associated with the bind group.
+                /// Default configuration associated with the bind group
                 /// </summary>
-                public BindDefinition[] DefaultBinds 
-                {
-                    get { return defaultBinds; } 
-                    set 
-                    { 
-                        defaultBinds = value;
-                        resetButton.Visible = defaultBinds != null;
-                    }
-                }
-
-                public override bool Visible
-                {
-                    set
-                    {
-                        if (value == true && base.Visible != value)
-                            UpdateBindGroup();
-
-                        base.Visible = value;
-                    }
-                }
+                public BindDefinition[] DefaultBinds { get; private set; }
 
                 private readonly Label name;
                 private readonly BorderedButton resetButton;
-                private readonly ScrollBox<ScrollBoxEntry<BindBox>, BindBox> scrollBox;
-                private readonly HudChain layout;
-
-                private IBindGroup _bindGroup;
-                private BindDefinition[] defaultBinds;
-
-                public BindGroupBox(HudParentBase parent = null) : base(parent)
+                private readonly int bindOffset;
+                public BindGroupBox(bool isAliased, IBindGroup group, BindDefinition[] defaults = null) : base(null)
                 {
+                    AlignVertical = true;
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis;
+                    Spacing = lineSpacing;
+
+                    var divider1 = new TexturedBox()
+                    {
+                        Color = dividerColor,
+                        Height = dividerHeight,
+                    };
+                    Add(divider1);
+
                     name = new Label()
                     {
                         Format = GlyphFormat.White,
                         AutoResize = false,
-                        Height = 24f,
-                        Padding = new Vector2(0f, 24f),
+                        Height = lineHeight
                     };
+                    Add(name);
 
                     resetButton = new BorderedButton(this)
                     {
-                        Text = "Defaults",
-                        Size = new Vector2(234f, 44f),
-                        ParentAlignment = ParentAlignments.Top | ParentAlignments.Right | ParentAlignments.Inner,
+                        Text = "Reset",
+                        Padding = Vector2.Zero,
+                        Size = new Vector2(comboBtnWidth, lineHeight),
+                        BorderThickness = btnBorderThickness,
+                        Offset = new Vector2(0f, -(dividerHeight + lineSpacing)),
+                        ParentAlignment = ParentAlignments.InnerTopRight,
                         Visible = false,
-                        BorderThickness = 1f,
                     };
 
                     resetButton.MouseInput.LeftClicked += ResetBinds;
 
-                    scrollBox = new ScrollBox<ScrollBoxEntry<BindBox>, BindBox>(true)
-                    {
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainOffAxis | HudChainSizingModes.ClampChainAlignAxis,
-                        Spacing = 8f,
-                    };
-
-                    scrollBox.Background.Visible = false;
-
-                    var divider1 = new TexturedBox()
-                    {
-                        Color = new Color(53, 66, 75),
-                        Padding = new Vector2(0f, 16f),
-                        Height = 2f,
-                    };
-
                     var divider2 = new TexturedBox()
                     {
-                        Color = new Color(53, 66, 75),
-                        Padding = new Vector2(0f, 16f),
-                        Height = 2f,
+                        Color = dividerColor,
+                        Height = dividerHeight,
                     };
+                    Add(divider2);
+                    bindOffset = Count;
 
-                    layout = new HudChain(true, this)
-                    {
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                        DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
-                        Padding = new Vector2(20f, 0f),
-                        Offset = new Vector2(-10f, 0f),
-                        CollectionContainer = { name, divider1, scrollBox, divider2 },
-                    };
-
-                    Height = 338f;
+                    SetGroup(group, isAliased);
+                    DefaultBinds = defaults;
                 }
 
                 protected override void Layout()
                 {
-                    SliderBar slider = scrollBox.ScrollBar.slide;
-                    slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
+                    resetButton.Visible = (DefaultBinds != null);
+                    base.Layout();
+                }
 
-                    scrollBox.Height = _size.Y - (layout.Height - scrollBox.Height);
+                private void SetGroup(IBindGroup group, bool isAliased)
+                {
+                    if (group != null)
+                    {
+                        BindGroup = group;
+                        name.Text = $"Group: {BindGroup.Name}";
+
+                        for (int n = 0; n < BindGroup.Count; n++)
+                        {
+                            if (n >= (Count - bindOffset))
+                            {
+                                // Individual inserts should be nicer than this
+                                var container = new HudElementContainer();
+                                container.SetElement(new BindBox(isAliased));
+                                Insert(Count, container);
+                            }
+                        }
+
+                        UpdateBindGroup();
+                    }
+                    else
+                    {
+                        throw new Exception("BindGroup cannot be null.");
+                    }
                 }
 
                 /// <summary>
-                /// Applies the default configuration to the bind group if defaults are defined.
+                /// Updates bind combo text
+                /// </summary>
+                private void UpdateBindGroup()
+                {
+                    if (BindGroup != null)
+                    {
+                        for (int i = 0; i < BindGroup.Count; i++)
+                        {
+                            var bind = Collection[i + bindOffset].Element as BindBox;
+                            bind.SetBind(BindGroup[i], BindGroup);
+                        }
+                    }
+                }
+
+                /// <summary>
+                /// Applies the default configuration to the bind group, if defaults are defined
                 /// </summary>
                 private void ResetBinds(object sender, EventArgs args)
                 {
@@ -235,102 +278,70 @@ namespace RichHudFramework
                         UpdateBindGroup();
                     }
                 }
-
-                /// <summary>
-                /// Updates bind controls.
-                /// </summary>
-                private void UpdateBindGroup()
-                {
-                    if (BindGroup != null)
-                    {
-                        name.Text = $"Group: {BindGroup.Name}";
-
-                        for (int n = 0; n < BindGroup.Count; n++)
-                        {
-                            if (scrollBox.Collection.Count == n)
-                                scrollBox.Add(new BindBox());
-
-                            scrollBox.Collection[n].Enabled = true;
-                            scrollBox.Collection[n].Element.SetBind(BindGroup[n], BindGroup);
-                        }
-                    }
-                }
             }
 
             /// <summary>
-            /// Control for individual keybinds. Supports up to three controls per bind.
+            /// Control used to represent <see cref="IBind"/> key combos and update them
             /// </summary>
             private class BindBox : HudElementBase
             {
                 private readonly Label bindName;
-                private readonly BorderedButton con1, con2, con3;
+                private readonly BorderedButton[] combos;
 
-                private IBind bind;
-                private IBindGroup group;
+                private BindManager.BindGroup.Bind bind;
+                private BindManager.BindGroup group;
 
-                public BindBox(HudParentBase parent = null) : base(parent)
-                {                    
-                    bindName = new Label(this)
+                public BindBox(bool isAliased) : base(null)
+                {
+                    bindName = new Label()
                     {
                         Text = "NewBindBox",
                         Format = GlyphFormat.Blueish,
                         AutoResize = false,
-                        Size = new Vector2(150f, 44f),
-                        ParentAlignment = ParentAlignments.Left | ParentAlignments.InnerH,
-                        DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
+                        Size = new Vector2(150f, lineHeight),
+                        ParentAlignment = ParentAlignments.InnerLeft,
+                        DimAlignment = DimAlignments.UnpaddedHeight,
                     };
 
-                    con1 = new BorderedButton()
+                    combos = new BorderedButton[2];
+                    combos[0] = new BorderedButton()
                     {
                         Text = "none",
-                        Padding = new Vector2(),
-                        Size = new Vector2(126f, 44f),
-                        BorderThickness = 1f,
+                        Padding = Vector2.Zero,
+                        Size = new Vector2(comboBtnWidth, lineHeight),
+                        BorderThickness = btnBorderThickness,
                     };
 
-                    con1.MouseInput.LeftClicked += (sender, args) => GetNewControl(0);
-                    con1.MouseInput.RightClicked += (sender, args) => RemoveControl(0);
+                    combos[0].MouseInput.LeftClicked += (sender, args) => GetNewCombo(0);
+                    combos[0].MouseInput.RightClicked += (sender, args) => bind.ClearCombo(0);
 
-                    con2 = new BorderedButton()
+                    combos[1] = new BorderedButton()
                     {
                         Text = "none",
-                        Padding = new Vector2(),
-                        Size = new Vector2(126f, 44f),
-                        BorderThickness = 1f,
+                        Padding = Vector2.Zero,
+                        Size = new Vector2(comboBtnWidth, lineHeight),
+                        BorderThickness = btnBorderThickness,
+                        Visible = isAliased
                     };
 
-                    con2.MouseInput.LeftClicked += (sender, args) => GetNewControl(1);
-                    con2.MouseInput.RightClicked += (sender, args) => RemoveControl(1);
-
-                    con3 = new BorderedButton()
-                    {
-                        Text = "none",
-                        Padding = new Vector2(),
-                        Size = new Vector2(126f, 44f),
-                        BorderThickness = 1f,
-                    };
-
-                    con3.MouseInput.LeftClicked += (sender, args) => GetNewControl(2);
-                    con3.MouseInput.RightClicked += (sender, args) => RemoveControl(2);
+                    combos[1].MouseInput.LeftClicked += (sender, args) => GetNewCombo(1);
+                    combos[1].MouseInput.RightClicked += (sender, args) => bind.ClearCombo(1);
 
                     var layout = new HudChain(false, this)
                     {
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
                         Spacing = 13f,
-                        Padding = new Vector2(32f, 0f),
-                        ParentAlignment = ParentAlignments.Right | ParentAlignments.InnerH,
-                        DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
-                        CollectionContainer = { con1, con2, con3 }
+                        Padding = new Vector2(bindPadding, 0f),
+                        DimAlignment = DimAlignments.UnpaddedSize,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        CollectionContainer = { { bindName, 1f }, { combos[0], 0f }, { combos[1], 0f } }
                     };
 
-                    Size = new Vector2(400f, 44f);
+                    Height = lineHeight;
                 }
 
                 public void Reset()
                 {
-                    var fullGroup = group as BindManager.BindGroup;
-                    fullGroup.BindChanged -= OnBindChanged;
-
+                    group.BindChanged -= OnBindChanged;
                     bindName.TextBoard.Clear();
                     bind = null;
                     group = null;
@@ -338,12 +349,23 @@ namespace RichHudFramework
 
                 public void SetBind(IBind bind, IBindGroup group)
                 {
-                    this.bind = bind;
-                    this.group = group;
+                    this.bind = bind as BindManager.BindGroup.Bind;
+                    this.group = group as BindManager.BindGroup;
                     UpdateBindText();
 
-                    var fullGroup = group as BindManager.BindGroup;
-                    fullGroup.BindChanged += OnBindChanged;
+                    this.group.BindChanged += OnBindChanged;
+                }
+
+                protected override void HandleInput(Vector2 cursorPos)
+                {
+                    if (combos[0].IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Click to set main key combo");
+                    }
+                    else if (combos[1].IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Click to set alias key combo");
+                    }
                 }
 
                 private void OnBindChanged(object sender, EventArgs args)
@@ -352,12 +374,12 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Opens the rebind dialog for the given bind for the control specified.
+                /// Opens the rebind dialog for the given bind alias
                 /// </summary>
-                private void GetNewControl(int index)
+                private void GetNewCombo(int alias)
                 {
                     RichHudTerminal.CloseMenu();
-                    RebindDialog.UpdateBind(bind, index, DialogClosed);
+                    RebindDialog.UpdateBind(bind, alias, DialogClosed);
                 }
 
                 /// <summary>
@@ -369,62 +391,39 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Removes the control at the index specified.
-                /// </summary>
-                private void RemoveControl(int index)
-                {
-                    if (index < 3)
-                    {
-                        List<IControl> combo = bind.GetCombo();
-
-                        if (index < combo.Count)
-                        {
-                            if (index == 0 && combo.Count == 1)
-                            {
-                                bind.ClearCombo();
-                            }
-                            else
-                            {
-                                combo.RemoveAt(index);
-                                bind.TrySetCombo(combo, false);
-                            }
-                        }
-                    }
-                }
-
-                /// <summary>
-                /// Updates the buttons for the bind controls to reflect the current configuration.
+                /// Updates the buttons for the bind controls to reflect the current configuration
                 /// </summary>
                 private void UpdateBindText()
                 {
                     bindName.Text = bind.Name;
-                    List<IControl> combo = bind.GetCombo();
 
-                    if (combo != null && combo.Count > 0)
+                    if (bind.AliasCount > 0)
                     {
-                        if (!group.DoesComboConflict(combo, bind))
-                            bindName.TextBoard.SetFormatting(GlyphFormat.Blueish);
-                        else
+                        bool isConflicting = false;
+
+                        for (int i = 0; i < bind.AliasCount; i++)
+                        {
+                            if (group.DoesComboConflict(bind, i))
+                            {
+                                isConflicting = true;
+                                break;
+                            }
+                        }
+
+                        if (isConflicting)
                             bindName.TextBoard.SetFormatting(TerminalFormatting.WarningFormat);
-
-                        con1.Text = combo[0].DisplayName;
-
-                        if (combo.Count > 1)
-                            con2.Text = combo[1].DisplayName;
                         else
-                            con2.Text = "none";
+                            bindName.TextBoard.SetFormatting(GlyphFormat.Blueish);
 
-                        if (combo.Count > 2)
-                            con3.Text = combo[2].DisplayName;
-                        else
-                            con3.Text = "none";
+                        for (int i = 0; i < combos.Length; i++)
+                            combos[i].Text = bind.ToString(i, false);
                     }
                     else
                     {
                         bindName.TextBoard.SetFormatting(TerminalFormatting.WarningFormat);
-                        con1.Text = "none";
-                        con2.Text = "none";
-                        con3.Text = "none";
+
+                        for (int i = 0; i < combos.Length; i++)
+                            combos[i].Text = "none";
                     }
                 }
             }

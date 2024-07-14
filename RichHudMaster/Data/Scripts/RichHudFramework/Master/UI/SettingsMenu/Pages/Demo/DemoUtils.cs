@@ -28,7 +28,6 @@ namespace RichHudFramework
                 TextBox = 15,
                 TextField = 16,
                 TreeBox = 17,
-                DoubleLabelBox = 19,
                 Label = 20,
                 LabelBox = 21,
                 TexturedBox = 22
@@ -37,7 +36,7 @@ namespace RichHudFramework
             /// <summary>
             /// Base class for windows used to contain the demo elements.
             /// </summary>
-            private abstract class TestWindow : WindowBase
+            private abstract class TestWindow : Window
             {
                 /// <summary>
                 /// Demo element instance
@@ -95,7 +94,7 @@ namespace RichHudFramework
                 public TestWindowNode(DemoElements elementEnum, HudParentBase parent = null) : base(parent)
                 {
                     this.elementEnum = elementEnum;
-                    cameraNode = new CamSpaceNode(this);
+                    cameraNode = new CamSpaceNode(this) { DrawCursorInHudSpace = true };
 
                     window = GetTestWindow(elementEnum);
                     window.Register(cameraNode);
@@ -118,11 +117,23 @@ namespace RichHudFramework
                         case DemoElements.ColorPickerRGB:
                             return new TestWindow<ColorPickerRGB>();
                         case DemoElements.Dropdown:
-                            return new TestWindow<Dropdown<int>>();
+                            {
+                                var dropdown = new TestWindow<Dropdown<int>>();
+                                dropdown.Subtype.Add("Entry 1", 1);
+                                dropdown.Subtype.Add("Entry 2", 2);
+                                dropdown.Subtype.Add("Entry 3", 3);
+                                return dropdown;
+                            }
                         case DemoElements.LabelBoxButton:
                             return new TestWindow<LabelBoxButton>();
                         case DemoElements.ListBox:
-                            return new TestWindow<ListBox<int>>();
+                            {
+                                var listbox = new TestWindow<ListBox<int>>();
+                                listbox.Subtype.Add("Entry 1", 1);
+                                listbox.Subtype.Add("Entry 2", 1);
+                                listbox.Subtype.Add("Entry 3", 1);
+                                return listbox;
+                            }
                         case DemoElements.NamedCheckBox:
                             return new TestWindow<NamedCheckBox>();
                         case DemoElements.NamedOnOffButton:
@@ -136,9 +147,13 @@ namespace RichHudFramework
                         case DemoElements.TextBox:
                             return new TestWindow<TextBox>();
                         case DemoElements.TreeBox:
-                            return new TestWindow<TreeList<int>>();
-                        case DemoElements.DoubleLabelBox:
-                            return new TestWindow<DoubleLabelBox>();
+                            {
+                                var treebox = new TestWindow<TreeList<int>>();
+                                treebox.Subtype.Add("Entry 1", 1);
+                                treebox.Subtype.Add("Entry 2", 1);
+                                treebox.Subtype.Add("Entry 3", 1);
+                                return treebox;
+                            }
                         case DemoElements.Label:
                             return new TestWindow<Label>();
                         case DemoElements.LabelBox:

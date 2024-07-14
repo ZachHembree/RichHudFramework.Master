@@ -27,8 +27,8 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         public const long modID = 1965654081, queueID = 1314086443;
-        public const int apiVID = 10, minApiVID = 7;
-        public static readonly Vector4I versionID = new Vector4I(1, 2, 4, 3); // Major, Minor, Rev, Hotfix
+        public const int apiVID = 11, minApiVID = 7;
+        public static readonly Vector4I versionID = new Vector4I(1, 3, 0, 0); // Major, Minor, Rev, Hotfix
 
         /// <summary>
         /// Read-only list of currently registered clients
@@ -37,7 +37,11 @@ namespace RichHudFramework.Server
 
         public static RichHudMaster Instance { get; private set; }
 
+        public static ICommandGroup Commands => Instance._commands;
+
         private readonly List<ModClient> clients;
+        private TerminalPageCategory demoCategory;
+        private ICommandGroup _commands;
 
         public RichHudMaster() : base(true, true)
         {
@@ -57,7 +61,7 @@ namespace RichHudFramework.Server
 
         protected override void AfterLoadData()
         {
-            CmdManager.GetOrCreateGroup("/rhd", GetChatCommands());
+            _commands = CmdManager.GetOrCreateGroup("/rhd", GetChatCommands());
 
             RhServer.Init();
             BlacklistManager.Init();
@@ -176,13 +180,10 @@ namespace RichHudFramework.Server
             MasterConfig.Save();
             MasterConfig.ClearSubscribers();
 
-            if (ExceptionHandler.Reloading)
-            {
-                for (int n = clients.Count - 1; n >= 0; n--)
-                    clients[n].Unregister();
+            for (int n = clients.Count - 1; n >= 0; n--)
+                clients[n].Unregister();
 
-                clients.Clear();
-            }
+            clients.Clear();
         }
 
         public override void Close()

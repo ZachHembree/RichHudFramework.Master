@@ -1,4 +1,5 @@
 ﻿using RichHudFramework.UI.Rendering;
+using VRageMath;
 
 namespace RichHudFramework.UI.Server
 {
@@ -33,7 +34,12 @@ namespace RichHudFramework.UI.Server
         
         public TerminalButton()
         {
-            button = new BorderedButton();
+            button = new BorderedButton() 
+            {
+                DimAlignment = DimAlignments.UnpaddedWidth,
+                Padding = Vector2.Zero
+            };
+
             SetElement(button);
 
             MouseInput.LeftClicked += (sender, args) => ControlChanged?.Invoke(sender, args);          
@@ -41,8 +47,6 @@ namespace RichHudFramework.UI.Server
 
         public override void Update()
         {
-            base.Update();
-
             if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && button.MouseInput.IsMousedOver)
                 HudMain.Cursor.RegisterToolTip(ToolTip);
         }

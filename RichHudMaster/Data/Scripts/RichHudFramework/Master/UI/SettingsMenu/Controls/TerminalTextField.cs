@@ -16,6 +16,12 @@ namespace RichHudFramework.UI.Server
     public class TerminalTextField : TerminalValue<string>
     {
         /// <summary>
+        /// Invoked whenver a change occurs to a control that requires a response, like a change
+        /// to a value.
+        /// </summary>
+        public override event EventHandler ControlChanged;
+
+        /// <summary>
         /// The name of the control as it appears in the terminal.
         /// </summary>
         public override string Name { get { return textElement.Name; } set { textElement.Name = value; } }
@@ -25,8 +31,8 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public override string Value
         {
-            get { return textElement.TextField; }
-            set { textElement.TextField = value; }
+            get { return inputValue; }
+            set { textElement.textField.TextBoard.SetText(value); inputValue = value; }
         }
 
         /// <summary>
@@ -40,11 +46,14 @@ namespace RichHudFramework.UI.Server
         public Func<char, bool> CharFilterFunc { get { return textElement.CharFilterFunc; } set { textElement.CharFilterFunc = value; } }
 
         private readonly NamedTextField textElement;
+        private string inputValue;
 
         public TerminalTextField()
         {
             textElement = new NamedTextField();
             SetElement(textElement);
+
+            textElement.textField.TextChanged += OnTextFieldChanged;
         }
 
         public override void Update()
@@ -53,7 +62,29 @@ namespace RichHudFramework.UI.Server
                 HudMain.Cursor.RegisterToolTip(ToolTip);
 
             if (!textElement.FieldOpen || !textElement.Visible)
-                base.Update();
+            {
+                if (!controlUpdating && inputValue != lastValue)
+                {
+                    controlUpdating = true;
+                    lastValue = Value;
+                    ControlChanged?.Invoke(this, EventArgs.Empty);
+                    controlUpdating = false;
+                }
+
+                if (CustomValueGetter != null)
+                {
+                    string newValue = CustomValueGetter();
+
+                    if (newValue != inputValue)
+                        Value = newValue;
+                }
+            }
+        }
+
+        private void OnTextFieldChanged(object sender, EventArgs args)
+        {
+            var field = sender as TextField;
+            inputValue = field.TextBoard.ToString();
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)
@@ -81,34 +112,7 @@ namespace RichHudFramework.UI.Server
 
         private class NamedTextField : HudElementBase
         {
-            public override float Width
-            {
-                get { return textField.Width + Padding.X; }
-                set
-                {
-                    if (value > Padding.X)
-                        value -= Padding.X;
-
-                    textField.Width = value;
-                    name.Width = value;
-                }
-            }
-
-            public override float Height
-            {
-                get { return textField.Height + name.Height + Padding.Y; }
-                set
-                {
-                    if (value > Padding.Y)
-                        value -= Padding.Y;
-
-                    textField.Height = value - name.Height;
-                }
-            }
-
             public string Name { get { return name.TextBoard.ToString(); } set { name.Text = value; } }
-
-            public string TextField { get{ return textField.TextBoard.ToString(); } set { textField.Text = value; } }
 
             public Func<char, bool> CharFilterFunc { get { return textField.CharFilterFunc; } set { textField.CharFilterFunc = value; } }
 
@@ -119,22 +123,27 @@ namespace RichHudFramework.UI.Server
 
             public NamedTextField(HudParentBase parent = null) : base(parent)
             {
-                name = new Label(this)
+                name = new Label()
                 {
                     Format = TerminalFormatting.ControlFormat,
                     Text = "NewTextField",
                     AutoResize = false,
                     Height = 22f,
                     Padding = new Vector2(0f, 2f),
-                    ParentAlignment = ParentAlignments.Top | ParentAlignments.InnerV | ParentAlignments.UsePadding
                 };
 
-                textField = new TextField(name) 
+                textField = new TextField();
+
+                var layout = new HudChain(true, this)
                 {
-                    ParentAlignment = ParentAlignments.Bottom,
+                    DimAlignment = DimAlignments.UnpaddedSize,
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                    CollectionContainer = { name, { textField, 1f } }
                 };
 
-                Padding = new Vector2(40f, 0f);
+                Height = name.Height + textField.Height;
+                Padding = Vector2.Zero;
+                DimAlignment = DimAlignments.UnpaddedWidth;
             }
         }
     }

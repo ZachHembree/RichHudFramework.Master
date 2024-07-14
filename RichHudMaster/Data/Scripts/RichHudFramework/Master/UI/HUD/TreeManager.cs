@@ -64,6 +64,9 @@ namespace RichHudFramework
                 /// </summary>
                 public static IReadOnlyList<long> TreeElapsedTicks => treeManager.treeTimes;
 
+                /// <summary>
+                /// Used to indicate older clients requesting tree updates. Deprecated.
+                /// </summary>
                 public static bool RefreshRequested;
 
                 public bool UpdatingTree { get; private set; }
@@ -77,7 +80,7 @@ namespace RichHudFramework
                 private List<Action> depthTestActions, depthTestActionBuffer;
                 private List<Action> inputActions, inputActionBuffer;
                 private List<Action> drawActions, drawActionBuffer;
-                private List<Action<bool>> layoutActions;
+                private List<Action<bool>> layoutActions, layoutActionBuffer;
                 private float lastResScale;
                 private int sortTick;
 
@@ -111,6 +114,7 @@ namespace RichHudFramework
                     drawActionBuffer = new List<Action>(200);
 
                     layoutActions = new List<Action<bool>>(200);
+                    layoutActionBuffer = new List<Action<bool>>(200);
 
                     clients = new List<TreeClient>();
                     mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
@@ -164,18 +168,35 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw()
                 {
-                    if (isImmediateUpdateReq)
-                    {
-                        UpdateAccessorLists();
-                        FinishAccessorUpdate();
+                    if (!UpdatingTree)
+                        UpdateTree();
 
-                        isImmediateUpdateReq = false;
+                    if (!isImmediateUpdateReq)
+                        DrawUI();
+                }
+
+                private void UpdateTree()
+                {
+                    int drawTick = instance.drawTick;
+
+                    // Spread out client tree updates
+                    for (int n = 0; n < clients.Count; n++)
+                    {
+                        int clientTick = drawTick + (n % treeRefreshRate);
+                        clients[n].Update(clientTick, isImmediateUpdateReq);
                     }
 
-                    BillBoardUtils.BeginDraw();
+                    if (isImmediateUpdateReq)
+                        UpdateAccessorListsImmediate();
+                    else
+                        BeginAccessorListsUpdate();
+                }
 
-                    int drawTick = instance.drawTick;
+                private void DrawUI()
+                {
+                    BillBoardUtils.BeginDraw();
                     float resScale = ResScale;
+                    int drawTick = instance.drawTick;
 
                     mainClient.EnableCursor = EnableCursor;
                     instance._cursor.DrawCursor = false;
@@ -185,9 +206,6 @@ namespace RichHudFramework
                         if (clients[n].EnableCursor)
                             instance._cursor.DrawCursor = true;
                     }
-
-                    for (int n = 0; n < clients.Count; n++)
-                        clients[n].Update(drawTick + (n % treeRefreshRate)); // Spread out client tree updates
 
                     treeTimes[drawTick] = treeTimer.ElapsedTicks;
                     drawTimer.Restart();
@@ -224,9 +242,6 @@ namespace RichHudFramework
                         RefreshRequested = false;
 
                     lastResScale = resScale;
-                    
-                    if (!UpdatingTree)
-                        BeginAccessorListsUpdate();
                 }
 
                 /// <summary>
@@ -234,28 +249,43 @@ namespace RichHudFramework
                 /// </summary>
                 public void HandleInput()
                 {
-                    inputTimer.Restart();
+                    if (!isImmediateUpdateReq)
+                    {
+                        inputTimer.Restart();
 
-                    // Invoke after draw callbacks on clients
-                    for (int n = 0; n < clients.Count; n++)
-                        clients[n].BeforeInputCallback?.Invoke();
+                        // Invoke after draw callbacks on clients
+                        for (int n = 0; n < clients.Count; n++)
+                            clients[n].BeforeInputCallback?.Invoke();
 
-                    for (int n = 0; n < depthTestActions.Count; n++)
-                        depthTestActions[n]();
+                        for (int n = 0; n < depthTestActions.Count; n++)
+                            depthTestActions[n]();
 
-                    for (int n = inputActions.Count - 1; n >= 0; n--)
-                        inputActions[n]();
+                        for (int n = inputActions.Count - 1; n >= 0; n--)
+                            inputActions[n]();
 
-                    // Invoke after draw callbacks on clients
-                    for (int n = 0; n < clients.Count; n++)
-                        clients[n].AfterInputCallback?.Invoke();
+                        // Invoke after draw callbacks on clients
+                        for (int n = 0; n < clients.Count; n++)
+                            clients[n].AfterInputCallback?.Invoke();
 
-                    inputTimer.Stop();
-                    inputTimes[instance.drawTick] = inputTimer.ElapsedTicks;
+                        inputTimer.Stop();
+                        inputTimes[instance.drawTick] = inputTimer.ElapsedTicks;
+                    }
                 }
 
                 /// <summary>
-                /// Updates tree accessor delegate lists, spreading out updates over 5 ticks
+                /// Performs full tree update synchronously
+                /// </summary>
+                private void UpdateAccessorListsImmediate()
+                {
+                    UpdateAccessorLists();
+                    FinishAccessorUpdate();
+
+                    isImmediateUpdateReq = false;
+                    sortTick = 0;
+                }
+
+                /// <summary>
+                /// Dispatches parallel tree update divided over 3 ticks
                 /// </summary>
                 private void BeginAccessorListsUpdate()
                 {
@@ -268,8 +298,6 @@ namespace RichHudFramework
 
                         if (sortTick == 3)
                             sortTick = 0;
-
-                        UpdatingTree = false;
 
                         if (sortTick == 0)
                         {
@@ -285,7 +313,7 @@ namespace RichHudFramework
                     if (sortTick % 3 == 0 || isImmediateUpdateReq)
                     {
                         RebuildUpdateLists();
-                        UpdateDistMap();
+                        instance.EnqueueAction(UpdateDistMap);
                     }
 
                     if (sortTick % 3 == 1 || isImmediateUpdateReq)
@@ -297,9 +325,8 @@ namespace RichHudFramework
                     if (sortTick % 3 == 2 || isImmediateUpdateReq)
                     {
                         BuildSortedUpdateLists();
+                        treeTimer.Stop();
                     }
-
-                    treeTimer.Stop();
                 }
 
                 private void FinishAccessorUpdate()
@@ -309,6 +336,7 @@ namespace RichHudFramework
                     MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
                     MyUtils.Swap(ref inputActionBuffer, ref inputActions);
                     MyUtils.Swap(ref drawActionBuffer, ref drawActions);
+                    MyUtils.Swap(ref layoutActionBuffer, ref layoutActions);
                 }
 
                 /// <summary>
@@ -318,31 +346,21 @@ namespace RichHudFramework
                 {
                     // Clear update lists and rebuild accessor lists from HUD tree
                     updateAccessors.Clear();
-                    layoutActions.Clear();
                     uniqueOriginFuncs.Clear();
 
                     // Add client UI elements
                     for (int n = 0; n < clients.Count; n++)
                         updateAccessors.AddRange(clients[n].UpdateAccessors);
 
+                    // Manually append cursor elements after all clients
+                    instance._cursor.GetUpdateAccessors(updateAccessors, 0);
+
                     if (updateAccessors.Capacity > updateAccessors.Count * 3 && updateAccessors.Count > 200)
                         updateAccessors.TrimExcess();
 
                     // Build distance func HashSet
                     for (int n = 0; n < updateAccessors.Count; n++)
-                        uniqueOriginFuncs.Add(updateAccessors[n].Item2.Item2);
-
-                    layoutActions.EnsureCapacity(updateAccessors.Count);
-
-                    // Build layout list (without sorting)
-                    for (int n = 0; n < updateAccessors.Count; n++)
-                    {
-                        HudUpdateAccessors accessors = updateAccessors[n];
-                        layoutActions.Add(accessors.Item5);
-                    }
-
-                    if (layoutActions.Capacity > layoutActions.Count * 3 && layoutActions.Count > 200)
-                        layoutActions.TrimExcess();
+                        uniqueOriginFuncs.Add(updateAccessors[n].Item2.Item2);                    
                 }
 
                 /// <summary>
@@ -351,14 +369,7 @@ namespace RichHudFramework
                 private void UpdateDistMap()
                 {
                     distMap.Clear();
-
-                    // Update distance for each unique position delegate
-                    // Max distance: 655.35m; Precision: 1cm/unit
-                    //
-                    // This should help keep profiler overhead for this part to a minimum by reducing the
-                    // number of delegate calls to a small handful. This also means the cost difference between
-                    // using Distance() and DistanceSquared() will be negligible.
-                    Vector3D camPos = MyAPIGateway.Session.Camera.WorldMatrix.Translation;
+                    Vector3D camPos = PixelToWorldRef[0].Translation;
 
                     foreach (Func<Vector3D> OriginFunc in uniqueOriginFuncs)
                     {
@@ -369,6 +380,7 @@ namespace RichHudFramework
                     }
 
                     HudSpacesRegistered = distMap.Count;
+                    UpdatingTree = false;
                 }
 
                 /// <summary>
@@ -405,10 +417,14 @@ namespace RichHudFramework
                     depthTestActionBuffer.Clear();
                     inputActionBuffer.Clear();
                     drawActionBuffer.Clear();
+                    layoutActionBuffer.Clear();
 
                     depthTestActionBuffer.EnsureCapacity(updateAccessors.Count);
                     inputActionBuffer.EnsureCapacity(updateAccessors.Count);
                     drawActionBuffer.EnsureCapacity(updateAccessors.Count);
+                    layoutActionBuffer.EnsureCapacity(updateAccessors.Count);
+
+                    UpdatingTree = false;
                 }
 
                 /// <summary>
@@ -446,12 +462,22 @@ namespace RichHudFramework
                         drawActionBuffer.Add(accessors.Item6);
                     }
 
+                    // Build layout list (without sorting)
+                    for (int n = 0; n < updateAccessors.Count; n++)
+                    {
+                        HudUpdateAccessors accessors = updateAccessors[n];
+                        layoutActionBuffer.Add(accessors.Item5);
+                    }                        
+
                     if (depthTestActionBuffer.Capacity > depthTestActionBuffer.Count * 3 && depthTestActionBuffer.Count > 200)
                     {
                         depthTestActionBuffer.TrimExcess();
                         inputActionBuffer.TrimExcess();
                         drawActionBuffer.TrimExcess();
+                        layoutActionBuffer.TrimExcess();
                     }
+
+                    UpdatingTree = false;
                 }
             }
         }

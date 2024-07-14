@@ -46,8 +46,8 @@ namespace RichHudFramework
 
                     typeColumn = new HudChain(true)
                     {
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                        CollectionContainer = { typeList, createButton },
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        CollectionContainer = { { typeList, 1f }, createButton },
                         Spacing = 8f
                     };
 
@@ -66,15 +66,16 @@ namespace RichHudFramework
 
                     instanceButtonRow = new HudChain(false)
                     {
-                        SizingMode = HudChainSizingModes.FitMembersBoth | HudChainSizingModes.FitChainBoth,
-                        CollectionContainer = { removeButton, clearAllButton },
+                        Height = removeButton.Height,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        CollectionContainer = { { removeButton, 1f }, { clearAllButton, 1f } },
                         Spacing = 8f,
                     };
 
                     instanceColumn = new HudChain(true)
                     {
-                        SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                        CollectionContainer = { instanceList, instanceButtonRow },
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        CollectionContainer = { { instanceList, 1f }, instanceButtonRow },
                         Spacing = 8f
                     };
 
@@ -94,12 +95,13 @@ namespace RichHudFramework
                     transformCol1 = new HudChain(true)
                     {
                         Spacing = 10f,
-                        CollectionContainer = { screenSpaceToggle, xAxisBar, yAxisBar, zAxisBar, angleBar }
+                        CollectionContainer = { screenSpaceToggle, xAxisBar, yAxisBar, zAxisBar, angleBar },
                     };
+                    transformCol1.Size = transformCol1.GetRangeSize();
 
                     // Column 2
-                    resScaleToggle = new NamedCheckBox() { Name = "Res Scaling" };
-                    scaleBar = new NamedSliderBox() { Name = "Scale", Padding = new Vector2(40f, 0f), Min = 0.001f, Max = 1f };
+                    resScaleToggle = new NamedCheckBox() { Name = "High DPI Scaling" };
+                    scaleBar = new NamedSliderBox() { Name = "Scale", Padding = new Vector2(40f, 0f), Min = 0.01f, Max = 2f };
                     xPosBar = new NamedSliderBox() { Name = "PosX", Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f };
                     yPosBar = new NamedSliderBox() { Name = "PosY", Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f };
                     zPosBar = new NamedSliderBox() { Name = "PosZ", Padding = new Vector2(40f, 0f), Min = -2f, Max = 0f };
@@ -107,47 +109,95 @@ namespace RichHudFramework
                     transformCol2 = new HudChain(true)
                     {
                         Spacing = 10f,
-                        CollectionContainer = { resScaleToggle, scaleBar, xPosBar, yPosBar, zPosBar }
+                        CollectionContainer = { resScaleToggle, scaleBar, xPosBar, yPosBar, zPosBar },
+                        
                     };
+                    transformCol2.Size = transformCol2.GetRangeSize();
 
                     spawnControls = new HudChain(false)
                     {
-                        CollectionContainer = { typeColumn, instanceColumn },
                         Spacing = 16f,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        IsMasking = true,
+                        CollectionContainer = { { typeColumn, 1f }, { instanceColumn, 1f } },
                     };
 
                     transformControls = new HudChain(false)
                     {
-                        CollectionContainer = { transformCol1, transformCol2 }
+                        SizingMode = HudChainSizingModes.ClampMembersOffAxis | HudChainSizingModes.AlignMembersCenter,
+                        CollectionContainer = { transformCol1, transformCol2 },
                     };
+                    transformControls.Size = transformControls.GetRangeSize();
 
                     var layout = new HudChain(true, this)
                     {
-                        ParentAlignment = ParentAlignments.Left | ParentAlignments.Inner,
+                        DimAlignment = DimAlignments.UnpaddedSize,
+                        ParentAlignment = ParentAlignments.InnerLeft,
                         Spacing = 10f,
-                        CollectionContainer = { spawnControls, transformControls }
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        CollectionContainer = { { spawnControls, 1f }, transformControls }
                     };
 
                     Padding = new Vector2(40f, 8f);
                     demoRoot = new HudCollection(HudMain.HighDpiRoot);
                 }
 
-                protected override void Layout()
+                protected override void HandleInput(Vector2 cursorPos)
                 {
-                    // Adjust height of the top row to make room for the bottom row
-                    Vector2 size = cachedSize - cachedPadding;
-                    float colWidth = (size.X - spawnControls.Padding.X - spawnControls.Spacing) * .5f,
-                        listHeight = (size.Y - spawnControls.Padding.Y - createButton.Height - typeColumn.Spacing - transformControls.Height);
-
-                    typeColumn.Width = colWidth;
-                    instanceColumn.Width = colWidth;
-                    instanceButtonRow.MemberMaxSize = new Vector2((colWidth - instanceButtonRow.Spacing) * .5f, removeButton.Height);
-
-                    typeList.Height = listHeight;
-                    instanceList.Height = listHeight;
-
                     UpdateSliderValueText();
                     UpdateInstanceNames();
+
+                    // Update matrix transform based on input
+                    if (instanceList.Selection != null)
+                    {
+                        CamSpaceNode node = instanceList.Selection.AssocMember.cameraNode;
+
+                        // Scale
+                        node.IsScreenSpace = screenSpaceToggle.IsBoxChecked;
+                        node.UseResScaling = resScaleToggle.IsBoxChecked;
+                        node.PlaneScale = scaleBar.Current;
+
+                        // Rotation
+                        node.RotationAxis = new Vector3(xAxisBar.Current, yAxisBar.Current, zAxisBar.Current);
+                        node.RotationAngle = angleBar.Current;
+
+                        // Translation
+                        node.TransformOffset = new Vector3D(xPosBar.Current, yPosBar.Current, zPosBar.Current);
+                    }
+
+                    if (screenSpaceToggle.MouseInput.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Compensates for FOV and resolution scaling");
+                    }
+                    if (xAxisBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Quaternion rotation axis, X-component");
+                    }
+                    if (yAxisBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Quaternion rotation axis, Y-component");
+                    }
+                    if (zAxisBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Quaternion rotation axis, Z-component");
+                    }
+
+                    if (angleBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Rotation around the axis, seen above, from -pi to +pi");
+                    }
+                    if (xPosBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in meters. X-direction");
+                    }
+                    if (yPosBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in meters. Y-direction");
+                    }
+                    if (zPosBar.IsMousedOver)
+                    {
+                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in meters. Z-direction");
+                    }
                 }
 
                 /// <summary>
@@ -187,26 +237,6 @@ namespace RichHudFramework
                     }
                 }
 
-                protected override void HandleInput(Vector2 cursorPos)
-                {
-                    // Update matrix transform based on input
-                    if (instanceList.Selection != null)
-                    {
-                        CamSpaceNode node = instanceList.Selection.AssocMember.cameraNode;
-
-                        // Scale
-                        node.IsScreenSpace = screenSpaceToggle.IsBoxChecked;
-                        node.UseResScaling = resScaleToggle.IsBoxChecked;
-                        node.PlaneScale = scaleBar.Current;
-
-                        // Rotation
-                        node.RotationAxis = new Vector3(xAxisBar.Current, yAxisBar.Current, zAxisBar.Current);
-                        node.RotationAngle = angleBar.Current;
-
-                        // Translation
-                        node.TransformOffset = new Vector3D(xPosBar.Current, yPosBar.Current, zPosBar.Current);
-                    }
-                }
 
                 /// <summary>
                 /// Updates UI to match the configuration of the node just selected

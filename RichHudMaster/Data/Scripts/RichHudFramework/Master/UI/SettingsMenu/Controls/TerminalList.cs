@@ -93,27 +93,9 @@ namespace RichHudFramework.UI.Server
             /// </summary>
             public ListBoxEntry<T> Selection => listBox.Selection;
 
-            public override float Width
-            {
-                get { return hudChain.Width; }
-                set { hudChain.Width = value; }
-            }
-
-            public override float Height
-            {
-                get { return hudChain.Height; }
-            }
-
-            public override Vector2 Padding
-            {
-                get { return hudChain.Padding; }
-                set { hudChain.Padding = value; }
-            }
-
             public readonly ListBox<T> listBox;
 
             private readonly Label name;
-            private readonly HudChain hudChain;
 
             public NamedListBox(HudParentBase parent = null) : base(parent)
             {
@@ -128,18 +110,18 @@ namespace RichHudFramework.UI.Server
                 listBox = new ListBox<T>()
                 {
                     Format = TerminalFormatting.ControlFormat,
-                    Height = 172f,
-                    MinVisibleCount = 6
+                    Height = 172f
                 };
 
-                hudChain = new HudChain(true, this)
+                var layout = new HudChain(true, this)
                 {
-                    SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth,
-                    CollectionContainer = { name, listBox },
+                    DimAlignment = DimAlignments.UnpaddedSize,
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                    CollectionContainer = { { name , 0f }, { listBox, 1f } },
                     Spacing = 2f
                 };
 
-                Padding = new Vector2(10f, 0f);
+                Padding = new Vector2(0f, 0f);
                 Size = new Vector2(250f, 200f);
             }
 

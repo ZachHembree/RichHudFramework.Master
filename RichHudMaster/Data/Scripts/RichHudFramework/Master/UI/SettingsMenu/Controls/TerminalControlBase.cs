@@ -154,7 +154,7 @@ namespace RichHudFramework.UI.Server
 
         public override void Update()
         {
-            if (Value != null && !Value.Equals(lastValue) && !controlUpdating)
+            if (!controlUpdating && Value != null && !Value.Equals(lastValue))
             {
                 controlUpdating = true;
                 lastValue = Value;
@@ -162,8 +162,11 @@ namespace RichHudFramework.UI.Server
                 controlUpdating = false;
             }
 
-            if (CustomValueGetter != null && !Value.Equals(CustomValueGetter()))
-                Value = CustomValueGetter();
+            if (CustomValueGetter != null)
+            {
+                TValue newValue = CustomValueGetter();
+                Value = newValue;
+            }
         }
 
         protected override object GetOrSetMember(object data, int memberEnum)

@@ -18,7 +18,7 @@ namespace RichHudFramework.Server
         public static bool EnableDebug { get; set; }
 
         private static RichHudDebug instance;
-        private readonly TerminalPageCategory pageCategory;
+        private readonly TerminalPageCategory debugCategory;
         private readonly TextPage statsText;
         private StringBuilder statsBuilder;
 
@@ -61,19 +61,13 @@ namespace RichHudFramework.Server
                 Format = new GlyphFormat(new Color(255, 191, 0))
             };
 
-            pageCategory = new TerminalPageCategory()
+            debugCategory = new TerminalPageCategory()
             {
                 Name = "Debug",
                 Enabled = false,
                 PageContainer =
                 {
-                    new DemoPage()
-                    {
-                        Name = "Demo",
-                    },
-
                     statsText,
-
                     new ControlPage()
                     {
                         Name = "Settings",
@@ -115,8 +109,6 @@ namespace RichHudFramework.Server
                     }
                 }
             };
-
-            RichHudTerminal.Root.Add(pageCategory);
         }
 
         public static void Init()
@@ -135,10 +127,13 @@ namespace RichHudFramework.Server
             instance.UpdateDisplayInternal();
         }
 
+        public static TerminalPageCategory GetDebugCategory()
+        {
+            return instance.debugCategory;
+        }
+
         private void UpdateDisplayInternal()
         {
-            pageCategory.Enabled = EnableDebug;
-
             if (EnableDebug && (statsText.Element.Visible || enableOverlay) && updateTimer.ElapsedMilliseconds > 100)
             {
                 IReadOnlyList<RichHudMaster.ModClient> modClients = RichHudMaster.Clients;

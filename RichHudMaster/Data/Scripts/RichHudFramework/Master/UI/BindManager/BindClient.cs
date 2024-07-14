@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using VRage;
 using VRageMath;
 using RichHudFramework.Server;
-using BindDefinitionData = VRage.MyTuple<string, string[]>;
+using BindDefinitionDataOld = VRage.MyTuple<string, string[]>;
 using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
+    using BindDefinitionData = MyTuple<string, string[], string[][]>;
+
     namespace UI.Server
     {
         using BindClientMembers = MyTuple<
@@ -28,26 +30,21 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<IBindGroup> Groups => bindGroups;
 
-                /// <summary>
-                /// Read-only collection of all available controls for use with key binds
-                /// </summary>
-                public IReadOnlyList<IControl> Controls => BindManager.Instance.controls;
-
                 public SeBlacklistModes RequestBlacklistMode 
                 { 
                     get { return _requestBlacklistMode | tmpBlacklist; } 
                     set { lastBlacklist = value; _requestBlacklistMode = value; } 
                 }
 
-                private readonly RichHudMaster.ModClient masterClient;
+                private readonly RichHudMaster.ModClient modClient;
                 private readonly Action UpdateAction;
                 private readonly List<BindGroup> bindGroups;
                 private readonly int index;
                 private SeBlacklistModes _requestBlacklistMode, lastBlacklist, tmpBlacklist;
 
-                public Client(RichHudMaster.ModClient masterClient = null)
+                public Client(RichHudMaster.ModClient modClient = null)
                 {
-                    this.masterClient = masterClient;
+                    this.modClient = modClient;
                     bindGroups = new List<BindGroup>();
                     index = _instance.bindClients.Count;
                     _instance.bindClients.Add(this);
@@ -63,8 +60,8 @@ namespace RichHudFramework
                     tmpBlacklist = SeBlacklistModes.None;
                     _requestBlacklistMode = lastBlacklist;
 
-                    if (masterClient?.RunOnExceptionHandler != null)
-                        masterClient.RunOnExceptionHandler(UpdateAction);
+                    if (modClient?.RunOnExceptionHandler != null)
+                        modClient.RunOnExceptionHandler(UpdateAction);
                     else
                         UpdateInputInternal();
                 }
@@ -83,12 +80,6 @@ namespace RichHudFramework
                 {
                     tmpBlacklist |= mode;
                 }
-
-                /// <summary>
-                /// Retrieves the control with the given name
-                /// </summary>
-                public IControl GetControl(string name) =>
-                    BindManager.GetControl(name);
 
                 /// <summary>
                 /// Returns the first bind group with the name given or creates
@@ -149,9 +140,13 @@ namespace RichHudFramework
                         case BindClientAccessors.GetBindGroup:
                             return GetBindGroup(data as string)?.Index ?? -1;
                         case BindClientAccessors.GetComboIndices:
-                            return BindManager.GetComboIndices(data as IReadOnlyList<string>);
+                            {
+                                var indices = new List<int>();
+                                GetComboIndices(data as IReadOnlyList<string>, indices);
+                                return indices;
+                            }
                         case BindClientAccessors.GetControlByName:
-                            return BindManager.GetControl(data as string)?.Index ?? -1;
+                            return GetControl(data as string).id;
                         case BindClientAccessors.ClearBindGroups:
                             ClearBindGroups(); break;
                         case BindClientAccessors.Unload:
@@ -165,6 +160,10 @@ namespace RichHudFramework
                             }
                         case BindClientAccessors.IsChatOpen:
                             return IsChatOpen;
+                        case BindClientAccessors.GetControlName:
+                            return GetControlName((int)data);
+                        case BindClientAccessors.GetControlNames:
+                            return GetControlNames(data as IReadOnlyList<int>);
                     }
 
                     return null;
@@ -172,7 +171,7 @@ namespace RichHudFramework
 
                 private object GetOrSetGroupMember(int index, object data, int memberEnum)
                 {
-                    IBindGroup group = bindGroups[index];
+                    BindGroup group = bindGroups[index];
 
                     switch ((BindGroupAccessors)memberEnum)
                     {
@@ -187,11 +186,19 @@ namespace RichHudFramework
                         case BindGroupAccessors.RegisterBindIndices:
                             group.RegisterBinds(data as IReadOnlyList<MyTuple<string, IReadOnlyList<int>>>); break;
                         case BindGroupAccessors.RegisterBindDefinitions:
-                            group.RegisterBinds(data as IReadOnlyList<BindDefinitionData>); break;
+                            group.RegisterBinds(data as IReadOnlyList<BindDefinitionDataOld>); break;
                         case BindGroupAccessors.AddBindWithIndices:
                             {
-                                var args = (MyTuple<string, IReadOnlyList<int>>)data;
-                                return new Vector2I(group.Index, group.AddBind(args.Item1, args.Item2).Index);
+                                if (modClient.apiVersionID < 11)
+                                {
+                                    var args = (MyTuple<string, IReadOnlyList<int>>)data;
+                                    return new Vector2I(group.Index, group.AddBind(args.Item1, args.Item2).Index);
+                                }
+                                else
+                                {
+                                    var args = (MyTuple<string, IReadOnlyList<int>, IReadOnlyList<IReadOnlyList<int>>>)data;
+                                    return new Vector2I(group.Index, group.AddBind(args.Item1, args.Item2, args.Item3).Index);
+                                }
                             }
                         case BindGroupAccessors.AddBindWithNames:
                             {
@@ -200,8 +207,16 @@ namespace RichHudFramework
                             }
                         case BindGroupAccessors.DoesComboConflict:
                             {
-                                var args = (MyTuple<IReadOnlyList<int>, int>)data;
-                                return group.DoesComboConflict(args.Item1, args.Item2);
+                                if (modClient.apiVersionID < 11)
+                                {
+                                    var args = (MyTuple<IReadOnlyList<int>, int>)data;
+                                    return group.DoesComboConflict(args.Item1, group[args.Item2]);
+                                }
+                                else
+                                {
+                                    var args = (MyTuple<IReadOnlyList<int>, int, int>)data;
+                                    return group.DoesComboConflict(args.Item1, group[args.Item2], args.Item3);
+                                }
                             }
                         case BindGroupAccessors.TryRegisterBindName:
                             {
@@ -212,29 +227,60 @@ namespace RichHudFramework
                             }
                         case BindGroupAccessors.TryRegisterBindWithIndices:
                             {
-                                var args = (MyTuple<string, IReadOnlyList<int>>)data;
+                                if (modClient.apiVersionID < 11)
+                                {
+                                    var args = (MyTuple<string, IReadOnlyList<int>>)data;
 
-                                IBind bind;
-                                bool success = group.TryRegisterBind(args.Item1, out bind, args.Item2);
+                                    IBind bind;
+                                    bool success = group.TryRegisterBind(args.Item1, out bind, args.Item2);
 
-                                return success ? bind.Index : -1;
+                                    return success ? bind.Index : -1;
+                                }
+                                else
+                                {
+                                    var args = (MyTuple<string, IReadOnlyList<int>, IReadOnlyList<IReadOnlyList<int>>>)data;
+
+                                    IBind bind;
+                                    bool success = group.TryRegisterBind(args.Item1, out bind, args.Item2, args.Item3);
+
+                                    return success ? bind.Index : -1;
+                                }
                             }
                         case BindGroupAccessors.TryRegisterBindWithNames:
                             {
-                                var args = (MyTuple<string, IReadOnlyList<string>>)data;
-
                                 IBind bind;
-                                bool success = group.TryRegisterBind(args.Item1, out bind, args.Item2);
+                                var args = (MyTuple<string, IReadOnlyList<string>>)data;
+                                var buf = _instance.conIDbuf;
+
+                                GetComboIndices(args.Item2, buf, false);
+                                bool success = group.TryRegisterBind(args.Item1, out bind, buf);
 
                                 return success ? bind.Index : -1;
                             }
                         case BindGroupAccessors.TryLoadBindData:
                             {
-                                var arg = data as IReadOnlyList<BindDefinitionData>;
-                                return group.TryLoadBindData(arg);
+                                if (modClient.apiVersionID < 11)
+                                {
+                                    var arg = data as IReadOnlyList<BindDefinitionDataOld>;
+                                    return group.TryLoadBindData(arg);
+                                }
+                                else
+                                {
+                                    var arg = data as IReadOnlyList<BindDefinitionData>;
+                                    return group.TryLoadBindData(arg);
+                                }
                             }
                         case BindGroupAccessors.GetBindData:
-                            return group.GetBindData();
+                            {
+                                if (modClient.apiVersionID < 11)
+                                {
+                                    return group.GetBindDataOld();
+                                }
+                                else
+                                {
+                                    return group.GetBindData();
+                                }
+                            }
                         case BindGroupAccessors.ClearSubscribers:
                             group.ClearSubscribers();
                             break;
@@ -285,7 +331,7 @@ namespace RichHudFramework
                                     bind.PressedAndHeld += (sender, args) => eventData.Item2();
                                 else
                                     bind.PressedAndHeld -= (sender, args) => eventData.Item2();
-
+                                    
                                 break;
                             }
                         case BindAccesssors.OnRelease:
@@ -300,21 +346,41 @@ namespace RichHudFramework
                                 break;
                             }
                         case BindAccesssors.GetCombo:
-                            return bind.GetComboIndices();
+                            return bind.GetConIDs((data != null) ? (int)data : 0);
                         case BindAccesssors.TrySetComboWithIndices:
                             {
-                                var comboData = (MyTuple<IReadOnlyList<int>, bool, bool>)data;
-                                return bind.TrySetCombo(comboData.Item1, comboData.Item2, comboData.Item3);
+                                if (modClient.apiVersionID < 11)
+                                {
+                                    var args = (MyTuple<IReadOnlyList<int>, bool, bool>)data;
+                                    return bind.TrySetCombo(args.Item1, 0, args.Item2, args.Item3);
+                                }
+                                else
+                                {
+                                    var args = (MyTuple<IReadOnlyList<int>, int, bool, bool>)data;
+                                    return bind.TrySetCombo(args.Item1, args.Item2, args.Item3, args.Item4);
+                                }
                             }
                         case BindAccesssors.TrySetComboWithNames:
                             {
-                                var comboData = (MyTuple<IReadOnlyList<string>, bool, bool>)data;
-                                return bind.TrySetCombo(comboData.Item1, comboData.Item2, comboData.Item3);
+                                if (modClient.apiVersionID < 11)
+                                {
+                                    var args = (MyTuple<IReadOnlyList<string>, bool, bool>)data;
+                                    return bind.TrySetCombo(args.Item1, 0, args.Item2, args.Item3);
+                                }
+                                else
+                                {
+                                    var args = (MyTuple<IReadOnlyList<string>, int, bool, bool>)data;
+                                    return bind.TrySetCombo(args.Item1, args.Item2, args.Item3, args.Item4);
+                                }
                             }
                         case BindAccesssors.ClearCombo:
-                            bind.ClearCombo(); break;
+                            bind.ClearCombo((data != null) ? (int)data : 0); break;
                         case BindAccesssors.ClearSubscribers:
                             bind.ClearSubscribers(); break;
+                        case BindAccesssors.AnalogValue:
+                            return bind.AnalogValue;
+                        case BindAccesssors.AliasCount:
+                            return bind.AliasCount;
                     }
 
                     return null;
@@ -369,6 +435,8 @@ namespace RichHudFramework
                                 return control.IsReleased;
                             case ControlAccessors.Analog:
                                 return control.Analog;
+                            case ControlAccessors.AnalogValue:
+                                return control.AnalogValue;
                         }
                     }
 

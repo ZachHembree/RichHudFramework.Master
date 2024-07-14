@@ -75,22 +75,39 @@ namespace RichHudFramework
                     /// <summary>
                     /// Returns the index for this font using regular styling
                     /// </summary>
-                    public Vector2I Regular => new Vector2I(Index, 0);
+                    public Vector2I Regular { get; }
 
                     /// <summary>
                     /// Returns the index for the bolded version of this font
                     /// </summary>
-                    public Vector2I Bold => new Vector2I(Index, 1);
+                    public Vector2I Bold { get; }
 
                     /// <summary>
                     /// Returns the index for the italicised version of this font
                     /// </summary>
-                    public Vector2I Italic => new Vector2I(Index, 2);
+                    public Vector2I Italic { get; }
+
+                    /// <summary>
+                    /// Retruns the index for the underlined version of the font
+                    /// </summary>
+                    public Vector2I Underline { get; }
 
                     /// <summary>
                     /// Returns the index for the bold italic version of this font
                     /// </summary>
-                    public Vector2I BoldItalic => new Vector2I(Index, 3);
+                    public Vector2I BoldItalic { get; }
+
+                    /// <summary>
+                    /// Returns the index for the bold underlined version of this font
+                    /// </summary>
+                    public Vector2I BoldUnderline { get; }
+
+                    /// <summary>
+                    /// Returns the index for the bold italic underline version of this font
+                    /// </summary>
+                    public Vector2I BoldItalicUnderline { get; }
+
+                    public IReadOnlyList<IFontStyle> AtlasStyles { get; }
 
                     private readonly FontStyle[] styles;
 
@@ -103,8 +120,17 @@ namespace RichHudFramework
                         PtSize = ptSize;
                         Index = index;
 
+                        Regular = new Vector2I(Index, 0);
+                        Bold = new Vector2I(Index, 1);
+                        Italic = new Vector2I(Index, 2);
+                        BoldItalic = new Vector2I(Index, 3);
+                        Underline = new Vector2I(Index, 4);
+                        BoldUnderline = new Vector2I(Index, 5);
+                        BoldItalicUnderline = new Vector2I(Index, 7);
+
                         BaseScale = 12f / ptSize;
                         styles = new FontStyle[2];
+                        AtlasStyles = styles;
                     }
 
                     /// <summary>

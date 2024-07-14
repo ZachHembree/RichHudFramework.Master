@@ -57,7 +57,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Read-only collection of all registered fonts.
                 /// </summary>
-                public static IReadOnlyList<IFont> Fonts => Instance.extFonts;
+                public static IReadOnlyList<IFont> Fonts => Instance._fonts;
 
                 private static FontManager Instance
                 {
@@ -66,13 +66,11 @@ namespace RichHudFramework
                 }
                 private static FontManager _instance;
 
-                private readonly IReadOnlyList<IFont> extFonts;
-                private readonly List<IFont> fonts;
+                private readonly List<IFont> _fonts;
 
                 private FontManager() : base(false, true)
                 {
-                    fonts = new List<IFont>();
-                    extFonts = fonts;
+                    _fonts = new List<IFont>();
                 }
 
                 public static void Init()
@@ -115,10 +113,10 @@ namespace RichHudFramework
                 /// </summary>
                 public static bool TryAddFont(string name, float ptSize, out IFont font)
                 {
-                    if (!Instance.fonts.Exists(x => x.Name == name))
+                    if (!Instance._fonts.Exists(x => x.Name == name))
                     {
-                        font = new Font(name, ptSize, Instance.fonts.Count);
-                        Instance.fonts.Add(font);
+                        font = new Font(name, ptSize, Instance._fonts.Count);
+                        Instance._fonts.Add(font);
 
                         return true;
                     }
@@ -143,10 +141,10 @@ namespace RichHudFramework
                 /// </summary>
                 public static bool TryAddFont(FontDefinition fontData, out IFont font)
                 {
-                    if (!Instance.fonts.Exists(x => x.Name == fontData.Item1))
+                    if (!Instance._fonts.Exists(x => x.Name == fontData.Item1))
                     {
-                        font = new Font(fontData, Instance.fonts.Count);
-                        Instance.fonts.Add(font);
+                        font = new Font(fontData, Instance._fonts.Count);
+                        Instance._fonts.Add(font);
 
                         return true;
                     }
@@ -177,9 +175,9 @@ namespace RichHudFramework
                 {
                     name = name.ToLower();
 
-                    for (int n = 0; n < Instance.fonts.Count; n++)
-                        if (Instance.fonts[n].Name.ToLower() == name)
-                            return Instance.fonts[n];
+                    for (int n = 0; n < Instance._fonts.Count; n++)
+                        if (Instance._fonts[n].Name.ToLower() == name)
+                            return Instance._fonts[n];
 
                     return null;
                 }
@@ -187,14 +185,57 @@ namespace RichHudFramework
                 /// <summary>
                 /// Retrieves the font with the given name.
                 /// </summary>
-                public static IFont GetFont(int index) =>
-                    Instance.fonts[index];
+                public static IFont GetFont(int index)
+                {
+                    if (_instance == null)
+                        Init();
+
+                    return _instance._fonts[index];
+                }
 
                 /// <summary>
                 /// Retrieves the font with the given name.
                 /// </summary>
-                public static IFontStyle GetFontStyle(Vector2I index) =>
-                    Instance.fonts[index.X][index.Y & 1];
+                public static IFontStyle GetFontStyle(Vector2I index)
+                {
+                    if (_instance == null)
+                        Init();
+
+                    return _instance._fonts[index.X].AtlasStyles[index.Y & 1];
+                }
+
+                /// <summary>
+                /// Retrieves Glyphs and character sizes for the given range of char and GlyphFormat data, using partially initialized
+                /// FormattedGlyphs.
+                /// </summary>
+                public static void SetFormattedGlyphs(IList<char> chars, IList<FormattedGlyph> formattedGlyphs, int start = 0, int count = -1)
+                {
+                    if (_instance == null)
+                        Init();
+
+                    if (count == -1)
+                        count = formattedGlyphs.Count;
+
+                    for (int i = start; i < count; i++)
+                    {
+                        if (formattedGlyphs[i].glyph == null)
+                        {
+                            GlyphFormat format = formattedGlyphs[i].format;
+                            Vector2I index = format.Data.Item3;
+                            IFontStyle fontStyle = _instance._fonts[index.X].AtlasStyles[index.Y & 1];
+                            float fontSize = format.Data.Item2 * fontStyle.FontScale;
+                            Glyph glyph = fontStyle[chars[i]];
+                            Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
+
+                            formattedGlyphs[i] = new FormattedGlyph
+                            {
+                                chSize = glyphSize,
+                                format = format,
+                                glyph = glyph
+                            };
+                        }
+                    }
+                }
 
                 /// <summary>
                 /// Retrieves the font style index of the font with the given name and style.
@@ -222,7 +263,7 @@ namespace RichHudFramework
                 {
                     return new FontManagerMembers()
                     {
-                        Item1 = new MyTuple<Func<int, FontMembers>, Func<int>>(x => _instance.fonts[x].GetApiData(), () => _instance.fonts.Count),
+                        Item1 = new MyTuple<Func<int, FontMembers>, Func<int>>(x => _instance._fonts[x].GetApiData(), () => _instance._fonts.Count),
                         Item2 = TryAddApiFont,
                         Item3 = GetApiFont
                     };

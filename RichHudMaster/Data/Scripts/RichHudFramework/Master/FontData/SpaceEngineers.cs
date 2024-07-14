@@ -40,18 +40,18 @@ namespace RichHudFramework
 				{
 					AtlasMembers[] fontAtlases = new AtlasMembers[11];
 					fontAtlases[0] = new AtlasMembers("RichHudSe0", new Vector2(1024f, 1024f));
-					fontAtlases[10] = new AtlasMembers("RichHudSe1", new Vector2(1024f, 1024f));
-					fontAtlases[1] = new AtlasMembers("RichHudSe2", new Vector2(1024f, 1024f));
-					fontAtlases[2] = new AtlasMembers("RichHudSe3", new Vector2(1024f, 1024f));
-					fontAtlases[3] = new AtlasMembers("RichHudSe4", new Vector2(1024f, 1024f));
-					fontAtlases[4] = new AtlasMembers("RichHudSe5", new Vector2(1024f, 1024f));
-					fontAtlases[5] = new AtlasMembers("RichHudSe6", new Vector2(1024f, 1024f));
-					fontAtlases[6] = new AtlasMembers("RichHudSe7", new Vector2(1024f, 1024f));
-					fontAtlases[7] = new AtlasMembers("RichHudSe8", new Vector2(1024f, 1024f));
-					fontAtlases[8] = new AtlasMembers("RichHudSe9", new Vector2(1024f, 1024f));
-					fontAtlases[9] = new AtlasMembers("RichHudSe10", new Vector2(1024f, 1024f));
+                    fontAtlases[10] = new AtlasMembers("RichHudSe1", new Vector2(1024f, 1024f));
+                    fontAtlases[1] = new AtlasMembers("RichHudSe2", new Vector2(1024f, 1024f));
+                    fontAtlases[2] = new AtlasMembers("RichHudSe3", new Vector2(1024f, 1024f));
+                    fontAtlases[3] = new AtlasMembers("RichHudSe4", new Vector2(1024f, 1024f));
+                    fontAtlases[4] = new AtlasMembers("RichHudSe5", new Vector2(1024f, 1024f));
+                    fontAtlases[5] = new AtlasMembers("RichHudSe6", new Vector2(1024f, 1024f));
+                    fontAtlases[6] = new AtlasMembers("RichHudSe7", new Vector2(1024f, 1024f));
+                    fontAtlases[7] = new AtlasMembers("RichHudSe8", new Vector2(1024f, 1024f));
+                    fontAtlases[8] = new AtlasMembers("RichHudSe9", new Vector2(1024f, 1024f));
+                    fontAtlases[9] = new AtlasMembers("RichHudSe10", new Vector2(1024f, 1024f));
 
-					KeyValuePair<char, GlyphMembers>[] glyphs = new KeyValuePair<char, GlyphMembers>[7216]
+					KeyValuePair<char, GlyphMembers>[] glyphs = new KeyValuePair<char, GlyphMembers>[7252]
 					{ 
 						new KeyValuePair<char, GlyphMembers>((char)0x4E00, new GlyphMembers(10, new Vector2(38f, 37f), new Vector2(0f, 3f), 33f, -1f)),
 						new KeyValuePair<char, GlyphMembers>((char)0x4E01, new GlyphMembers(10, new Vector2(38f, 37f), new Vector2(38f, 3f), 33f, -1f)),
@@ -7269,91 +7269,49 @@ namespace RichHudFramework
 						new KeyValuePair<char, GlyphMembers>((char)0x2212, new GlyphMembers(0, new Vector2(34f, 45f), new Vector2(46f, 630f), 18f, -7f)),
 						new KeyValuePair<char, GlyphMembers>((char)0x2219, new GlyphMembers(0, new Vector2(24f, 45f), new Vector2(80f, 630f), 8f, -7f)),
 						new KeyValuePair<char, GlyphMembers>((char)0x25A1, new GlyphMembers(0, new Vector2(37f, 45f), new Vector2(104f, 630f), 21f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE001, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(141f, 630f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE002, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(194f, 630f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE003, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(247f, 630f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE004, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(300f, 630f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE005, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(353f, 630f), 41f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE006, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(406f, 630f), 41f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE007, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(459f, 630f), 32f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE008, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(512f, 630f), 32f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE009, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(565f, 630f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE00A, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(618f, 630f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE00B, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(671f, 630f), 34f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE00C, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(724f, 630f), 34f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE00D, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(777f, 630f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE00E, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(830f, 630f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE00F, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(883f, 630f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE010, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(936f, 630f), 41f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE011, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(0f, 682f), 32f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE012, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(53f, 682f), 41f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE013, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(106f, 682f), 32f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE014, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(159f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE015, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(212f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE016, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(265f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE017, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(318f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE018, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(371f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE019, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(424f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE020, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(477f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE021, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(530f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE022, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(578f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE023, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(621f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE024, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(671f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE025, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(725f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE026, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(778f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE027, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(829f, 682f), 40f, -7f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE030, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(882f, 682f), 50f, -9f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE031, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(935f, 682f), 50f, -9f)),
+						new KeyValuePair<char, GlyphMembers>((char)0xE032, new GlyphMembers(0, new Vector2(53f, 52f), new Vector2(0f, 734f), 50f, -9f)),
 					};
 
-					KeyValuePair<uint, float>[] kerningPairs = new KeyValuePair<uint, float>[78]
+					KeyValuePair<uint, float>[] kerningPairs = new KeyValuePair<uint, float>[0]
 					{
-						new KeyValuePair<uint, float>(70386710, -1f),
-						new KeyValuePair<uint, float>(70648854, -1f),
-						new KeyValuePair<uint, float>(70386762, -2f),
-						new KeyValuePair<uint, float>(70386764, -2f),
-						new KeyValuePair<uint, float>(2884752, -1f),
-						new KeyValuePair<uint, float>(2950288, -1f),
-						new KeyValuePair<uint, float>(3015824, -1f),
-						new KeyValuePair<uint, float>(538576016, -1f),
-						new KeyValuePair<uint, float>(538838160, -1f),
-						new KeyValuePair<uint, float>(539362448, -1f),
-						new KeyValuePair<uint, float>(538117264, -1f),
-						new KeyValuePair<uint, float>(538182800, -1f),
-						new KeyValuePair<uint, float>(23135376, -2f),
-						new KeyValuePair<uint, float>(22217872, -2f),
-						new KeyValuePair<uint, float>(14681232, -2f),
-						new KeyValuePair<uint, float>(14746768, -2f),
-						new KeyValuePair<uint, float>(14812304, -2f),
-						new KeyValuePair<uint, float>(14877840, -2f),
-						new KeyValuePair<uint, float>(14943376, -2f),
-						new KeyValuePair<uint, float>(15008912, -2f),
-						new KeyValuePair<uint, float>(15074448, -2f),
-						new KeyValuePair<uint, float>(15139984, -2f),
-						new KeyValuePair<uint, float>(15205520, -2f),
-						new KeyValuePair<uint, float>(15271056, -2f),
-						new KeyValuePair<uint, float>(15336592, -2f),
-						new KeyValuePair<uint, float>(15402128, -2f),
-						new KeyValuePair<uint, float>(15729808, -2f),
-						new KeyValuePair<uint, float>(15795344, -1f),
-						new KeyValuePair<uint, float>(15860880, -2f),
-						new KeyValuePair<uint, float>(15926416, -2f),
-						new KeyValuePair<uint, float>(15991952, -2f),
-						new KeyValuePair<uint, float>(16057488, -2f),
-						new KeyValuePair<uint, float>(16123024, -2f),
-						new KeyValuePair<uint, float>(16254096, -2f),
-						new KeyValuePair<uint, float>(16319632, -1f),
-						new KeyValuePair<uint, float>(16385168, -1f),
-						new KeyValuePair<uint, float>(16450704, -1f),
-						new KeyValuePair<uint, float>(16516240, -1f),
-						new KeyValuePair<uint, float>(25035920, -1f),
-						new KeyValuePair<uint, float>(16843920, -2f),
-						new KeyValuePair<uint, float>(16974992, -2f),
-						new KeyValuePair<uint, float>(17106064, -2f),
-						new KeyValuePair<uint, float>(17237136, -2f),
-						new KeyValuePair<uint, float>(17368208, -2f),
-						new KeyValuePair<uint, float>(17630352, -2f),
-						new KeyValuePair<uint, float>(17761424, -2f),
-						new KeyValuePair<uint, float>(17892496, -2f),
-						new KeyValuePair<uint, float>(18547856, -2f),
-						new KeyValuePair<uint, float>(18023568, -2f),
-						new KeyValuePair<uint, float>(18154640, -2f),
-						new KeyValuePair<uint, float>(18416784, -2f),
-						new KeyValuePair<uint, float>(18678928, -2f),
-						new KeyValuePair<uint, float>(18810000, -2f),
-						new KeyValuePair<uint, float>(21234832, -1f),
-						new KeyValuePair<uint, float>(21496976, -1f),
-						new KeyValuePair<uint, float>(21824656, -2f),
-						new KeyValuePair<uint, float>(21955728, -2f),
-						new KeyValuePair<uint, float>(22348944, -1f),
-						new KeyValuePair<uint, float>(22611088, -1f),
-						new KeyValuePair<uint, float>(22742160, -2f),
-						new KeyValuePair<uint, float>(22873232, -2f),
-						new KeyValuePair<uint, float>(23004304, -2f),
-						new KeyValuePair<uint, float>(35194000, -2f),
-						new KeyValuePair<uint, float>(23659664, -1f),
-						new KeyValuePair<uint, float>(23790736, -1f),
-						new KeyValuePair<uint, float>(23921808, -1f),
-						new KeyValuePair<uint, float>(24052880, -1f),
-						new KeyValuePair<uint, float>(24315024, -1f),
-						new KeyValuePair<uint, float>(24446096, -1f),
-						new KeyValuePair<uint, float>(24773776, -1f),
-						new KeyValuePair<uint, float>(69600400, -2f),
-						new KeyValuePair<uint, float>(69731472, -2f),
-						new KeyValuePair<uint, float>(69928080, -1f),
-						new KeyValuePair<uint, float>(70124688, -1f),
-						new KeyValuePair<uint, float>(70321296, -2f),
-						new KeyValuePair<uint, float>(70386832, -1f),
-						new KeyValuePair<uint, float>(70648976, -1f),
-						new KeyValuePair<uint, float>(71107728, -2f),
 					};
 
-                    return new FontStyleMembers(0, 37f, 30f, fontAtlases, glyphs, kerningPairs);
+					return new FontStyleMembers(0, 37f, 30f, fontAtlases, glyphs, kerningPairs);
 				}
 			}
 		}

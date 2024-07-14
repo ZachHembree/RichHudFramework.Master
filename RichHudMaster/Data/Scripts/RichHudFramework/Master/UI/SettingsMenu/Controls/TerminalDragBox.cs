@@ -58,8 +58,8 @@ namespace RichHudFramework.UI.Server
             openButton = new BorderedButton()
             {
                 Text = "NewDragBox",
-                DimAlignment = DimAlignments.Width | DimAlignments.IgnorePadding,
-                Size = new Vector2(253f, 50f)
+                DimAlignment = DimAlignments.UnpaddedWidth,
+                Padding = Vector2.Zero
             };
             SetElement(openButton);
 
@@ -129,7 +129,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Customized window with a confirm button used to specify a position on the screen.
         /// </summary>
-        private class DragWindow : WindowBase
+        private class DragWindow : Window
         {
             /// <summary>
             /// Invoked when the window's confirm button is clicked
@@ -199,12 +199,12 @@ namespace RichHudFramework.UI.Server
 
                 if (AlignToEdge)
                 {
-                    if (cachedPosition.X > 0f)
+                    if (Position.X > 0f)
                         alignment.X = Width * .5f;
                     else
                         alignment.X = -Width * .5f;
 
-                    if (cachedPosition.Y > 0f)
+                    if (Position.Y > 0f)
                         alignment.Y = Height * .5f;
                     else
                         alignment.Y = -Height * .5f;

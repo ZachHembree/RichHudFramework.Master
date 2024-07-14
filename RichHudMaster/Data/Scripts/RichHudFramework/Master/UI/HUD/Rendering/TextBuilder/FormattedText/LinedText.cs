@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using RichHudFramework.Internal;
+using System.Collections.Generic;
 using System.Text;
+using System;
 using VRage;
 using VRageMath;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
@@ -12,22 +14,38 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private class LinedText : FormattedTextBase
         {
+            private readonly List<Line> lineBuf;
+
             public LinedText(LinePool lines) : base(lines, true)
-            { }
+            {
+                lineBuf = new List<Line>();
+            }
 
             /// <summary>
             /// Inserts text at a given position in the document.
             /// </summary>
-            /// <param name="start">X = line; Y = ch</param>
-            public override void Insert(IList<RichStringMembers> text, Vector2I start)
+            /// <param name="index">X = line; Y = ch</param>
+            public override void Insert(IList<RichStringMembers> text, Vector2I index)
             {
-                start = ClampIndex(start);
+                index = ClampIndex(index);
                 charBuffer.Clear();
 
-                for (int n = 0; n < text.Count; n++)
-                    GetRichChars(text[n], charBuffer, AllowSpecialChars);
+                // Prepend immediately preceeding text
+                if (lines.Count > 0)
+                    charBuffer.AddRange(lines[index.X], 0, index.Y);
 
-                InsertChars(start);
+                for (int n = 0; n < text.Count; n++)
+                    charBuffer.AppendRichString(text[n], AllowSpecialChars);
+
+                // Append succeeding text
+                if (lines.Count > 0)
+                {
+                    charBuffer.AddRange(lines[index.X], index.Y, lines[index.X].Count - index.Y);
+                    lines.RemoveAt(index.X);
+                }
+
+                GenerateLines();
+                InsertLines(index.X);
             }
 
             /// <summary>
@@ -38,53 +56,38 @@ namespace RichHudFramework.UI.Rendering.Server
                 Insert(new RichStringMembers[] { text }, start);
 
             /// <summary>
-            /// Inserts the contents of the character buffer at the index specified.
+            /// Splits character buffer into multiple lines at line breaks, if any are present
             /// </summary>
-            private void InsertChars(Vector2I splitStart)
+            private void GenerateLines()
             {
-                if (lines.Count > 0)
-                {
-                    for (int y = splitStart.Y; y < lines[splitStart.X].Count; y++)
-                        charBuffer.AddCharFromLine(y, lines[splitStart.X]);
-
-                    lines.RemoveAt(splitStart.X);
-                }
-
-                InsertLines(GetLines(), splitStart.X);
-            }
-
-            /// <summary>
-            /// Generates a list of lines from the contents of the character buffer.
-            /// </summary>
-            private List<Line> GetLines()
-            {
-                Line currentLine = null;
-                List<Line> newLines = new List<Line>();
+                lineBuf.TrimExcess();
+                lineBuf.Clear();
 
                 for (int n = 0; n < charBuffer.Count; n++)
                 {
-                    if (currentLine == null || (charBuffer.Chars[n] == '\n' && currentLine.Count > 0))
-                    {
-                        currentLine = lines.GetNewLine();
-                        newLines.Add(currentLine);
-                    }
+                    int k = n + 1;
 
-                    currentLine.AddCharFromLine(n, charBuffer);
+                    // Find line break
+                    while (k < charBuffer.Count && charBuffer.Chars[k] != '\n')
+                        k++;
+
+                    Line currentLine = lines.GetNewLine();
+                    currentLine.AddRange(charBuffer, n, k - n);
+                    lineBuf.Add(currentLine);
+
+                    n = k - 1;
                 }
-
-                return newLines;
             }
 
             /// <summary>
             /// Inserts new lines at the given index and calculates the size of each line.
             /// </summary>
-            private void InsertLines(List<Line> newLines, int start)
+            private void InsertLines(int start)
             {
-                for (int n = 0; n < newLines.Count; n++)
-                    newLines[n].UpdateSize();
+                for (int n = 0; n < lineBuf.Count; n++)
+                    lineBuf[n].UpdateSize();
 
-                lines.InsertRange(start, newLines);
-                charBuffer.Clear();
+                lines.InsertRange(start, lineBuf);
             }
         }
     }

@@ -26,12 +26,14 @@ namespace RichHudFramework
                     public IReadOnlyList<Line> PooledLines => lines;
 
                     private readonly List<Line> lines;
+                    private readonly Stack<Line> stack;
                     private readonly TextBuilder builder;
 
                     public LinePool(TextBuilder builder)
                     {
                         this.builder = builder;
                         lines = new List<Line>();
+                        stack = new Stack<Line>();
                     }
 
                     /// <summary>
@@ -41,10 +43,10 @@ namespace RichHudFramework
                     {
                         Line line;
 
-                        if (Count < lines.Count)
+                        if (stack.Count > 0)
                         {
-                            int last = lines.Count - 1;
-                            line = lines[last];
+                            line = stack.Pop();
+                            lines.Add(line);
 
                             if (line.Count > 0)
                                 line.Clear();
@@ -58,7 +60,7 @@ namespace RichHudFramework
                             lines.Add(line);
                         }
 
-                        Count++;
+                        Count = lines.Count;
                         return Count - 1;
                     }
 
@@ -66,16 +68,13 @@ namespace RichHudFramework
                     /// Pulls a line out of the pool, if one is available, and returns it. If no pooled lines
                     /// are available, a new line will be created.
                     /// </summary>
-                    public Line GetNewLine(int minCapacity = 6)
+                    public Line GetNewLine(int minCapacity = 0)
                     {
                         Line line;
 
-                        if (Count < lines.Count)
+                        if (stack.Count > 0)
                         {
-                            int last = lines.Count - 1;
-
-                            line = lines[last];
-                            lines.RemoveAt(last);
+                            line = stack.Pop();
 
                             if (line.Count > 0)
                                 line.Clear();
@@ -94,17 +93,8 @@ namespace RichHudFramework
                     /// </summary>
                     public void Add(Line line)
                     {
-                        if (Count < lines.Count)
-                        {
-                            Line pooledLine = lines[Count];
-                            lines[Count] = line;
-
-                            lines.Add(pooledLine);
-                        }
-                        else
-                            lines.Add(line);
-
-                        Count++;
+                        lines.Add(line);
+                        Count = lines.Count;
                     }
 
                     /// <summary>
@@ -112,24 +102,8 @@ namespace RichHudFramework
                     /// </summary>
                     public void Insert(int index, Line line)
                     {
-                        if (index < lines.Count)
-                        {
-                            if (index < Count)
-                            {
-                                lines.Insert(index, line);
-                            }
-                            else
-                            {
-                                Line pooledLine = lines[index];
-                                lines[index] = line;
-
-                                lines.Add(pooledLine);
-                            }                            
-                        }
-                        else
-                            lines.Add(line);
-
-                        Count++;
+                        lines.Insert(index, line);
+                        Count = lines.Count;
                     }
 
                     /// <summary>
@@ -143,6 +117,7 @@ namespace RichHudFramework
                             Add(newLines[n]);
 
                         TrimExcess();
+                        Count = lines.Count;
                     }
 
                     /// <summary>
@@ -151,7 +126,7 @@ namespace RichHudFramework
                     public void InsertRange(int index, IList<Line> newLines)
                     {
                         lines.InsertRange(index, newLines);
-                        Count += newLines.Count;
+                        Count = lines.Count;
 
                         TrimExcess();
                     }
@@ -161,11 +136,9 @@ namespace RichHudFramework
                     /// </summary>
                     public void RemoveAt(int index)
                     {
-                        Line pooledLine = lines[index];
-
+                        stack.Push(lines[index]);
                         lines.RemoveAt(index);
-                        lines.Add(pooledLine);
-                        Count--;
+                        Count = lines.Count;
                     }
 
                     /// <summary>
@@ -173,20 +146,18 @@ namespace RichHudFramework
                     /// </summary>
                     public void RemoveRange(int index, int rangeSize)
                     {
-                        if (index < 0 || rangeSize < 0 || (index + rangeSize) >= lines.Count || lines.Count == 0)
-                            throw new Exception($"Index out of range. Start: {index} Size: {rangeSize} Count: {Count} BufCount: {lines.Count}");
-
-                        // Move everything after the range being removed and move the
-                        // lines being removed to the end of the list.
-                        for (int n = (index + rangeSize); n < Count; n++)
+                        if (rangeSize > 0)
                         {
-                            Line old = lines[n - rangeSize];
+                            // Move everything after the range being removed and move the
+                            // lines being removed to the end of the list.
+                            for (int i = (index + rangeSize - 1); i >= index; i--)
+                            {
+                                stack.Push(lines[i]);
+                            }
 
-                            lines[n - rangeSize] = lines[n];
-                            lines[n] = old;
+                            lines.RemoveRange(index, rangeSize);
+                            Count = lines.Count;
                         }
-
-                        Count -= rangeSize;
                     }
 
                     public void EnsureCapacity(int capacity) =>
@@ -194,7 +165,7 @@ namespace RichHudFramework
 
                     public void TrimExcess()
                     {
-                        if (Count > 10 && lines.Capacity > 5 * Count)
+                        if (lines.Count > 10 && lines.Capacity > 5 * lines.Count)
                             lines.TrimExcess();
                     }
 
@@ -203,7 +174,13 @@ namespace RichHudFramework
                     /// </summary>
                     public void Clear()
                     {
-                        Count = 0;
+                        for (int i = lines.Count - 1; i >= 0; i--)
+                        {
+                            stack.Push(lines[i]);
+                            lines.RemoveAt(i);
+                        }
+
+                        Count = lines.Count;
                     }
 
                     /// <summary>
@@ -246,7 +223,7 @@ namespace RichHudFramework
 
                     private class PooledLine : Line
                     {
-                        public PooledLine(TextBuilder builder, int capacity = 6) : base(builder, 6)
+                        public PooledLine(TextBuilder builder, int capacity = 0) : base(builder, capacity)
                         { }
                     }
                 }

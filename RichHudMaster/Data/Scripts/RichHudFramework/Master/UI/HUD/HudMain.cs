@@ -147,7 +147,7 @@ namespace RichHudFramework
 
                 _root = new HudRoot();
                 _highDpiRoot = new ScaledSpaceNode(_root) { UpdateScaleFunc = () => ResScale };
-                _cursor = new HudCursor(_root);
+                _cursor = new HudCursor();
 
                 UpdateScreenScaling();
                 TreeManager.Init();
@@ -174,16 +174,18 @@ namespace RichHudFramework
             /// </summary>
             public override void Draw()
             {
-                UpdateCache();
-                treeManager.Draw();
+                EnqueueAction(() => 
+                {
+                    UpdateCache();
+                    treeManager.Draw();
+                    drawTick++;
 
-                drawTick++;
+                    if (drawTick == tickResetInterval)
+                        drawTick = 0;
 
-                if (drawTick == tickResetInterval)
-                    drawTick = 0;
-
-                if (SharedBinds.Escape.IsNewPressed)
-                    LoseInputFocusCallback?.Invoke();
+                    if (SharedBinds.Escape.IsNewPressed)
+                        LoseInputFocusCallback?.Invoke();
+                });
             }
 
             public override void HandleInput()
@@ -230,6 +232,37 @@ namespace RichHudFramework
                 };
                 
                 PixelToWorldRef[0] *= MyAPIGateway.Session.Camera.WorldMatrix;
+                Vector2 screenPos;
+
+                if (MyAPIGateway.Input.IsJoystickLastUsed)
+                {
+                    Vector2 halfScreen = 0.5f * new Vector2(ScreenWidth, ScreenHeight);
+                    Vector2 gpDelta = new Vector2
+                    { 
+                        X = SharedBinds.RightStickX.AnalogValue, 
+                        Y = SharedBinds.RightStickY.AnalogValue
+                    } * 10f * ResScale;
+
+                    screenPos = _cursor.ScreenPos + gpDelta;
+                    screenPos = Vector2.Clamp(screenPos, -halfScreen, halfScreen);
+                    screenPos -= new Vector2(-ScreenWidth * .5f, ScreenHeight * .5f);
+                    screenPos.Y *= -1f;
+                }
+                else
+                {
+                    // Reverse scaling due to differences between rendering resolution and
+                    // desktop resolution when running the game in windowed mode
+                    Vector2 desktopSize = MyAPIGateway.Input.GetMouseAreaSize(),
+                        invMousePosScale = new Vector2
+                        {
+                            X = ScreenWidth / desktopSize.X,
+                            Y = ScreenHeight / desktopSize.Y,
+                        };
+
+                    screenPos = MyAPIGateway.Input.GetMousePosition() * invMousePosScale;
+                }
+
+                _cursor.UpdateCursorPos(screenPos, ref PixelToWorldRef[0]);
             }
 
             /// <summary>
@@ -293,7 +326,7 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Converts from a position in absolute screen space coordinates to a position in pixels.
+            /// Converts from a position in normalized screen space coordinates to a position in pixels.
             /// </summary>
             public static Vector2 GetPixelVector(Vector2 scaledVec)
             {
@@ -308,7 +341,7 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Converts from a coordinate given in pixels to a position in absolute units.
+            /// Converts from a coordinate given in pixels to a position in normalized units.
             /// </summary>
             public static Vector2 GetAbsoluteVector(Vector2 pixelVec)
             {
@@ -327,8 +360,6 @@ namespace RichHudFramework
             /// </summary>
             private sealed class HudRoot : HudParentBase, IReadOnlyHudSpaceNode
             {
-                public override bool Visible => true;
-
                 public bool DrawCursorInHudSpace { get; }
 
                 public Vector3 CursorPos { get; private set; }
@@ -354,9 +385,9 @@ namespace RichHudFramework
                     IsInFront = true;
                     IsFacingCamera = true;
 
-                    GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorld);
-                    GetNodeOriginFunc = () => PixelToWorld.Translation;
-                    PlaneToWorldRef = new MatrixD[1];
+                    GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorldRef[0]);
+                    GetNodeOriginFunc = () => PixelToWorldRef[0].Translation;
+                    PlaneToWorldRef = PixelToWorldRef;
                 }
 
                 protected override void Layout()

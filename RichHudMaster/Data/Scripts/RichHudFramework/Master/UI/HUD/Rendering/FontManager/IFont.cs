@@ -43,6 +43,8 @@ namespace RichHudFramework
                 /// </summary>
                 IFontStyle this[int index] { get; }
 
+                IReadOnlyList<IFontStyle> AtlasStyles { get; }
+
                 /// <summary>
                 /// Attempts to add a style to the font using a FontStyleDefinition
                 /// </summary>

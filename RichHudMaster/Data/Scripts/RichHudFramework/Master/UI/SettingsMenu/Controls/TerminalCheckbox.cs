@@ -23,7 +23,7 @@ namespace RichHudFramework.UI.Server
         
         public TerminalCheckbox()
         {
-            checkBox = new NamedCheckBox() { AutoResize = true };
+            checkBox = new NamedCheckBox();
             SetElement(checkBox);
         }
 
