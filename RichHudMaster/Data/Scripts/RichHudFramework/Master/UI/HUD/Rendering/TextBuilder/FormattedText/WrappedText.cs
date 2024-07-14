@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using VRageMath;
-using VRage;
 using System.Text;
+using VRage;
+using VRageMath;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
-using System.Collections;
 
 namespace RichHudFramework.UI.Rendering.Server
 {
@@ -49,7 +48,14 @@ namespace RichHudFramework.UI.Rendering.Server
                 for (int n = 0; n < text.Count; n++)
                     charBuffer.AppendRichString(text[n], AllowSpecialChars);
 
-                InsertChars(insertStart, start);
+                if (lines.Count > 0)
+                {
+                    charBuffer.AddRange(lines[start.X], start.Y, lines[start.X].Count - start.Y);
+                    lines.RemoveRange(insertStart, start.X - insertStart + 1);
+                }
+
+                GenerateLines();
+                InsertLines(insertStart);
             }
 
             /// <summary>
@@ -75,9 +81,10 @@ namespace RichHudFramework.UI.Rendering.Server
             public override void RemoveRange(Vector2I start, Vector2I end)
             {
                 base.RemoveRange(start, end);
+                int index = start.X;
 
-                if (start.X < lines.Count - 1)
-                    TryPullToLine(start.X);
+                while (index < lines.Count - 1 && TryPullToLine(index))
+                    index++;
             }
 
             /// <summary>
@@ -154,22 +161,6 @@ namespace RichHudFramework.UI.Rendering.Server
             }
 
             /// <summary>
-            /// Inserts the contents of the charBuffer starting at the given index and updates wrapping of
-            /// the surrounding text.
-            /// </summary>
-            private void InsertChars(int startLine, Vector2I splitStart)
-            {
-                if (lines.Count > 0)
-                {
-                    charBuffer.AddRange(lines[splitStart.X], splitStart.Y, lines[splitStart.X].Count - splitStart.Y);
-                    lines.RemoveRange(startLine, splitStart.X - startLine + 1);
-                }
-
-                GenerateLines();
-                InsertLines(startLine);
-            }
-
-            /// <summary>
             /// Generates a new list of wrapped <see cref="Line"/>s from the contents of the character buffer.
             /// </summary>
             private void GenerateLines()
@@ -179,13 +170,12 @@ namespace RichHudFramework.UI.Rendering.Server
                 charBuffer.UpdateFormat();
 
                 float wordWidth, spaceRemaining = MaxLineWidth;
-                int wordEnd, lastLineStart, lastLineEnd,
-                    nextLineStart = 0, nextLineEnd = -1;
+                int wordEnd, lineStart = 0, lineEnd = -1;
 
                 for (int wordStart = 0; TryGetWordEnd(wordStart, out wordEnd, out wordWidth); wordStart = wordEnd + 1)
                 {
-                    bool isWrapping = 
-                        (spaceRemaining < wordWidth && wordWidth <= MaxLineWidth) 
+                    bool isWrapping =
+                        (spaceRemaining < wordWidth && wordWidth <= MaxLineWidth)
                         || charBuffer.Chars[wordStart] == '\n';
 
                     for (int n = wordStart; n <= wordEnd; n++)
@@ -193,30 +183,28 @@ namespace RichHudFramework.UI.Rendering.Server
                         // Start new line beginning with the nth character, usually wordStart
                         if (spaceRemaining < charBuffer.FormattedGlyphs[n].chSize.X || isWrapping)
                         {
-                            lastLineStart = nextLineStart;
-                            lastLineEnd = nextLineEnd;
-                            nextLineStart = n;
-
-                            if (lastLineEnd != -1)
+                            // Start new line
+                            if (lineEnd != -1)
                             {
                                 Line lastLine = lines.GetNewLine();
-                                lastLine.AddRange(charBuffer, lastLineStart, lastLineEnd - lastLineStart + 1);
+                                lastLine.AddRange(charBuffer, lineStart, lineEnd - lineStart + 1);
                                 lineBuf.Add(lastLine);
                             }
 
+                            lineStart = n;
                             spaceRemaining = MaxLineWidth;
                             isWrapping = false;
                         }
 
-                        nextLineEnd = n;
+                        lineEnd = n;
                         spaceRemaining -= charBuffer.FormattedGlyphs[n].chSize.X;
-                    }                    
+                    }
                 }
 
-                if (nextLineEnd != -1)
+                if (lineEnd != -1)
                 {
                     Line nextLine = lines.GetNewLine();
-                    nextLine.AddRange(charBuffer, nextLineStart, nextLineEnd - nextLineStart + 1);
+                    nextLine.AddRange(charBuffer, lineStart, lineEnd - lineStart + 1);
                     lineBuf.Add(nextLine);
                 }
             }
@@ -235,8 +223,11 @@ namespace RichHudFramework.UI.Rendering.Server
                 // Pull text from the lines following the insert to maintain proper text wrapping
                 index += Math.Max(lineBuf.Count - 1, 0);
 
+                if (index > 0)
+                    TryPullToLine(index - 1);
+
                 while (index < lines.Count - 1 && TryPullToLine(index))
-                    index++;               
+                    index++;
             }
 
             /// <summary>
@@ -245,18 +236,18 @@ namespace RichHudFramework.UI.Rendering.Server
             private bool TryPullToLine(int line)
             {
                 float spaceRemaining = MaxLineWidth - lines[line].UnscaledSize.X;
-                Vector2I wordStart = new Vector2I(line + 1, 0), 
-                    wordEnd, end = new Vector2I();
+                Vector2I wordStart = new Vector2I(line + 1, 0),
+                    wordEnd, end = Vector2I.Zero;
 
-                while (TryGetWordEnd(wordStart, out wordEnd, ref spaceRemaining) && lines[wordStart.X].Chars[wordStart.Y] != '\n')
+                while (lines[wordStart.X].Chars[wordStart.Y] != '\n' && TryGetWordEnd(wordStart, out wordEnd, ref spaceRemaining))
                 {
                     end = wordEnd;
 
-                    if (wordStart.X == wordEnd.X)
+                    if (wordStart.X == wordEnd.X) // Add one word
                     {
                         lines.PooledLines[line].AddRange(lines.PooledLines[wordStart.X], wordStart.Y, wordEnd.Y - wordStart.Y + 1);
                     }
-                    else // Basically never happens
+                    else // Compact multi-line word
                     {
                         int startCount = lines.PooledLines[wordStart.X].Count - wordStart.Y;
                         lines.PooledLines[line].AddRange(lines.PooledLines[wordStart.X], wordStart.Y, startCount);
@@ -267,25 +258,33 @@ namespace RichHudFramework.UI.Rendering.Server
                         lines.PooledLines[line].AddRange(lines.PooledLines[wordEnd.X], 0, wordEnd.Y + 1);
                     }
 
-                    wordStart = wordEnd;
+                    if (!lines.TryGetNextIndex(wordEnd, out wordStart))
+                        break;
                 }
 
                 if (end.X > line)
                 {
                     if (end.Y < lines[end.X].Count - 1)
                     {
+                        // Remove pulled chars on ending line
                         lines.PooledLines[end.X].RemoveRange(0, end.Y + 1);
                         lines.PooledLines[end.X].UpdateSize();
+                        // Remove intervening emptied lines
                         lines.RemoveRange(line + 1, end.X - line - 1);
                     }
                     else
+                    {
+                        // Remove intervening empty lines
                         lines.RemoveRange(line + 1, end.X - line);
+                    }
 
                     lines.PooledLines[line].UpdateSize();
                     return true;
                 }
                 else
+                {
                     return false;
+                }
             }
 
             /// <summary>
@@ -303,15 +302,17 @@ namespace RichHudFramework.UI.Rendering.Server
                         (left == ' ' || left == '-' || left == '_') &&
                         !(right == ' ' || right == '-' || right == '_');
 
-                    if (!(lines[end.X].Chars[end.Y] == '\n' || isWordBreak))
+                    if (left == '\n' || isWordBreak)
+                    {
+                        return end;
+                    }
+                    else
                     {
                         end = start;
                     }
-                    else
-                        break;
                 }
 
-                return start;
+                return end;
             }
 
             /// <summary>
@@ -321,7 +322,7 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <param name="end">Somewhere to the right of or equal to the start.</param>
             private bool TryGetWordEnd(Vector2I start, out Vector2I end, ref float spaceRemaining)
             {
-                spaceRemaining -= lines[start.X].FormattedGlyphs[start.Y].chSize.X;
+                spaceRemaining -= lines.PooledLines[start.X].FormattedGlyphs[start.Y].chSize.X;
 
                 while (lines.TryGetNextIndex(start, out end) && spaceRemaining > 0f)
                 {
@@ -331,16 +332,18 @@ namespace RichHudFramework.UI.Rendering.Server
                         (left == ' ' || left == '-' || left == '_') &&
                         !(right == ' ' || right == '-' || right == '_');
 
-                    if (!(lines[end.X].Chars[end.Y] == '\n' || isWordBreak))
+                    if (right == '\n' || isWordBreak)
                     {
-                        spaceRemaining -= lines[end.X].FormattedGlyphs[end.Y].chSize.X;
-                        start = end;
+                        end = start;
+                        break;
                     }
                     else
-                        break;
+                    {
+                        spaceRemaining -= lines.PooledLines[end.X].FormattedGlyphs[end.Y].chSize.X;
+                        start = end;
+                    }
                 }
 
-                end = start;
                 return spaceRemaining > 0f;
             }
 
