@@ -81,28 +81,42 @@ namespace RichHudFramework
                     {
                         case RebindPageAccessors.Add:
                             {
-                                if (data is MyTuple<object, BindDefinitionDataOld[]>)
-                                {
-                                    var args = (MyTuple<object, BindDefinitionDataOld[]>)data;
-                                    BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
-
-                                    for (int n = 0; n < defaults.Length; n++)
-                                        defaults[n] = args.Item2[n];
-
-                                    Add(args.Item1 as IBindGroup, defaults);
-                                    break;
-                                }
-                                else
+                                if (data is MyTuple<object, BindDefinitionData[], bool>)
                                 {
                                     var args = (MyTuple<object, BindDefinitionData[], bool>)data;
-                                    BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
+                                    BindDefinition[] defaults = null;
 
-                                    for (int n = 0; n < defaults.Length; n++)
-                                        defaults[n] = (BindDefinition)args.Item2[n];
+                                    if (args.Item2 != null)
+                                    {
+                                        defaults = new BindDefinition[args.Item2.Length];
+
+                                        for (int n = 0; n < defaults.Length; n++)
+                                            defaults[n] = (BindDefinition)args.Item2[n];
+                                    }
 
                                     Add(args.Item1 as IBindGroup, defaults, args.Item3);
-                                    break;
                                 }
+                                else if (data is IBindGroup)
+                                {
+                                    Add(data as IBindGroup);
+                                }
+                                else if (data is MyTuple<object, BindDefinitionDataOld[]>)
+                                {
+                                    var args = (MyTuple<object, BindDefinitionDataOld[]>)data;
+                                    BindDefinition[] defaults = null;
+
+                                    if (args.Item2 != null)
+                                    {
+                                        defaults = new BindDefinition[args.Item2.Length];
+
+                                        for (int n = 0; n < defaults.Length; n++)
+                                            defaults[n] = args.Item2[n];
+                                    }
+
+                                    Add(args.Item1 as IBindGroup, defaults);
+                                }
+
+                                break;
                             }
                     }
 
