@@ -201,9 +201,7 @@ namespace RichHudFramework
                     InputMode = HudInputMode.NoInput;
 
                 if (InputMode == HudInputMode.CursorOnly)
-                    BindManager.BlacklistMode |= SeBlacklistModes.MouseAndCam;
-                else
-                    BindManager.BlacklistMode &= ~SeBlacklistModes.MouseAndCam;
+                    BindManager.RequestTempBlacklist(SeBlacklistModes.MouseAndCam);
 
                 // Reset cursor
                 _cursor.Release();
