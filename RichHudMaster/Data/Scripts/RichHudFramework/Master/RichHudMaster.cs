@@ -19,11 +19,11 @@ namespace RichHudFramework.Server
     using UI.Rendering.Server;
     using UI.Server;
     using ExtendedClientData = MyTuple<ClientData, Action<Action>, ApiMemberAccessor>;
-
+    
     /// <summary>
     /// Main class for Framework API server.
     /// </summary>
-    [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation, 0)]
+    [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
     public sealed partial class RichHudMaster : ModBase
     {
         public const long modID = 1965654081, queueID = 1314086443;
@@ -180,10 +180,13 @@ namespace RichHudFramework.Server
             MasterConfig.Save();
             MasterConfig.ClearSubscribers();
 
-            for (int n = clients.Count - 1; n >= 0; n--)
-                clients[n].Unregister();
+            if (ExceptionHandler.Reloading)
+            {
+                for (int n = clients.Count - 1; n >= 0; n--)
+                    clients[n].Unregister();
 
-            clients.Clear();
+                clients.Clear();
+            }
         }
 
         public override void Close()

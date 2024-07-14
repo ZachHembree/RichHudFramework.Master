@@ -71,12 +71,15 @@ namespace RichHudFramework
                 private readonly List<KeyCombo> keyCombos;
                 private bool wasBindChanged;
 
+                private readonly List<int> conIDbuf;
+
                 public BindGroup(int index, string name)
                 {
                     Name = name;
                     Index = index;
 
                     controls = _instance.controls;
+                    conIDbuf = _instance.conIDbuf;
                     controlComboMap = new List<int>[controls.Length];
 
                     for (int n = 0; n < controlComboMap.Length; n++)
@@ -317,7 +320,7 @@ namespace RichHudFramework
                 /// </summary>
                 public void RegisterBinds(IReadOnlyList<BindDefinitionDataOld> bindData)
                 {
-                    var buf = _instance.conIDbuf;
+                    var buf = conIDbuf;
 
                     foreach (var bind in bindData)
                     {
@@ -340,7 +343,7 @@ namespace RichHudFramework
                 /// </summary>
                 public IBind AddBind(string bindName, IReadOnlyList<string> combo = null)
                 {
-                    var buf = _instance.conIDbuf;
+                    var buf = conIDbuf;
                     GetComboIndices(combo, buf, false);
                     return AddBindInternal(bindName, buf);
                 }
@@ -489,7 +492,7 @@ namespace RichHudFramework
                 /// </summary>
                 private bool TrySetBinds(IReadOnlyList<BindDefinition> bindData)
                 {
-                    var buf = _instance.conIDbuf;
+                    var buf = conIDbuf;
 
                     foreach (BindDefinition bindDef in bindData)
                     {
@@ -720,7 +723,7 @@ namespace RichHudFramework
                 public BindDefinition[] GetBindDefinitions()
                 {
                     BindDefinition[] bindData = new BindDefinition[binds.Count];
-                    var cBuf = _instance.conIDbuf;
+                    var cBuf = conIDbuf;
                     var controls = _instance.controls;
 
                     for (int bindID = 0; bindID < binds.Count; bindID++)
@@ -768,8 +771,7 @@ namespace RichHudFramework
                 public BindDefinitionData[] GetBindData()
                 {
                     BindDefinitionData[] bindData = new BindDefinitionData[binds.Count];
-                    var cBuf = _instance.conIDbuf;
-                    var controls = _instance.controls;
+                    var cBuf = conIDbuf;
 
                     for (int bindID = 0; bindID < binds.Count; bindID++)
                     {
@@ -816,8 +818,7 @@ namespace RichHudFramework
                 public BindDefinitionDataOld[] GetBindDataOld()
                 {
                     BindDefinitionDataOld[] bindData = new BindDefinitionDataOld[binds.Count];
-                    var cBuf = _instance.conIDbuf;
-                    var controls = _instance.controls;
+                    var cBuf = conIDbuf;
 
                     for (int bindID = 0; bindID < binds.Count; bindID++)
                     {
@@ -861,7 +862,7 @@ namespace RichHudFramework
                     else
                         return true;
 
-                    var buf = _instance.conIDbuf;
+                    var buf = conIDbuf;
 
                     if (TryGetBindCombo(buf, bind.Index, alias))
                         return DoesComboConflict(buf, comboID);
@@ -874,7 +875,7 @@ namespace RichHudFramework
                 /// </summary>
                 public bool DoesComboConflict(IReadOnlyList<ControlHandle> controls, IBind bind = null, int alias = 0)
                 {
-                    var buf = _instance.conIDbuf;
+                    var buf = conIDbuf;
                     GetComboIndices(controls, buf);
                     return DoesComboConflict(buf, bind, alias);
                 }
