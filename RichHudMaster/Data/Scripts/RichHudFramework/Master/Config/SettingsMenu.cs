@@ -23,8 +23,7 @@ namespace RichHudFramework.Server
                 new RebindPage()
                 {
                     Name = "Binds",
-                    IsAliased = true,
-                    GroupContainer = { { MasterBinds.BindGroup, BindsConfig.DefaultBinds } }
+                    GroupContainer = { { MasterBinds.BindGroup, BindsConfig.DefaultBinds, true } }
                 },
                 demoCategory,
                 debugCategory

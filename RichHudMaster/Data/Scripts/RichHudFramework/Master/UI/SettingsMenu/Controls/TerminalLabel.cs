@@ -14,7 +14,7 @@ namespace RichHudFramework.UI.Server
     using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
 
     /// <summary>
-    /// Label for use within control tiles and vertical control categories
+    /// Label for use within control tiles and control categories
     /// </summary>
     public class TerminalLabel : TerminalControlBase
     {

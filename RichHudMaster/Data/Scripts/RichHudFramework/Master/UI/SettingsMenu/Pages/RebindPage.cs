@@ -34,8 +34,6 @@ namespace RichHudFramework
             /// </summary>
             public IReadOnlyList<IBindGroup> BindGroups { get; }
 
-            public bool IsAliased { get; set; }
-
             public RebindPage GroupContainer => this;
 
             private readonly BindGroupList bindGroups;
@@ -54,18 +52,18 @@ namespace RichHudFramework
             /// <summary>
             /// Adds the given bind group to the page
             /// </summary>
-            public void Add(IBindGroup bindGroup)
+            public void Add(IBindGroup bindGroup, bool isAliased = false)
             {
-                var bindBox = new BindGroupBox(IsAliased, bindGroup);
+                var bindBox = new BindGroupBox(isAliased, bindGroup);
                 bindGroups.Add(bindBox);
             }
 
             /// <summary>
             /// Adds the given bind group to the page along with its associated default configuration
             /// </summary>
-            public void Add(IBindGroup bindGroup, BindDefinition[] defaultBinds)
+            public void Add(IBindGroup bindGroup, BindDefinition[] defaultBinds, bool isAliased = false)
             {
-                var bindBox = new BindGroupBox(IsAliased, bindGroup, defaultBinds);
+                var bindBox = new BindGroupBox(isAliased, bindGroup, defaultBinds);
                 bindGroups.Add(bindBox);
             }
 
@@ -96,23 +94,13 @@ namespace RichHudFramework
                                 }
                                 else
                                 {
-                                    var args = (MyTuple<object, BindDefinitionData[]>)data;
+                                    var args = (MyTuple<object, BindDefinitionData[], bool>)data;
                                     BindDefinition[] defaults = new BindDefinition[args.Item2.Length];
 
                                     for (int n = 0; n < defaults.Length; n++)
                                         defaults[n] = (BindDefinition)args.Item2[n];
 
-                                    Add(args.Item1 as IBindGroup, defaults);
-                                    break;
-                                }
-                            }
-                        case RebindPageAccessors.GetOrSetIsAliased:
-                            {
-                                if (data == null)
-                                    return IsAliased;
-                                else
-                                {
-                                    IsAliased = (bool)data;
+                                    Add(args.Item1 as IBindGroup, defaults, args.Item3);
                                     break;
                                 }
                             }
