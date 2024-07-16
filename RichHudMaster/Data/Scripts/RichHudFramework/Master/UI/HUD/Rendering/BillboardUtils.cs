@@ -49,7 +49,7 @@ namespace RichHudFramework
                 private static BillBoardUtils instance;
                 private const int statsWindowSize = 240, sampleRateDiv = 5,
                     bufMinResizeThreshold = 4000,
-                    bbUpdateSize = 10;
+                    bbBatchSize = 10;
 
                 private readonly List<MyTriangleBillboard> bbBuf;
                 private readonly List<MyTriangleBillboard>[] bbSwapPools;
@@ -465,7 +465,7 @@ namespace RichHudFramework
                 private void UpdateBllboardTrimming()
                 {
                     int usage99 = GetUsagePercentile(.99f),
-                            alloc01 = GetAllocPercentile(0.01f);
+                        alloc01 = GetAllocPercentile(0.01f);
                     bool trimBillboards = false;
 
                     // 2D Bllboards billboards
@@ -518,14 +518,17 @@ namespace RichHudFramework
                 private void Update3dBillboards()
                 {
                     int count = Math.Min(triangleList.Count, bbPoolBack.Count),
-                        adjCount = MathHelper.CeilToInt(count / (double)bbUpdateSize),
-                        stride = Math.Max(500 / bbUpdateSize, MathHelper.CeilToInt(adjCount / 8d));
+                        batchCount = MathHelper.CeilToInt(count / (double)bbBatchSize),
+                        batchStride = Math.Max(
+                            MathHelper.CeilToInt(500 / (double)bbBatchSize), 
+                            MathHelper.CeilToInt(batchCount / 4d)
+                        );
 
-                    MyAPIGateway.Parallel.For(0, adjCount, i =>
+                    MyAPIGateway.Parallel.For(0, batchCount, i =>
                     {
-                        int strideEnd = Math.Min(count, (i + 1) * bbUpdateSize);
+                        int strideEnd = Math.Min(count, (i + 1) * bbBatchSize);
 
-                        for (int j = i * bbUpdateSize; j < strideEnd; j++)
+                        for (int j = i * bbBatchSize; j < strideEnd; j++)
                         {
                             TriangleBillboardData bbData = triangleList[j];
                             MyTriangleBillboard bb = bbPoolBack[bbData.Item2.X];
@@ -548,20 +551,23 @@ namespace RichHudFramework
                             bb.Position1 = bbData.Item6.Item2;
                             bb.Position2 = bbData.Item6.Item3;
                         }
-                    });
+                    }, batchStride);
                 }
 
                 private void UpdateFlatBillboards()
                 {
                     int count = Math.Min(flatTriangleList.Count, bbPoolBack.Count),
-                        adjCount = MathHelper.CeilToInt(count / (double)bbUpdateSize),
-                        stride = Math.Max(500 / bbUpdateSize, MathHelper.CeilToInt(adjCount / 8d));
+                        batchCount = MathHelper.CeilToInt(count / (double)bbBatchSize),
+                        batchStride = Math.Max(
+                            MathHelper.CeilToInt(500 / (double)bbBatchSize),
+                            MathHelper.CeilToInt(batchCount / 4d)
+                        );
 
-                    MyAPIGateway.Parallel.For(0, adjCount, i =>
+                    MyAPIGateway.Parallel.For(0, batchCount, i =>
                     {
-                        int strideEnd = Math.Min(count, (i + 1) * bbUpdateSize);
+                        int strideEnd = Math.Min(count, (i + 1) * bbBatchSize);
 
-                        for (int j = i * bbUpdateSize; j < strideEnd; j++)
+                        for (int j = i * bbBatchSize; j < strideEnd; j++)
                         {
                             FlatTriangleBillboardData bbData = flatTriangleList[j];
                             Triangle planePos = new Triangle { Point0 = bbData.Item6.Item1, Point1 = bbData.Item6.Item2, Point2 = bbData.Item6.Item3 },
@@ -626,7 +632,7 @@ namespace RichHudFramework
                             bb.Material = bbData.Item3;
                             bb.Color = bbData.Item4.Item1;
                         }
-                    }, stride);
+                    }, batchStride);
                 }
 
             }
