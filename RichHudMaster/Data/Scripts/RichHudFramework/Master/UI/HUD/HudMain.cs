@@ -261,6 +261,7 @@ namespace RichHudFramework
                 }
 
                 _cursor.UpdateCursorPos(screenPos, ref PixelToWorldRef[0]);
+                _cursor.Visible = _cursor.DrawCursor && !MyAPIGateway.Gui.IsCursorVisible;
             }
 
             /// <summary>

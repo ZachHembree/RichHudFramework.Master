@@ -1,4 +1,4 @@
-﻿using Sandbox.ModAPI;
+using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using VRage;
@@ -330,7 +330,6 @@ namespace RichHudFramework
                         Z = (float)Math.Round(Vector3D.DistanceSquared(worldPos, cursorLine.From), 6)
                     };
 
-                    cursorBox.Visible = DrawCursor && !MyAPIGateway.Gui.IsCursorVisible;
                     cursorBox.Offset = new Vector2(CursorPos.X, CursorPos.Y);
                     UpdateToolTip(boundTooltips, tooltipScale);
                 }
