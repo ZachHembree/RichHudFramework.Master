@@ -168,7 +168,7 @@ namespace RichHudFramework
                 /// Returns true if the given HUD space is being captured by the cursor
                 /// </summary>
                 public bool IsCapturingSpace(HudSpaceDelegate GetHudSpaceFunc) =>
-                    (State & NodeVisibleMask) == NodeVisibleMask && GetCapturedHudSpaceFunc == GetHudSpaceFunc;
+                    (HudMain.InputMode != HudInputMode.NoInput) && GetCapturedHudSpaceFunc == GetHudSpaceFunc;
 
                 /// <summary>
                 /// Attempts to capture the cursor at the given depth with the given HUD space. If drawInHudSpace
@@ -198,7 +198,7 @@ namespace RichHudFramework
                 /// Indicates whether the cursor is being captured by the given element.
                 /// </summary>
                 public bool IsCapturing(ApiMemberAccessor capturedElement) =>
-                    (State & NodeVisibleMask) == NodeVisibleMask && capturedElement == CapturedElement;
+                    (HudMain.InputMode != HudInputMode.NoInput) && capturedElement == CapturedElement;
 
                 /// <summary>
                 /// Attempts to capture the cursor with the given object
@@ -269,6 +269,8 @@ namespace RichHudFramework
                     IsCaptured = false;
                     captureDepth = 0f;
                     GetCapturedHudSpaceFunc = null;
+                    IsToolTipRegistered = false;
+                    GetToolTipFunc = null;
                 }
 
                 public void UpdateCursorPos(Vector2 screenPos, ref MatrixD ptw)
@@ -288,9 +290,11 @@ namespace RichHudFramework
 
                     WorldPos = worldPos;
                     ScreenPos = screenPos;
+
+                    UpdateLocalPos();
                 }
 
-                protected override void Layout()
+                private void UpdateLocalPos()
                 {
                     // Update custom hud space and tooltips
                     HudSpaceData? hudSpaceData = GetCapturedHudSpaceFunc?.Invoke();
@@ -332,12 +336,6 @@ namespace RichHudFramework
 
                     cursorBox.Offset = new Vector2(CursorPos.X, CursorPos.Y);
                     UpdateToolTip(boundTooltips, tooltipScale);
-                }
-
-                protected override void HandleInput(Vector2 cursorPos)
-                {
-                    IsToolTipRegistered = false;
-                    GetToolTipFunc = null;
                 }
 
                 private void UpdateToolTip(bool boundTooltip, float scale)
