@@ -104,7 +104,7 @@ namespace RichHudFramework
                     scaleBar = new NamedSliderBox() { Name = "Scale", Padding = new Vector2(40f, 0f), Min = 0.01f, Max = 2f };
                     xPosBar = new NamedSliderBox() { Name = "PosX", Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f };
                     yPosBar = new NamedSliderBox() { Name = "PosY", Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f };
-                    zPosBar = new NamedSliderBox() { Name = "PosZ", Padding = new Vector2(40f, 0f), Min = -2f, Max = 0f };
+                    zPosBar = new NamedSliderBox() { Name = "PosZ", Padding = new Vector2(40f, 0f), Min = -.2f * 1E3f, Max = -.05f * 1E3f };
 
                     transformCol2 = new HudChain(true)
                     {
@@ -162,7 +162,7 @@ namespace RichHudFramework
                         node.RotationAngle = angleBar.Current;
 
                         // Translation
-                        node.TransformOffset = new Vector3D(xPosBar.Current, yPosBar.Current, zPosBar.Current);
+                        node.TransformOffset = new Vector3D(xPosBar.Current, yPosBar.Current, zPosBar.Current * 1E-3f);
                     }
 
                     if (screenSpaceToggle.MouseInput.IsMousedOver)
@@ -196,7 +196,7 @@ namespace RichHudFramework
                     }
                     if (zPosBar.IsMousedOver)
                     {
-                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in meters. Z-direction");
+                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in millimeters. Z-direction");
                     }
                 }
 
@@ -213,9 +213,9 @@ namespace RichHudFramework
 
                     // Update col 2 slider value text
                     scaleBar.ValueText = $"{scaleBar.Current:G5}";
-                    xPosBar.ValueText = $"{xPosBar.Current:G5}";
-                    yPosBar.ValueText = $"{yPosBar.Current:G5}";
-                    zPosBar.ValueText = $"{zPosBar.Current:G5}";
+                    xPosBar.ValueText = $"{xPosBar.Current:G5}m";
+                    yPosBar.ValueText = $"{yPosBar.Current:G5}m";
+                    zPosBar.ValueText = $"{zPosBar.Current:G5}mm";
                 }
 
                 /// <summary>
@@ -261,7 +261,7 @@ namespace RichHudFramework
                         // Translation
                         xPosBar.Current = (float)node.TransformOffset.X;
                         yPosBar.Current = (float)node.TransformOffset.Y;
-                        zPosBar.Current = (float)node.TransformOffset.Z;
+                        zPosBar.Current = (float)node.TransformOffset.Z * 1E3f;
                     }
                 }
 
