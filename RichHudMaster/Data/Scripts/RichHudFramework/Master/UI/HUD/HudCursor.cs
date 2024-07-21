@@ -290,11 +290,9 @@ namespace RichHudFramework
 
                     WorldPos = worldPos;
                     ScreenPos = screenPos;
-
-                    UpdateLocalPos();
                 }
 
-                private void UpdateLocalPos()
+                protected override void Layout()
                 {
                     // Update custom hud space and tooltips
                     HudSpaceData? hudSpaceData = GetCapturedHudSpaceFunc?.Invoke();
