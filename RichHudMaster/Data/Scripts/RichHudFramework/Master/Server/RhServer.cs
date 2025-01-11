@@ -226,9 +226,6 @@ namespace RichHudFramework.Server
         /// </summary>
         private void ProcessMessagesFromClient()
         {
-            // Used for tracking current client reply list
-            ulong? currentClient = null;
-
             foreach (var message in receivedClientMessages)
             {
                 var actionID = (ServerActions)message.Item2.actionID;

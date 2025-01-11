@@ -310,7 +310,7 @@ namespace RichHudFramework
 
                     if (useScreenSpace)
                     {
-                        PlaneToWorldRef[0] = HighDpiRoot.HudSpace.PlaneToWorldRef[0];
+                        PlaneToWorldRef[0] = Root.HudSpace.PlaneToWorldRef[0];
                         boundTooltips = true;
                         tooltipScale = ResScale;
                     }
@@ -333,6 +333,8 @@ namespace RichHudFramework
                     };
 
                     cursorBox.Offset = new Vector2(CursorPos.X, CursorPos.Y);
+                    cursorBox.Visible = DrawCursor && !MyAPIGateway.Gui.IsCursorVisible;
+
                     UpdateToolTip(boundTooltips, tooltipScale);
                 }
 
@@ -348,6 +350,7 @@ namespace RichHudFramework
                         {
                             toolTip.Visible = true;
                             toolTip.Format = ToolTip.DefaultText;
+                            toolTip.TextBoard.Scale = scale;
                             toolTip.TextBoard.SetText(data.Item1);
 
                             if (data.Item2 != null)
@@ -371,7 +374,7 @@ namespace RichHudFramework
 
                         if (boundTooltip)
                         {
-                            Vector2 halfScreenSize = new Vector2(ScreenWidth, ScreenHeight) * .5f / scale;
+                            Vector2 halfScreenSize = new Vector2(ScreenWidth, ScreenHeight) * .5f;
                             BoundingBox2 screenBox = new BoundingBox2(-halfScreenSize, halfScreenSize),
                                 offsetBox = new BoundingBox2(cursorPos - halfScreenSize, cursorPos + halfScreenSize);
 
