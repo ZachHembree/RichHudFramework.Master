@@ -74,7 +74,8 @@ namespace RichHudFramework
 
                 private readonly List<HudUpdateAccessors> updateAccessors;
                 private readonly Dictionary<Func<Vector3D>, ushort> distMap;
-                private readonly HashSet<Func<Vector3D>> uniqueOriginFuncs;
+                private readonly HashSet<Func<Vector3D>> originFuncSet;
+                private readonly List<Func<Vector3D>> originFunctions;
                 private readonly List<ulong> indexBuffer;
 
                 private List<Action> depthTestActions, depthTestActionBuffer;
@@ -101,7 +102,8 @@ namespace RichHudFramework
 
                     updateAccessors = new List<HudUpdateAccessors>(200);
                     distMap = new Dictionary<Func<Vector3D>, ushort>(50);
-                    uniqueOriginFuncs = new HashSet<Func<Vector3D>>();
+                    originFuncSet = new HashSet<Func<Vector3D>>();
+                    originFunctions = new List<Func<Vector3D>>();
                     indexBuffer = new List<ulong>(200);
 
                     depthTestActions = new List<Action>(200);
@@ -346,7 +348,7 @@ namespace RichHudFramework
                 {
                     // Clear update lists and rebuild accessor lists from HUD tree
                     updateAccessors.Clear();
-                    uniqueOriginFuncs.Clear();
+                    originFuncSet.Clear();
 
                     // Add client UI elements
                     for (int n = 0; n < clients.Count; n++)
@@ -360,7 +362,10 @@ namespace RichHudFramework
 
                     // Build distance func HashSet
                     for (int n = 0; n < updateAccessors.Count; n++)
-                        uniqueOriginFuncs.Add(updateAccessors[n].Item2.Item2);                    
+                        originFuncSet.Add(updateAccessors[n].Item2.Item2);
+
+                    originFunctions.Clear();
+                    originFunctions.AddRange(originFuncSet);
                 }
 
                 /// <summary>
@@ -368,15 +373,46 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateDistMap()
                 {
-                    distMap.Clear();
+                    indexBuffer.Clear();
                     Vector3D camPos = PixelToWorldRef[0].Translation;
 
-                    foreach (Func<Vector3D> OriginFunc in uniqueOriginFuncs)
+                    for (int i = 0; i < originFunctions.Count; i++)
                     {
+                        Func<Vector3D> OriginFunc = originFunctions[i];
                         Vector3D nodeOrigin = OriginFunc();
-                        double dist = Math.Round(Vector3D.Distance(nodeOrigin, camPos), 2);
-                        var reverseDist = (ushort)(ushort.MaxValue - (ushort)Math.Min(dist * 100d, ushort.MaxValue));
-                        distMap.Add(OriginFunc, reverseDist);
+                        double dist = Math.Round(Vector3D.Distance(nodeOrigin, camPos), 6);
+                        ulong index = (ulong)i,
+                            // 32-bit converters unavailable
+                            distBits = (ulong)BitConverter.DoubleToInt64Bits(dist),
+                            // Extract 11-bit exponent and clamp to 8-bits
+                            exponent = (ulong)MathHelper.Clamp((int)(distBits >> 52) - 1023, -126, 127) + 127,
+                            // Extract and truncate 52-bit mantissa
+                            mantissa = (distBits & 0xFFFFFFFFFFFFF) >> (52 - 23);
+
+                        // Reconstitute and encode fp32 distance in sort buffer
+                        distBits = ((exponent << 23) | mantissa);
+                        indexBuffer.Add((distBits << 32) | index);
+                    }
+
+                    indexBuffer.Sort();
+                    distMap.Clear();
+
+                    int distID = ushort.MaxValue;
+                    uint lastDist = 0;
+
+                    for (int i = 0; i < indexBuffer.Count; i++)
+                    {
+                        ulong data = indexBuffer[i];
+                        int index = (int)data;
+                        uint dist = (uint)(data >> 32);
+
+                        if (dist > lastDist && distID > 0)
+                        {
+                            distID--;
+                            lastDist = dist;
+                        }
+
+                        distMap.Add(originFunctions[index], (ushort)distID);
                     }
 
                     HudSpacesRegistered = distMap.Count;
@@ -432,13 +468,10 @@ namespace RichHudFramework
                 /// </summary>
                 private void BuildSortedUpdateLists()
                 {
-                    // Lower 32 bits store the index, upper 32 store draw depth and distance
-                    ulong indexMask = 0x00000000FFFFFFFF;
-
                     // Build sorted depth test list
                     for (int n = 0; n < indexBuffer.Count; n++)
                     {
-                        int index = (int)(indexBuffer[n] & indexMask);
+                        int index = (int)indexBuffer[n];
                         HudUpdateAccessors accessors = updateAccessors[index];
 
                         depthTestActionBuffer.Add(accessors.Item3);
@@ -447,7 +480,7 @@ namespace RichHudFramework
                     // Build sorted input list
                     for (int n = 0; n < indexBuffer.Count; n++)
                     {
-                        int index = (int)(indexBuffer[n] & indexMask);
+                        int index = (int)indexBuffer[n];
                         HudUpdateAccessors accessors = updateAccessors[index];
 
                         inputActionBuffer.Add(accessors.Item4);
@@ -456,7 +489,7 @@ namespace RichHudFramework
                     // Build sorted draw list
                     for (int n = 0; n < indexBuffer.Count; n++)
                     {
-                        int index = (int)(indexBuffer[n] & indexMask);
+                        int index = (int)indexBuffer[n];
                         HudUpdateAccessors accessors = updateAccessors[index];
 
                         drawActionBuffer.Add(accessors.Item6);
