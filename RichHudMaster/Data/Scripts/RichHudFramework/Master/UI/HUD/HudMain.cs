@@ -213,11 +213,8 @@ namespace RichHudFramework
             /// </summary>
             private void UpdateCache()
             {
-                if (drawTick % 60 == 0)
-                {
-                    UpdateScreenScaling();
-                    UiBkOpacity = MyAPIGateway.Session.Config.UIBkOpacity;
-                }
+                UpdateScreenScaling();
+                UiBkOpacity = MyAPIGateway.Session.Config.UIBkOpacity;
 
                 // Update screen to world matrix transform
                 PixelToWorldRef[0] = new MatrixD
