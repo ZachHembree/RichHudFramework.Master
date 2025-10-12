@@ -61,6 +61,56 @@ namespace RichHudFramework.Server
                 Format = new GlyphFormat(new Color(255, 191, 0))
             };
 
+            // Text cache diagnostics
+            var bbCacheControl = new TerminalCheckbox()
+            {
+                Name = "Billboard Cache",
+                Value = TextDiagnostics.Instance.BBCacheEnabled,
+                ControlChangedHandler = (obj, args) =>
+                {
+                    var element = obj as TerminalCheckbox;
+                    TextDiagnostics.Instance.BBCacheEnabled = element.Value;
+                },
+                ToolTip = "Controls caching of finalized billboard data used for text rendering.\n" +
+                    "Requires typesetting, glyph and text caches."
+            };
+            var typeCacheControl = new TerminalCheckbox()
+            {
+                Name = "Typesetting Cache",
+                Value = TextDiagnostics.Instance.TypesettingCacheEnabled,
+                ControlChangedHandler = (obj, args) =>
+                {
+                    var element = obj as TerminalCheckbox;
+                    TextDiagnostics.Instance.TypesettingCacheEnabled = element.Value;
+                },
+                ToolTip = "Controls caching for character placement within a UI element.\n" +
+                    "Requires glyph and text caches."
+            };
+            var glyphCacheControl = new TerminalCheckbox()
+            {
+                Name = "Glyph Cache",
+                Value = TextDiagnostics.Instance.GlyphCacheEnabled,
+                ControlChangedHandler = (obj, args) =>
+                {
+                    var element = obj as TerminalCheckbox;
+                    TextDiagnostics.Instance.GlyphCacheEnabled = element.Value;
+                },
+                ToolTip = "Controls caching of text font data.\n" +
+                    "Requires text cache."
+            };
+            var textCacheControl = new TerminalCheckbox()
+            {
+                Name = "Text Cache",
+                Value = TextDiagnostics.Instance.LineTextCacheEnabled,
+                ControlChangedHandler = (obj, args) =>
+                {
+                    var element = obj as TerminalCheckbox;
+                    TextDiagnostics.Instance.LineTextCacheEnabled = element.Value;
+                },
+                ToolTip = "Controls all text-related caching.\n" +
+                    "Required by glyph, typesetting and billboard caches."
+            };
+            
             debugCategory = new TerminalPageCategory()
             {
                 Name = "Debug",
@@ -103,6 +153,14 @@ namespace RichHudFramework.Server
                                             }
                                         }
                                     },
+                                    // Text cache diagnostic controls
+                                    new ControlTile()
+                                    {
+                                        textCacheControl,
+                                        glyphCacheControl,
+                                        typeCacheControl,
+                                        bbCacheControl
+                                    }
                                 }
                             }
                         }
@@ -195,6 +253,28 @@ namespace RichHudFramework.Server
                 if (statsText.Element.Visible)
                 {
                     var cursor = HudMain.Cursor as HudMain.HudCursor;
+
+                    statsBuilder.Append($"\t\tText Caching\n");
+                    AddGrid(statsBuilder, new string[,]
+                    {
+                        { "Cache", "Enabled", "Hit Pct" },
+                        { "Text",
+                            $"{TextDiagnostics.Instance.LineTextCacheEnabled}",
+                            $"{TextDiagnostics.GetTextHitPercent():F2}%"
+                        },
+                        { "Glyphs",
+                            $"{TextDiagnostics.Instance.GlyphCacheEnabled}",
+                            $"{TextDiagnostics.GetGlyphHitPercent():F2}%"
+                        },
+                        { "Typesetting",
+                            $"{TextDiagnostics.Instance.TypesettingCacheEnabled}",
+                            $"{TextDiagnostics.GetTypesettingHitPercent():F2}%"
+                        },
+                        { "Billboards",
+                            $"{TextDiagnostics.Instance.BBCacheEnabled}",
+                            $"{TextDiagnostics.GetBBHitPercent():F2}%"
+                        },
+                    }, 3, 4);
 
                     statsBuilder.Append($"\n\tCursor:\n");
                     statsBuilder.Append($"\t\tVisible: {cursor.Visible}\n");

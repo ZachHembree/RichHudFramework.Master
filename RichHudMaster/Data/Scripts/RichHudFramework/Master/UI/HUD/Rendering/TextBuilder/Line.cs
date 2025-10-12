@@ -1,3 +1,4 @@
+using RichHudFramework.UI.Server;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -101,7 +102,11 @@ namespace RichHudFramework
                     /// </summary>
                     private bool canTextBeEqual;
 
-                    public bool isFormatStale;
+                    /// <summary>
+                    /// Set true if a formatting change was made that requires looking up glyph information 
+                    /// in the font tables
+                    /// </summary>
+                    private bool isFormatStale;
 
                     /// <summary>
                     /// True if text size has changed since the last time the size was calculated
@@ -240,6 +245,10 @@ namespace RichHudFramework
                         if (Count == chars.Length)
                             SetCapacity(Count + 1);
 
+                        // DIAGNOSTICS
+                        if (!TextDiagnostics.Instance.LineTextCacheEnabled)
+                            canTextBeEqual = false;
+
                         if (canTextBeEqual)
                         {
                             if (chars[Count] == line.chars[index])
@@ -265,6 +274,15 @@ namespace RichHudFramework
                             isFormatStale = true;
                         }
 
+                        // DIAGNOSTICS
+                        if (TextDiagnostics.Instance.LineTextCacheEnabled)
+                        {
+                            if (canTextBeEqual)
+                                TextDiagnostics.Instance.LineTextCacheHits++;
+                            else
+                                TextDiagnostics.Instance.LineTextCacheMisses++;
+                        }
+
                         Count++;
                         isSizeStale = true;
                     }
@@ -285,6 +303,10 @@ namespace RichHudFramework
 
                         if (text.Length > 0)
                         {
+                            // DIAGNOSTICS
+                            if (!TextDiagnostics.Instance.LineTextCacheEnabled)
+                                canTextBeEqual = false;
+
                             int newCount = text.Length + Count;
 
                             if (newCount > chars.Length)
@@ -328,6 +350,15 @@ namespace RichHudFramework
                             }
 
                             isSizeStale = true;
+
+                            // DIAGNOSTICS
+                            if (TextDiagnostics.Instance.LineTextCacheEnabled)
+                            {
+                                if (canTextBeEqual)
+                                    TextDiagnostics.Instance.LineTextCacheHits += (ulong)text.Length;
+                                else
+                                    TextDiagnostics.Instance.LineTextCacheMisses += (ulong)text.Length;
+                            }
                         }
                     }
 
@@ -348,6 +379,10 @@ namespace RichHudFramework
 
                         if (srcCount > 0)
                         {
+                            // DIAGNOSTICS
+                            if (!TextDiagnostics.Instance.LineTextCacheEnabled)
+                                canTextBeEqual = false;
+
                             int newCount = srcCount + Count;
 
                             if (newCount > chars.Length)
@@ -416,6 +451,15 @@ namespace RichHudFramework
                                 isFormatStale = true;
                             }
 
+                            // DIAGNOSTICS
+                            if (TextDiagnostics.Instance.LineTextCacheEnabled)
+                            {
+                                if (canTextBeEqual)
+                                    TextDiagnostics.Instance.LineTextCacheHits += (ulong)srcCount;
+                                else
+                                    TextDiagnostics.Instance.LineTextCacheMisses += (ulong)srcCount;
+                            }
+
                             Count = newCount;
                             isSizeStale = true;
                         }
@@ -441,7 +485,7 @@ namespace RichHudFramework
 
                             if (Count == 0)
                             {
-                                if (!canTextBeEqual)
+                                if (!canTextBeEqual || !TextDiagnostics.Instance.LineTextCacheEnabled)
                                     isQuadCacheStale = true;
 
                                 canTextBeEqual = true;
@@ -456,7 +500,7 @@ namespace RichHudFramework
                     /// </summary>
                     public void Clear()
                     {
-                        if (!canTextBeEqual)
+                        if (!canTextBeEqual || !TextDiagnostics.Instance.LineTextCacheEnabled)
                             isQuadCacheStale = true;
 
                         isSizeStale = true;
@@ -505,13 +549,16 @@ namespace RichHudFramework
 
                     public void RestartTextUpdate()
                     {
+                        if (!TextDiagnostics.Instance.LineTextCacheEnabled)
+                            canTextBeEqual = false;
+
                         if (isFormatStale)
                             UpdateFormat();
 
                         if (isSizeStale)
                             UpdateSize();
 
-                        if (!canTextBeEqual || Count != lastCount)
+                        if (!canTextBeEqual || Count != lastCount || !TextDiagnostics.Instance.GlyphCacheEnabled)
                             isQuadCacheStale = true;
 
                         canTextBeEqual = true;
@@ -605,10 +652,13 @@ namespace RichHudFramework
                             }
 
                             if (glyphBoards.Count > 20 && glyphBoards.Capacity > 5 * glyphBoards.Count)
-                            {
                                 glyphBoards.TrimExcess();
-                            }
+
+                            if (TextDiagnostics.Instance.GlyphCacheEnabled)
+                                TextDiagnostics.Instance.GlyphCacheMisses += (ulong)glyphBoards.Count;
                         }
+                        else
+                            TextDiagnostics.Instance.GlyphCacheHits += (ulong)glyphBoards.Count;
                     }
                 }
             }

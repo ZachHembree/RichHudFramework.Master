@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
@@ -341,6 +341,15 @@ namespace RichHudFramework
                     // If it's not visible, dont bother
                     if (containment != ContainmentType.Disjoint)
                     {
+                        if (!TextDiagnostics.Instance.BBCacheEnabled)
+                            isBbCacheStale = true;
+
+                        if (!TextDiagnostics.Instance.TypesettingCacheEnabled)
+                        {
+                            areOffsetsStale = true;
+                            isLineRangeStale = true;
+                        }
+
                         if (AutoResize)
                             _textOffset = Vector2.Zero;                        
 
@@ -361,6 +370,8 @@ namespace RichHudFramework
                         // Update bb data cache
                         if (isBbCacheStale)
                             UpdateBbCache(box, mask);
+                        else
+                            TextDiagnostics.Instance.BBCacheHits += (ulong)bbCache.Count;
 
                         // Draw text from cached bb data
                         BillBoardUtils.AddTriangleData(bbCache, matrixRef);
@@ -393,6 +404,9 @@ namespace RichHudFramework
                         bbCache.TrimExcess();
 
                     isBbCacheStale = false;
+
+                    if (TextDiagnostics.Instance.BBCacheEnabled)
+                        TextDiagnostics.Instance.BBCacheMisses += (ulong)bbCache.Count;
                 }
 
                 /// <summary>
@@ -561,15 +575,21 @@ namespace RichHudFramework
                             // If the textboard is resized, the entire visible range has to
                             // be recalculated.
                             if (areOffsetsStale || line.isQuadCacheStale)
+                            {
                                 UpdateLineOffsets(line);
+
+                                if (TextDiagnostics.Instance.TypesettingCacheEnabled)
+                                    TextDiagnostics.Instance.TypesettingMisses += (ulong)line.Count;
+                            }
+                            else if (TextDiagnostics.Instance.TypesettingCacheEnabled)
+                                TextDiagnostics.Instance.TypesettingHits += (ulong)line.Count;
 
                             line.isQuadCacheStale = false;
                         }
 
                         // Underlines are only generated for the range of lines currently visible.
                         // If that range changes, they need to be regenerated.
-                        if (isBbCacheStale || isLineRangeStale)
-                            UpdateUnderlines();
+                        UpdateUnderlines();
                     }
                 }
 
