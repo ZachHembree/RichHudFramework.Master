@@ -303,10 +303,6 @@ namespace RichHudFramework
 
                         if (text.Length > 0)
                         {
-                            // DIAGNOSTICS
-                            if (!TextDiagnostics.LineTextCache.Enabled)
-                                canTextBeEqual = false;
-
                             int newCount = text.Length + Count;
 
                             if (newCount > chars.Length)
@@ -350,15 +346,6 @@ namespace RichHudFramework
                             }
 
                             isSizeStale = true;
-
-                            // DIAGNOSTICS
-                            if (TextDiagnostics.LineTextCache.Enabled)
-                            {
-                                if (canTextBeEqual)
-                                    TextDiagnostics.LineTextCache.Hits += (ulong)text.Length;
-                                else
-                                    TextDiagnostics.LineTextCache.Misses += (ulong)text.Length;
-                            }
                         }
                     }
 
