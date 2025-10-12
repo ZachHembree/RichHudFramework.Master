@@ -13,18 +13,22 @@ namespace RichHudFramework.Server
     using UI.Rendering.Server;
     using UI.Server;
 
+    /// <summary>
+    /// Manages debug information display and configuration for the Rich HUD Framework.
+    /// </summary>
     public sealed class RichHudDebug : RichHudComponentBase
     {
         public static bool EnableDebug { get; set; }
 
         private static RichHudDebug instance;
-        private readonly TerminalPageCategory debugCategory;
-        private readonly TextPage statsText;
-        private readonly StringBuilder statsBuilder;
-
         private readonly Stopwatch updateTimer;
-        private readonly UpdateStats stats;
+        private readonly UpdateStats updateStats;
+
+        private readonly TextPage statisticsPage;
+        private readonly TerminalPageCategory debugCategory;
+
         private readonly TextBoard overlay;
+        private readonly StringBuilder statsBuilder;
         private bool enableOverlay;
         private Vector2 overlayPos;
 
@@ -35,23 +39,19 @@ namespace RichHudFramework.Server
             else
                 throw new Exception($"Only one instance of {GetType().Name} can exist at any given time.");
 
-            statsText = new TextPage()
+            EnableDebug = false;
+            updateStats = new UpdateStats();
+            updateTimer = new Stopwatch();
+            updateTimer.Start();
+
+            statisticsPage = new TextPage()
             {
                 Name = "Statistics",
                 HeaderText = "Debug Statistics",
                 SubHeaderText = "Update Times and API Usage",
             };
-
-            statsText.TextBuilder.BuilderMode = TextBuilderModes.Lined;
-            statsBuilder = new StringBuilder();
-            updateTimer = new Stopwatch();
-            updateTimer.Start();
-
-            stats = new UpdateStats();
-
-            overlayPos = new Vector2(0.5f, 0.5f);
-            enableOverlay = false;
-            EnableDebug = false;
+            statisticsPage.TextBuilder.BuilderMode = TextBuilderModes.Lined;
+            debugCategory = CreateDebugCategory();
 
             overlay = new TextBoard()
             {
@@ -60,113 +60,9 @@ namespace RichHudFramework.Server
                 Scale = 0.8f,
                 Format = new GlyphFormat(new Color(255, 191, 0))
             };
-
-            // Text cache diagnostics
-            var bbCacheControl = new TerminalCheckbox()
-            {
-                Name = "Billboard Cache",
-                Value = TextDiagnostics.BBCache.Enabled,
-                ControlChangedHandler = (obj, args) =>
-                {
-                    var element = obj as TerminalCheckbox;
-                    TextDiagnostics.BBCache.Enabled = element.Value;
-                },
-                ToolTip = "Controls caching of finalized billboard data used for text rendering.\n" +
-                    "Requires typesetting, glyph and text caches."
-            };
-            var typeCacheControl = new TerminalCheckbox()
-            {
-                Name = "Typesetting Cache",
-                Value = TextDiagnostics.TypesettingCache.Enabled,
-                ControlChangedHandler = (obj, args) =>
-                {
-                    var element = obj as TerminalCheckbox;
-                    TextDiagnostics.TypesettingCache.Enabled = element.Value;
-                },
-                ToolTip = "Controls caching for character placement within a UI element.\n" +
-                    "Requires glyph and text caches."
-            };
-            var glyphCacheControl = new TerminalCheckbox()
-            {
-                Name = "Glyph Cache",
-                Value = TextDiagnostics.GlyphCache.Enabled,
-                ControlChangedHandler = (obj, args) =>
-                {
-                    var element = obj as TerminalCheckbox;
-                    TextDiagnostics.GlyphCache.Enabled = element.Value;
-                },
-                ToolTip = "Controls caching of text font data.\n" +
-                    "Requires text cache."
-            };
-            var textCacheControl = new TerminalCheckbox()
-            {
-                Name = "Text Cache",
-                Value = TextDiagnostics.LineTextCache.Enabled,
-                ControlChangedHandler = (obj, args) =>
-                {
-                    var element = obj as TerminalCheckbox;
-                    TextDiagnostics.LineTextCache.Enabled = element.Value;
-                },
-                ToolTip = "Controls all text-related caching.\n" +
-                    "Required by glyph, typesetting and billboard caches."
-            };
-            
-            debugCategory = new TerminalPageCategory()
-            {
-                Name = "Debug",
-                Enabled = false,
-                PageContainer =
-                {
-                    statsText,
-                    new ControlPage()
-                    {
-                        Name = "Settings",
-                        CategoryContainer =
-                        {
-                            new ControlCategory()
-                            {
-                                HeaderText = "Debug Settings",
-                                SubheaderText = "",
-                                TileContainer =
-                                {
-                                    new ControlTile()
-                                    {
-                                        new TerminalCheckbox()
-                                        {
-                                            Name = "Enable Overlay",
-                                            Value = enableOverlay,
-                                            ControlChangedHandler = (obj, args) =>
-                                            {
-                                                var element = obj as TerminalCheckbox;
-                                                enableOverlay = element.Value;
-                                            }
-                                        },
-                                        new TerminalDragBox()
-                                        {
-                                            Name = "Set Overlay Pos",
-                                            Value = overlayPos,
-                                            AlignToEdge = true,
-                                            ControlChangedHandler = (obj, args) =>
-                                            {
-                                                var element = obj as TerminalDragBox;
-                                                overlayPos = element.Value;
-                                            }
-                                        }
-                                    },
-                                    // Text cache diagnostic controls
-                                    new ControlTile()
-                                    {
-                                        textCacheControl,
-                                        glyphCacheControl,
-                                        typeCacheControl,
-                                        bbCacheControl
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            };
+            overlayPos = new Vector2(0.5f, 0.5f);
+            enableOverlay = false;
+            statsBuilder = new StringBuilder();
         }
 
         public static void Init()
@@ -182,156 +78,129 @@ namespace RichHudFramework.Server
 
         public static void UpdateDisplay()
         {
-            instance.UpdateDisplayInternal();
+            instance?.UpdateDisplayInternal();
         }
 
         public static TerminalPageCategory GetDebugCategory()
         {
-            return instance.debugCategory;
+            return instance?.debugCategory;
+        }
+
+        private TerminalPageCategory CreateDebugCategory()
+        {
+            var category = new TerminalPageCategory
+            {
+                Name = "Debug",
+                Enabled = false
+            };
+
+            category.PageContainer.Add(statisticsPage);
+            category.PageContainer.Add(CreateSettingsPage());
+            return category;
+        }
+
+        private ControlPage CreateSettingsPage()
+        {
+            var settingsPage = new ControlPage
+            {
+                Name = "Settings"
+            };
+
+            var controlCategory = new ControlCategory
+            {
+                HeaderText = "Debug Settings",
+                SubheaderText = ""
+            };
+
+            controlCategory.TileContainer.Add(CreateOverlayControlTile());
+            controlCategory.TileContainer.Add(CreateCacheControlTile());
+            settingsPage.CategoryContainer.Add(controlCategory);
+            return settingsPage;
+        }
+
+        private ControlTile CreateOverlayControlTile()
+        {
+            return new ControlTile
+            {
+                new TerminalCheckbox
+                {
+                    Name = "Enable Overlay",
+                    Value = enableOverlay,
+                    ControlChangedHandler = (obj, args) =>
+                    {
+                        var checkbox = obj as TerminalCheckbox;
+                        enableOverlay = checkbox.Value;
+                    }
+                },
+                new TerminalDragBox
+                {
+                    Name = "Set Overlay Pos",
+                    Value = overlayPos,
+                    AlignToEdge = true,
+                    ControlChangedHandler = (obj, args) =>
+                    {
+                        var dragBox = obj as TerminalDragBox;
+                        overlayPos = dragBox.Value;
+                    }
+                }
+            };
+        }
+
+        private ControlTile CreateCacheControlTile()
+        {
+            return new ControlTile
+            {
+                CreateCacheCheckbox("Text Cache", () => TextDiagnostics.LineTextCache.Enabled,
+                    value => TextDiagnostics.LineTextCache.Enabled = value,
+                    "Controls all text-related caching.\nRequired by glyph, typesetting and billboard caches."),
+                CreateCacheCheckbox("Glyph Cache", () => TextDiagnostics.GlyphCache.Enabled,
+                    value => TextDiagnostics.GlyphCache.Enabled = value,
+                    "Controls caching of text font data.\nRequires text cache."),
+                CreateCacheCheckbox("Typesetting Cache", () => TextDiagnostics.TypesettingCache.Enabled,
+                    value => TextDiagnostics.TypesettingCache.Enabled = value,
+                    "Controls caching for character placement within a UI element.\nRequires glyph and text caches."),
+                CreateCacheCheckbox("Billboard Cache", () => TextDiagnostics.BBCache.Enabled,
+                    value => TextDiagnostics.BBCache.Enabled = value,
+                    "Controls caching of finalized billboard data used for text rendering.\nRequires typesetting, glyph and text caches.")
+            };
+        }
+
+        private TerminalCheckbox CreateCacheCheckbox(string name, Func<bool> getValue, Action<bool> setValue, string toolTip)
+        {
+            return new TerminalCheckbox
+            {
+                Name = name,
+                Value = getValue(),
+                ControlChangedHandler = (obj, args) =>
+                {
+                    var checkbox = obj as TerminalCheckbox;
+                    setValue(checkbox.Value);
+                },
+                ToolTip = toolTip
+            };
         }
 
         private void UpdateDisplayInternal()
         {
-            if (EnableDebug && (statsText.Element.Visible || enableOverlay) && updateTimer.ElapsedMilliseconds > 100)
+            TextDiagnostics.Update();
+
+            if (EnableDebug && (statisticsPage.Element.Visible || enableOverlay) && updateTimer.ElapsedMilliseconds > 100)
             {
-                IReadOnlyList<RichHudMaster.ModClient> modClients = RichHudMaster.Clients;
-                IReadOnlyList<IFont> fonts = FontManager.Fonts;
-                HudMain.TreeClient masterHud = HudMain.TreeManager.MainClient;
-                BindManager.Client masterInput = BindManager.MainClient;
-                int bbUsage30 = BillBoardUtils.GetUsagePercentile(.30f),
-                    bbUsage50 = BillBoardUtils.GetUsagePercentile(.50f),
-                    bbUsage99 = BillBoardUtils.GetUsagePercentile(.99f),
-                    bbAlloc30 = BillBoardUtils.GetAllocPercentile(.30f),
-                    bbAlloc50 = BillBoardUtils.GetAllocPercentile(.50f),
-                    bbAlloc99 = BillBoardUtils.GetAllocPercentile(.99f),
-                    matUsage30 = BillBoardUtils.GetMatrixUsagePercentile(.30f),
-                    matUsage50 = BillBoardUtils.GetMatrixUsagePercentile(.50f),
-                    matUsage99 = BillBoardUtils.GetMatrixUsagePercentile(.99f);
-
-                stats.Update();
                 statsBuilder.Clear();
-
-                var vID = RichHudMaster.versionID;
-                statsBuilder.Append($"Rich HUD Master (v {vID.X}.{vID.Y}.{vID.Z}.{vID.W})\n");
-                statsBuilder.Append($"Summary:\n");
-                statsBuilder.Append($"\tSE Input Blacklist: {BindManager.CurrentBlacklistMode}\n");
-                statsBuilder.Append($"\tInput Mode: {HudMain.InputMode}\n");
-                statsBuilder.Append($"\tCursor Visible: {HudMain.Cursor.Visible}\n");
-                statsBuilder.Append($"\tChat Open: {BindManager.IsChatOpen}\n");
-                statsBuilder.Append($"\tClient Mods: {modClients.Count}\n");
-
-                foreach (RichHudMaster.ModClient client in modClients)
-                    statsBuilder.Append($"\t\t{client.name}\t\t|\tVersion: {client.VersionString}\t\t|\tSubtype: {client.ClientSubtype}\n");
-
-                statsBuilder.Append($"\n\tHudMain:\n");
-                statsBuilder.Append($"\t\tHUD Spaces Updating: {HudMain.TreeManager.HudSpacesRegistered}\n");
-                statsBuilder.Append($"\t\tElements Updating: {HudMain.TreeManager.ElementRegistered}\n");
-                statsBuilder.Append($"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n");
-
-                statsBuilder.Append($"\t\tBillboard Stats\n");
-                AddGrid(statsBuilder, new string[,]
-                {
-                    { "Name",       "30th",             "50th",             "99th" },
-                    { "BB Use",     $"{bbUsage30}",     $"{bbUsage50}",     $"{bbUsage99}" },
-                    { "BB Alloc",   $"{bbAlloc30}",     $"{bbAlloc50}",     $"{bbAlloc99}" },
-                    { "Matrices",   $"{matUsage30}",    $"{matUsage50}",    $"{matUsage99}" },
-
-                }, 3, 4);
-
-                statsBuilder.Append($"\t\tUpdate Timers  (IsHighResolution: {Stopwatch.IsHighResolution}):\n");
-                AddGrid(statsBuilder, new string[,]
-                {
-                    { "Name",   "Avg",                          "50th",                     "99th" },
-                    { "Draw",   $"{stats.AvgDrawTime:F2}ms",    $"{stats.Draw50th:F2}ms",   $"{stats.Draw99th:F2}ms" },
-                    { "Input",  $"{stats.AvgInputTime:F2}ms",   $"{stats.Input50th:F2}ms",  $"{stats.Input99th:F2}ms" },
-                    { "Total",  $"{stats.AvgTotalTime:F2}ms",   $"{stats.Total50th:F2}ms",  $"{stats.Total99th:F2}ms" },
-                    { "Tree*",  $"{stats.AvgTreeTime:F2}ms",    $"{stats.Tree50th:F2}ms",   $"{stats.Tree99th:F2}ms" },
-                }, 3, 4);
-
+                AppendSummaryStats(statsBuilder);
+                AppendHudMainStats(statsBuilder);
+                AppendBillboardStats(statsBuilder);
+                AppendUpdateTimerStats(statsBuilder);
                 overlay.SetText(statsBuilder);
 
-                if (statsText.Element.Visible)
+                if (statisticsPage.Element.Visible)
                 {
-                    var cursor = HudMain.Cursor as HudMain.HudCursor;
-
-                    statsBuilder.Append($"\t\tText Caching\n");
-                    AddGrid(statsBuilder, new string[,]
-                    {
-                        { "Cache", "Enabled", "Hit Pct" },
-                        { "Text",
-                            $"{TextDiagnostics.LineTextCache.Enabled}",
-                            $"{TextDiagnostics.LineTextCache.GetHitPct():F2}%"
-                        },
-                        { "Glyphs",
-                            $"{TextDiagnostics.GlyphCache.Enabled}",
-                            $"{TextDiagnostics.GlyphCache.GetHitPct():F2}%"
-                        },
-                        { "Typesetting",
-                            $"{TextDiagnostics.TypesettingCache.Enabled}",
-                            $"{TextDiagnostics.TypesettingCache.GetHitPct():F2}%"
-                        },
-                        { "Billboards",
-                            $"{TextDiagnostics.BBCache.Enabled}",
-                            $"{TextDiagnostics.BBCache.GetHitPct():F2}%"
-                        },
-                    }, 3, 4);
-
-                    statsBuilder.Append($"\n\tCursor:\n");
-                    statsBuilder.Append($"\t\tVisible: {cursor.Visible}\n");
-                    statsBuilder.Append($"\t\tCaptured: {cursor.IsCaptured}\n");
-
-                    if (cursor.IsCaptured)
-                    {
-                        statsBuilder.Append($"\t\tPosition: {cursor.ScreenPos}\n");
-
-                        var modName = cursor.CapturedElement(null, (int)HudElementAccessors.ModName) as string ?? "None";
-                        var type = cursor.CapturedElement(null, (int)HudElementAccessors.GetType) as Type;
-                        var ZOffset = (sbyte)cursor.CapturedElement(null, (int)HudElementAccessors.ZOffset);
-                        var fullZOffset = (ushort)cursor.CapturedElement(null, (int)HudElementAccessors.FullZOffset);
-                        var pos = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Position);
-                        var size = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Size);
-
-                        statsBuilder.Append($"\t\t\tMod: {modName}\n");
-                        statsBuilder.Append($"\t\t\tType: {type}\n");
-                        statsBuilder.Append($"\t\t\tZOffset: {ZOffset}\n");
-                        statsBuilder.Append($"\t\t\tFullZOffset: {fullZOffset}\n");
-                        statsBuilder.Append($"\t\t\tPosition: {pos}\n");
-                        statsBuilder.Append($"\t\t\tSize: {size}\n");
-                    }
-
-                    statsBuilder.Append($"\n\tBindManager:\n");
-                    statsBuilder.Append($"\t\tControls Registered: {BindManager.Controls.Count}\n");
-                    statsBuilder.Append($"\t\tClients Registered: {BindManager.Clients.Count}\n");
-
-                    statsBuilder.Append($"\n\n\tFontManager:\n");
-                    statsBuilder.Append($"\t\tFonts Registered: {fonts.Count}\n\n");
-
-                    foreach (IFont font in fonts)
-                    {
-                        FontStyles supportedStyles = FontStyles.Italic | FontStyles.Underline;
-
-                        if (font.IsStyleDefined(FontStyles.Bold))
-                            supportedStyles |= FontStyles.Bold;
-
-                        statsBuilder.Append($"\t\t{font.Name}\n");
-                        statsBuilder.Append($"\t\t\tAtlas PtSize: {font.PtSize}\n");
-                        statsBuilder.Append($"\t\t\tStyles: Regular, {supportedStyles}\n\n");
-                    }
-
-                    statsBuilder.Append($"Details:\n");
-                    statsBuilder.Append($"\tMaster:\n");
-
-                    GetHudStats(masterHud, statsBuilder);
-                    GetBindStats(masterInput, statsBuilder);
-
-                    foreach (RichHudMaster.ModClient modClient in modClients)
-                    {
-                        statsBuilder.Append($"\n\t{modClient.name}:\n");
-                        GetHudStats(modClient.hudClient, statsBuilder);
-                        GetBindStats(modClient.bindClient, statsBuilder);
-                    }
-
-                    statsText.Text = statsBuilder;
+                    AppendTextCachingStats(statsBuilder);
+                    AppendCursorStats(statsBuilder);
+                    AppendBindManagerStats(statsBuilder);
+                    AppendFontManagerStats(statsBuilder);
+                    AppendDetailedStats(statsBuilder);
+                    statisticsPage.Text = statsBuilder;
                 }
 
                 updateTimer.Restart();
@@ -352,6 +221,133 @@ namespace RichHudFramework.Server
                     offset.Y -= overlay.Size.Y * .5f;
 
                 overlay.Draw(offset, MatrixD.CreateScale(HudMain.ResScale, HudMain.ResScale, 1d) * HudMain.PixelToWorld);
+            }
+        }
+
+        private void AppendSummaryStats(StringBuilder statsBuilder)
+        {
+            var vID = RichHudMaster.versionID;
+            statsBuilder.Append($"Rich HUD Master (v {vID.X}.{vID.Y}.{vID.Z}.{vID.W})\n");
+            statsBuilder.Append("Summary:\n");
+            statsBuilder.Append($"\tSE Input Blacklist: {BindManager.CurrentBlacklistMode}\n");
+            statsBuilder.Append($"\tInput Mode: {HudMain.InputMode}\n");
+            statsBuilder.Append($"\tCursor Visible: {HudMain.Cursor.Visible}\n");
+            statsBuilder.Append($"\tChat Open: {BindManager.IsChatOpen}\n");
+            statsBuilder.Append($"\tClient Mods: {RichHudMaster.Clients.Count}\n");
+
+            foreach (var client in RichHudMaster.Clients)
+                statsBuilder.Append($"\t\t{client.name}\t\t|\tVersion: {client.VersionString}\t\t|\tSubtype: {client.ClientSubtype}\n");
+        }
+
+        private void AppendHudMainStats(StringBuilder statsBuilder)
+        {
+            statsBuilder.Append("\n\tHudMain:\n");
+            statsBuilder.Append($"\t\tHUD Spaces Updating: {HudMain.TreeManager.HudSpacesRegistered}\n");
+            statsBuilder.Append($"\t\tElements Updating: {HudMain.TreeManager.ElementRegistered}\n");
+            statsBuilder.Append($"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n");
+        }
+
+        private void AppendBillboardStats(StringBuilder statsBuilder)
+        {
+            statsBuilder.Append("\t\tBillboard Stats\n");
+            AddGrid(statsBuilder, new string[,]
+            {
+                { "Name", "30th", "50th", "99th" },
+                { "BB Use", BillBoardUtils.GetUsagePercentile(.30f).ToString(), BillBoardUtils.GetUsagePercentile(.50f).ToString(), BillBoardUtils.GetUsagePercentile(.99f).ToString() },
+                { "BB Alloc", BillBoardUtils.GetAllocPercentile(.30f).ToString(), BillBoardUtils.GetAllocPercentile(.50f).ToString(), BillBoardUtils.GetAllocPercentile(.99f).ToString() },
+                { "Matrices", BillBoardUtils.GetMatrixUsagePercentile(.30f).ToString(), BillBoardUtils.GetMatrixUsagePercentile(.50f).ToString(), BillBoardUtils.GetMatrixUsagePercentile(.99f).ToString() }
+            }, 3, 4);
+        }
+
+        private void AppendUpdateTimerStats(StringBuilder statsBuilder)
+        {
+            updateStats.Update();
+            statsBuilder.Append($"\t\tUpdate Timers (IsHighResolution: {Stopwatch.IsHighResolution}):\n");
+            AddGrid(statsBuilder, new string[,]
+            {
+                { "Name", "Avg", "50th", "99th" },
+                { "Draw", $"{updateStats.AvgDrawTime:F2}ms", $"{updateStats.Draw50th:F2}ms", $"{updateStats.Draw99th:F2}ms" },
+                { "Input", $"{updateStats.AvgInputTime:F2}ms", $"{updateStats.Input50th:F2}ms", $"{updateStats.Input99th:F2}ms" },
+                { "Total", $"{updateStats.AvgTotalTime:F2}ms", $"{updateStats.Total50th:F2}ms", $"{updateStats.Total99th:F2}ms" },
+                { "Tree*", $"{updateStats.AvgTreeTime:F2}ms", $"{updateStats.Tree50th:F2}ms", $"{updateStats.Tree99th:F2}ms" }
+            }, 3, 4);
+        }
+
+        private void AppendTextCachingStats(StringBuilder statsBuilder)
+        {
+            statsBuilder.Append("\t\tText Caching\n");
+            AddGrid(statsBuilder, new string[,]
+            {
+                { "Cache", "Enabled", "Hit Pct" },
+                { "Text", TextDiagnostics.LineTextCache.Enabled.ToString(), $"{TextDiagnostics.LineTextCache.GetHitPct():F2}%" },
+                { "Glyphs", TextDiagnostics.GlyphCache.Enabled.ToString(), $"{TextDiagnostics.GlyphCache.GetHitPct():F2}%" },
+                { "Typesetting", TextDiagnostics.TypesettingCache.Enabled.ToString(), $"{TextDiagnostics.TypesettingCache.GetHitPct():F2}%" },
+                { "Billboards", TextDiagnostics.BBCache.Enabled.ToString(), $"{TextDiagnostics.BBCache.GetHitPct():F2}%" }
+            }, 3, 4);
+        }
+
+        private void AppendCursorStats(StringBuilder statsBuilder)
+        {
+            var cursor = HudMain.Cursor as HudMain.HudCursor;
+            statsBuilder.Append("\n\tCursor:\n");
+            statsBuilder.Append($"\t\tVisible: {cursor.Visible}\n");
+            statsBuilder.Append($"\t\tCaptured: {cursor.IsCaptured}\n");
+
+            if (cursor.IsCaptured)
+            {
+                statsBuilder.Append($"\t\tPosition: {cursor.ScreenPos}\n");
+                var modName = cursor.CapturedElement(null, (int)HudElementAccessors.ModName) as string ?? "None";
+                var type = cursor.CapturedElement(null, (int)HudElementAccessors.GetType) as Type;
+                var zOffset = (sbyte)cursor.CapturedElement(null, (int)HudElementAccessors.ZOffset);
+                var fullZOffset = (ushort)cursor.CapturedElement(null, (int)HudElementAccessors.FullZOffset);
+                var pos = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Position);
+                var size = (Vector2)cursor.CapturedElement(null, (int)HudElementAccessors.Size);
+
+                statsBuilder.Append($"\t\t\tMod: {modName}\n");
+                statsBuilder.Append($"\t\t\tType: {type}\n");
+                statsBuilder.Append($"\t\t\tZOffset: {zOffset}\n");
+                statsBuilder.Append($"\t\t\tFullZOffset: {fullZOffset}\n");
+                statsBuilder.Append($"\t\t\tPosition: {pos}\n");
+                statsBuilder.Append($"\t\t\tSize: {size}\n");
+            }
+        }
+
+        private void AppendBindManagerStats(StringBuilder statsBuilder)
+        {
+            statsBuilder.Append("\n\tBindManager:\n");
+            statsBuilder.Append($"\t\tControls Registered: {BindManager.Controls.Count}\n");
+            statsBuilder.Append($"\t\tClients Registered: {BindManager.Clients.Count}\n");
+        }
+
+        private void AppendFontManagerStats(StringBuilder statsBuilder)
+        {
+            statsBuilder.Append("\n\n\tFontManager:\n");
+            statsBuilder.Append($"\t\tFonts Registered: {FontManager.Fonts.Count}\n\n");
+
+            foreach (var font in FontManager.Fonts)
+            {
+                FontStyles supportedStyles = FontStyles.Italic | FontStyles.Underline;
+                if (font.IsStyleDefined(FontStyles.Bold))
+                    supportedStyles |= FontStyles.Bold;
+
+                statsBuilder.Append($"\t\t{font.Name}\n");
+                statsBuilder.Append($"\t\t\tAtlas PtSize: {font.PtSize}\n");
+                statsBuilder.Append($"\t\t\tStyles: Regular, {supportedStyles}\n\n");
+            }
+        }
+
+        private void AppendDetailedStats(StringBuilder statsBuilder)
+        {
+            statsBuilder.Append("Details:\n");
+            statsBuilder.Append("\tMaster:\n");
+            GetHudStats(HudMain.TreeManager.MainClient, statsBuilder);
+            GetBindStats(BindManager.MainClient, statsBuilder);
+
+            foreach (var modClient in RichHudMaster.Clients)
+            {
+                statsBuilder.Append($"\n\t{modClient.name}:\n");
+                GetHudStats(modClient.hudClient, statsBuilder);
+                GetBindStats(modClient.bindClient, statsBuilder);
             }
         }
 
@@ -406,73 +402,57 @@ namespace RichHudFramework.Server
         }
 
         /// <summary>
-        /// Used to generate statistics based on HUD update times
+        /// Collects and processes update statistics for HUD components.
         /// </summary>
-        private class UpdateStats
+        internal class UpdateStats
         {
-            public double AvgTreeTime => treeStats.AvgTime;
+            public double AvgTreeTime => _treeStats.AvgTime;
+            public double Tree50th => _treeStats.Pct50th;
+            public double Tree99th => _treeStats.Pct99th;
+            public double AvgDrawTime => _drawStats.AvgTime;
+            public double Draw50th => _drawStats.Pct50th;
+            public double Draw99th => _drawStats.Pct99th;
+            public double AvgInputTime => _inputStats.AvgTime;
+            public double Input50th => _inputStats.Pct50th;
+            public double Input99th => _inputStats.Pct99th;
+            public double AvgTotalTime => _drawStats.AvgTime + _inputStats.AvgTime;
+            public double Total50th => _drawStats.Pct50th + _inputStats.Pct50th;
+            public double Total99th => _drawStats.Pct99th + _inputStats.Pct99th;
 
-            public double Tree50th => treeStats.Pct50th;
-
-            public double Tree99th => treeStats.Pct99th;
-
-
-            public double AvgDrawTime => drawStats.AvgTime;
-
-            public double Draw50th => drawStats.Pct50th;
-
-            public double Draw99th => drawStats.Pct99th;
-
-
-            public double AvgInputTime => inputStats.AvgTime;
-
-            public double Input50th => inputStats.Pct50th;
-
-            public double Input99th => inputStats.Pct99th;
-
-
-            public double AvgTotalTime => drawStats.AvgTime + inputStats.AvgTime;
-
-            public double Total50th => drawStats.Pct50th + inputStats.Pct50th;
-
-            public double Total99th => drawStats.Pct99th + inputStats.Pct99th;
-
-            private readonly TickStats drawStats, inputStats, treeStats;
-            private readonly List<long> tickBuffer;
+            private readonly TickStats _drawStats;
+            private readonly TickStats _inputStats;
+            private readonly TickStats _treeStats;
+            private readonly List<long> _tickBuffer;
 
             public UpdateStats()
             {
-                tickBuffer = new List<long>();
-                drawStats = new TickStats();
-                inputStats = new TickStats();
-                treeStats = new TickStats();
+                _tickBuffer = new List<long>();
+                _drawStats = new TickStats();
+                _inputStats = new TickStats();
+                _treeStats = new TickStats();
             }
 
             public void Update()
             {
-                treeStats.Update(HudMain.TreeManager.TreeElapsedTicks, tickBuffer);
-                drawStats.Update(HudMain.TreeManager.DrawElapsedTicks, tickBuffer);
-                inputStats.Update(HudMain.TreeManager.InputElapsedTicks, tickBuffer);
+                _treeStats.Update(HudMain.TreeManager.TreeElapsedTicks, _tickBuffer);
+                _drawStats.Update(HudMain.TreeManager.DrawElapsedTicks, _tickBuffer);
+                _inputStats.Update(HudMain.TreeManager.InputElapsedTicks, _tickBuffer);
             }
 
-            public class TickStats
+            internal class TickStats
             {
                 public double AvgTime { get; private set; }
-
                 public double Pct50th { get; private set; }
-
                 public double Pct99th { get; private set; }
 
                 public void Update(IReadOnlyList<long> ticks, List<long> tickBuffer)
                 {
                     double tpms = TimeSpan.TicksPerMillisecond;
-
                     tickBuffer.Clear();
                     tickBuffer.AddRange(ticks);
                     tickBuffer.Sort();
 
                     long totalTicks = 0;
-
                     for (int n = 0; n < tickBuffer.Count; n++)
                         totalTicks += tickBuffer[n];
 
