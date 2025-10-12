@@ -341,10 +341,10 @@ namespace RichHudFramework
                     // If it's not visible, dont bother
                     if (containment != ContainmentType.Disjoint)
                     {
-                        if (!TextDiagnostics.Instance.BBCacheEnabled)
+                        if (!TextDiagnostics.BBCache.Enabled)
                             isBbCacheStale = true;
 
-                        if (!TextDiagnostics.Instance.TypesettingCacheEnabled)
+                        if (!TextDiagnostics.TypesettingCache.Enabled)
                         {
                             areOffsetsStale = true;
                             isLineRangeStale = true;
@@ -371,7 +371,7 @@ namespace RichHudFramework
                         if (isBbCacheStale)
                             UpdateBbCache(box, mask);
                         else
-                            TextDiagnostics.Instance.BBCacheHits += (ulong)bbCache.Count;
+                            TextDiagnostics.BBCache.Hits += (ulong)bbCache.Count;
 
                         // Draw text from cached bb data
                         BillBoardUtils.AddTriangleData(bbCache, matrixRef);
@@ -405,8 +405,8 @@ namespace RichHudFramework
 
                     isBbCacheStale = false;
 
-                    if (TextDiagnostics.Instance.BBCacheEnabled)
-                        TextDiagnostics.Instance.BBCacheMisses += (ulong)bbCache.Count;
+                    if (TextDiagnostics.BBCache.Enabled)
+                        TextDiagnostics.BBCache.Misses += (ulong)bbCache.Count;
                 }
 
                 /// <summary>
@@ -587,11 +587,11 @@ namespace RichHudFramework
                             {
                                 UpdateLineOffsets(line);
 
-                                if (TextDiagnostics.Instance.TypesettingCacheEnabled)
-                                    TextDiagnostics.Instance.TypesettingMisses += (ulong)line.Count;
+                                if (TextDiagnostics.TypesettingCache.Enabled)
+                                    TextDiagnostics.TypesettingCache.Misses += (ulong)line.Count;
                             }
-                            else if (TextDiagnostics.Instance.TypesettingCacheEnabled)
-                                TextDiagnostics.Instance.TypesettingHits += (ulong)line.Count;
+                            else if (TextDiagnostics.TypesettingCache.Enabled)
+                                TextDiagnostics.TypesettingCache.Hits += (ulong)line.Count;
 
                             line.isQuadCacheStale = false;
                         }

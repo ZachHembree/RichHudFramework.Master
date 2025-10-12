@@ -20,7 +20,7 @@ namespace RichHudFramework.Server
         private static RichHudDebug instance;
         private readonly TerminalPageCategory debugCategory;
         private readonly TextPage statsText;
-        private StringBuilder statsBuilder;
+        private readonly StringBuilder statsBuilder;
 
         private readonly Stopwatch updateTimer;
         private readonly UpdateStats stats;
@@ -65,11 +65,11 @@ namespace RichHudFramework.Server
             var bbCacheControl = new TerminalCheckbox()
             {
                 Name = "Billboard Cache",
-                Value = TextDiagnostics.Instance.BBCacheEnabled,
+                Value = TextDiagnostics.BBCache.Enabled,
                 ControlChangedHandler = (obj, args) =>
                 {
                     var element = obj as TerminalCheckbox;
-                    TextDiagnostics.Instance.BBCacheEnabled = element.Value;
+                    TextDiagnostics.BBCache.Enabled = element.Value;
                 },
                 ToolTip = "Controls caching of finalized billboard data used for text rendering.\n" +
                     "Requires typesetting, glyph and text caches."
@@ -77,11 +77,11 @@ namespace RichHudFramework.Server
             var typeCacheControl = new TerminalCheckbox()
             {
                 Name = "Typesetting Cache",
-                Value = TextDiagnostics.Instance.TypesettingCacheEnabled,
+                Value = TextDiagnostics.TypesettingCache.Enabled,
                 ControlChangedHandler = (obj, args) =>
                 {
                     var element = obj as TerminalCheckbox;
-                    TextDiagnostics.Instance.TypesettingCacheEnabled = element.Value;
+                    TextDiagnostics.TypesettingCache.Enabled = element.Value;
                 },
                 ToolTip = "Controls caching for character placement within a UI element.\n" +
                     "Requires glyph and text caches."
@@ -89,11 +89,11 @@ namespace RichHudFramework.Server
             var glyphCacheControl = new TerminalCheckbox()
             {
                 Name = "Glyph Cache",
-                Value = TextDiagnostics.Instance.GlyphCacheEnabled,
+                Value = TextDiagnostics.GlyphCache.Enabled,
                 ControlChangedHandler = (obj, args) =>
                 {
                     var element = obj as TerminalCheckbox;
-                    TextDiagnostics.Instance.GlyphCacheEnabled = element.Value;
+                    TextDiagnostics.GlyphCache.Enabled = element.Value;
                 },
                 ToolTip = "Controls caching of text font data.\n" +
                     "Requires text cache."
@@ -101,11 +101,11 @@ namespace RichHudFramework.Server
             var textCacheControl = new TerminalCheckbox()
             {
                 Name = "Text Cache",
-                Value = TextDiagnostics.Instance.LineTextCacheEnabled,
+                Value = TextDiagnostics.LineTextCache.Enabled,
                 ControlChangedHandler = (obj, args) =>
                 {
                     var element = obj as TerminalCheckbox;
-                    TextDiagnostics.Instance.LineTextCacheEnabled = element.Value;
+                    TextDiagnostics.LineTextCache.Enabled = element.Value;
                 },
                 ToolTip = "Controls all text-related caching.\n" +
                     "Required by glyph, typesetting and billboard caches."
@@ -259,20 +259,20 @@ namespace RichHudFramework.Server
                     {
                         { "Cache", "Enabled", "Hit Pct" },
                         { "Text",
-                            $"{TextDiagnostics.Instance.LineTextCacheEnabled}",
-                            $"{TextDiagnostics.GetTextHitPercent():F2}%"
+                            $"{TextDiagnostics.LineTextCache.Enabled}",
+                            $"{TextDiagnostics.LineTextCache.GetHitPct():F2}%"
                         },
                         { "Glyphs",
-                            $"{TextDiagnostics.Instance.GlyphCacheEnabled}",
-                            $"{TextDiagnostics.GetGlyphHitPercent():F2}%"
+                            $"{TextDiagnostics.GlyphCache.Enabled}",
+                            $"{TextDiagnostics.GlyphCache.GetHitPct():F2}%"
                         },
                         { "Typesetting",
-                            $"{TextDiagnostics.Instance.TypesettingCacheEnabled}",
-                            $"{TextDiagnostics.GetTypesettingHitPercent():F2}%"
+                            $"{TextDiagnostics.TypesettingCache.Enabled}",
+                            $"{TextDiagnostics.TypesettingCache.GetHitPct():F2}%"
                         },
                         { "Billboards",
-                            $"{TextDiagnostics.Instance.BBCacheEnabled}",
-                            $"{TextDiagnostics.GetBBHitPercent():F2}%"
+                            $"{TextDiagnostics.BBCache.Enabled}",
+                            $"{TextDiagnostics.BBCache.GetHitPct():F2}%"
                         },
                     }, 3, 4);
 
