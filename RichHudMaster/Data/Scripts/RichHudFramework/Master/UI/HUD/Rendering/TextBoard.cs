@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
@@ -536,7 +536,16 @@ namespace RichHudFramework
                     lineRange.Y = end;
 
                     if (lastLineRange != lineRange)
+                    {
                         isLineRangeStale = true;
+
+                        // Even if other lines' offsets are otherwise unaffected by surrounding
+                        // lines, vertically centered text introduces a variable offset which
+                        // could invalidate the vertical offset when normal (top) alignement
+                        // would not.
+                        if (VertCenterText)
+                            areOffsetsStale = true;
+                    }
                 }
 
                 private void UpdateGlyphBoards()
