@@ -371,6 +371,7 @@ namespace RichHudFramework
                                 canTextBeEqual = false;
 
                             int newCount = srcCount + Count;
+                            bool wasCached = canTextBeEqual;
 
                             if (newCount > chars.Length)
                                 SetCapacity(newCount);
@@ -442,9 +443,17 @@ namespace RichHudFramework
                             if (TextDiagnostics.LineTextCache.Enabled)
                             {
                                 if (canTextBeEqual)
+                                    // Tentative hits. If a change occurs later in the Line update, the entire
+                                    // line will be invalidated.
                                     TextDiagnostics.LineTextCache.Hits += (ulong)srcCount;
                                 else
-                                    TextDiagnostics.LineTextCache.Misses += (ulong)srcCount;
+                                {
+                                    // Line invalidated. Remove tentative hits.
+                                    if (wasCached)
+                                        TextDiagnostics.LineTextCache.Hits -= (ulong)Count;
+
+                                    TextDiagnostics.LineTextCache.Misses += (ulong)newCount;
+                                }
                             }
 
                             Count = newCount;
