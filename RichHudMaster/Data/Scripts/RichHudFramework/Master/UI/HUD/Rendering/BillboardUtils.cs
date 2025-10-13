@@ -54,6 +54,7 @@ namespace RichHudFramework
                 private readonly List<MyTriangleBillboard> bbBuf;
                 private readonly List<MyTriangleBillboard>[] bbSwapPools;
                 private List<MyTriangleBillboard> bbPoolBack;
+                private int[] bbPoolBackCount;
                 private int currentPool;
 
                 private readonly List<TriangleBillboardData> triangleList;
@@ -81,6 +82,7 @@ namespace RichHudFramework
                         new List<MyTriangleBillboard>(1000)
                     };
                     bbBuf = new List<MyTriangleBillboard>(1000);
+                    bbPoolBackCount = new int[1] { 0 };
 
                     triangleList = new List<TriangleBillboardData>();
                     flatTriangleList = new List<FlatTriangleBillboardData>(1000);
@@ -172,6 +174,8 @@ namespace RichHudFramework
                     var bbBuf = instance.bbBuf;
                     var matList = instance.matrixBuf;
                     var matTable = instance.matrixTable;
+                    var bbCount = instance.bbPoolBackCount;
+                    bbCount[0] = Math.Max(bbCount[0], bbDataBack.Count);
 
                     // Find matrix index in table or add it
                     int matrixID;
@@ -183,21 +187,22 @@ namespace RichHudFramework
                         matTable.Add(matrixRef, matrixID);
                     }
 
-                    int bbCountStart = bbDataBack.Count;
+                    int bbCountStart = bbCount[0];
                     bbDataBack.EnsureCapacity(bbDataBack.Count + triangles.Count);
 
                     for (int i = 0; i < triangles.Count; i++)
                     {
                         var tri = triangles[i];
-                        tri.Item2 = new Vector2I(bbDataBack.Count, matrixID);
+                        tri.Item2 = new Vector2I(bbCount[0], matrixID);
                         bbDataBack.Add(tri);
+                        bbCount[0]++;
                     }
 
                     // Add more billboards to pool as needed then queue them for rendering
-                    int bbToAdd = Math.Max(bbDataBack.Count - bbPool.Count, 0);
+                    int bbToAdd = Math.Max(bbCount[0] - bbPool.Count, 0);
                     instance.AddNewBB(bbToAdd);
 
-                    for (int i = bbCountStart; i < bbDataBack.Count; i++)
+                    for (int i = bbCountStart; i < bbCount[0]; i++)
                         bbBuf.Add(bbPool[i]);
                         
                     MyTransparentGeometry.AddBillboards(bbBuf, false);
@@ -383,6 +388,8 @@ namespace RichHudFramework
                     {
                         case BillBoardUtilAccessors.GetPoolBack:
                             return instance.bbPoolBack;
+                        case BillBoardUtilAccessors.GetPoolCount:
+                            return instance.bbPoolBackCount;
                     }
 
                     return null;
@@ -429,6 +436,7 @@ namespace RichHudFramework
                         UpdateBllboardTrimming();
                     }
 
+                    bbPoolBackCount[0] = 0;
                     triangleList.Clear();
                     flatTriangleList.Clear();
                     matrixBuf.Clear();
