@@ -88,7 +88,8 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Used to change the position of the text within the text element. AutoResize must be disabled for this to work.
+                /// Used to change the position of the text within the text element. Clamped to maximize visible text.
+                /// AutoResize must be disabled for this to work.
                 /// </summary>
                 public Vector2 TextOffset
                 {
@@ -169,31 +170,36 @@ namespace RichHudFramework
 
                 /// <summary>
                 /// Calculates the minimum offset needed to ensure that the character at the specified index
-                /// is within the visible range.
+                /// is within the visible range, while maximizing visible text.
                 /// </summary>
                 public void MoveToChar(Vector2I index)
                 {
                     if (!AutoResize && lines.Count > 0)
                     {
-                        index.X = MathHelper.Clamp(index.X, 0, lines.Count - 1);
-                        index.Y = MathHelper.Clamp(index.Y, 0, lines[index.X].Count - 1);
-
-                        if (lines[index.X].Count > 0)
+                        // If the text is smaller or equal to in size, then all of it is always visible after 
+                        // clamping.
+                        if (_textSize.X > _fixedSize.X || _textSize.Y > _fixedSize.Y)
                         {
-                            UpdateGlyphs();
+                            index.X = MathHelper.Clamp(index.X, 0, lines.Count - 1);
+                            index.Y = MathHelper.Clamp(index.Y, 0, lines[index.X].Count - 1);
 
-                            if (index.X < lineRange.X || index.X > lineRange.Y)
+                            if (lines[index.X].Count > 0)
                             {
-                                if (BuilderMode != TextBuilderModes.Unlined)
-                                    UpdateVerticalOffset(index.X);
-                                else
-                                    _textOffset.Y = 0f;
-                            }
+                                UpdateGlyphs();
 
-                            if (BuilderMode != TextBuilderModes.Wrapped)
-                                _textOffset.X = GetCharRangeOffset(index);
-                            else
-                                _textOffset.X = 0f;
+                                if (index.X < lineRange.X || index.X > lineRange.Y)
+                                {
+                                    if (BuilderMode != TextBuilderModes.Unlined)
+                                        UpdateVerticalOffset(index.X);
+                                    else
+                                        _textOffset.Y = 0f;
+                                }
+
+                                if (BuilderMode != TextBuilderModes.Wrapped)
+                                    _textOffset.X = GetCharRangeOffset(index);
+                                else
+                                    _textOffset.X = 0f;
+                            }
                         }
                     }
                 }
@@ -208,13 +214,13 @@ namespace RichHudFramework
                     if (index > lineRange.Y) // Scroll down
                     {
                         _textOffset.Y = -line._verticalOffset;
-                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y * .5f : _fixedSize.Y * .5f;
+                        _textOffset.Y += VertCenterText ? _textSize.Y * .5f : _fixedSize.Y * .5f;
                         _textOffset.Y -= (_fixedSize.Y - line.UnscaledSize.Y);
                     }
                     else if (index < lineRange.X) // Scroll up
                     {
                         _textOffset.Y = -line._verticalOffset;
-                        _textOffset.Y += (VertCenterText || AutoResize) ? _textSize.Y * .5f : _fixedSize.Y * .5f;
+                        _textOffset.Y += VertCenterText ? _textSize.Y * .5f : _fixedSize.Y * .5f;
                     }
                 }
 
@@ -351,7 +357,13 @@ namespace RichHudFramework
                         }
 
                         if (AutoResize)
-                            _textOffset = Vector2.Zero;                        
+                            _textOffset = Vector2.Zero;
+                        else
+                        {
+                            // Maximize visible text while allowing movement
+                            Vector2 maxOffset = Vector2.Max(_textSize - _fixedSize, Vector2.Zero);
+                            _textOffset = Vector2.Clamp(_textOffset, -maxOffset, maxOffset);
+                        }
 
                         // Check for changes in position, size or masking
                         if (lastBox != box || lastMask != mask)
