@@ -142,6 +142,18 @@ namespace RichHudFramework.Server
                         var dragBox = obj as TerminalDragBox;
                         overlayPos = dragBox.Value;
                     }
+                },
+                new TerminalButton()
+                {
+                    Name = "Tare Timers",
+                    ControlChangedHandler = (obj, args) => { updateStats.Tare(); },
+                    ToolTip = "Sets the current update times as the baseline."
+                },
+                new TerminalButton()
+                {
+                    Name = "Clear Tare",
+                    ControlChangedHandler = (obj, args) => { updateStats.ClearTare(); },
+                    ToolTip = "Resets timer tare to zero."
                 }
             };
         }
@@ -191,11 +203,11 @@ namespace RichHudFramework.Server
                 AppendHudMainStats(statsBuilder);
                 AppendBillboardStats(statsBuilder);
                 AppendUpdateTimerStats(statsBuilder);
+                AppendTextCachingStats(statsBuilder);
                 overlay.SetText(statsBuilder);
 
                 if (statisticsPage.Element.Visible)
                 {
-                    AppendTextCachingStats(statsBuilder);
                     AppendCursorStats(statsBuilder);
                     AppendBindManagerStats(statsBuilder);
                     AppendFontManagerStats(statsBuilder);
@@ -353,6 +365,9 @@ namespace RichHudFramework.Server
 
         private static void GetHudStats(HudMain.TreeClient client, StringBuilder statsBuilder)
         {
+            if (client.UpdateAccessors.Count == 0)
+                return;
+
             statsBuilder.Append($"\t\tHudMain:\n");
             statsBuilder.Append($"\t\t\tEnable Cursor: {client.EnableCursor}\n");
             statsBuilder.Append($"\t\t\tElements Updating: {client.UpdateAccessors.Count}\n\n");
@@ -361,6 +376,9 @@ namespace RichHudFramework.Server
         private static void GetBindStats(BindManager.Client client, StringBuilder statsBuilder)
         {
             IReadOnlyList<IBindGroup> bindGroups = client.Groups;
+
+            if (bindGroups.Count == 0)
+                return;
 
             statsBuilder.Append($"\t\tBindManager:\n");
             statsBuilder.Append($"\t\t\tBlacklist Mode: {client.RequestBlacklistMode}\n");
@@ -406,18 +424,21 @@ namespace RichHudFramework.Server
         /// </summary>
         internal class UpdateStats
         {
-            public double AvgTreeTime => _treeStats.AvgTime;
-            public double Tree50th => _treeStats.Pct50th;
-            public double Tree99th => _treeStats.Pct99th;
-            public double AvgDrawTime => _drawStats.AvgTime;
-            public double Draw50th => _drawStats.Pct50th;
-            public double Draw99th => _drawStats.Pct99th;
-            public double AvgInputTime => _inputStats.AvgTime;
-            public double Input50th => _inputStats.Pct50th;
-            public double Input99th => _inputStats.Pct99th;
-            public double AvgTotalTime => _drawStats.AvgTime + _inputStats.AvgTime;
-            public double Total50th => _drawStats.Pct50th + _inputStats.Pct50th;
-            public double Total99th => _drawStats.Pct99th + _inputStats.Pct99th;
+            public double AvgTreeTime => _treeStats.AvgTime - _treeStats.TareTime;
+            public double Tree50th => _treeStats.Pct50th - _treeStats.TareTime;
+            public double Tree99th => _treeStats.Pct99th - _treeStats.TareTime;
+
+            public double AvgDrawTime => _drawStats.AvgTime - _drawStats.TareTime;
+            public double Draw50th => _drawStats.Pct50th - _drawStats.TareTime;
+            public double Draw99th => _drawStats.Pct99th - _drawStats.TareTime;
+
+            public double AvgInputTime => _inputStats.AvgTime - _inputStats.TareTime;
+            public double Input50th => _inputStats.Pct50th - _inputStats.TareTime;
+            public double Input99th => _inputStats.Pct99th - _inputStats.TareTime;
+
+            public double AvgTotalTime => AvgDrawTime + AvgInputTime;
+            public double Total50th => Draw50th + Input50th;
+            public double Total99th => Draw99th + Input99th;
 
             private readonly TickStats _drawStats;
             private readonly TickStats _inputStats;
@@ -432,6 +453,20 @@ namespace RichHudFramework.Server
                 _treeStats = new TickStats();
             }
 
+            public void Tare()
+            {
+                _treeStats.Tare();
+                _drawStats.Tare();
+                _inputStats.Tare();
+            }
+
+            public void ClearTare()
+            {
+                _treeStats.ClearTare();
+                _drawStats.ClearTare();
+                _inputStats.ClearTare();
+            }
+
             public void Update()
             {
                 _treeStats.Update(HudMain.TreeManager.TreeElapsedTicks, _tickBuffer);
@@ -444,6 +479,17 @@ namespace RichHudFramework.Server
                 public double AvgTime { get; private set; }
                 public double Pct50th { get; private set; }
                 public double Pct99th { get; private set; }
+                public double TareTime { get; private set; }
+
+                public void Tare()
+                {
+                    TareTime = AvgTime;
+                }
+
+                public void ClearTare()
+                {
+                    TareTime = 0d;
+                }
 
                 public void Update(IReadOnlyList<long> ticks, List<long> tickBuffer)
                 {
@@ -456,6 +502,7 @@ namespace RichHudFramework.Server
                     for (int n = 0; n < tickBuffer.Count; n++)
                         totalTicks += tickBuffer[n];
 
+                    TareTime = Math.Min(TareTime, Math.Min(Pct50th, AvgTime));
                     AvgTime = (totalTicks / (double)tickBuffer.Count) / tpms;
                     Pct50th = tickBuffer[(int)(tickBuffer.Count * 0.5d)] / tpms;
                     Pct99th = tickBuffer[(int)(tickBuffer.Count * 0.99d)] / tpms;
