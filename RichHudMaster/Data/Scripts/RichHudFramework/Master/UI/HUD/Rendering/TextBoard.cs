@@ -132,7 +132,7 @@ namespace RichHudFramework
                 private readonly Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
                 private readonly List<FlatTriangleBillboardData> bbCache;
-                private readonly MatrixD[] matRef;
+                private readonly MatrixD[] textMatrixRef;
 
                 public TextBoard()
                 {
@@ -143,7 +143,7 @@ namespace RichHudFramework
                     Format = GlyphFormat.White;
                     _fixedSize = new Vector2(100f);
 
-                    matRef = new MatrixD[1];
+                    textMatrixRef = new MatrixD[1];
                     underlines = new List<UnderlineBoard>();
                     bbCache = new List<FlatTriangleBillboardData>();
 
@@ -330,9 +330,9 @@ namespace RichHudFramework
                 {
                     Vector2 halfSize = _size * .5f * Scale;
                     BoundingBox2 box = new BoundingBox2(offset - halfSize, offset + halfSize);
-                    matRef[0] = matrix;
+                    textMatrixRef[0] = matrix;
 
-                    Draw(box, CroppedBox.defaultMask, matRef);
+                    Draw(box, CroppedBox.defaultMask, textMatrixRef);
                 }
 
                 /// <summary>
@@ -365,8 +365,25 @@ namespace RichHudFramework
                             _textOffset = Vector2.Clamp(_textOffset, -maxOffset, maxOffset);
                         }
 
-                        // Check for changes in position, size or masking
-                        if (lastBox != box || lastMask != mask)
+                        // Re-center matrix transform and bounding boxes
+                        if (TextDiagnostics.BBCache.Enabled)
+                        {
+                            Vector2 boxOffset = box.Center;
+                            textMatrixRef[0] = matrixRef[0];
+                            // Translate matrix to TextBoard position
+                            textMatrixRef[0].Translation += ((boxOffset.X * textMatrixRef[0].Right) + (boxOffset.Y * textMatrixRef[0].Up));
+                            // Move mask to new center
+                            mask = mask.Translate(-boxOffset);
+                            // Center box at zero
+                            box = box.Translate(-boxOffset);
+                        }
+
+                        // Check for changes in size or masking
+                        if (Vector2.DistanceSquared(lastBox.Min, box.Min) > 0.1f ||
+                            Vector2.DistanceSquared(lastBox.Max, box.Max) > 0.1f ||
+                            Vector2.DistanceSquared(lastMask.Min, mask.Min) > 0.1f ||
+                            Vector2.DistanceSquared(lastMask.Max, mask.Max) > 0.1f
+                        )
                         {
                             isBbCacheStale = true;
                             lastBox = box;
@@ -386,11 +403,14 @@ namespace RichHudFramework
                             TextDiagnostics.BBCache.Hits += (ulong)bbCache.Count;
 
                         // Draw text from cached bb data
-                        BillBoardUtils.AddTriangleData(bbCache, matrixRef);
+                        if (TextDiagnostics.BBCache.Enabled)
+                            BillBoardUtils.AddTriangleData(bbCache, textMatrixRef);
+                        else
+                            BillBoardUtils.AddTriangleData(bbCache, matrixRef);
 
                         // If self-resizing, then defer glyph updates to allow the rest of the UI
                         // time to catch up
-                        if (AutoResize) 
+                        if (AutoResize)
                             UpdateGlyphs();
 
                         // Invoke update callback
