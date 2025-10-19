@@ -57,6 +57,8 @@ namespace RichHudFramework
 
             public class TextBoard : TextBuilder, ITextBoard
             {
+                const long TextChangeEventPeriodMS = 500;
+
                 /// <summary>
                 /// Raised when a change is made to the text.
                 /// </summary>
@@ -430,7 +432,7 @@ namespace RichHudFramework
                             UpdateGlyphs();
 
                         // Invoke update callback
-                        if (isUpdateEventPending && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > 500)
+                        if (isUpdateEventPending && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > TextChangeEventPeriodMS)
                         {
                             TextChanged?.Invoke();
                             eventTimer.Restart();
@@ -484,7 +486,7 @@ namespace RichHudFramework
                     {
                         Vector2 halfSize = underlines[n].size * Scale * .5f,
                             pos = offset + underlines[n].offset * Scale;
-
+                            
                         bb.bounds = new BoundingBox2(pos - halfSize, pos + halfSize);
                         bb.mask.Value.Contains(ref bb.bounds, out containment);
                         underlineBoard.materialData.bbColor = underlines[n].color;
@@ -636,6 +638,9 @@ namespace RichHudFramework
                         Line line = lines.PooledLines[ln];
                         line.UpdateGlyphBoards();
 
+                        if (line.isColorStale)
+							isBbCacheStale = true;
+
                         if (line.isQuadCacheStale)
                             isQuadCacheStale = true;
 
@@ -643,7 +648,8 @@ namespace RichHudFramework
                             areOffsetsStale = true;
 
                         line.lastIndex = ln;
-                    }
+						line.isColorStale = false;
+					}
                 }
 
                 /// <summary>

@@ -1,4 +1,6 @@
-﻿namespace RichHudFramework.UI.Server
+﻿using RichHudFramework.Internal;
+
+namespace RichHudFramework.UI.Server
 {
     /// <summary>
     /// Diagnostic counters and settings for the RHM text rendering
@@ -30,7 +32,7 @@
         /// </summary>
         public static CacheStats BBCache = new CacheStats();
 
-        public class CacheStats
+		public class CacheStats
         {
             public bool Enabled = true;
             public ulong Hits = 0;
@@ -73,5 +75,5 @@
 
             tick++;
         }
-    }
+	}
 }
