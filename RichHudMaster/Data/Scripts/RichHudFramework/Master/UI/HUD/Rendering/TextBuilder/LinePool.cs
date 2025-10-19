@@ -23,7 +23,7 @@ namespace RichHudFramework
 
                     public int Capacity => lines.Capacity;
 
-                    public IReadOnlyList<Line> PooledLines => lines;
+                    public IReadOnlyList<Line> PooledLines { get; }
 
                     private readonly List<Line> lines;
                     private readonly Stack<Line> stack;
@@ -33,6 +33,7 @@ namespace RichHudFramework
                     {
                         this.builder = builder;
                         lines = new List<Line>();
+						PooledLines = lines;
                         stack = new Stack<Line>();
                     }
 

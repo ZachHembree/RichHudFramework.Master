@@ -499,7 +499,6 @@ namespace RichHudFramework
                 /// </summary>
                 protected override void AfterTextUpdate(bool colorChange = false)
                 {
-                    isUpdateEventPending = true;
                     isTextSizeUpdateReq = !colorChange;
 				}
 
@@ -535,7 +534,8 @@ namespace RichHudFramework
                         isLineRangeStale = false;
                         areOffsetsStale = false;
                         isQuadCacheStale = false;
-                    }
+						isUpdateEventPending = true;
+					}
 
                     lastTextOffset = _textOffset;
                     lastTextSize = _textSize;
@@ -543,12 +543,40 @@ namespace RichHudFramework
                     LineWrapWidth = _fixedSize.X;
                 }
 
-                private void UpdateLineRange()
+				/// <summary>
+				/// Calculates the total size of the text, both visible and not.
+				/// </summary>
+				private void UpdateTextSize()
+				{
+					Vector2 tSize = new Vector2();
+
+					if (lines.Count > 0)
+					{
+						foreach (Line line in lines.PooledLines)
+						{
+							tSize.X = Math.Max(line.UnscaledSize.X, tSize.X);
+							tSize.Y += line.UnscaledSize.Y;
+						}
+
+						// Trailing line breaks do not start new lines
+						Line lastLine = lines[lines.Count - 1];
+
+						if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
+							tSize.Y -= lastLine.UnscaledSize.Y;
+					}
+
+					_textSize = tSize;
+					lastAutoResize = AutoResize;
+					lastVertCenterText = VertCenterText;
+					isTextSizeUpdateReq = false;
+				}
+
+				private void UpdateLineRange()
                 {
                     int start = 0,
                         end;
 
-                    if (!AutoResize)
+					if (!AutoResize)
                     {
                         float height = _textOffset.Y;
 
@@ -588,7 +616,7 @@ namespace RichHudFramework
                     lineRange.X = start;
                     lineRange.Y = end;
 
-                    if (lastLineRange != lineRange)
+					if (lastLineRange != lineRange)
                     {
                         isLineRangeStale = true;
 
@@ -629,7 +657,18 @@ namespace RichHudFramework
 
                     if (lines.Count > 0)
                     {
-                        for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
+						// Update vertical offsets
+						float vAlign = ((VertCenterText || AutoResize) ? _textSize.Y : _fixedSize.Y) * .5f,
+							vPos = 0f;
+
+						foreach (Line line in lines.PooledLines)
+						{
+							line._verticalOffset = vAlign - vPos;
+							vPos += line.UnscaledSize.Y;
+						}
+
+                        // Update character offsets
+						for (int ln = lineRange.X; ln <= lineRange.Y; ln++)
                         {
                             Line line = lines.PooledLines[ln];
 
@@ -654,42 +693,6 @@ namespace RichHudFramework
                         UpdateUnderlines();
                     }
                 }
-
-                /// <summary>
-                /// Calculates the total size of the text, both visible and not.
-                /// </summary>
-                private void UpdateTextSize()
-                {
-                    Vector2 tSize = new Vector2();
-
-                    if (lines.Count > 0)
-                    {
-                        foreach (Line line in lines.PooledLines)
-                        {
-                            line._verticalOffset = -tSize.Y;
-
-                            if (line.UnscaledSize.X > tSize.X)
-                                tSize.X = line.UnscaledSize.X;
-
-                            tSize.Y += line.UnscaledSize.Y;
-                        }
-
-                        Line lastLine = lines[lines.Count - 1];
-
-                        if (lastLine.Count == 1 && lastLine[0].Ch == '\n')
-                            tSize.Y -= lastLine.UnscaledSize.Y;
-
-                        float vAlign = ((VertCenterText || AutoResize) ? tSize.Y : _fixedSize.Y) * .5f;
-
-                        foreach (Line line in lines.PooledLines)
-                            line._verticalOffset += vAlign;
-                    }
-
-                    _textSize = tSize;
-					lastAutoResize = AutoResize;
-					lastVertCenterText = VertCenterText;
-					isTextSizeUpdateReq = false;
-				}
 
 				/// <summary>
 				/// Updates the position of each character in the given line.

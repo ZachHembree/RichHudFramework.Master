@@ -107,7 +107,7 @@ namespace RichHudFramework
                     Format = GlyphFormat.White;
                 }
 
-                protected virtual void AfterTextUpdate(bool colorChange = false)
+                protected virtual void AfterTextUpdate(bool isColorChange = false)
                 { }
 
                 protected virtual void SetWrapWidth(float width)
