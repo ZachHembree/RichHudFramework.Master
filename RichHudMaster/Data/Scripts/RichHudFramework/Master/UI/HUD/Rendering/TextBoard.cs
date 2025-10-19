@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
@@ -74,9 +74,21 @@ namespace RichHudFramework
                 public Vector2 Size => (AutoResize ? _textSize : _fixedSize) * Scale;
 
                 /// <summary>
-                /// Full text size including any text outside the visible range.
+                /// Full text size including any text outside the visible range. Updates immediately.
                 /// </summary>
-                public Vector2 TextSize => _textSize * Scale;
+                public Vector2 TextSize 
+                { 
+                    get 
+                    {
+						if (AutoResize != lastAutoResize || VertCenterText != lastVertCenterText)
+							isTextSizeUpdateReq = true;
+
+						if (isTextSizeUpdateReq)
+							UpdateTextSize();
+
+						return _textSize * Scale; 
+                    } 
+                }
 
                 /// <summary>
                 /// Size of the text box when AutoResize is set to false. Does nothing otherwise.
@@ -127,7 +139,10 @@ namespace RichHudFramework
                     areOffsetsStale,
                     isQuadCacheStale,
                     isLineRangeStale,
-                    isBbCacheStale;
+                    isBbCacheStale,
+                    isTextSizeUpdateReq,
+                    lastAutoResize,
+                    lastVertCenterText;
 
                 private readonly Stopwatch eventTimer;
                 private readonly List<UnderlineBoard> underlines;
@@ -158,7 +173,8 @@ namespace RichHudFramework
                     isQuadCacheStale = true;
                     isLineRangeStale = true;
                     isBbCacheStale = true;
-                }
+                    isTextSizeUpdateReq = true;
+				}
 
                 protected override void SetWrapWidth(float width)
                 {
@@ -481,17 +497,24 @@ namespace RichHudFramework
                 /// <summary>
                 /// Called when the text builder is updated
                 /// </summary>
-                protected override void AfterTextUpdate()
+                protected override void AfterTextUpdate(bool colorChange = false)
                 {
                     isUpdateEventPending = true;
-                }
+                    isTextSizeUpdateReq = !colorChange;
+				}
 
                 /// <summary>
                 /// Updates character position, visible range and regenerates glyph data as needed.
                 /// </summary>
                 private void UpdateGlyphs()
                 {
-                    UpdateLineRange();
+                    if (AutoResize != lastAutoResize || VertCenterText != lastVertCenterText)
+                        isTextSizeUpdateReq = true;
+
+                    if (isTextSizeUpdateReq)
+						UpdateTextSize();
+
+					UpdateLineRange();
                     UpdateGlyphBoards();
 
                     // Check for external resizing and offset changes
@@ -524,8 +547,6 @@ namespace RichHudFramework
                 {
                     int start = 0,
                         end;
-
-                    _textSize = GetTextSize();
 
                     if (!AutoResize)
                     {
@@ -637,7 +658,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Calculates the total size of the text, both visible and not.
                 /// </summary>
-                private Vector2 GetTextSize()
+                private void UpdateTextSize()
                 {
                     Vector2 tSize = new Vector2();
 
@@ -664,13 +685,16 @@ namespace RichHudFramework
                             line._verticalOffset += vAlign;
                     }
 
-                    return tSize;
-                }
+                    _textSize = tSize;
+					lastAutoResize = AutoResize;
+					lastVertCenterText = VertCenterText;
+					isTextSizeUpdateReq = false;
+				}
 
-                /// <summary>
-                /// Updates the position of each character in the given line.
-                /// </summary>
-                private void UpdateLineOffsets(Line line)
+				/// <summary>
+				/// Updates the position of each character in the given line.
+				/// </summary>
+				private void UpdateLineOffsets(Line line)
                 {
                     float width = 0f,
                         height = line._verticalOffset - GetBaseline(line),

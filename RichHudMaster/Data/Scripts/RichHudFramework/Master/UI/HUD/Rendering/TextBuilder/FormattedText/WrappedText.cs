@@ -25,13 +25,16 @@ namespace RichHudFramework.UI.Rendering.Server
             /// Sets the maximum width for a line in the text before its wrapped to the next line and updates
             /// text wrapping.
             /// </summary>
-            public void SetWrapWidth(float width)
+            public bool SetWrapWidth(float width)
             {
                 if (Math.Abs(width - MaxLineWidth) > 1f)
                 {
                     MaxLineWidth = width;
                     Rewrap();
+                    return true;
                 }
+                else
+                    return false;
             }
 
             /// <summary>

@@ -1,4 +1,5 @@
-﻿using System;
+using RichHudFramework.UI.Server;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using VRage;
@@ -106,16 +107,15 @@ namespace RichHudFramework
                     Format = GlyphFormat.White;
                 }
 
-                protected virtual void AfterTextUpdate()
+                protected virtual void AfterTextUpdate(bool colorChange = false)
                 { }
 
                 protected virtual void SetWrapWidth(float width)
                 {
                     _lineWrapWidth = width;
 
-                    if (BuilderMode == TextBuilderModes.Wrapped)
+                    if (BuilderMode == TextBuilderModes.Wrapped && wrappedText.SetWrapWidth(width))
                     {
-                        wrappedText.SetWrapWidth(width);
                         AfterTextUpdate();
                     }
                 }
@@ -332,12 +332,11 @@ namespace RichHudFramework
                 {
                     bool isOtherEqual, isColorEqual;
                     GetIsFormatEqual(format, start, end, out isOtherEqual, out isColorEqual);
-
+                    
                     if (!isOtherEqual || !isColorEqual)
-                    {
                         formatter.SetFormatting(start, end, new GlyphFormat(format));
-                        AfterTextUpdate();
-                    }
+
+					AfterTextUpdate(isOtherEqual && !isColorEqual);
                 }
 
                 /// <summary>
@@ -453,7 +452,7 @@ namespace RichHudFramework
                             if (!isOtherEqual)
                                 break;
 
-                            // Increment idnex
+                            // Increment index
                             if (i.X < Count && i.Y + 1 < lines[i.X].Count)
                                 i.Y++;
                             else if (i.X + 1 < Count)
