@@ -112,7 +112,12 @@ namespace RichHudFramework.Server
                     case ApiModuleTypes.SettingsMenu:
                         return menuData.Item1;
                     case ApiModuleTypes.BillBoardUtils:
-                        return BillBoardUtils.GetApiData();
+                        {
+                            if (apiVersionID < 11)
+								return BillBoardUtils.GetApiData10();
+                            else
+								return BillBoardUtils.GetApiData();
+						}
                 }
 
                 return null;

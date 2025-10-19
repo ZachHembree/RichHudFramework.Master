@@ -40,7 +40,7 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         public const long modID = 1965654081, queueID = 1314086443;
-        public const int apiVID = 11, minApiVID = 7;
+        public const int apiVID = 12, minApiVID = 7;
         public const string modName = "Rich HUD Master";
         public static readonly Vector4I versionID = new Vector4I(1, 3, 0, 7); // Major, Minor, Rev, Hotfix
         public static readonly string versionString = $"{versionID.X}.{versionID.Y}.{versionID.Z}.{versionID.W} ({apiVID})";
