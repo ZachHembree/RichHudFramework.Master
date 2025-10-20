@@ -13,7 +13,7 @@ namespace RichHudFramework.UI.Rendering.Server
     {
         private abstract class FormattedTextBase : IIndexedCollection<Line>
         {
-            public Line this[int index] => lines[index];
+            public Line this[int index] => lines.PooledLines[index];
 
             public virtual int Count => lines.Count;
 
@@ -53,7 +53,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 Vector2I start = new Vector2I(Math.Max(0, lines.Count - 1), 0);
 
                 if (lines.Count > 0)
-                    start.Y = Math.Max(0, lines[start.X].Count);
+                    start.Y = Math.Max(0, lines.PooledLines[start.X].Count);
 
                 return start;
             }
@@ -87,7 +87,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 {
                     if (end.X > start.X)
                     {
-                        lines.PooledLines[start.X].SetFormatting(start.Y, lines[start.X].Count - 1, formatting);
+                        lines.PooledLines[start.X].SetFormatting(start.Y, lines.PooledLines[start.X].Count - 1, formatting);
 
                         for (int x = start.X + 1; x < end.X; x++)
                             lines.PooledLines[x].SetFormatting(formatting);
@@ -109,15 +109,15 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             public virtual void RemoveRange(Vector2I start, Vector2I end)
             {
-                if (start.X < lines.Count && lines[start.X].Count > 0)
+                if (start.X < lines.Count && lines.PooledLines[start.X].Count > 0)
                 {
                     if (end.X > start.X)
                     {
-                        if (end.Y == (lines[end.X].Count - 1))
+                        if (end.Y == (lines.PooledLines[end.X].Count - 1))
                             lines.RemoveAt(end.X);
                         else
                         {
-                            lines.PooledLines[end.X].RemoveRange(0, lines[end.X].Count - end.Y);
+                            lines.PooledLines[end.X].RemoveRange(0, lines.PooledLines[end.X].Count - end.Y);
                             lines.PooledLines[end.X].UpdateSize();
                         }
 
@@ -128,13 +128,13 @@ namespace RichHudFramework.UI.Rendering.Server
                             lines.RemoveAt(start.X);
                         else
                         {
-                            lines.PooledLines[start.X].RemoveRange(start.Y, lines[start.X].Count - start.Y);
+                            lines.PooledLines[start.X].RemoveRange(start.Y, lines.PooledLines[start.X].Count - start.Y);
                             lines.PooledLines[start.X].UpdateSize();
                         }
                     }
                     else
                     {
-                        if (start.X > 0 && start.Y == 0 && end.Y == (lines[start.X].Count - 1))
+                        if (start.X > 0 && start.Y == 0 && end.Y == (lines.PooledLines[start.X].Count - 1))
                             lines.RemoveAt(start.X);
                         else
                         {

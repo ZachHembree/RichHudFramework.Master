@@ -51,12 +51,12 @@ namespace RichHudFramework.UI.Rendering.Server
                 if (insertStart > 0)
                 {
 					insertStart--;
-					charBuffer.AddRange(lines[insertStart]);
+					charBuffer.AddRange(lines.PooledLines[insertStart]);
 				}
 
 				// Prepend immediately preceeding text
 				if (lines.Count > 0)
-					charBuffer.AddRange(lines[start.X], 0, start.Y);
+					charBuffer.AddRange(lines.PooledLines[start.X], 0, start.Y);
 
 				for (int n = 0; n < text.Count; n++)
 					charBuffer.AppendRichString(text[n], AllowSpecialChars);
@@ -64,7 +64,7 @@ namespace RichHudFramework.UI.Rendering.Server
 				// Append succeeding text
 				if (lines.Count > 0)
 				{
-					charBuffer.AddRange(lines[start.X], start.Y, lines[start.X].Count - start.Y);
+					charBuffer.AddRange(lines.PooledLines[start.X], start.Y, lines.PooledLines[start.X].Count - start.Y);
 					lines.RemoveRange(insertStart, start.X - insertStart + 1);
 				}
 
@@ -109,13 +109,13 @@ namespace RichHudFramework.UI.Rendering.Server
                 int charCount = 0;
 
                 for (int n = 0; n < Count; n++)
-                    charCount += lines[n].Count;
+                    charCount += lines.PooledLines[n].Count;
 
                 charBuffer.EnsureCapacity(charCount);
                 charBuffer.Clear();
 
                 for (int n = 0; n < Count; n++)
-                    charBuffer.AddRange(lines[n]);
+                    charBuffer.AddRange(lines.PooledLines[n]);
 
                 lines.Clear();
                 GenerateLines();
@@ -136,7 +136,7 @@ namespace RichHudFramework.UI.Rendering.Server
 					start--;
 
 				for (int n = start; n <= end; n++)
-                    charCount += lines[n].Count;
+                    charCount += lines.PooledLines[n].Count;
 
                 charBuffer.EnsureCapacity(charCount);
                 charBuffer.Clear();
@@ -225,11 +225,11 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             private bool TryPullToLine(int line)
             {
-                float spaceRemaining = MaxLineWidth - lines[line].UnscaledSize.X;
+                float spaceRemaining = MaxLineWidth - lines.PooledLines[line].UnscaledSize.X;
                 Vector2I wordStart = new Vector2I(line + 1, 0),
                     wordEnd, end = Vector2I.Zero;
 
-                while (lines[wordStart.X].Chars[wordStart.Y] != '\n' && TryGetWordEnd(wordStart, out wordEnd, ref spaceRemaining))
+                while (lines.PooledLines[wordStart.X].Chars[wordStart.Y] != '\n' && TryGetWordEnd(wordStart, out wordEnd, ref spaceRemaining))
                 {
                     end = wordEnd;
 
@@ -254,7 +254,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 if (end.X > line)
                 {
-                    if (end.Y < lines[end.X].Count - 1)
+                    if (end.Y < lines.PooledLines[end.X].Count - 1)
                     {
                         // Remove pulled chars on ending line
                         lines.PooledLines[end.X].RemoveRange(0, end.Y + 1);

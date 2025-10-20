@@ -26,16 +26,16 @@ namespace RichHudFramework.UI.Rendering.Server
                 int charCount = 0;
 
                 for (int n = 0; n < Count; n++)
-                    charCount += lines[n].Count;
+                    charCount += lines.PooledLines[n].Count;
 
                 Line chars = lines.GetNewLine(charCount);
 
                 for (int line = 0; line < Count; line++)
                 {
-                    for (int ch = 0; ch < lines[line].Count; ch++)
+                    for (int ch = 0; ch < lines.PooledLines[line].Count; ch++)
                     {
-                        if (lines[line][ch].Ch >= ' ')
-                            chars.AddCharFromLine(ch, lines[line]);
+                        if (lines.PooledLines[line][ch].Ch >= ' ')
+                            chars.AddCharFromLine(ch, lines.PooledLines[line]);
                     }
                 }
 

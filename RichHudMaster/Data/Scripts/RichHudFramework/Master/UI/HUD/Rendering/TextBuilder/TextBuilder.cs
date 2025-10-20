@@ -25,12 +25,12 @@ namespace RichHudFramework
         {
             public abstract partial class TextBuilder : ITextBuilder
             {
-                public IRichChar this[Vector2I index] => lines[index.X][index.Y];
+                public IRichChar this[Vector2I index] => lines.PooledLines[index.X][index.Y];
 
                 /// <summary>
                 /// Gets the line at the specified index.
                 /// </summary>
-                public ILine this[int index] => lines[index];
+                public ILine this[int index] => lines.PooledLines[index];
 
                 /// <summary>
                 /// Number of lines in the text.
@@ -318,8 +318,8 @@ namespace RichHudFramework
                 {
                     Format = format;
 
-                    if (lines.Count > 0 && lines[lines.Count - 1].Count > 0)
-                        SetFormattingData(Vector2I.Zero, new Vector2I(lines.Count - 1, lines[lines.Count - 1].Count - 1), format.Data);
+                    if (lines.Count > 0 && lines.PooledLines[lines.Count - 1].Count > 0)
+                        SetFormattingData(Vector2I.Zero, new Vector2I(lines.Count - 1, lines.PooledLines[lines.Count - 1].Count - 1), format.Data);
                 }
 
                 /// <summary>
@@ -344,13 +344,13 @@ namespace RichHudFramework
                 /// </summary>
                 public RichText GetText()
                 {
-                    if (lines.Count > 0 && lines[lines.Count - 1].Count > 0)
+                    if (lines.Count > 0 && lines.PooledLines[lines.Count - 1].Count > 0)
                     {
                         List<RichStringMembers> nextTextData;
 
                         if (!GetIsTextEqual(lastTextData))
                         {
-                            Vector2I end = new Vector2I(lines.Count - 1, lines[lines.Count - 1].Count - 1);
+                            Vector2I end = new Vector2I(lines.Count - 1, lines.PooledLines[lines.Count - 1].Count - 1);
                             nextTextData = GetTextRangeData(Vector2I.Zero, end);
                         }
                         else
@@ -386,10 +386,10 @@ namespace RichHudFramework
 
                     if (end.X > start.X)
                     {
-                        lines.PooledLines[start.X].GetRangeString(text, start.Y, lines[start.X].Count - 1);
+                        lines.PooledLines[start.X].GetRangeString(text, start.Y, lines.PooledLines[start.X].Count - 1);
 
                         for (int line = start.X + 1; line <= end.X - 1; line++)
-                            lines.PooledLines[line].GetRangeString(text, 0, lines[line].Count - 1);
+                            lines.PooledLines[line].GetRangeString(text, 0, lines.PooledLines[line].Count - 1);
 
                         lines.PooledLines[end.X].GetRangeString(text, 0, end.Y);
                     }
@@ -437,10 +437,10 @@ namespace RichHudFramework
                     {
                         int chStart = x == start.X ? start.Y : 0;
 
-                        for (int y = chStart; y < lines[x].Count; y++)
+                        for (int y = chStart; y < lines.PooledLines[x].Count; y++)
                         {
                             // Compare formatting
-                            GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
+                            GlyphFormat currentFormat = lines.PooledLines[i.X].FormattedGlyphs[i.Y].format;
 
                             isOtherEqual = currentFormat.Data.Item1 == newFormat.Item1
                                 && currentFormat.Data.Item2 == newFormat.Item2
@@ -453,7 +453,7 @@ namespace RichHudFramework
                                 break;
 
                             // Increment index
-                            if (i.X < Count && i.Y + 1 < lines[i.X].Count)
+                            if (i.X < Count && i.Y + 1 < lines.PooledLines[i.X].Count)
                                 i.Y++;
                             else if (i.X + 1 < Count)
                                 i = new Vector2I(i.X + 1, 0);
@@ -483,7 +483,7 @@ namespace RichHudFramework
                                 if (formatter.AllowSpecialChars || newChars[y] >= ' ')
                                 {
                                     // Compare formatting
-                                    GlyphFormat currentFormat = lines[i.X].FormattedGlyphs[i.Y].format;
+                                    GlyphFormat currentFormat = lines.PooledLines[i.X].FormattedGlyphs[i.Y].format;
 
                                     bool formatEqual = currentFormat.Data.Item1 == newFormat.Item1
                                         && currentFormat.Data.Item2 == newFormat.Item2
@@ -494,13 +494,13 @@ namespace RichHudFramework
                                         return false;
 
                                     // Compare text
-                                    char ch = lines[i.X].Chars[i.Y];
+                                    char ch = lines.PooledLines[i.X].Chars[i.Y];
 
                                     if (ch != newChars[y])
                                         return false;
 
                                     // Increment index
-                                    if (i.X < Count && i.Y + 1 < lines[i.X].Count)
+                                    if (i.X < Count && i.Y + 1 < lines.PooledLines[i.X].Count)
                                         i.Y++;
                                     else if (i.X + 1 < Count)
                                         i = new Vector2I(i.X + 1, 0);
@@ -539,7 +539,7 @@ namespace RichHudFramework
                     }
 
                     for (int n = 0; n < lines.Count; n++)
-                        currentLength += lines[n].Count;
+                        currentLength += lines.PooledLines[n].Count;
 
                     return newTextLength == currentLength;
                 }
@@ -669,15 +669,15 @@ namespace RichHudFramework
                     int charCount = 0;
 
                     for (int i = 0; i < lines.Count; i++)
-                        charCount += lines[i].Count;
+                        charCount += lines.PooledLines[i].Count;
 
                     StringBuilder sb = new StringBuilder();
                     sb.EnsureCapacity(charCount);
 
                     for (int i = 0; i < lines.Count; i++)
                     {
-                        for (int j = 0; j < lines[i].Count; j++)
-                            sb.Append(lines[i].Chars[j]);
+                        for (int j = 0; j < lines.PooledLines[i].Count; j++)
+                            sb.Append(lines.PooledLines[i].Chars[j]);
                     }
 
                     return sb.ToString();

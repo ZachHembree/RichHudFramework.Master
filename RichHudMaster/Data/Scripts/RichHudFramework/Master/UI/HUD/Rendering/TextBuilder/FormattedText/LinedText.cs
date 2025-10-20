@@ -32,7 +32,7 @@ namespace RichHudFramework.UI.Rendering.Server
 
                 // Prepend immediately preceeding text
                 if (lines.Count > 0)
-                    charBuffer.AddRange(lines[index.X], 0, index.Y);
+                    charBuffer.AddRange(lines.PooledLines[index.X], 0, index.Y);
 
                 for (int n = 0; n < text.Count; n++)
                     charBuffer.AppendRichString(text[n], AllowSpecialChars);
@@ -40,7 +40,7 @@ namespace RichHudFramework.UI.Rendering.Server
                 // Append succeeding text
                 if (lines.Count > 0)
                 {
-                    charBuffer.AddRange(lines[index.X], index.Y, lines[index.X].Count - index.Y);
+                    charBuffer.AddRange(lines.PooledLines[index.X], index.Y, lines.PooledLines[index.X].Count - index.Y);
                     lines.RemoveAt(index.X);
                 }
 
