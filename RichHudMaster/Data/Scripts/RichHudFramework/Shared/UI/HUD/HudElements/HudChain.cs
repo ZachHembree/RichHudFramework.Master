@@ -123,6 +123,8 @@ namespace RichHudFramework
                     alignAxis = 0;
                     offAxis = 1;
                 }
+
+                LayoutCallback = Layout;
             }
 
             public HudChain(HudParentBase parent) : this(false, parent)
@@ -218,7 +220,7 @@ namespace RichHudFramework
                 return listSize + Padding;
             }
 
-            protected override void Layout()
+            protected virtual void Layout()
             {
                 Vector2 chainSize = UnpaddedSize;
 

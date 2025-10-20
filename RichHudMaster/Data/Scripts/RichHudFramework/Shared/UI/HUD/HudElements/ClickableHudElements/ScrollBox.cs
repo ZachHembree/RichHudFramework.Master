@@ -202,6 +202,8 @@ namespace RichHudFramework.UI
                 ScrollBar.Padding = new Vector2(16f);
                 ScrollBar.Height = 24f;
             }
+
+            HandleInputCallback = HandleInput;
         }
 
         public ScrollBox(HudParentBase parent) : this(true, parent)
@@ -245,7 +247,7 @@ namespace RichHudFramework.UI
             return -1;
         }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected virtual void HandleInput(Vector2 cursorPos)
         {
             ScrollBar.MouseInput.InputEnabled = EnableScrolling;
 

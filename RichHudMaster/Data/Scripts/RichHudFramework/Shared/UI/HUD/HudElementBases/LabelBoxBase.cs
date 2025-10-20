@@ -54,9 +54,11 @@ namespace RichHudFramework
 
                 FitToTextElement = true;
                 Color = Color.Gray;
+
+                LayoutCallback = Layout;
             }
 
-            protected override void Layout()
+            protected virtual void Layout()
             {
                 if (!AutoResize)
                 {

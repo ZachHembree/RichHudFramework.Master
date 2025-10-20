@@ -149,9 +149,12 @@ namespace RichHudFramework.UI
 
             LoseFocusCallback = LoseFocus;
             GetFocus();
+
+            LayoutCallback = Layout;
+            HandleInputCallback = HandleInput;
         }
 
-        protected override void Layout()
+        protected virtual void Layout()
         {
             body.Height = CachedSize.Y - Padding.Y - header.Height;
             body.Width = CachedSize.X - Padding.X;
@@ -181,7 +184,7 @@ namespace RichHudFramework.UI
             Offset = pos - Origin;
         }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected virtual void HandleInput(Vector2 cursorPos)
         {
             if (IsMousedOver)
             {

@@ -97,6 +97,7 @@ namespace RichHudFramework.UI
             ClearSelectionOnLoseFocus = true;
 
             Size = new Vector2(60f, 200f);
+            HandleInputCallback = HandleInput;
         }
 
         public TextBox() : this(null)
@@ -164,7 +165,7 @@ namespace RichHudFramework.UI
                 ClearSelection();
         }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected virtual void HandleInput(Vector2 cursorPos)
         {
             bool useInput = allowInput || (MouseInput.HasFocus && HudMain.InputMode == HudInputMode.Full);
 
@@ -346,6 +347,9 @@ namespace RichHudFramework.UI
 
                 blinkTimer = new Stopwatch();
                 blinkTimer.Start();
+
+                LayoutCallback = Layout;
+                HandleInputCallback = HandleInput;
             }
 
             /// <summary>
@@ -425,7 +429,7 @@ namespace RichHudFramework.UI
                 text.MoveToChar(index);
             }
 
-            protected override void Layout()
+            private void Layout()
             {
                 if (caretMoved)
                 {
@@ -518,7 +522,7 @@ namespace RichHudFramework.UI
             /// <summary>
             /// Handles input for moving the caret.
             /// </summary>
-            protected override void HandleInput(Vector2 cursorPos)
+            private void HandleInput(Vector2 cursorPos)
             {
                 if (SharedBinds.DownArrow.IsPressedAndHeld || SharedBinds.DownArrow.IsNewPressed)
                     Move(new Vector2I(1, 0), true);
@@ -670,6 +674,8 @@ namespace RichHudFramework.UI
                 Start = -Vector2I.One;
                 highlightBoard = new MatBoard();
                 highlightList = new List<HighlightBox>();
+
+                DrawCallback = Draw;
             }
 
             public void SetSelection(Vector2I start, Vector2I end)
@@ -727,7 +733,7 @@ namespace RichHudFramework.UI
                 }
             }
 
-            protected override void Draw()
+            protected void Draw()
             {
                 if (lastTextSize != text.Size)
                 {

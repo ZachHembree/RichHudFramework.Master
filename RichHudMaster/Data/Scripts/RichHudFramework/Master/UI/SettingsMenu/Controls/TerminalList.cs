@@ -123,14 +123,14 @@ namespace RichHudFramework.UI.Server
 
                 Padding = new Vector2(0f, 0f);
                 Size = new Vector2(250f, 200f);
+
+                LayoutCallback = Layout;
             }
 
-            protected override void Layout()
+            protected void Layout()
             {
                 listBox.Color = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                 listBox.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
-
-                base.Layout();
             }
 
             public void SetSelection(ListBoxEntry<T> entry) =>

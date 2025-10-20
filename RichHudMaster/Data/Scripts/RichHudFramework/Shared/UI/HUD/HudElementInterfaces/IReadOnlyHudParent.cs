@@ -34,8 +34,7 @@ namespace RichHudFramework
             IsSelectivelyMasked = 1 << 10,
             CanIgnoreMasking = 1 << 11,
             IsInputEnabled = 1 << 12,
-            WasParentInputEnabled = 1 << 13,
-            IsInitialized = 1 << 14,
+            WasParentInputEnabled = 1 << 13
         }
 
         public struct HudLayerData

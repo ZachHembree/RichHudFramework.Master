@@ -383,9 +383,11 @@ namespace RichHudFramework
                     GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorldRef[0]);
                     GetNodeOriginFunc = () => PixelToWorldRef[0].Translation;
                     PlaneToWorldRef = PixelToWorldRef;
+
+                    LayoutCallback = Layout;
                 }
 
-                protected override void Layout()
+                private void Layout()
                 {
                     PlaneToWorldRef[0] = PixelToWorld;
                     CursorPos = new Vector3(Cursor.ScreenPos.X, Cursor.ScreenPos.Y, 0f);

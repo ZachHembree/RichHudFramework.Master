@@ -339,6 +339,7 @@ namespace RichHudFramework
                     };
 
                     Height = lineHeight;
+                    HandleInputCallback = HandleInput;
                 }
 
                 public void Reset()
@@ -358,7 +359,7 @@ namespace RichHudFramework
                     this.group.BindChanged += OnBindChanged;
                 }
 
-                protected override void HandleInput(Vector2 cursorPos)
+                protected void HandleInput(Vector2 cursorPos)
                 {
                     if (combos[0].IsMousedOver)
                     {

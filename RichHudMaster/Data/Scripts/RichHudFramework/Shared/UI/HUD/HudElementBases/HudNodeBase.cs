@@ -60,7 +60,7 @@ namespace RichHudFramework
             /// <summary>
             /// Starts input update in a try-catch block. Useful for manually updating UI elements.
             /// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
-            /// If you need to update input, use HandleInput().
+            /// If you need to update input, use HandleInputCallback.
             /// </summary>
             public override void BeginInput()
             {
@@ -73,16 +73,17 @@ namespace RichHudFramework
                         else
                             State &= ~HudElementStates.WasParentInputEnabled;
 
+                        if (HandleInputCallback == null)
+                            return;
+
                         bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask,
                              isInputEnabled = (State & NodeInputMask) == NodeInputMask;
 
                         if (isVisible && isInputEnabled)
                         {
                             Vector3 cursorPos = HudSpace.CursorPos;
-                            HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
+                            HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
                         }
-
-                        State |= HudElementStates.IsInitialized;
                     }
                     catch (Exception e)
                     {
@@ -93,26 +94,36 @@ namespace RichHudFramework
 
             /// <summary>
             /// Updates layout for the element and its children. Overriding this method is rarely necessary. 
-            /// If you need to update layout, use Layout().
+            /// If you need to update layout, use LayoutCallback.
             /// </summary>
-            public override void BeginLayout(bool refresh)
+            public override void BeginLayout(bool isArranging)
             {
-                if (!ExceptionHandler.ClientsPaused)
+				if (!ExceptionHandler.ClientsPaused)
                 {
                     try
                     {
-                        if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
-                            State |= HudElementStates.WasParentVisible;
-                        else
-                            State &= ~HudElementStates.WasParentVisible;
+						if (isArranging)
+						{
+							if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
+								State |= HudElementStates.WasParentVisible;
+							else
+								State &= ~HudElementStates.WasParentVisible;
 
-                        bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
+							layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+						}
 
-                        if (isVisible)
+						if (SizingCallback == null && LayoutCallback == null)
+                            return;
+
+						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
+
+						if (isVisible)
                         {
-                            layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
-                            Layout();
-                        }
+							if (!isArranging)
+                                SizingCallback?.Invoke();
+							else
+								LayoutCallback?.Invoke();
+						}
                     }
                     catch (Exception e)
                     {
@@ -137,13 +148,23 @@ namespace RichHudFramework
 
                 if ((State & NodeVisibleMask) == NodeVisibleMask)
                 {
-                    HudSpace = _parent?.HudSpace;
+					bool isInputEnabled = (State & NodeInputMask) == NodeInputMask,
+						canUseCursor = isInputEnabled && (State & HudElementStates.CanUseCursor) > 0;
+
+					HudSpace = _parent?.HudSpace;
                     layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+					var accessors = new HudUpdateAccessors()
+					{
+						Item1 = GetOrSetApiMemberFunc,
+						Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(() => layerData.fullZOffset, HudSpace.GetNodeOriginFunc),
+						Item3 = (InputDepthCallback != null && canUseCursor) ? BeginInputDepthAction : null,
+						Item4 = BeginInputAction,
+						Item5 = BeginLayoutAction,
+						Item6 = DrawCallback != null ? BeginDrawAction : null
+					};
 
-                    UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                    accessorDelegates.Item2.Item2 = HudSpace.GetNodeOriginFunc;
-
-                    UpdateActions.Add(accessorDelegates); ;
+					UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
+                    UpdateActions.Add(accessors);
 
                     for (int n = 0; n < children.Count; n++)
                         children[n].GetUpdateAccessors(UpdateActions, preloadDepth);

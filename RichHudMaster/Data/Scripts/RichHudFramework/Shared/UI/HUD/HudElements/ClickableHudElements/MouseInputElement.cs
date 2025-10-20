@@ -102,6 +102,7 @@ namespace RichHudFramework.UI
             DimAlignment = DimAlignments.UnpaddedSize;
 
             LoseFocusCallback = LoseFocus;
+            HandleInputCallback = HandleInput;
         }
 
         public MouseInputElement() : this(null)
@@ -150,7 +151,7 @@ namespace RichHudFramework.UI
             }
         }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected virtual void HandleInput(Vector2 cursorPos)
         {
             if (IsMousedOver)
             {

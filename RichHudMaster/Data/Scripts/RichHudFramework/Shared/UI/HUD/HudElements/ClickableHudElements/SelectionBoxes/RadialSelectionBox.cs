@@ -122,6 +122,10 @@ namespace RichHudFramework.UI
 
             UseGestureInput = false;
             UseCursor = true;
+
+            LayoutCallback = Layout;
+            DrawCallback = Draw;
+            HandleInputCallback = HandleInput;
         }
 
         /// <summary>
@@ -185,7 +189,7 @@ namespace RichHudFramework.UI
             SelectionIndex = -1;
         }
 
-        protected override void Layout()
+        protected virtual void Layout()
         {
             // Get enabled elements and effective max count
             EnabledCount = 0;
@@ -250,7 +254,7 @@ namespace RichHudFramework.UI
             }
         }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected virtual void HandleInput(Vector2 cursorPos)
         {
             if (UseGestureInput || IsMousedOver)
             {
@@ -352,7 +356,7 @@ namespace RichHudFramework.UI
             }
         }
 
-        protected override void Draw()
+        protected virtual void Draw()
         {
             Vector2 size = CachedSize - Padding;
             int entrySize = polyBoard.Sides / effectiveMaxCount;

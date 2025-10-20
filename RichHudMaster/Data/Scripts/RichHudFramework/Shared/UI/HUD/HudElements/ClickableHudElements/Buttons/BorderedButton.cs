@@ -67,12 +67,14 @@ namespace RichHudFramework.UI
 
             _mouseInput.GainedInputFocus += GainFocus;
             _mouseInput.LostInputFocus += LoseFocus;
+
+            HandleInputCallback = HandleInput;
         }
 
         public BorderedButton() : this(null)
         { }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected virtual void HandleInput(Vector2 cursorPos)
         {
             if (MouseInput.HasFocus)
             {

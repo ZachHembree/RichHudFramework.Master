@@ -90,9 +90,11 @@ namespace RichHudFramework.UI
 
             AutoResize = true;
             Size = new Vector2(250f, 37f);
+
+            DrawCallback = Draw;
         }
 
-        protected override void Draw()
+        protected virtual void Draw()
         {
             if (AutoResize)
                 UnpaddedSize = layout.GetRangeSize();

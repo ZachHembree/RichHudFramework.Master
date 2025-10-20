@@ -239,12 +239,15 @@ namespace RichHudFramework.UI
 
             Current = 0f;
             Percent = 0f;
+
+            HandleInputCallback = HandleInput;
+            LayoutCallback = Layout;
         }
 
         public SliderBar() : this(null)
         { }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected virtual void HandleInput(Vector2 cursorPos)
         {
             if (!canMoveSlider && mouseInput.IsNewLeftClicked)
             {
@@ -286,7 +289,7 @@ namespace RichHudFramework.UI
             }
         }
 
-        protected override void Layout()
+        protected virtual void Layout()
         {
             slider.Visible = SliderVisible;
 

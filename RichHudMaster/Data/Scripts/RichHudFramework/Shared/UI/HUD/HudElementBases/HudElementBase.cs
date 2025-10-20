@@ -220,16 +220,18 @@ namespace RichHudFramework
                 Origin = Vector2.Zero;
                 Position = Vector2.Zero;
                 OriginAlignment = Vector2.Zero;
+
+                InputDepthCallback = InputDepth;
             }
 
             /// <summary>
             /// Used to check whether the cursor is moused over the element and whether its being
             /// obstructed by another element.
             /// </summary>
-            protected override void InputDepth()
+            protected virtual void InputDepth()
             {
                 State &= ~HudElementStates.IsMouseInBounds;
-
+                
                 if (HudMain.InputMode != HudInputMode.NoInput && (HudSpace?.IsFacingCamera ?? false))
                 {
                     Vector3 cursorPos = HudSpace.CursorPos;
@@ -252,7 +254,7 @@ namespace RichHudFramework
 
             /// <summary>
             /// Updates input for the element and its children. Overriding this method is rarely necessary.
-            /// If you need to update input, use HandleInput().
+            /// If you need to update input, use HandleInputCallback.
             /// </summary>
             public sealed override void BeginInput()
             {
@@ -272,7 +274,7 @@ namespace RichHudFramework
 
                         State &= ~HudElementStates.IsMousedOver;
 
-                        if (isVisible && isInputEnabled)
+                        if (isVisible && isInputEnabled && HandleInputCallback != null)
                         {
                             Vector3 cursorPos = HudSpace.CursorPos;
                             bool mouseInBounds = (State & HudElementStates.IsMouseInBounds) > 0;
@@ -284,18 +286,16 @@ namespace RichHudFramework
                                 if (isMousedOver)
                                     State |= HudElementStates.IsMousedOver;
 
-                                HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
+                                HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
 
                                 if (!canShareCursor)
-                                    HudMain.Cursor.Capture(accessorDelegates.Item1);
+                                    HudMain.Cursor.Capture(GetOrSetApiMemberFunc);
                             }
                             else
                             {
-                                HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
+								HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
                             }
                         }
-
-                        State |= HudElementStates.IsInitialized;
                     }
                     catch (Exception e)
                     {
@@ -306,81 +306,60 @@ namespace RichHudFramework
 
             /// <summary>
             /// Updates layout for the element and its children. Overriding this method is rarely necessary. 
-            /// If you need to update layout, use Layout().
+            /// If you need to update layout, use LayoutCallback.
             /// </summary>
-            public sealed override void BeginLayout(bool refresh)
+            public sealed override void BeginLayout(bool isArranging)
             {
                 if (!ExceptionHandler.ClientsPaused)
                 {
                     try
                     {
-                        if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
-                            State |= HudElementStates.WasParentVisible;
-                        else
-                            State &= ~HudElementStates.WasParentVisible;
-
-                        bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
-
-                        if (isVisible)
+                        if (isArranging)
                         {
-                            layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+							if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
+								State |= HudElementStates.WasParentVisible;
+							else
+								State &= ~HudElementStates.WasParentVisible;
 
-                            if (_parentFull != null)
-                            {
-                                Origin = _parentFull.Position + OriginAlignment;
-                            }
-                            else
-                            {
-                                Origin = Vector2.Zero;
-                                Position = Offset;
-                                Padding = Padding;
-                                CachedSize = UnpaddedSize + Padding;
-                            }
+							bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
 
-                            Layout();
+							if (isVisible)
+							{
+								layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
 
-                            if (children.Count > 0)
-                                UpdateChildAlignment();
+								if (_parentFull != null)
+								{
+									Origin = _parentFull.Position + OriginAlignment;
+								}
+								else
+								{
+									Origin = Vector2.Zero;
+									Position = Offset;
+									Padding = Padding;
+									CachedSize = UnpaddedSize + Padding;
+								}
 
-                            if (_parentFull != null && (_parentFull.State & HudElementStates.IsMasked) > 0 &&
-                                (State & HudElementStates.CanIgnoreMasking) == 0
-                            )
-                                State |= HudElementStates.IsMasked;
-                            else
-                                State &= ~HudElementStates.IsMasked;
+								LayoutCallback?.Invoke();
 
-                            if ((State & HudElementStates.IsMasking) > 0 || (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0))
-                                UpdateMasking();
-                            else if ((State & HudElementStates.IsMasked) > 0)
-                                maskingBox = _parentFull?.maskingBox;
-                            else
-                                maskingBox = null;
-                        }
+								if (children.Count > 0)
+									UpdateChildAlignment();
 
-                    }
-                    catch (Exception e)
-                    {
-                        ExceptionHandler.ReportException(e);
-                    }
-                }
-            }
+								if (_parentFull != null && (_parentFull.State & HudElementStates.IsMasked) > 0 &&
+									(State & HudElementStates.CanIgnoreMasking) == 0
+								)
+									State |= HudElementStates.IsMasked;
+								else
+									State &= ~HudElementStates.IsMasked;
 
-            /// <summary>
-            /// Used to immediately draw billboards. Overriding this method is rarely necessary. 
-            /// If you need to draw something, use Draw().
-            /// </summary>
-            public sealed override void BeginDraw()
-            {
-                if (!ExceptionHandler.ClientsPaused)
-                {
-                    try
-                    {
-                        bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
+								if ((State & HudElementStates.IsMasking) > 0 || (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0))
+									UpdateMasking();
+								else if ((State & HudElementStates.IsMasked) > 0)
+									maskingBox = _parentFull?.maskingBox;
+								else
+									maskingBox = null;
+							}
+						}
 
-                        if (isVisible)
-                        {
-                            Draw();
-                        }
                     }
                     catch (Exception e)
                     {

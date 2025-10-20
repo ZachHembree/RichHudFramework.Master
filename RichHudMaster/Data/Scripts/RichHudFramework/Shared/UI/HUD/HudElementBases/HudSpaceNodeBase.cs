@@ -79,9 +79,11 @@ namespace RichHudFramework
                 GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(DrawCursorInHudSpace, 1f, PlaneToWorldRef[0]);
                 GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;
                 PlaneToWorldRef = new MatrixD[1];
+
+                LayoutCallback = Layout;
             }
 
-            protected override void Layout()
+            protected virtual void Layout()
             {
                 // Determine whether the node is in front of the camera and pointed toward it
                 MatrixD camMatrix = MyAPIGateway.Session.Camera.WorldMatrix;
@@ -113,11 +115,22 @@ namespace RichHudFramework
 
             public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte preloadDepth)
             {
-                layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
-                UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                accessorDelegates.Item2.Item2 = GetNodeOriginFunc;
+				bool isInputEnabled = (State & NodeInputMask) == NodeInputMask,
+					canUseCursor = isInputEnabled && (State & HudElementStates.CanUseCursor) > 0;
 
-                UpdateActions.Add(accessorDelegates);
+				layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+				var accessors = new HudUpdateAccessors()
+				{
+					Item1 = GetOrSetApiMemberFunc,
+					Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(() => layerData.fullZOffset, GetNodeOriginFunc),
+					Item3 = (InputDepthCallback != null && canUseCursor) ? BeginInputDepthAction : null,
+					Item4 = BeginInputAction,
+					Item5 = BeginLayoutAction,
+					Item6 = DrawCallback != null ? BeginDrawAction : null
+				};
+
+				UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
+                UpdateActions.Add(accessors);
 
                 if (Visible && IsInFront)
                 {

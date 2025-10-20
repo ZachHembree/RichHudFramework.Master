@@ -53,12 +53,14 @@ namespace RichHudFramework.UI
         {
             TextBoard = new TextBoard();
             TextBoard.SetText("NewLabel", GlyphFormat.White);
+
+            DrawCallback = Draw;
         }
 
         public Label() : this(null)
         { }
 
-        protected override void Draw()
+        protected virtual void Draw()
         {
             Vector2 size = (CachedSize - Padding),
                 halfSize = .5f * size;

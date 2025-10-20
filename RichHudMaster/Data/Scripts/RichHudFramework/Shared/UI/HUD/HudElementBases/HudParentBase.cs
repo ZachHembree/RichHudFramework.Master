@@ -69,42 +69,84 @@ namespace RichHudFramework
                 set { layerData.zOffset = value; }
             }
 
-            public HudElementStates State { get; protected set; }
+			// Custom Update Hooks - inject custom updates and polling here
 
+			/// <summary>
+			/// Used to check whether the cursor is moused over the element and whether its being
+			/// obstructed by another element.
+			/// </summary>
+			protected Action InputDepthCallback;
+
+			/// <summary>
+			/// Updates the input of this UI element. Invocation order affected by z-Offset and depth sorting.
+			/// Executes last, after Draw.
+			/// </summary>
+			protected Action<Vector2> HandleInputCallback;
+
+			/// <summary>
+			/// Updates the sizing of the element. Executes before layout in bottom-up order, before layout.
+			/// </summary>
+			protected Action SizingCallback;
+
+			/// <summary>
+			/// Updates the internal layout of the UI element. Executes after sizing in top-down order, before 
+			/// input and draw. Not affected by depth or z-Offset sorting.
+			/// </summary>
+			protected Action LayoutCallback;
+
+			/// <summary>
+			/// Used to immediately draw billboards. Invocation order affected by z-Offset and depth sorting.
+			/// Executes after Layout and before HandleInput.
+			/// </summary>
+			protected Action DrawCallback;
+
+			/// <summary>
+			/// Internal state tracking flags
+			/// </summary>
+			public HudElementStates State { get; protected set; }
+
+            /// <summary>
+            /// Internal state mask for determining visibility
+            /// </summary>
             public HudElementStates NodeVisibleMask { get; protected set; }
 
+            /// <summary>
+            /// Internal state mask for determining whether input updates are enabled
+            /// </summary>
             public HudElementStates NodeInputMask { get; protected set; }
 
-            protected HudLayerData layerData;
-            protected readonly List<HudNodeBase> children;
-            protected HudUpdateAccessors accessorDelegates;
+			// Internal callbacks - DO NOT TOUCH - SHOO - AVERT YOUR EYES
+			protected ApiMemberAccessor GetOrSetApiMemberFunc { get; private set; }
+			protected Action BeginInputDepthAction { get; private set; }
+			protected Action BeginInputAction { get; private set; }
+			protected Action<bool> BeginLayoutAction { get; private set; }
+			protected Action BeginDrawAction { get; private set; }
 
-            public HudParentBase()
+			protected HudLayerData layerData;
+			protected readonly List<HudNodeBase> children;
+
+			public HudParentBase()
             {
                 NodeVisibleMask = HudElementStates.IsVisible;
                 NodeInputMask = HudElementStates.IsInputEnabled;
                 State = HudElementStates.IsRegistered | HudElementStates.IsInputEnabled | HudElementStates.IsVisible;
 
                 children = new List<HudNodeBase>();
-                accessorDelegates = new HudUpdateAccessors()
-                {
-                    Item1 = GetOrSetApiMember,
-                    Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(() => layerData.fullZOffset, null),
-                    Item3 = BeginInputDepth,
-                    Item4 = BeginInput,
-                    Item5 = BeginLayout,
-                    Item6 = BeginDraw
-                };
+                GetOrSetApiMemberFunc = GetOrSetApiMember;
+                BeginInputDepthAction = BeginInputDepth;
+                BeginInputAction = BeginInput;
+                BeginLayoutAction = BeginLayout;
+                BeginDrawAction = BeginDraw;
             }
 
             /// <summary>
             /// Starts cursor depth check in a try-catch block. Useful for manually updating UI elements.
             /// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
-            /// If you need to do cursor depth testing use InputDepth();
+            /// If you need to do cursor depth testing use InputDepthCallback;
             /// </summary>
             public void BeginInputDepth()
             {
-                if (!ExceptionHandler.ClientsPaused)
+                if (!ExceptionHandler.ClientsPaused && InputDepthCallback != null)
                 {
                     try
                     {
@@ -113,7 +155,7 @@ namespace RichHudFramework
                             isInputEnabled = (State & NodeInputMask) == NodeInputMask;
 
                         if (canUseCursor && isVisible && isInputEnabled)
-                            InputDepth();
+							InputDepthCallback();
                     }
                     catch (Exception e)
                     {
@@ -125,11 +167,11 @@ namespace RichHudFramework
             /// <summary>
             /// Starts input update in a try-catch block. Useful for manually updating UI elements.
             /// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
-            /// If you need to update input, use HandleInput().
+            /// If you need to update input, use HandleInputCallback.
             /// </summary>
             public virtual void BeginInput()
             {
-                if (!ExceptionHandler.ClientsPaused)
+                if (!ExceptionHandler.ClientsPaused && HandleInputCallback != null)
                 {
                     try
                     {
@@ -139,10 +181,8 @@ namespace RichHudFramework
                         if (isVisible && isInputEnabled)
                         {
                             Vector3 cursorPos = HudSpace.CursorPos;
-                            HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
+							HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
                         }
-
-                        State |= HudElementStates.IsInitialized;
                     }
                     catch (Exception e)
                     {
@@ -154,21 +194,31 @@ namespace RichHudFramework
             /// <summary>
             /// Starts layout update in a try-catch block. Useful for manually updating UI elements.
             /// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
-            /// If you need to update layout, use Layout().
+            /// If you need to update layout, use LayoutCallback.
             /// </summary>
-            public virtual void BeginLayout(bool refresh)
+            public virtual void BeginLayout(bool isArranging)
             {
-                if (!ExceptionHandler.ClientsPaused)
+				if (!ExceptionHandler.ClientsPaused)
                 {
-                    try
+					if (isArranging)
+					{
+						layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData);
+					}
+
+					if (SizingCallback == null && LayoutCallback == null)
+						return;
+
+					try
                     {
                         bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
 
                         if (isVisible)
                         {
-                            layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData);
-                            Layout();
-                        }
+							if (!isArranging)
+                                SizingCallback?.Invoke();
+							else
+								LayoutCallback?.Invoke();
+						}
                     }
                     catch (Exception e)
                     {
@@ -180,18 +230,18 @@ namespace RichHudFramework
             /// <summary>
             /// Starts UI draw in a try-catch block. Useful for manually updating UI elements.
             /// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
-            /// If you need to draw billboards, use Draw().
+            /// If you need to draw billboards, use DrawCallback.
             /// </summary>
-            public virtual void BeginDraw()
+            public void BeginDraw()
             {
-                if (!ExceptionHandler.ClientsPaused)
+                if (!ExceptionHandler.ClientsPaused && DrawCallback != null)
                 {
                     try
                     {
                         bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
 
                         if (isVisible)
-                            Draw();
+							DrawCallback();
                     }
                     catch (Exception e)
                     {
@@ -201,42 +251,28 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Used to check whether the cursor is moused over the element and whether its being
-            /// obstructed by another element.
-            /// </summary>
-            protected virtual void InputDepth() { }
-
-            /// <summary>
-            /// Updates the input of this UI element. Invocation order affected by z-Offset and depth sorting.
-            /// Executes last, after Draw.
-            /// </summary>
-            protected virtual void HandleInput(Vector2 cursorPos) { }
-
-            /// <summary>
-            /// Updates the layout of this UI element. Not affected by depth or z-Offset sorting.
-            /// Executes before input and draw.
-            /// </summary>
-            protected virtual void Layout() { }
-
-            /// <summary>
-            /// Used to immediately draw billboards. Invocation order affected by z-Offset and depth sorting.
-            /// Executes after Layout and before HandleInput.
-            /// </summary>
-            protected virtual void Draw() { }
-
-            /// <summary>
             /// Adds update delegates for members in the order dictated by the UI tree
             /// </summary>
             public virtual void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte preloadDepth)
             {
                 if ((State & NodeVisibleMask) == NodeVisibleMask)
                 {
-                    layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData);
+                    bool isInputEnabled = (State & NodeInputMask) == NodeInputMask,
+                        canUseCursor = isInputEnabled && (State & HudElementStates.CanUseCursor) > 0;
 
-                    UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
-                    accessorDelegates.Item2.Item2 = HudSpace.GetNodeOriginFunc;
+					layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData);
+                    var accessors = new HudUpdateAccessors()
+                    {
+                        Item1 = GetOrSetApiMemberFunc,
+                        Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(() => layerData.fullZOffset, HudSpace.GetNodeOriginFunc),
+                        Item3 = (InputDepthCallback != null && canUseCursor) ? BeginInputDepthAction : null,
+                        Item4 = HandleInputCallback != null ? BeginInputAction : null,
+                        Item5 = BeginLayoutAction,
+                        Item6 = DrawCallback != null ? BeginDrawAction : null
+					};
 
-                    UpdateActions.Add(accessorDelegates);
+					UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);
+					UpdateActions.Add(accessors);
 
                     for (int n = 0; n < children.Count; n++)
                         children[n].GetUpdateAccessors(UpdateActions, preloadDepth);

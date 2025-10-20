@@ -84,12 +84,14 @@ namespace RichHudFramework.UI
             MouseInput.LeftClicked += ToggleValue;
             MouseInput.GainedInputFocus += GainFocus;
             MouseInput.LostInputFocus += LoseFocus;
+
+            HandleInputCallback = HandleInput;
         }
 
         public BorderedCheckBox() : this(null)
         { }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected virtual void HandleInput(Vector2 cursorPos)
         {
             if (MouseInput.HasFocus)
             {

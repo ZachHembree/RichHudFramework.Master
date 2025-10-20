@@ -162,6 +162,8 @@ namespace RichHudFramework
                         BuilderMode = TextBuilderModes.Lined,
                         AutoResize = true
                     };
+
+                    LayoutCallback = Layout;
                 }
 
                 /// <summary>
@@ -292,7 +294,7 @@ namespace RichHudFramework
                     ScreenPos = screenPos;
                 }
 
-                protected override void Layout()
+                private void Layout()
                 {
                     // Update custom hud space and tooltips
                     HudSpaceData? hudSpaceData = GetCapturedHudSpaceFunc?.Invoke();

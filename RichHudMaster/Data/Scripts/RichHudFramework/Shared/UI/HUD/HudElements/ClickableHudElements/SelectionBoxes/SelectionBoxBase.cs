@@ -56,15 +56,17 @@ namespace RichHudFramework.UI
             hudChain.Size.X - Padding.X - hudChain.ScrollBar.Width - hudChain.Padding.X - HighlightPadding.X;
 
         public ScrollSelectionBoxBase(HudParentBase parent) : base(parent)
-        { }
+        {
+			HandleInputCallback = HandleInput;
+		}
 
         public ScrollSelectionBoxBase() : base(null)
-        { }
-
-        protected override void HandleInput(Vector2 cursorPos)
         {
-            base.HandleInput(cursorPos);
+            HandleInputCallback = HandleInput;
+        }
 
+        protected virtual void HandleInput(Vector2 cursorPos)
+        {
             if (listInput.KeyboardScroll)
             {
                 if (listInput.HighlightIndex > hudChain.End)
@@ -230,6 +232,8 @@ namespace RichHudFramework.UI
             Size = new Vector2(335f, 203f);
 
             HighlightPadding = new Vector2(8f, 0f);
+
+            LayoutCallback = Layout;
         }
 
         public SelectionBoxBase() : this(null)
@@ -275,7 +279,7 @@ namespace RichHudFramework.UI
             return hudChain.GetRangeSize(start, end) + Padding;
         }
 
-        protected override void Layout()
+        protected virtual void Layout()
         {
             if (!chainHidesDisabled)
             {
