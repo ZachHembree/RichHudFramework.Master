@@ -4,6 +4,7 @@ using RichHudFramework.UI;
 using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using VRage;
 using VRage.Game;
@@ -18,7 +19,8 @@ namespace RichHudFramework.Server
 {
     using UI.Rendering.Server;
     using UI.Server;
-    using ExtendedClientData = MyTuple<ClientData, Action<Action>, ApiMemberAccessor>;
+	using VRage.ModAPI;
+	using ExtendedClientData = MyTuple<ClientData, Action<Action>, ApiMemberAccessor>;
     using MasterMessage = MyTuple<object, byte, object>; // { object sender, queryTypeEnum, object message }
     using MasterRegData = MyTuple<MasterVersionData, Action<object>>; // { Name, ModID, ApiVID, VersionID, Callback(object) }
     using SetVersionFunc = Action<MyTuple<MasterVersionData, Action<object>>>;
@@ -40,9 +42,9 @@ namespace RichHudFramework.Server
     public sealed partial class RichHudMaster : ModBase
     {
         public const long modID = 1965654081, queueID = 1314086443;
-        public const int apiVID = 12, minApiVID = 7;
+        public const int apiVID = 13, minApiVID = 7;
         public const string modName = "Rich HUD Master";
-        public static readonly Vector4I versionID = new Vector4I(1, 3, 0, 7); // Major, Minor, Rev, Hotfix
+        public static readonly Vector4I versionID = new Vector4I(1, 3, 1, 0); // Major, Minor, Rev, Hotfix
         public static readonly string versionString = $"{versionID.X}.{versionID.Y}.{versionID.Z}.{versionID.W} ({apiVID})";
 
         class MasterRegEntry
@@ -149,7 +151,7 @@ namespace RichHudFramework.Server
             versionPriorityList = new List<MasterRegEntry>();
             hasPriority = false;
 
-            clients = new List<ModClient>();
+			clients = new List<ModClient>();
         }
 
         protected override void AfterLoadData()

@@ -11,18 +11,16 @@ namespace RichHudFramework
 {
 	using Internal;
 	using Server;
-
+	using HudUpdateAccessors = MyTuple<
+		ApiMemberAccessor,
+		MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
+		Action, // DepthTest
+		Action, // HandleInput
+		Action<bool>, // BeforeLayout
+		Action // BeforeDraw
+	>;
 	namespace UI.Server
 	{
-		using HudUpdateAccessors = MyTuple<
-			ApiMemberAccessor,
-			MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
-			Action, // DepthTest
-			Action, // HandleInput
-			Action<bool>, // BeforeLayout
-			Action // BeforeDraw
-		>;
-
 		public sealed partial class HudMain
 		{
 			public sealed class TreeManager
@@ -69,6 +67,12 @@ namespace RichHudFramework
 				/// </summary>
 				public static bool RefreshRequested;
 
+				struct VersionedUpdateList
+				{
+					public IReadOnlyList<HudUpdateAccessors> accessors;
+					public int vID;
+				}
+
 				// Sync
 				private readonly FastResourceLock clientRegLock, updateSwapLock, treeSwapLock;
 				private volatile bool isUpdatingTree, isImmediateUpdateReq;
@@ -84,14 +88,15 @@ namespace RichHudFramework
 				private readonly List<Func<Vector3D>> originFunctions;
 				private readonly List<ulong> indexBuffer;
 
-				private readonly List<IReadOnlyList<HudUpdateAccessors>> activeUpdateLists;
+				private readonly List<VersionedUpdateList> activeUpdateLists;
 				private List<HudUpdateAccessors> activeLateUpdateBuffer, inactiveLateUpdateBuffer;
 
 				// Sorted client data
 				private List<Action> depthTestActions, depthTestActionBuffer;
 				private List<Action> inputActions, inputActionBuffer;
 				private List<Action> drawActions, drawActionBuffer;
-				private List<Action<bool>> layoutActions, layoutActionBuffer;
+				private List<MyTuple<Action<bool>, int>> sizingActions, sizingActionBuffer;
+				private List<MyTuple<Action<bool>, int>> layoutActions, layoutActionBuffer;
 				private float lastResScale;
 
 				// Stats
@@ -111,7 +116,7 @@ namespace RichHudFramework
 					updateSwapLock = new FastResourceLock();
 					treeSwapLock = new FastResourceLock();
 
-					activeUpdateLists = new List<IReadOnlyList<HudUpdateAccessors>>();
+					activeUpdateLists = new List<VersionedUpdateList>();
 					activeLateUpdateBuffer = new List<HudUpdateAccessors>();
 					inactiveLateUpdateBuffer = new List<HudUpdateAccessors>();
 
@@ -129,8 +134,11 @@ namespace RichHudFramework
 					drawActions = new List<Action>(200);
 					drawActionBuffer = new List<Action>(200);
 
-					layoutActions = new List<Action<bool>>(200);
-					layoutActionBuffer = new List<Action<bool>>(200);
+					sizingActions = new List<MyTuple<Action<bool>, int>>(200);
+					sizingActionBuffer = new List<MyTuple<Action<bool>, int>>(200);
+
+					layoutActions = new List<MyTuple<Action<bool>, int>>(200);
+					layoutActionBuffer = new List<MyTuple<Action<bool>, int>>(200);
 
 					clients = new List<TreeClient>();
 					mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
@@ -299,12 +307,24 @@ namespace RichHudFramework
 					for (int n = 0; n < clients.Count; n++)
 						clients[n].BeforeDrawCallback?.Invoke();
 
+					// Sizing - vID 13+ only
+					for (int n = sizingActions.Count - 1; n >= 0; n--)
+						sizingActions[n].Item1(false);
+
 					// Older clients (1.0.3-) node spaces require layout refreshes to function
+					// Refresh no longer used in vID 13+ (1.3+). Flag repurposed for explicit
+					// sizing/layout passes.
 					bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
 						refreshLayout = lastResScale != resScale || rebuildLists;
 
+					// Arrange/layout
 					for (int n = 0; n < layoutActions.Count; n++)
-						layoutActions[n](refreshLayout);
+					{
+						int vID = layoutActions[n].Item2;
+						bool isArranging = vID > 12;
+						// For client vID > 12, true indicates top-down arrange/layout pass
+						layoutActions[n].Item1(refreshLayout || isArranging);
+					}
 
 					// Draw UI elements
 					for (int n = 0; n < drawActions.Count; n++)
@@ -459,19 +479,27 @@ namespace RichHudFramework
 					try
 					{
 						for (int i = 0; i < clients.Count; i++)
-							activeUpdateLists.Add(clients[i].UpdateAccessors);
+						{
+							activeUpdateLists.Add(new VersionedUpdateList {
+								accessors = clients[i].UpdateAccessors, 
+								vID = clients[i].ApiVersion
+							});
+						}
 
 						// Manually append last elements after all clients
-						activeUpdateLists.Add(activeLateUpdateBuffer);
+						activeUpdateLists.Add(new VersionedUpdateList {
+							accessors = activeLateUpdateBuffer,
+							vID = RichHudMaster.apiVID
+						});
 
 						// Build distance func HashSet
 						activeCount = 0;
 
 						for (int i = 0; i < activeUpdateLists.Count; i++)
 						{
-							for (int j = 0; j < activeUpdateLists[i].Count; j++)
+							for (int j = 0; j < activeUpdateLists[i].accessors.Count; j++)
 							{
-								originFuncSet.Add(activeUpdateLists[i][j].Item2.Item2);
+								originFuncSet.Add(activeUpdateLists[i].accessors[j].Item2.Item2);
 								activeCount++;
 							}
 						}
@@ -547,9 +575,9 @@ namespace RichHudFramework
 					// Build index list and sort by zOffset
 					for (int i = 0; i < activeUpdateLists.Count; i++)
 					{
-						for (int j = 0; j < activeUpdateLists[i].Count; j++)
+						for (int j = 0; j < activeUpdateLists[i].accessors.Count; j++)
 						{
-							var accessors = activeUpdateLists[i][j];
+							var accessors = activeUpdateLists[i].accessors[j];
 							ulong index = ((uint)i << 16 | (ushort)j),
 							zOffset = accessors.Item2.Item1(),
 							distance = distMap[accessors.Item2.Item2];
@@ -573,11 +601,13 @@ namespace RichHudFramework
 					depthTestActionBuffer.Clear();
 					inputActionBuffer.Clear();
 					drawActionBuffer.Clear();
+					sizingActionBuffer.Clear();
 					layoutActionBuffer.Clear();
 
 					depthTestActionBuffer.EnsureCapacity(activeCount);
 					inputActionBuffer.EnsureCapacity(activeCount);
 					drawActionBuffer.EnsureCapacity(activeCount);
+					sizingActionBuffer.EnsureCapacity(activeCount);
 					layoutActionBuffer.EnsureCapacity(activeCount);
 				}
 
@@ -593,8 +623,10 @@ namespace RichHudFramework
 						int i = (int)(index >> 16);
 						int j = (int)(index & 0xFFFF);
 
-						HudUpdateAccessors accessors = activeUpdateLists[i][j];
-						depthTestActionBuffer.Add(accessors.Item3);
+						Action depthTestAction = activeUpdateLists[i].accessors[j].Item3;
+
+						if (depthTestAction != null)
+							depthTestActionBuffer.Add(depthTestAction);
 					}
 
 					// Build sorted input list
@@ -604,8 +636,11 @@ namespace RichHudFramework
 						int i = (int)(index >> 16);
 						int j = (int)(index & 0xFFFF);
 
-						HudUpdateAccessors accessors = activeUpdateLists[i][j];
-						inputActionBuffer.Add(accessors.Item4);
+						HudUpdateAccessors accessors = activeUpdateLists[i].accessors[j];
+						Action inputAction = activeUpdateLists[i].accessors[j].Item4;
+
+						if (inputAction != null)
+							inputActionBuffer.Add(inputAction);
 					}
 
 					// Build sorted draw list
@@ -615,26 +650,41 @@ namespace RichHudFramework
 						int i = (int)(index >> 16);
 						int j = (int)(index & 0xFFFF);
 
-						HudUpdateAccessors accessors = activeUpdateLists[i][j];
-						drawActionBuffer.Add(accessors.Item6);
+						Action drawAction = activeUpdateLists[i].accessors[j].Item6;
+
+						if (drawAction != null)
+							drawActionBuffer.Add(drawAction);
+					}
+
+					// Build sizing list  (without sorting)
+					for (int i = 0; i < activeUpdateLists.Count; i++)
+					{
+						int vID = activeUpdateLists[i].vID;
+
+						if (vID > 12)
+						{
+							for (int j = 0; j < activeUpdateLists[i].accessors.Count; j++)
+							{
+								Action<bool> layoutAction = activeUpdateLists[i].accessors[j].Item5;
+
+								if (layoutAction != null)
+									sizingActionBuffer.Add(new MyTuple<Action<bool>, int>(layoutAction, vID));
+							}
+						}
 					}
 
 					// Build layout list (without sorting)
 					for (int i = 0; i < activeUpdateLists.Count; i++)
 					{
-						for (int j = 0; j < activeUpdateLists[i].Count; j++)
-						{
-							var accessors = activeUpdateLists[i][j];
-							layoutActionBuffer.Add(accessors.Item5);
-						}
-					}
+						int vID = activeUpdateLists[i].vID;
 
-					if (depthTestActionBuffer.Capacity > depthTestActionBuffer.Count * 3 && depthTestActionBuffer.Count > 200)
-					{
-						depthTestActionBuffer.TrimExcess();
-						inputActionBuffer.TrimExcess();
-						drawActionBuffer.TrimExcess();
-						layoutActionBuffer.TrimExcess();
+						for (int j = 0; j < activeUpdateLists[i].accessors.Count; j++)
+						{
+							Action<bool> layoutAction = activeUpdateLists[i].accessors[j].Item5;
+
+							if (layoutAction != null)
+								layoutActionBuffer.Add(new MyTuple<Action<bool>, int>(layoutAction, vID));
+						}
 					}
 
 					// Make results visible
@@ -647,6 +697,7 @@ namespace RichHudFramework
 						MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
 						MyUtils.Swap(ref inputActionBuffer, ref inputActions);
 						MyUtils.Swap(ref drawActionBuffer, ref drawActions);
+						MyUtils.Swap(ref sizingActionBuffer, ref sizingActions);
 						MyUtils.Swap(ref layoutActionBuffer, ref layoutActions);
 					}
 					finally

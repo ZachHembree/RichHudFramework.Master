@@ -97,7 +97,7 @@ namespace RichHudFramework
 					/// </summary>
 					public bool EnableCursor
 					{
-						get { return _enableCursor && (apiVersion > 8 || MyAPIGateway.Gui.ChatEntryVisible); }
+						get { return _enableCursor && (ApiVersion > 8 || MyAPIGateway.Gui.ChatEntryVisible); }
 						set { _enableCursor = value; }
 					}
 
@@ -126,14 +126,15 @@ namespace RichHudFramework
 					/// </summary>
 					public Action AfterInputCallback { get; private set; }
 
+					public int ApiVersion { get; private set; }
+
 					private bool _refreshDrawList, _enableCursor, refreshRequested, updatePending;
-					private readonly int apiVersion;
 					private List<HudUpdateAccessors> activeUpdateBuffer,
 						inactiveUpdateBuffer;
 
 					public TreeClient(int apiVersion = RichHudMaster.apiVID)
 					{
-						this.apiVersion = apiVersion;
+						this.ApiVersion = apiVersion;
 
 						activeUpdateBuffer = new List<HudUpdateAccessors>(200);
 						inactiveUpdateBuffer = new List<HudUpdateAccessors>(200);
@@ -142,7 +143,7 @@ namespace RichHudFramework
 
 					public void Update(int tick)
 					{
-						if (RefreshDrawList || apiVersion > 7)
+						if (RefreshDrawList || ApiVersion > 7)
 							refreshRequested = true;
 
 						if (refreshRequested && (tick % treeRefreshRate) == 0)
@@ -156,7 +157,7 @@ namespace RichHudFramework
 							refreshRequested = false;
 							_refreshDrawList = false;
 
-							if (apiVersion <= 7)
+							if (ApiVersion <= 7)
 								TreeManager.RefreshRequested = true;
 
 							updatePending = true;
