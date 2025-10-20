@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using VRage;
 using VRageMath;
@@ -43,23 +44,33 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <param name="start">X = line; Y = ch</param>
             public override void Insert(IList<RichStringMembers> text, Vector2I start)
             {
-                start = ClampIndex(start);
+				start = ClampIndex(start);
+                int insertStart = start.X;
+				charBuffer.Clear();
 
-                charBuffer.Clear();
-                int insertStart = PrependPreceeding(start);
-
-                for (int n = 0; n < text.Count; n++)
-                    charBuffer.AppendRichString(text[n], AllowSpecialChars);
-
-                if (lines.Count > 0)
+                if (insertStart > 0)
                 {
-                    charBuffer.AddRange(lines[start.X], start.Y, lines[start.X].Count - start.Y);
-                    lines.RemoveRange(insertStart, start.X - insertStart + 1);
-                }
+					insertStart--;
+					charBuffer.AddRange(lines[insertStart]);
+				}
 
-                GenerateLines();
-                InsertLines(insertStart);
-            }
+				// Prepend immediately preceeding text
+				if (lines.Count > 0)
+					charBuffer.AddRange(lines[start.X], 0, start.Y);
+
+				for (int n = 0; n < text.Count; n++)
+					charBuffer.AppendRichString(text[n], AllowSpecialChars);
+
+				// Append succeeding text
+				if (lines.Count > 0)
+				{
+					charBuffer.AddRange(lines[start.X], start.Y, lines[start.X].Count - start.Y);
+					lines.RemoveRange(insertStart, start.X - insertStart + 1);
+				}
+
+				GenerateLines();
+				InsertLines(insertStart);
+			}
 
             /// <summary>
             /// Inserts a string starting on a given line at a given position.
@@ -121,46 +132,22 @@ namespace RichHudFramework.UI.Rendering.Server
             {
                 int charCount = 0;
 
-                for (int n = start; n <= end; n++)
+				if (start > 0)
+					start--;
+
+				for (int n = start; n <= end; n++)
                     charCount += lines[n].Count;
 
                 charBuffer.EnsureCapacity(charCount);
                 charBuffer.Clear();
 
-                int insertStart = PrependPreceeding(new Vector2I(start, 0));
+				for (int n = start; n <= end; n++)
+                    charBuffer.AddRange(lines.PooledLines[n]);
 
-                for (int n = start; n <= end; n++)
-                    charBuffer.AddRange(lines[n]);
-
-                lines.RemoveRange(insertStart, end - insertStart + 1);
+                lines.RemoveRange(start, end - start + 1);
 
                 GenerateLines();
-                InsertLines(insertStart);
-            }
-
-            /// <summary>
-            /// Finds the start of the word associated with the character at the given index then
-            /// prepends everything between the start of that line and the given index to the character
-            /// buffer.
-            /// </summary>
-            private int PrependPreceeding(Vector2I splitStart)
-            {
-                Vector2I splitEnd;
-
-                if (lines.TryGetLastIndex(splitStart, out splitEnd))
-                {
-                    // Retrieve the index of the first character in the word
-                    Vector2I wordStart = GetWordStart(splitEnd);
-                    wordStart.Y = 0; // Grab the whole line
-
-                    for (int i = wordStart.X; i < splitEnd.X; i++)
-                        charBuffer.AddRange(lines.PooledLines[i]);
-
-                    charBuffer.AddRange(lines.PooledLines[splitStart.X], 0, splitStart.Y);
-                    return wordStart.X;
-                }
-                else
-                    return splitStart.X;
+                InsertLines(start);
             }
 
             /// <summary>
@@ -288,34 +275,6 @@ namespace RichHudFramework.UI.Rendering.Server
                 {
                     return false;
                 }
-            }
-
-            /// <summary>
-            /// Gets the position of the beginning of a word given the index of one of its characters.
-            /// </summary>
-            private Vector2I GetWordStart(Vector2I end)
-            {
-                Vector2I start;
-
-                while (lines.TryGetLastIndex(end, out start))
-                {
-                    char left = lines.PooledLines[start.X].Chars[start.Y],
-                        right = lines.PooledLines[end.X].Chars[end.Y];
-                    bool isWordBreak =
-                        (left == ' ' || left == '-' || left == '_') &&
-                        !(right == ' ' || right == '-' || right == '_');
-
-                    if (left == '\n' || isWordBreak)
-                    {
-                        return end;
-                    }
-                    else
-                    {
-                        end = start;
-                    }
-                }
-
-                return end;
             }
 
             /// <summary>
