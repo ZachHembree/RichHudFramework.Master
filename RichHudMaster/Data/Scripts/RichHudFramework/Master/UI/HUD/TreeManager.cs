@@ -217,7 +217,7 @@ namespace RichHudFramework
 					try
 					{
 						if (!isUpdatingTree)
-							UpdateTree();
+							UpdateTree(isImmediateUpdateReq);
 
 						if (!isImmediateUpdateReq)
 							DrawUI();
@@ -228,12 +228,12 @@ namespace RichHudFramework
 					}
 					finally
 					{
-						clientRegLock.ReleaseShared();
 						updateSwapLock.ReleaseShared();
+						clientRegLock.ReleaseShared();
 					}
 				}
 
-				private void UpdateTree()
+				private void UpdateTree(bool isSynchronous)
 				{
 					int drawTick = instance.drawTick;
 
@@ -250,7 +250,8 @@ namespace RichHudFramework
 
 					if (sortTick == 0)
 					{
-						treeSwapLock.AcquireExclusive();
+						if (!isSynchronous)
+							treeSwapLock.AcquireExclusive();
 
 						try
 						{
@@ -265,16 +266,15 @@ namespace RichHudFramework
 						}
 						finally
 						{
-							treeSwapLock.ReleaseExclusive();
+							if (!isSynchronous)
+								treeSwapLock.ReleaseExclusive();
 						}
 					}
 
-					if (isImmediateUpdateReq)
+					if (isSynchronous)
 						UpdateAccessorListsImmediate();
 					else
 						BeginAccessorListsUpdate();
-
-					isImmediateUpdateReq = false;
 				}
 
 				private void DrawUI()
@@ -367,8 +367,8 @@ namespace RichHudFramework
 					}
 					finally
 					{
-						clientRegLock.ReleaseShared();
 						updateSwapLock.ReleaseShared();
+						clientRegLock.ReleaseShared();
 					}
 				}
 
@@ -395,16 +395,17 @@ namespace RichHudFramework
 					treeTimer.Restart();
 					isUpdatingTree = true;
 
-					RebuildUpdateLists();
+					RebuildUpdateLists(true);
 					UpdateDistMap();
 
 					UpdateIndexBuffer();
 					ResetUpdateBuffers();
 
-					BuildSortedUpdateLists();
+					BuildSortedUpdateLists(true);
 
 					treeTimer.Stop();
 					isUpdatingTree = false;
+					isImmediateUpdateReq = false;
 				}
 
 				/// <summary>
@@ -446,12 +447,14 @@ namespace RichHudFramework
 				/// <summary>
 				/// Rebuilds main update accessor list from UI tree as well as the layout accessors
 				/// </summary>
-				private void RebuildUpdateLists()
+				private void RebuildUpdateLists(bool isSynchronous = false)
 				{
 					// Clear update lists and rebuild accessor lists from HUD tree
 					originFuncSet.Clear();
 					activeUpdateLists.Clear();
-					treeSwapLock.AcquireShared();
+
+					if (!isSynchronous)
+						treeSwapLock.AcquireShared();
 
 					try
 					{
@@ -475,7 +478,8 @@ namespace RichHudFramework
 					}
 					finally
 					{
-						treeSwapLock.ReleaseShared();
+						if (!isSynchronous)
+							treeSwapLock.ReleaseShared();
 					}
 
 					originFunctions.Clear();
@@ -580,7 +584,7 @@ namespace RichHudFramework
 				/// <summary>
 				/// Builds sorted update accessor lists
 				/// </summary>
-				private void BuildSortedUpdateLists()
+				private void BuildSortedUpdateLists(bool isSynchronous = false)
 				{
 					// Build sorted depth test list
 					for (int n = 0; n < indexBuffer.Count; n++)
@@ -634,7 +638,8 @@ namespace RichHudFramework
 					}
 
 					// Make results visible
-					updateSwapLock.AcquireExclusive();
+					if (!isSynchronous)
+						updateSwapLock.AcquireExclusive();
 
 					try
 					{
@@ -646,7 +651,8 @@ namespace RichHudFramework
 					}
 					finally
 					{
-						updateSwapLock.ReleaseExclusive();
+						if (!isSynchronous)
+							updateSwapLock.ReleaseExclusive();
 					}
 				}
 			}
