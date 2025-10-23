@@ -156,8 +156,8 @@ namespace RichHudFramework.UI
 
         protected virtual void Layout()
         {
-            body.Height = CachedSize.Y - Padding.Y - header.Height;
-            body.Width = CachedSize.X - Padding.X;
+            body.Height = UnpaddedSize.Y - header.Height;
+            body.Width = UnpaddedSize.X;
         }
 
         protected void Resize(Vector2 cursorPos)

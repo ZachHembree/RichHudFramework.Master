@@ -213,7 +213,7 @@ namespace RichHudFramework.UI
             // Update entry positions
             int entrySize = polyBoard.Sides / effectiveMaxCount;
             Vector2I slice = new Vector2I(0, entrySize - 1);
-            Vector2 size = CachedSize - Padding;
+            Vector2 size = UnpaddedSize;
 
             for (int i = 0; i < hudCollectionList.Count; i++)
             {
@@ -236,13 +236,13 @@ namespace RichHudFramework.UI
 
             if (HudMain.InputMode != HudInputMode.NoInput && (HudSpace?.IsFacingCamera ?? false))
             {
-                Vector2 size = CachedSize - Padding,
+                Vector2 size = UnpaddedSize,
                     aspect = new Vector2(size.Y / size.X, size.X / size.Y),
                     cursorPos = new Vector2(HudSpace.CursorPos.X, HudSpace.CursorPos.Y) - Position;
 
                 cursorPos *= aspect;
 
-                float max = .5f * (CachedSize.X - Padding.X),
+                float max = .5f * (UnpaddedSize.X),
                     min = polyBoard.InnerRadius * max,
                     offsetLen = cursorPos.Length();
 
@@ -358,7 +358,7 @@ namespace RichHudFramework.UI
 
         protected virtual void Draw()
         {
-            Vector2 size = CachedSize - Padding;
+            Vector2 size = UnpaddedSize;
             int entrySize = polyBoard.Sides / effectiveMaxCount;
             polyBoard.Color = BackgroundColor;
             UpdateVisPos();
