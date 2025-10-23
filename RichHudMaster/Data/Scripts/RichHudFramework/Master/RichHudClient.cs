@@ -102,7 +102,7 @@ namespace RichHudFramework.Server
                         return bindClient.GetApiData();
                     case ApiModuleTypes.HudMain:
                         {
-                            if (apiVersionID < 9)
+                            if (apiVersionID < (int)APIVersionTable.TextRefMatrixDrawSupport)
                                 return hudClient.GetApiData8();
                             else
                                 return hudClient.GetApiData();
@@ -113,7 +113,7 @@ namespace RichHudFramework.Server
                         return menuData.Item1;
                     case ApiModuleTypes.BillBoardUtils:
                         {
-                            if (apiVersionID < 11)
+                            if (apiVersionID < (int)APIVersionTable.BBUtils3DSupport)
 								return BillBoardUtils.GetApiData10();
                             else
 								return BillBoardUtils.GetApiData();

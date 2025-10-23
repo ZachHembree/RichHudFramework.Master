@@ -189,7 +189,7 @@ namespace RichHudFramework
                             group.RegisterBinds(data as IReadOnlyList<BindDefinitionDataOld>); break;
                         case BindGroupAccessors.AddBindWithIndices:
                             {
-                                if (modClient.apiVersionID < 12)
+                                if (modClient.apiVersionID < (int)APIVersionTable.BindAliasAndAnalogSupport)
                                 {
                                     var args = (MyTuple<string, IReadOnlyList<int>>)data;
                                     return new Vector2I(group.Index, group.AddBind(args.Item1, args.Item2).Index);
@@ -207,7 +207,7 @@ namespace RichHudFramework
                             }
                         case BindGroupAccessors.DoesComboConflict:
                             {
-                                if (modClient.apiVersionID < 12)
+                                if (modClient.apiVersionID < (int)APIVersionTable.BindAliasAndAnalogSupport)
                                 {
                                     var args = (MyTuple<IReadOnlyList<int>, int>)data;
                                     return group.DoesComboConflict(args.Item1, group[args.Item2]);
@@ -227,7 +227,7 @@ namespace RichHudFramework
                             }
                         case BindGroupAccessors.TryRegisterBindWithIndices:
                             {
-                                if (modClient.apiVersionID < 12)
+                                if (modClient.apiVersionID < (int)APIVersionTable.BindAliasAndAnalogSupport)
                                 {
                                     var args = (MyTuple<string, IReadOnlyList<int>>)data;
 
@@ -259,7 +259,7 @@ namespace RichHudFramework
                             }
                         case BindGroupAccessors.TryLoadBindData:
                             {
-                                if (modClient.apiVersionID < 12)
+                                if (modClient.apiVersionID < (int)APIVersionTable.BindAliasAndAnalogSupport)
                                 {
                                     var arg = data as IReadOnlyList<BindDefinitionDataOld>;
                                     return group.TryLoadBindData(arg);
@@ -272,7 +272,7 @@ namespace RichHudFramework
                             }
                         case BindGroupAccessors.GetBindData:
                             {
-                                if (modClient.apiVersionID < 12)
+                                if (modClient.apiVersionID < (int)APIVersionTable.BindAliasAndAnalogSupport)
                                 {
                                     return group.GetBindDataOld();
                                 }
@@ -349,7 +349,7 @@ namespace RichHudFramework
                             return bind.GetConIDs((data != null) ? (int)data : 0);
                         case BindAccesssors.TrySetComboWithIndices:
                             {
-                                if (modClient.apiVersionID < 12)
+                                if (modClient.apiVersionID < (int)APIVersionTable.BindAliasAndAnalogSupport)
                                 {
                                     var args = (MyTuple<IReadOnlyList<int>, bool, bool>)data;
                                     return bind.TrySetCombo(args.Item1, 0, args.Item2, args.Item3);
@@ -362,7 +362,7 @@ namespace RichHudFramework
                             }
                         case BindAccesssors.TrySetComboWithNames:
                             {
-                                if (modClient.apiVersionID < 12)
+                                if (modClient.apiVersionID < (int)APIVersionTable.BindAliasAndAnalogSupport)
                                 {
                                     var args = (MyTuple<IReadOnlyList<string>, bool, bool>)data;
                                     return bind.TrySetCombo(args.Item1, 0, args.Item2, args.Item3);

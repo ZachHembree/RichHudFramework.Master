@@ -321,7 +321,7 @@ namespace RichHudFramework
 					for (int n = 0; n < layoutActions.Count; n++)
 					{
 						int vID = layoutActions[n].Item2;
-						bool isArranging = vID > 12;
+						bool isArranging = vID >= (int)APIVersionTable.SizeAndArrangeSupport;
 						// For client vID > 12, true indicates top-down arrange/layout pass
 						layoutActions[n].Item1(refreshLayout || isArranging);
 					}
@@ -661,7 +661,7 @@ namespace RichHudFramework
 					{
 						int vID = activeUpdateLists[i].vID;
 
-						if (vID > 12)
+						if (vID >= (int)APIVersionTable.SizeAndArrangeSupport)
 						{
 							for (int j = 0; j < activeUpdateLists[i].accessors.Count; j++)
 							{

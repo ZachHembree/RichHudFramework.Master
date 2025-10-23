@@ -41,11 +41,18 @@ namespace RichHudFramework.Server
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
     public sealed partial class RichHudMaster : ModBase
     {
-        public const long modID = 1965654081, queueID = 1314086443;
-        public const int apiVID = 13, minApiVID = 7;
-        public const string modName = "Rich HUD Master";
-        public static readonly Vector4I versionID = new Vector4I(1, 3, 1, 0); // Major, Minor, Rev, Hotfix
-        public static readonly string versionString = $"{versionID.X}.{versionID.Y}.{versionID.Z}.{versionID.W} ({apiVID})";
+        public const long 
+            modID = 1965654081, 
+            queueID = 1314086443;
+        public const int 
+            apiVID = (int)APIVersionTable.Latest, 
+            minApiVID = (int)APIVersionTable.Version1Base;
+        public const string 
+            modName = "Rich HUD Master";
+        public static readonly Vector4I 
+            versionID = new Vector4I(1, 3, 1, 0); // Major, Minor, Rev, Hotfix
+        public static readonly string 
+            versionString = $"{versionID.X}.{versionID.Y}.{versionID.Z}.{versionID.W} ({apiVID})";
 
         class MasterRegEntry
         {
