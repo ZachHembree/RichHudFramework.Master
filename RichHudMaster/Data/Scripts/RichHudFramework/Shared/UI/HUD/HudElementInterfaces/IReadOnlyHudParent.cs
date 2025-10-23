@@ -18,7 +18,7 @@ namespace RichHudFramework
         >;
 
         [Flags]
-        public enum HudElementStates : ushort
+        public enum HudElementStates : uint
         {
             None = 0x0,
             IsVisible = 1 << 0,
@@ -34,7 +34,8 @@ namespace RichHudFramework
             IsSelectivelyMasked = 1 << 10,
             CanIgnoreMasking = 1 << 11,
             IsInputEnabled = 1 << 12,
-            WasParentInputEnabled = 1 << 13
+            WasParentInputEnabled = 1 << 13,
+            IsLayoutReady = 1 << 14
         }
 
         public struct HudLayerData

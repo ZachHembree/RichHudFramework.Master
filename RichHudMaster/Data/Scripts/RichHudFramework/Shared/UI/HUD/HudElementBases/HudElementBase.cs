@@ -315,14 +315,14 @@ namespace RichHudFramework
                     try
                     {
 						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
+						State &= ~HudElementStates.IsLayoutReady;
 
-                        // Arrange
-						if (isArranging)
+						if (isVisible)
                         {
-							if (isVisible)
-							{
-								layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
-
+                            if (!isArranging)
+                                UpdateSizeCallback?.Invoke();
+                            else
+                            {
 								if (_parentFull != null)
 								{
 									Origin = _parentFull.Position + OriginAlignment;
@@ -353,20 +353,24 @@ namespace RichHudFramework
 									maskingBox = _parentFull?.maskingBox;
 								else
 									maskingBox = null;
-							}
 
-                            // Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
-                            // during Layout/Arrange, but Layout should not run before UpdateSize. They need to be delayed.
+								State |= HudElementStates.IsLayoutReady;
+							}
+                        }
+
+						// Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
+						// during Layout/Arrange, but Layout should not run before UpdateSize. They need to be delayed.
+						if (isArranging)
+						{
 							if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
 								State |= HudElementStates.WasParentVisible;
 							else
 								State &= ~HudElementStates.WasParentVisible;
-						}
-                        // Sizing
-                        else if (isVisible)
-							UpdateSizeCallback?.Invoke();
 
-                    }
+							layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+						}
+
+					}
                     catch (Exception e)
                     {
                         ExceptionHandler.ReportException(e);

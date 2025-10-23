@@ -205,20 +205,28 @@ namespace RichHudFramework
 						layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData);
 					}
 
-					if (UpdateSizeCallback == null && LayoutCallback == null)
-						return;
+                    if (UpdateSizeCallback == null && LayoutCallback == null)
+                    {
+                        State |= HudElementStates.IsLayoutReady;
+                        return;
+                    }
+                    else
+                        State &= ~HudElementStates.IsLayoutReady;
 
-					try
+                    try
                     {
                         bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
 
                         if (isVisible)
                         {
-							if (!isArranging)
-								UpdateSizeCallback?.Invoke();
-							else
-								LayoutCallback?.Invoke();
-						}
+                            if (!isArranging)
+                                UpdateSizeCallback?.Invoke();
+                            else
+                            {
+                                LayoutCallback?.Invoke();
+                                State |= HudElementStates.IsLayoutReady;
+                            }
+                        }
                     }
                     catch (Exception e)
                     {
@@ -240,7 +248,7 @@ namespace RichHudFramework
                     {
                         bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
 
-                        if (isVisible)
+                        if (isVisible && (State & HudElementStates.IsLayoutReady) > 0)
 							DrawCallback();
                     }
                     catch (Exception e)

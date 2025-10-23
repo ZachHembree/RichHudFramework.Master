@@ -100,15 +100,21 @@ namespace RichHudFramework
                     try
                     {
 						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
+                        State &= ~HudElementStates.IsLayoutReady;
 
 						if (isVisible)
                         {
 							if (!isArranging)
                                 UpdateSizeCallback?.Invoke();
 							else
+							{
 								LayoutCallback?.Invoke();
+                                State |= HudElementStates.IsLayoutReady;
+							}
 						}
 
+						// Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
+						// during Layout/Arrange, but Layout should not run before UpdateSize. They need to be delayed.
 						if (isArranging)
 						{
 							if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
