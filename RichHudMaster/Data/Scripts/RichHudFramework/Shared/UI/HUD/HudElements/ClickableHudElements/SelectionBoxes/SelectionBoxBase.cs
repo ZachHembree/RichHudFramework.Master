@@ -271,7 +271,7 @@ namespace RichHudFramework.UI
             listInput.ClearSelection();
 
         /// <summary>
-        /// Returns the most recent total size of the list elements in the given range,
+        /// Calculates the total size of the list elements in the given range,
         /// including padding.
         /// </summary>
         public virtual Vector2 GetRangeSize(int start = 0, int end = -1)

@@ -86,7 +86,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Updates the sizing of the element. Executes before layout in bottom-up order, before layout.
 			/// </summary>
-			protected Action SizingCallback;
+			protected Action UpdateSizeCallback;
 
 			/// <summary>
 			/// Updates the internal layout of the UI element. Executes after sizing in top-down order, before 
@@ -205,7 +205,7 @@ namespace RichHudFramework
 						layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData);
 					}
 
-					if (SizingCallback == null && LayoutCallback == null)
+					if (UpdateSizeCallback == null && LayoutCallback == null)
 						return;
 
 					try
@@ -215,7 +215,7 @@ namespace RichHudFramework
                         if (isVisible)
                         {
 							if (!isArranging)
-                                SizingCallback?.Invoke();
+								UpdateSizeCallback?.Invoke();
 							else
 								LayoutCallback?.Invoke();
 						}

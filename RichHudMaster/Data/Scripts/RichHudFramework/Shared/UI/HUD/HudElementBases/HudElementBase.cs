@@ -197,7 +197,7 @@ namespace RichHudFramework
             public virtual bool IsMousedOver => (State & HudElementStates.IsMousedOver) > 0;
 
             /// <summary>
-            /// Values used internally to minimize property calls.
+            /// Last known final size, and the next size that will be used on Draw.
             /// </summary>
             protected Vector2 CachedSize { get; private set; }
 
@@ -262,12 +262,12 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
-                            State |= HudElementStates.WasParentInputEnabled;
-                        else
-                            State &= ~HudElementStates.WasParentInputEnabled;
+						if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
+							State |= HudElementStates.WasParentInputEnabled;
+						else
+							State &= ~HudElementStates.WasParentInputEnabled;
 
-                        bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask,
+						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask,
                              isInputEnabled = (State & NodeInputMask) == NodeInputMask,
                              canUseCursor = (State & HudElementStates.CanUseCursor) > 0,
                              canShareCursor = (State & HudElementStates.CanShareCursor) > 0;
@@ -296,7 +296,7 @@ namespace RichHudFramework
 								HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
                             }
                         }
-                    }
+					}
                     catch (Exception e)
                     {
                         ExceptionHandler.ReportException(e);
@@ -314,15 +314,11 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        if (isArranging)
+						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
+
+                        // Arrange
+						if (isArranging)
                         {
-							if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
-								State |= HudElementStates.WasParentVisible;
-							else
-								State &= ~HudElementStates.WasParentVisible;
-
-							bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
-
 							if (isVisible)
 							{
 								layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
@@ -358,7 +354,17 @@ namespace RichHudFramework
 								else
 									maskingBox = null;
 							}
+
+                            // Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
+                            // during Layout/Arrange, but Layout should not run before UpdateSize. They need to be delayed.
+							if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
+								State |= HudElementStates.WasParentVisible;
+							else
+								State &= ~HudElementStates.WasParentVisible;
 						}
+                        // Sizing
+                        else if (isVisible)
+							UpdateSizeCallback?.Invoke();
 
                     }
                     catch (Exception e)
@@ -377,7 +383,9 @@ namespace RichHudFramework
                 for (int i = 0; i < children.Count; i++)
                 {
                     var child = children[i] as HudElementBase;
-					child.State |= HudElementStates.WasParentVisible;
+
+                    if (child != null)
+					    child.State |= HudElementStates.WasParentVisible;
 
 					if (child != null && (child.State & (child.NodeVisibleMask)) == child.NodeVisibleMask)
 					{

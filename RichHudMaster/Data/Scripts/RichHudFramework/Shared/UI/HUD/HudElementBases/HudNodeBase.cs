@@ -68,23 +68,20 @@ namespace RichHudFramework
                 {
                     try
                     {
-                        if (_parent != null && (_parent.State & _parent.NodeInputMask) == _parent.NodeInputMask)
-                            State |= HudElementStates.WasParentInputEnabled;
-                        else
-                            State &= ~HudElementStates.WasParentInputEnabled;
+						if (_parent != null && (_parent.State & _parent.NodeInputMask) == _parent.NodeInputMask)
+							State |= HudElementStates.WasParentInputEnabled;
+						else
+							State &= ~HudElementStates.WasParentInputEnabled;
 
-                        if (HandleInputCallback == null)
-                            return;
-
-                        bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask,
+						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask,
                              isInputEnabled = (State & NodeInputMask) == NodeInputMask;
 
-                        if (isVisible && isInputEnabled)
+                        if (HandleInputCallback != null && isVisible && isInputEnabled)
                         {
                             Vector3 cursorPos = HudSpace.CursorPos;
                             HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
                         }
-                    }
+					}
                     catch (Exception e)
                     {
                         ExceptionHandler.ReportException(e);
@@ -102,6 +99,16 @@ namespace RichHudFramework
                 {
                     try
                     {
+						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
+
+						if (isVisible)
+                        {
+							if (!isArranging)
+                                UpdateSizeCallback?.Invoke();
+							else
+								LayoutCallback?.Invoke();
+						}
+
 						if (isArranging)
 						{
 							if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
@@ -111,20 +118,7 @@ namespace RichHudFramework
 
 							layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
 						}
-
-						if (SizingCallback == null && LayoutCallback == null)
-                            return;
-
-						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
-
-						if (isVisible)
-                        {
-							if (!isArranging)
-                                SizingCallback?.Invoke();
-							else
-								LayoutCallback?.Invoke();
-						}
-                    }
+					}
                     catch (Exception e)
                     {
                         ExceptionHandler.ReportException(e);
