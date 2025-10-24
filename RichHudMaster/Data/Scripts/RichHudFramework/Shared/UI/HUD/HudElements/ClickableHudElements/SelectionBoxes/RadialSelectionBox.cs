@@ -232,7 +232,7 @@ namespace RichHudFramework.UI
 
         protected override void InputDepth()
         {
-            State &= ~HudElementStates.IsMouseInBounds;
+            State[0] &= ~(uint)HudElementStates.IsMouseInBounds;
 
             if (HudMain.InputMode != HudInputMode.NoInput && (HudSpace?.IsFacingCamera ?? false))
             {
@@ -248,7 +248,7 @@ namespace RichHudFramework.UI
 
                 if (offsetLen > min && offsetLen < max)
                 {
-                    State |= HudElementStates.IsMouseInBounds;
+                    State[0] |= (uint)HudElementStates.IsMouseInBounds;
                     HudMain.Cursor.TryCaptureHudSpace(HudSpace.CursorPos.Z, HudSpace.GetHudSpaceFunc);
                 }
             }

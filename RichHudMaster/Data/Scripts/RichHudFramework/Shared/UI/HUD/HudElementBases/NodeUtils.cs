@@ -1,228 +1,201 @@
 ﻿using System;
 using System.Collections.Generic;
 using VRage;
-using VRageMath;
-using ApiMemberAccessor = System.Func<object, int, object>;
+using HudLayerData = VRage.MyTuple<
+	sbyte, // 1- zOffset
+	byte, // 2 - zOffsetInner
+	ushort // 3 - fullZOffset
+>;
+using HudNodeHookData = VRage.MyTuple<
+	System.Func<object, int, object>, // 1 -  GetOrSetApiMemberFunc
+	System.Action, // 2 - InputDepthAction
+	System.Action, // 3 - InputAction
+	System.Action, // 4 - SizingAction
+	System.Action<bool>, // 5 - LayoutAction
+	System.Action // 6 - DrawAction
+>;
+using HudNodeStateData = VRage.MyTuple<
+	uint, // 1 - State
+	uint, // 2 - NodeVisibleMask
+	uint // 3 - NodeInputMask
+>;
+using HudSpaceFunc = System.Func<VRageMath.Vector3D>;
 
 namespace RichHudFramework
 {
-    namespace UI
-    {
-        using Server;
-        using Client;
+	using HudNodeData = MyTuple<
+		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask }
+		HudSpaceFunc, // 2 - GetNodeOriginFunc
+		HudLayerData, // 3 - { 3.1 - zOffset, 3.2 - zOffsetInner, 3.3 - fullZOffset }
+		HudNodeHookData, // 4 - Main hooks
+		object, // 5 - Parent as HudNodeDataRef
+		List<object> // 6 - Children as IReadOnlyList<HudNodeDataRef>
+	>;
 
-        public abstract partial class HudNodeBase
-        {
-            /// <summary>
-            /// Collection of utilities used internally to manage HUD nodes
-            /// </summary>
-            protected static class NodeUtils
-            {
-                /// <summary>
-                /// Used internally quickly register a list of child nodes to a parent.
-                /// </summary>
-                public static void RegisterNodes(HudParentBase newParent, List<HudNodeBase> children, IReadOnlyList<HudNodeBase> nodes, bool canPreload)
-                {
-                    bool parentVisible = (newParent.State & newParent.NodeVisibleMask) == newParent.NodeVisibleMask;
+	namespace UI
+	{
+		// Read-only length-1 array containing raw UI node data
+		public abstract partial class HudNodeBase
+		{
+			/// <summary>
+			/// Collection of utilities used internally to manage HUD nodes
+			/// </summary>
+			protected static class NodeUtils
+			{
+				/// <summary>
+				/// Used internally quickly register a list of child nodes to a parent.
+				/// </summary>
+				public static void RegisterNodes(HudParentBase newParent, IReadOnlyList<HudNodeBase> nodes, bool canPreload)
+				{
+					ParentUtils.RegisterNodes(newParent, nodes, canPreload);
 
-                    children.EnsureCapacity(children.Count + nodes.Count);
+					for (int n = 0; n < nodes.Count; n++)
+					{
+						HudNodeBase node = nodes[n];
+						node.Parent = newParent;
 
-                    for (int n = 0; n < nodes.Count; n++)
-                    {
-                        HudNodeBase node = nodes[n];
-                        node.Parent = newParent;
-                        node.State |= HudElementStates.IsRegistered;
-						node.State &= ~HudElementStates.WasParentVisible;
+						node.State[0] |= (uint)HudElementStates.IsRegistered;
+						node.State[0] &= ~(uint)HudElementStates.WasParentVisible;
 
-						children.Add(node);
+						if (canPreload)
+							node.State[0] |= (uint)HudElementStates.CanPreload;
+						else
+							node.State[0] &= ~(uint)HudElementStates.CanPreload;
+					}
+				}
 
-                        if (canPreload)
-                            node.State |= HudElementStates.CanPreload;
-                        else
-                            node.State &= ~HudElementStates.CanPreload;
-                    }
-                }
+				/// <summary>
+				/// Used internally quickly register a list of child nodes to a parent.
+				/// </summary>
+				public static void RegisterNodes<TCon, TNode>(HudParentBase newParent, IReadOnlyList<TCon> nodes, bool canPreload)
+					where TCon : IHudElementContainer<TNode>, new()
+					where TNode : HudNodeBase
+				{
+					ParentUtils.RegisterNodes<TCon, TNode>(newParent, nodes, canPreload);
 
-                /// <summary>
-                /// Used internally quickly register a list of child nodes to a parent.
-                /// </summary>
-                public static void RegisterNodes<TCon, TNode>(HudParentBase newParent, List<HudNodeBase> children, IReadOnlyList<TCon> nodes, bool canPreload)
-                    where TCon : IHudElementContainer<TNode>, new()
-                    where TNode : HudNodeBase
-                {
-                    bool parentVisible = (newParent.State & newParent.NodeVisibleMask) == newParent.NodeVisibleMask;
-                    children.EnsureCapacity(children.Count + nodes.Count);
+					for (int n = 0; n < nodes.Count; n++)
+					{
+						HudNodeBase node = nodes[n].Element;
+						node.Parent = newParent;
 
-                    for (int n = 0; n < nodes.Count; n++)
-                    {
-                        HudNodeBase node = nodes[n].Element;
-                        node.Parent = newParent;
-                        node.State |= HudElementStates.IsRegistered;
-                        node.State &= ~HudElementStates.WasParentVisible;
+						node.State[0] |= (uint)HudElementStates.IsRegistered;
+						node.State[0] &= ~(uint)HudElementStates.WasParentVisible;
 
-                        children.Add(node);
+						if (canPreload)
+							node.State[0] |= (uint)HudElementStates.CanPreload;
+						else
+							node.State[0] &= ~(uint)HudElementStates.CanPreload;
+					}
+				}
 
-                        if (canPreload)
-                            node.State |= HudElementStates.CanPreload;
-                        else
-                            node.State &= ~HudElementStates.CanPreload;
-                    }
-                }
+				/// <summary>
+				/// Used internally to quickly unregister child nodes from their parent. Removes the range of nodes
+				/// specified in the node list from the child list.
+				/// </summary>
+				public static void UnregisterNodes(HudParentBase parent, IReadOnlyList<HudNodeBase> nodes, int index, int count)
+				{
+					if (count > 0)
+					{
+						ParentUtils.UnregisterNodes(parent, nodes, index, count);
 
-                /// <summary>
-                /// Used internally to quickly unregister child nodes from their parent. Removes the range of nodes
-                /// specified in the node list from the child list.
-                /// </summary>
-                public static void UnregisterNodes(HudParentBase parent, List<HudNodeBase> children, IReadOnlyList<HudNodeBase> nodes, int index, int count)
-                {
-                    if (count > 0)
-                    {
-                        int conEnd = index + count - 1;
+						for (int n = index; n < count; n++)
+						{
+							HudNodeBase node = nodes[n];
+							HudParentBase nodeParent = node._parent;
 
-                        if (!(index >= 0 && index < nodes.Count && conEnd <= nodes.Count))
-                            throw new Exception("Specified indices are out of range.");
+							if (nodeParent != parent)
+								throw new Exception("The child node specified is not registered to the parent given.");
 
-                        if (parent == null)
-                            throw new Exception("Parent cannot be null");
+							node.Parent = null;
+							node.nodeDataRef[0].Item5 = null;
+							node.State[0] &= (uint)~(HudElementStates.IsRegistered | HudElementStates.WasParentVisible);
+						}
+					}
+				}
 
-                        for (int i = index; i <= conEnd; i++)
-                        {
-                            int start = 0;
+				/// <summary>
+				/// Used internally to quickly unregister child nodes from their parent. Removes the range of nodes
+				/// specified in the node list from the child list.
+				/// </summary>
+				public static void UnregisterNodes<TCon, TNode>(HudParentBase parent, IReadOnlyList<TCon> nodes, int index, int count)
+					where TCon : IHudElementContainer<TNode>, new()
+					where TNode : HudNodeBase
+				{
+					if (count > 0)
+					{
+						ParentUtils.UnregisterNodes<TCon, TNode>(parent, nodes, index, count);
 
-                            while (start < children.Count && children[start] != nodes[i])
-                                start++;
+						for (int n = index; n < count; n++)
+						{
+							HudNodeBase node = nodes[n].Element;
+							HudParentBase nodeParent = node._parent;
 
-                            if (children[start] == nodes[i])
-                            {
-                                int j = start, end = start;
+							if (nodeParent != parent)
+								throw new Exception("The child node specified is not registered to the parent given.");
 
-                                while (j < children.Count && i <= conEnd && children[j] == nodes[i])
-                                {
-                                    end = j;
-                                    i++;
-                                    j++;
-                                }
+							node.Parent = null;
+							node.nodeDataRef[0].Item5 = null;
+							node.State[0] &= (uint)~(HudElementStates.IsRegistered | HudElementStates.WasParentVisible);
+						}
+					}
+				}
 
-                                children.RemoveRange(start, end - start + 1);
-                            }
-                        }
+				/// <summary>
+				/// Used internally to modify the state of hud nodes
+				/// </summary>
+				public static void SetNodesState(HudElementStates state, bool mask, IReadOnlyList<HudNodeBase> nodes, int index, int count)
+				{
+					if (count > 0)
+					{
+						int end = index + count - 1;
+						Utils.Debug.Assert(index >= 0 && end < nodes.Count, $"Range out of bounds. Index: {index}, End: {end}");
 
-                        for (int n = index; n < count; n++)
-                        {
-                            HudNodeBase node = nodes[n];
-                            HudParentBase nodeParent = node._parent;
+						if (mask)
+						{
+							for (int i = index; i <= end; i++)
+							{
+								nodes[i].State[0] &= (uint)~state;
+							}
+						}
+						else
+						{
+							for (int i = index; i <= end; i++)
+							{
+								nodes[i].State[0] |= (uint)state;
+							}
+						}
+					}
+				}
 
-                            if (nodeParent != parent)
-                                throw new Exception("The child node specified is not registered to the parent given.");
+				/// <summary>
+				/// Used internally to modify the state of hud nodes
+				/// </summary>
+				public static void SetNodesState<TCon, TNode>(HudElementStates state, bool mask, IReadOnlyList<TCon> nodes, int index, int count)
+					where TCon : IHudElementContainer<TNode>, new()
+					where TNode : HudNodeBase
+				{
+					if (count > 0)
+					{
+						int end = index + count - 1;
+						Utils.Debug.Assert(index >= 0 && end < nodes.Count, $"Range out of bounds. Index: {index}, End: {end}");
 
-                            node.Parent = null;
-                            node.State &= ~(HudElementStates.IsRegistered | HudElementStates.WasParentVisible);
-                        }
-                    }
-                }
-
-                /// <summary>
-                /// Used internally to quickly unregister child nodes from their parent. Removes the range of nodes
-                /// specified in the node list from the child list.
-                /// </summary>
-                public static void UnregisterNodes<TCon, TNode>(HudParentBase parent, List<HudNodeBase> children, IReadOnlyList<TCon> nodes, int index, int count)
-                    where TCon : IHudElementContainer<TNode>, new()
-                    where TNode : HudNodeBase
-                {
-                    if (count > 0)
-                    {
-                        int conEnd = index + count - 1;
-
-                        if (!(index >= 0 && index < nodes.Count && conEnd <= nodes.Count))
-                            throw new Exception("Specified indices are out of range.");
-
-                        if (parent == null)
-                            throw new Exception("Parent cannot be null");
-
-                        for (int i = index; i <= conEnd; i++)
-                        {
-                            int start = 0;
-
-                            while (start < children.Count && children[start] != nodes[i].Element)
-                                start++;
-
-                            if (children[start] == nodes[i].Element)
-                            {
-                                int j = start, end = start;
-
-                                while (j < children.Count && i <= conEnd && children[j] == nodes[i].Element)
-                                {
-                                    end = j;
-                                    i++;
-                                    j++;
-                                }
-
-                                children.RemoveRange(start, end - start + 1);
-                            }
-                        }
-
-                        for (int n = index; n < count; n++)
-                        {
-                            HudNodeBase node = nodes[n].Element;
-                            HudParentBase nodeParent = node._parent;
-
-                            if (nodeParent != parent)
-                                throw new Exception("The child node specified is not registered to the parent given.");
-
-                            node.Parent = null;
-                            node.State &= ~(HudElementStates.IsRegistered | HudElementStates.WasParentVisible);
-                        }
-                    }
-                }
-
-                /// <summary>
-                /// Used internally to modify the state of hud nodes
-                /// </summary>
-                public static void SetNodesState(HudElementStates state, bool mask, IReadOnlyList<HudNodeBase> nodes, int index, int count)
-                {
-                    if (count > 0)
-                    {
-                        int end = index + count - 1;
-                        Utils.Debug.Assert(index >= 0 && end < nodes.Count, $"Range out of bounds. Index: {index}, End: {end}");
-
-                        if (mask)
-                        {
-                            for (int i = index; i <= end; i++)
-                                nodes[i].State &= ~state;
-                        }
-                        else
-                        {
-                            for (int i = index; i <= end; i++)
-                                nodes[i].State |= state;
-                        }
-                    }
-                }
-
-                /// <summary>
-                /// Used internally to modify the state of hud nodes
-                /// </summary>
-                public static void SetNodesState<TCon, TNode>(HudElementStates state, bool mask, IReadOnlyList<TCon> nodes, int index, int count)
-                    where TCon : IHudElementContainer<TNode>, new()
-                    where TNode : HudNodeBase
-                {
-                    if (count > 0)
-                    {
-                        int end = index + count - 1;
-                        Utils.Debug.Assert(index >= 0 && end < nodes.Count, $"Range out of bounds. Index: {index}, End: {end}");
-
-                        if (mask)
-                        {
-                            for (int i = index; i <= end; i++)
-                                nodes[i].Element.State &= ~state;
-                        }
-                        else
-                        {
-                            for (int i = index; i <= end; i++)
-                                nodes[i].Element.State |= state;
-                        }
-                    }
-                }
-            }
-        }
-    }
+						if (mask)
+						{
+							for (int i = index; i <= end; i++)
+							{
+								nodes[i].Element.State[0] &= (uint)~state;
+							}
+						}
+						else
+						{
+							for (int i = index; i <= end; i++)
+							{
+								nodes[i].Element.State[0] |= (uint)state;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }

@@ -304,8 +304,8 @@ namespace RichHudFramework.UI.Server
                 Padding = new Vector2(372f, 0f);
                 Size = new Vector2(1210f, 288f);
 
-                ZOffset = sbyte.MaxValue - 1;
-                layerData.zOffsetInner = byte.MaxValue - 1;
+                layerData[0] = sbyte.MaxValue - 1;
+                layerData[1] = byte.MaxValue - 1;
                 Visible = false;
 
                 LayoutCallback = Layout;

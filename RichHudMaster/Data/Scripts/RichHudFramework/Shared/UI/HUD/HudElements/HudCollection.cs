@@ -108,7 +108,7 @@ namespace RichHudFramework
             /// </summary>
             public virtual void AddRange(IReadOnlyList<TElementContainer> newContainers, bool preload = false)
             {
-                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, children, newContainers, preload);
+                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, newContainers, preload);
                 hudCollectionList.AddRange(newContainers);
             }
 
@@ -128,7 +128,7 @@ namespace RichHudFramework
             /// </summary>
             public virtual void InsertRange(int index, IReadOnlyList<TElementContainer> newContainers, bool preload = false)
             {
-                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, children, newContainers, preload);
+                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, newContainers, preload);
                 hudCollectionList.InsertRange(index, newContainers);
             }
 
@@ -196,7 +196,7 @@ namespace RichHudFramework
             /// </summary>
             public virtual void RemoveRange(int index, int count)
             {
-                NodeUtils.UnregisterNodes<TElementContainer, TElement>(this, children, hudCollectionList, index, count);
+                NodeUtils.UnregisterNodes<TElementContainer, TElement>(this, hudCollectionList, index, count);
                 hudCollectionList.RemoveRange(index, count);
             }
 
@@ -205,7 +205,7 @@ namespace RichHudFramework
             /// </summary>
             public virtual void Clear()
             {
-                NodeUtils.UnregisterNodes<TElementContainer, TElement>(this, children, hudCollectionList, 0, hudCollectionList.Count);
+                NodeUtils.UnregisterNodes<TElementContainer, TElement>(this, hudCollectionList, 0, hudCollectionList.Count);
                 hudCollectionList.Clear();
             }
 

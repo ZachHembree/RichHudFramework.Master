@@ -129,10 +129,11 @@ namespace RichHudFramework
                     IsInFront = true;
                     IsFacingCamera = true;
 
-                    layerData.zOffset = sbyte.MaxValue;
-                    layerData.zOffsetInner = byte.MaxValue;
-                    layerData.fullZOffset = ushort.MaxValue;
-                    State |= HudElementStates.CanPreload;
+					layerData[0] = sbyte.MaxValue;
+					layerData[1] = byte.MaxValue;
+					layerData[2] = ushort.MaxValue;
+
+					State[0] |= (uint)HudElementStates.CanPreload;
 
                     GetHudSpaceFunc = () => new HudSpaceData(true, 1f, PlaneToWorldRef[0]);
                     GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;

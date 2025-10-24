@@ -103,6 +103,9 @@ namespace RichHudFramework
 				private readonly Stopwatch treeTimer, drawTimer, inputTimer;
 				private readonly long[] drawTimes, inputTimes, treeTimes;
 
+				private ulong usedDelegates;
+				private ulong skippedDelegates;
+
 				private TreeManager()
 				{
 					HudMain.Init();
@@ -290,6 +293,10 @@ namespace RichHudFramework
 					BillBoardUtils.BeginDraw();
 					float resScale = ResScale;
 					int drawTick = instance.drawTick;
+
+					// TESTING
+					double ratio = skippedDelegates / (double)(skippedDelegates + usedDelegates);
+					ExceptionHandler.SendDebugNotification($"Skipped Delegates: {ratio:P2}");
 
 					mainClient.EnableCursor = EnableCursor;
 					instance._cursor.DrawCursor = false;
@@ -616,6 +623,9 @@ namespace RichHudFramework
 				/// </summary>
 				private void BuildSortedUpdateLists(bool isSynchronous = false)
 				{
+					skippedDelegates = 0;
+					usedDelegates = 0;
+
 					// Build sorted depth test list
 					for (int n = 0; n < indexBuffer.Count; n++)
 					{
@@ -626,7 +636,12 @@ namespace RichHudFramework
 						Action depthTestAction = activeUpdateLists[i].accessors[j].Item3;
 
 						if (depthTestAction != null)
+						{
 							depthTestActionBuffer.Add(depthTestAction);
+							usedDelegates++;
+						}
+						else
+							skippedDelegates++;
 					}
 
 					// Build sorted input list
@@ -640,7 +655,12 @@ namespace RichHudFramework
 						Action inputAction = activeUpdateLists[i].accessors[j].Item4;
 
 						if (inputAction != null)
+						{
 							inputActionBuffer.Add(inputAction);
+							usedDelegates++;
+						}
+						else
+							skippedDelegates++;
 					}
 
 					// Build sorted draw list
@@ -653,7 +673,12 @@ namespace RichHudFramework
 						Action drawAction = activeUpdateLists[i].accessors[j].Item6;
 
 						if (drawAction != null)
+						{
 							drawActionBuffer.Add(drawAction);
+							usedDelegates++;
+						}
+						else
+							skippedDelegates++;
 					}
 
 					// Build sizing list  (without sorting)
@@ -665,10 +690,15 @@ namespace RichHudFramework
 						{
 							for (int j = 0; j < activeUpdateLists[i].accessors.Count; j++)
 							{
-								Action<bool> layoutAction = activeUpdateLists[i].accessors[j].Item5;
+								Action<bool> sizeAction = activeUpdateLists[i].accessors[j].Item5;
 
-								if (layoutAction != null)
-									sizingActionBuffer.Add(new MyTuple<Action<bool>, int>(layoutAction, vID));
+								if (sizeAction != null)
+								{
+									sizingActionBuffer.Add(new MyTuple<Action<bool>, int>(sizeAction, vID));
+									usedDelegates++;
+								}
+								else
+									skippedDelegates++;
 							}
 						}
 					}
@@ -683,7 +713,12 @@ namespace RichHudFramework
 							Action<bool> layoutAction = activeUpdateLists[i].accessors[j].Item5;
 
 							if (layoutAction != null)
+							{
 								layoutActionBuffer.Add(new MyTuple<Action<bool>, int>(layoutAction, vID));
+								usedDelegates++;
+							}
+							else
+								skippedDelegates++;
 						}
 					}
 

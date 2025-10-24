@@ -209,7 +209,7 @@ namespace RichHudFramework
                     {
                         TElement element = hudCollectionList[i].Element;
 
-                        if ((element.State & HudElementStates.IsVisible) > 0)
+                        if ((element.State[0] & (uint)HudElementStates.IsVisible) > 0)
                         {
                             Vector2 elementSize = element.UnpaddedSize + element.Padding;
 
@@ -249,7 +249,7 @@ namespace RichHudFramework
                     {
                         TElement element = hudCollectionList[i].Element;
 
-                        if ((element.State & HudElementStates.IsVisible) > 0)
+                        if ((element.State[0] & (uint)HudElementStates.IsVisible) > 0)
                         {
                             Vector2 elementSize = element.UnpaddedSize + element.Padding;
                             listSize[offAxis] = Math.Max(listSize[offAxis], elementSize[offAxis]);
@@ -364,7 +364,7 @@ namespace RichHudFramework
                 {
                     TElementContainer container = hudCollectionList[i];
 
-                    if ((container.Element.State & HudElementStates.IsVisible) > 0)
+                    if ((container.Element.State[0] & (uint)HudElementStates.IsVisible) > 0)
                     {
                         totalScale += container.AlignAxisScale;
                         visCount++;
@@ -389,7 +389,7 @@ namespace RichHudFramework
                         TElementContainer container = hudCollectionList[i];
                         TElement element = container.Element;
 
-                        if ((element.State & HudElementStates.IsVisible) > 0)
+                        if ((element.State[0] & (uint)HudElementStates.IsVisible) > 0)
                         {
                             Vector2 size = element.UnpaddedSize + element.Padding;
 
@@ -433,7 +433,7 @@ namespace RichHudFramework
                     TElementContainer container = hudCollectionList[i];
                     TElement element = container.Element;
 
-                    if ((element.State & HudElementStates.IsVisible) > 0)
+                    if ((element.State[0] & (uint)HudElementStates.IsVisible) > 0)
                     {
                         Vector2 size = element.UnpaddedSize + element.Padding;
                         

@@ -118,13 +118,13 @@ namespace RichHudFramework
             /// </summary>
             public bool UseCursor
             {
-                get { return (State & HudElementStates.CanUseCursor) > 0; }
+                get { return (State[0] & (uint)HudElementStates.CanUseCursor) > 0; }
                 set
                 {
                     if (value)
-                        State |= HudElementStates.CanUseCursor;
+                        State[0] |= (uint)HudElementStates.CanUseCursor;
                     else
-                        State &= ~HudElementStates.CanUseCursor;
+                        State[0] &= ~(uint)HudElementStates.CanUseCursor;
                 }
             }
 
@@ -133,13 +133,13 @@ namespace RichHudFramework
             /// </summary>
             public bool ShareCursor
             {
-                get { return (State & HudElementStates.CanShareCursor) > 0; }
+                get { return (State[0] & (uint)HudElementStates.CanShareCursor) > 0; }
                 set
                 {
                     if (value)
-                        State |= HudElementStates.CanShareCursor;
+                        State[0] |= (uint)HudElementStates.CanShareCursor;
                     else
-                        State &= ~HudElementStates.CanShareCursor;
+                        State[0] &= ~(uint)HudElementStates.CanShareCursor;
                 }
             }
 
@@ -149,13 +149,13 @@ namespace RichHudFramework
             /// </summary>
             public bool IsMasking
             {
-                get { return (State & HudElementStates.IsMasking) > 0; }
+                get { return (State[0] & (uint)HudElementStates.IsMasking) > 0; }
                 set
                 {
                     if (value)
-                        State |= HudElementStates.IsMasking;
+                        State[0] |= (uint)HudElementStates.IsMasking;
                     else
-                        State &= ~HudElementStates.IsMasking;
+                        State[0] &= ~(uint)HudElementStates.IsMasking;
                 }
             }
 
@@ -165,13 +165,13 @@ namespace RichHudFramework
             /// </summary>
             public bool IsSelectivelyMasked
             {
-                get { return (State & HudElementStates.IsSelectivelyMasked) > 0; }
+                get { return (State[0] & (uint)HudElementStates.IsSelectivelyMasked) > 0; }
                 set
                 {
                     if (value)
-                        State |= HudElementStates.IsSelectivelyMasked;
+                        State[0] |= (uint)HudElementStates.IsSelectivelyMasked;
                     else
-                        State &= ~HudElementStates.IsSelectivelyMasked;
+                        State[0] &= ~(uint)HudElementStates.IsSelectivelyMasked;
                 }
             }
 
@@ -181,20 +181,20 @@ namespace RichHudFramework
             /// </summary>
             public bool CanIgnoreMasking
             {
-                get { return (State & HudElementStates.CanIgnoreMasking) > 0; }
+                get { return (State[0] & (uint)HudElementStates.CanIgnoreMasking) > 0; }
                 set
                 {
                     if (value)
-                        State |= HudElementStates.CanIgnoreMasking;
+                        State[0] |= (uint)HudElementStates.CanIgnoreMasking;
                     else
-                        State &= ~HudElementStates.CanIgnoreMasking;
+                        State[0] &= ~(uint)HudElementStates.CanIgnoreMasking;
                 }
             }
 
             /// <summary>
             /// Indicates whether or not the element is capturing the cursor.
             /// </summary>
-            public virtual bool IsMousedOver => (State & HudElementStates.IsMousedOver) > 0;
+            public virtual bool IsMousedOver => (State[0] & (uint)HudElementStates.IsMousedOver) > 0;
 
             /// <summary>
             /// Last known final size, and the next size that will be used on Draw.
@@ -230,7 +230,7 @@ namespace RichHudFramework
             /// </summary>
             protected virtual void InputDepth()
             {
-                State &= ~HudElementStates.IsMouseInBounds;
+                State[0] &= ~(uint)HudElementStates.IsMouseInBounds;
                 
                 if (HudMain.InputMode != HudInputMode.NoInput && (HudSpace?.IsFacingCamera ?? false))
                 {
@@ -246,7 +246,7 @@ namespace RichHudFramework
 
                     if (mouseInBounds)
                     {
-                        State |= HudElementStates.IsMouseInBounds;
+                        State[0] |= (uint)HudElementStates.IsMouseInBounds;
                         HudMain.Cursor.TryCaptureHudSpace(cursorPos.Z, HudSpace.GetHudSpaceFunc);
                     }
                 }
@@ -262,34 +262,34 @@ namespace RichHudFramework
                 {
                     try
                     {
-						if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
-							State |= HudElementStates.WasParentInputEnabled;
+						if (_parent != null && (_parent.State[0] & _parent.NodeVisibleMask[0]) == _parent.NodeVisibleMask[0])
+							State[0] |= (uint)HudElementStates.WasParentInputEnabled;
 						else
-							State &= ~HudElementStates.WasParentInputEnabled;
+							State[0] &= ~(uint)HudElementStates.WasParentInputEnabled;
 
-						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask,
-                             isInputEnabled = (State & NodeInputMask) == NodeInputMask,
-                             canUseCursor = (State & HudElementStates.CanUseCursor) > 0,
-                             canShareCursor = (State & HudElementStates.CanShareCursor) > 0;
+						bool isVisible = (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0],
+                             isInputEnabled = (State[0] & NodeInputMask[0]) == NodeInputMask[0],
+                             canUseCursor = (State[0] & (uint)HudElementStates.CanUseCursor) > 0,
+                             canShareCursor = (State[0] & (uint)HudElementStates.CanShareCursor) > 0;
 
-                        State &= ~HudElementStates.IsMousedOver;
+                        State[0] &= ~(uint)HudElementStates.IsMousedOver;
 
                         if (isVisible && isInputEnabled && HandleInputCallback != null)
                         {
                             Vector3 cursorPos = HudSpace.CursorPos;
-                            bool mouseInBounds = (State & HudElementStates.IsMouseInBounds) > 0;
+                            bool mouseInBounds = (State[0] & (uint)HudElementStates.IsMouseInBounds) > 0;
 
                             if (canUseCursor && mouseInBounds && !HudMain.Cursor.IsCaptured && HudMain.Cursor.IsCapturingSpace(HudSpace.GetHudSpaceFunc))
                             {
                                 bool isMousedOver = mouseInBounds;
 
                                 if (isMousedOver)
-                                    State |= HudElementStates.IsMousedOver;
+                                    State[0] |= (uint)HudElementStates.IsMousedOver;
 
                                 HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
 
                                 if (!canShareCursor)
-                                    HudMain.Cursor.Capture(GetOrSetApiMemberFunc);
+                                    HudMain.Cursor.Capture(nodeDataRef[0].Item4.Item1);
                             }
                             else
                             {
@@ -314,8 +314,8 @@ namespace RichHudFramework
                 {
                     try
                     {
-						bool isVisible = (State & NodeVisibleMask) == NodeVisibleMask;
-						State &= ~HudElementStates.IsLayoutReady;
+						bool isVisible = (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0];
+						State[0] &= ~(uint)HudElementStates.IsLayoutReady;
 
 						if (isVisible)
                         {
@@ -340,21 +340,24 @@ namespace RichHudFramework
 								if (children.Count > 0)
 									UpdateChildAlignment();
 
-								if (_parentFull != null && (_parentFull.State & HudElementStates.IsMasked) > 0 &&
-									(State & HudElementStates.CanIgnoreMasking) == 0
+								if (_parentFull != null && (_parentFull.State[0] & (uint)(uint)HudElementStates.IsMasked) > 0 &&
+									(State[0] & (uint)(uint)HudElementStates.CanIgnoreMasking) == 0
 								)
-									State |= HudElementStates.IsMasked;
+									State[0] |= (uint)(uint)HudElementStates.IsMasked;
 								else
-									State &= ~HudElementStates.IsMasked;
+									State[0] &= ~(uint)HudElementStates.IsMasked;
 
-								if ((State & HudElementStates.IsMasking) > 0 || (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0))
+								if ((State[0] & (uint)(uint)HudElementStates.IsMasking) > 0 || 
+                                    (_parentFull != null && (State[0] & (uint)(uint)HudElementStates.IsSelectivelyMasked) > 0))
+							    {
 									UpdateMasking();
-								else if ((State & HudElementStates.IsMasked) > 0)
+								}
+								else if ((State[0] & (uint)(uint)HudElementStates.IsMasked) > 0)
 									maskingBox = _parentFull?.maskingBox;
 								else
 									maskingBox = null;
 
-								State |= HudElementStates.IsLayoutReady;
+								State[0] |= (uint)(uint)HudElementStates.IsLayoutReady;
 							}
                         }
 
@@ -362,12 +365,12 @@ namespace RichHudFramework
 						// during Layout/Arrange, but Layout should not run before UpdateSize. They need to be delayed.
 						if (isArranging)
 						{
-							if (_parent != null && (_parent.State & _parent.NodeVisibleMask) == _parent.NodeVisibleMask)
-								State |= HudElementStates.WasParentVisible;
+							if (_parent != null && (_parent.State[0] & _parent.NodeVisibleMask[0]) == _parent.NodeVisibleMask[0])
+								State[0] |= (uint)(uint)HudElementStates.WasParentVisible;
 							else
-								State &= ~HudElementStates.WasParentVisible;
+								State[0] &= ~(uint)HudElementStates.WasParentVisible;
 
-							layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+							layerData[2] = ParentUtils.GetFullZOffset(layerData, _parent);
 						}
 
 					}
@@ -389,9 +392,9 @@ namespace RichHudFramework
                     var child = children[i] as HudElementBase;
 
                     if (child != null)
-					    child.State |= HudElementStates.WasParentVisible;
+					    child.State[0] |= (uint)(uint)HudElementStates.WasParentVisible;
 
-					if (child != null && (child.State & (child.NodeVisibleMask)) == child.NodeVisibleMask)
+					if (child != null && (child.State[0] & (child.NodeVisibleMask[0])) == child.NodeVisibleMask[0])
 					{
                         child.Padding = child.Padding;
 
@@ -429,7 +432,7 @@ namespace RichHudFramework
                 {
                     var child = children[i] as HudElementBase;
 
-					if (child != null && (child.State & (child.NodeVisibleMask)) == child.NodeVisibleMask)
+					if (child != null && (child.State[0] & (child.NodeVisibleMask[0])) == child.NodeVisibleMask[0])
                     {
                         ParentAlignments originFlags = child.ParentAlignment;
                         Vector2 delta = Vector2.Zero,
@@ -476,14 +479,14 @@ namespace RichHudFramework
             /// </summary>
             protected void UpdateMasking()
             {
-                State |= HudElementStates.IsMasked;
+                State[0] |= (uint)HudElementStates.IsMasked;
                 BoundingBox2? parentBox, box = null;
 
-                if ((State & HudElementStates.CanIgnoreMasking) > 0)
+                if ((State[0] & (uint)HudElementStates.CanIgnoreMasking) > 0)
                 {
                     parentBox = null;
                 }
-                else if (_parentFull != null && (State & HudElementStates.IsSelectivelyMasked) > 0)
+                else if (_parentFull != null && (State[0] & (uint)HudElementStates.IsSelectivelyMasked) > 0)
                 {
                     Vector2 halfParent = .5f * _parentFull.CachedSize;
                     parentBox = new BoundingBox2(
@@ -497,7 +500,7 @@ namespace RichHudFramework
                 else
                     parentBox = _parentFull?.maskingBox;
 
-                if ((State & HudElementStates.IsMasking) > 0)
+                if ((State[0] & (uint)HudElementStates.IsMasking) > 0)
                 {
                     Vector2 halfSize = .5f * CachedSize;
                     box = new BoundingBox2(

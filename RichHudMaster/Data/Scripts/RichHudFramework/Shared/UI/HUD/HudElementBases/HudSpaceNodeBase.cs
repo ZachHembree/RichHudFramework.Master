@@ -115,18 +115,19 @@ namespace RichHudFramework
 
             public override void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte preloadDepth)
             {
-				bool isInputEnabled = (State & NodeInputMask) == NodeInputMask,
-					canUseCursor = isInputEnabled && (State & HudElementStates.CanUseCursor) > 0;
+				bool isInputEnabled = (State[0] & NodeInputMask[0]) == NodeInputMask[0],
+					canUseCursor = isInputEnabled && (State[0] & (uint)HudElementStates.CanUseCursor) > 0;
 
-				layerData.fullZOffset = ParentUtils.GetFullZOffset(layerData, _parent);
+				layerData[2] = ParentUtils.GetFullZOffset(nodeDataRef[0].Item3, _parent);
+
 				var accessors = new HudUpdateAccessors()
 				{
-					Item1 = GetOrSetApiMemberFunc,
-					Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(() => layerData.fullZOffset, GetNodeOriginFunc),
-					Item3 = (InputDepthCallback != null && canUseCursor) ? BeginInputDepthAction : null,
-					Item4 = BeginInputAction,
-					Item5 = BeginLayoutAction,
-					Item6 = DrawCallback != null ? BeginDrawAction : null
+					Item1 = nodeDataRef[0].Item4.Item1,
+					Item2 = new MyTuple<Func<ushort>, Func<Vector3D>>(() => (ushort)layerData[2], GetNodeOriginFunc),
+					Item3 = (InputDepthCallback != null && canUseCursor) ? nodeDataRef[0].Item4.Item2 : null,
+					Item4 = nodeDataRef[0].Item4.Item3,
+					Item5 = nodeDataRef[0].Item4.Item5,
+					Item6 = DrawCallback != null ? nodeDataRef[0].Item4.Item6 : null
 				};
 
 				UpdateActions.EnsureCapacity(UpdateActions.Count + children.Count + 1);

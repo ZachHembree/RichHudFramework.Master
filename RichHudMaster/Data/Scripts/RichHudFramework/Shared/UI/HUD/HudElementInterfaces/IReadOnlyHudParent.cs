@@ -38,19 +38,6 @@ namespace RichHudFramework
             IsLayoutReady = 1 << 14
         }
 
-        public struct HudLayerData
-        {
-            public sbyte zOffset;
-
-            /// <summary>
-            /// Additional zOffset range used internally; primarily for determining window draw order.
-            /// Don't use this unless you have a good reason for it.
-            /// </summary>
-            public byte zOffsetInner;
-
-            public ushort fullZOffset;
-        }
-
         public enum HudElementAccessors : int
         {
             /// <summary>
