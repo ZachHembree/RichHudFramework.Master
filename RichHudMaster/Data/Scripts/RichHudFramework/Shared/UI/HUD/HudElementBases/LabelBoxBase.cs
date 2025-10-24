@@ -55,21 +55,21 @@ namespace RichHudFramework
                 FitToTextElement = true;
                 Color = Color.Gray;
 
-                LayoutCallback = Layout;
+                UpdateSizeCallback = UpdateSize;
             }
 
-            protected virtual void Layout()
+            protected virtual void UpdateSize()
             {
-                if (!AutoResize)
-                {
-                    TextSize = Size - Padding;
-                }
-
-                if (FitToTextElement)
-                {
-                    Size = TextSize + Padding;
-                }
-            }
+				if (!AutoResize)
+				{
+					TextSize = UnpaddedSize;
+				}
+  
+				if (FitToTextElement)
+				{
+					UnpaddedSize = TextSize;
+				}
+			}
         }
     }
 }
