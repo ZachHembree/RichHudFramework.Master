@@ -102,15 +102,19 @@ namespace RichHudFramework
                 /// </summary>
                 public MatrixD[] PlaneToWorldRef { get; }
 
-                /// <summary>
-                /// Returns the world space position of the node's origin.
-                /// </summary>
-                public Func<Vector3D> GetNodeOriginFunc { get; }
+				/// <summary>
+				/// Returns the world space position of the node's origin.
+				/// </summary>
+				public Func<Vector3D> GetNodeOriginFunc
+				{
+					get { return hudSpaceOriginFunc[0]; }
+					private set { hudSpaceOriginFunc[0] = value; }
+				}
 
-                /// <summary>
-                /// True if the origin of the HUD space is in front of the camera
-                /// </summary>
-                public bool IsInFront { get; }
+				/// <summary>
+				/// True if the origin of the HUD space is in front of the camera
+				/// </summary>
+				public bool IsInFront { get; }
 
                 /// <summary>
                 /// True if the XY plane of the HUD space is in front and facing toward the camera

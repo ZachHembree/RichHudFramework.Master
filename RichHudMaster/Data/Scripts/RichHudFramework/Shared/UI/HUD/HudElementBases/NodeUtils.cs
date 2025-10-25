@@ -28,8 +28,8 @@ namespace RichHudFramework
 		HudSpaceFunc, // 2 - GetNodeOriginFunc
 		HudLayerData, // 3 - { 3.1 - zOffset, 3.2 - zOffsetInner, 3.3 - fullZOffset }
 		HudNodeHookData, // 4 - Main hooks
-		object, // 5 - Parent as HudNodeDataRef
-		List<object> // 6 - Children as IReadOnlyList<HudNodeDataRef>
+		object, // 5 - Parent as HudNodeDataHandle
+		List<object> // 6 - Children as IReadOnlyList<HudNodeDataHandle>
 	>;
 
 	namespace UI
@@ -107,7 +107,7 @@ namespace RichHudFramework
 								throw new Exception("The child node specified is not registered to the parent given.");
 
 							node.Parent = null;
-							node.nodeDataRef[0].Item5 = null;
+							node._dataHandle[0].Item3 = null;
 							node.State[0] &= (uint)~(HudElementStates.IsRegistered | HudElementStates.WasParentVisible);
 						}
 					}
@@ -134,7 +134,7 @@ namespace RichHudFramework
 								throw new Exception("The child node specified is not registered to the parent given.");
 
 							node.Parent = null;
-							node.nodeDataRef[0].Item5 = null;
+							node._dataHandle[0].Item3 = null;
 							node.State[0] &= (uint)~(HudElementStates.IsRegistered | HudElementStates.WasParentVisible);
 						}
 					}

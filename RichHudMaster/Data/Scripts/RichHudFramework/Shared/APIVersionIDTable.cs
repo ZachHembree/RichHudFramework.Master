@@ -14,8 +14,8 @@
 		BBUtilsSupport = 10,
 		BBUtils3DSupport = 11,
 		BindAliasAndAnalogSupport = 12,
-		SizeAndArrangeSupport = 13,
+		HudNodeHandleSupport = 13,
 
-		Latest = SizeAndArrangeSupport
+		Latest = HudNodeHandleSupport
 	}
 }

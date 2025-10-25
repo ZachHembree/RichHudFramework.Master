@@ -14,25 +14,26 @@ using HudNodeHookData = VRage.MyTuple<
 using HudNodeStateData = VRage.MyTuple<
 	uint[], // 1 - State
 	uint[], // 2 - NodeVisibleMask
-	uint[] // 3 - NodeInputMask
+	uint[], // 3 - NodeInputMask
+	System.Func<VRageMath.Vector3D>[],  // 4 - GetNodeOriginFunc
+	int[] // 5 - { 5.0 - zOffset, 5.1 - zOffsetInner, 5.2 - fullZOffset }
 >;
-using HudSpaceFunc = System.Func<VRageMath.Vector3D>;
+using HudSpaceOriginFunc = System.Func<VRageMath.Vector3D>;
 
 namespace RichHudFramework
 {
 	using HudNodeData = MyTuple<
-		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask }
-		HudSpaceFunc, // 2 - GetNodeOriginFunc
-		int[], // 3 - { 3.1 - zOffset, 3.2 - zOffsetInner, 3.3 - fullZOffset }
-		HudNodeHookData, // 4 - Main hooks
-		object, // 5 - Parent as HudNodeDataRef
-		List<object> // 6 - Children as IReadOnlyList<HudNodeDataRef>
+		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask, 1.4 - GetNodeOriginFunc, 1.5 - ZOffsets }
+		HudNodeHookData, // 2 - Main hooks
+		object, // 3 - Parent as HudNodeDataHandle
+		List<object>, // 4 - Children as IReadOnlyList<HudNodeDataHandle>
+		object // 5 - Unused
 	>;
-	
+
 	namespace UI
 	{
 		// Read-only length-1 array containing raw UI node data
-		using HudNodeDataRef = IReadOnlyList<HudNodeData>;
+		using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
 
 		/// <summary>
 		/// Wrapper around a shared reference to a UI element's shared tree data
@@ -42,7 +43,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Parent object of the node
 			/// </summary>
-			public LinkedHudNode Parent => new LinkedHudNode { dataRef = (dataRef[0].Item5 as HudNodeDataRef) };
+			public LinkedHudNode Parent => new LinkedHudNode { dataRef = (dataRef[0].Item3 as HudNodeDataHandle) };
 
 			/// <summary>
 			/// Internal state tracking flags
@@ -62,61 +63,61 @@ namespace RichHudFramework
 			/// <summary>
 			/// Determines whether the UI element will be drawn in the Back, Mid or Foreground
 			/// </summary>
-			public sbyte ZOffset => (sbyte)dataRef[0].Item3[0];
+			public sbyte ZOffset => (sbyte)dataRef[0].Item1.Item5[0];
 
 			/// <summary>
 			/// Used for input focus and window sorting
 			/// </summary>
-			public byte ZOffsetInner => (byte)dataRef[0].Item3[1];
+			public byte ZOffsetInner => (byte)dataRef[0].Item1.Item5[1];
 
 			/// <summary>
 			/// Combined offset used for final sorting
 			/// </summary>
-			public ushort FullZOffset => (ushort)dataRef[0].Item3[2];
+			public ushort FullZOffset => (ushort)dataRef[0].Item1.Item5[2];
 
 			/// <summary>
 			/// Used to check whether the cursor is moused over the element and whether its being
 			/// obstructed by another element.
 			/// </summary>
-			public Action InputDepthCallback => dataRef[0].Item4.Item2;
+			public Action InputDepthCallback => dataRef[0].Item2.Item2;
 
 			/// <summary>
 			/// Updates the input of this UI element. Invocation order affected by z-Offset and depth sorting.
 			/// Executes last, after Draw.
 			/// </summary>
-			public Action HandleInputCallback => dataRef[0].Item4.Item3;
+			public Action HandleInputCallback => dataRef[0].Item2.Item3;
 
 			/// <summary>
 			/// Updates the sizing of the element. Executes before layout in bottom-up order, before layout.
 			/// </summary>
-			public Action UpdateSizeCallback => dataRef[0].Item4.Item4;
+			public Action UpdateSizeCallback => dataRef[0].Item2.Item4;
 
 			/// <summary>
 			/// Updates the internal layout of the UI element. Executes after sizing in top-down order, before 
 			/// input and draw. Not affected by depth or z-Offset sorting.
 			/// </summary>
-			public Action<bool> LayoutCallback => dataRef[0].Item4.Item5;
+			public Action<bool> LayoutCallback => dataRef[0].Item2.Item5;
 
 			/// <summary>
 			/// Used to immediately draw billboards. Invocation order affected by z-Offset and depth sorting.
 			/// Executes after Layout and before HandleInput.
 			/// </summary>
-			public Action DrawCallback => dataRef[0].Item4.Item6;
+			public Action DrawCallback => dataRef[0].Item2.Item6;
 
 			/// <summary>
 			/// Delegate for getting HUD space translation in world space
 			/// </summary>
-			public HudSpaceFunc GetHudNodeOriginFunc => dataRef[0].Item2;
+			public HudSpaceOriginFunc GetHudNodeOriginFunc => dataRef[0].Item1.Item4[0];
 
 			/// <summary>
 			/// Debugging info delegate
 			/// </summary>
-			public ApiMemberAccessor GetOrSetMemberFunc => dataRef[0].Item4.Item1;
+			public ApiMemberAccessor GetOrSetMemberFunc => dataRef[0].Item2.Item1;
 
 			/// <summary>
 			/// Raw RHF API data
 			/// </summary>
-			public HudNodeDataRef dataRef;
+			public HudNodeDataHandle dataRef;
 		}
 	}
 }

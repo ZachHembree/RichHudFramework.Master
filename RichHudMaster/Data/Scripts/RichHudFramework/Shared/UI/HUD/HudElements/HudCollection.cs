@@ -250,6 +250,8 @@ namespace RichHudFramework
                 }
                 else if (child.Parent == null && children.Remove(child))
                 {
+                    childHandles.Remove(child.DataHandle);
+
                     if (!skipCollectionRemove)
                     {
                         for (int n = 0; n < hudCollectionList.Count; n++)

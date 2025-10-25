@@ -30,14 +30,14 @@ namespace RichHudFramework
 		HudSpaceFunc, // 2 - GetNodeOriginFunc
 		HudLayerData, // 3 - { 3.1 - zOffset, 3.2 - zOffsetInner, 3.3 - fullZOffset }
 		HudNodeHookData, // 4 - Main hooks
-		object, // 5 - Parent as HudNodeDataRef
-		List<object> // 6 - Children as IReadOnlyList<HudNodeDataRef>
+		object, // 5 - Parent as HudNodeDataHandle
+		List<object> // 6 - Children as IReadOnlyList<HudNodeDataHandle>
 	>;
 
 	namespace UI
 	{
 		// Read-only length-1 array containing raw UI node data
-		using HudNodeDataRef = IReadOnlyList<HudNodeData>;
+		using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
 		using Client;
         using Server;
 		using System.Collections.Generic;
@@ -59,8 +59,8 @@ namespace RichHudFramework
 					for (int n = 0; n < nodes.Count; n++)
 					{
 						HudNodeBase node = nodes[n];
-						node.nodeDataRef[0].Item5 = newParent.nodeDataRef;
-						newParent.childData.Add(node.nodeDataRef);
+						node._dataHandle[0].Item3 = newParent.DataHandle;
+						newParent.childHandles.Add(node.DataHandle);
 						newParent.children.Add(node);
 					}
 				}
@@ -77,8 +77,8 @@ namespace RichHudFramework
 					for (int n = 0; n < nodes.Count; n++)
 					{
 						HudNodeBase node = nodes[n].Element;
-						node.nodeDataRef[0].Item5 = newParent.nodeDataRef;
-						newParent.childData.Add(node.nodeDataRef);
+						node._dataHandle[0].Item3 = newParent.DataHandle;
+						newParent.childHandles.Add(node.DataHandle);
 						newParent.children.Add(node);
 					}
 				}
@@ -92,7 +92,6 @@ namespace RichHudFramework
 					if (count > 0)
 					{
 						int conEnd = index + count - 1;
-						var children = parent.children;
 
 						if (!(index >= 0 && index < nodes.Count && conEnd <= nodes.Count))
 							throw new Exception("Specified indices are out of range.");
@@ -104,22 +103,22 @@ namespace RichHudFramework
 						{
 							int start = 0;
 
-							while (start < children.Count && children[start] != nodes[i])
+							while (start < parent.children.Count && parent.children[start] != nodes[i])
 								start++;
 
-							if (children[start] == nodes[i])
+							if (parent.children[start] == nodes[i])
 							{
 								int j = start, end = start;
 
-								while (j < children.Count && i <= conEnd && children[j] == nodes[i])
+								while (j < parent.children.Count && i <= conEnd && parent.children[j] == nodes[i])
 								{
 									end = j;
 									i++;
 									j++;
 								}
 
-								parent.childData.RemoveRange(start, end - start + 1);
-								children.RemoveRange(start, end - start + 1);
+								parent.childHandles.RemoveRange(start, end - start + 1);
+								parent.children.RemoveRange(start, end - start + 1);
 							}
 						}
 					}
@@ -162,7 +161,7 @@ namespace RichHudFramework
 									j++;
 								}
 
-								parent.childData.RemoveRange(start, end - start + 1);
+								parent.childHandles.RemoveRange(start, end - start + 1);
 								children.RemoveRange(start, end - start + 1);
 							}
 						}
@@ -172,10 +171,10 @@ namespace RichHudFramework
 				/// <summary>
 				/// Calculates the full z-offset using the public offset and inner offset.
 				/// </summary>
-				public static ushort GetFullZOffset(int[] nodeData, HudParentBase parent = null)
+				public static ushort GetFullZOffset(int[] layerData, HudParentBase parent = null)
                 {
-                    byte outerOffset = (byte)(nodeData[0] - sbyte.MinValue);
-                    ushort innerOffset = (ushort)(nodeData[1] << 8);
+                    byte outerOffset = (byte)(layerData[0] - sbyte.MinValue);
+                    ushort innerOffset = (ushort)(layerData[1] << 8);
 
                     if (parent != null)
                     {

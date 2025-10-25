@@ -35,7 +35,8 @@ namespace RichHudFramework
             CanIgnoreMasking = 1 << 11,
             IsInputEnabled = 1 << 12,
             WasParentInputEnabled = 1 << 13,
-            IsLayoutReady = 1 << 14
+            IsLayoutReady = 1 << 14,
+            IsSpaceNode = 1 << 15
         }
 
         public enum HudElementAccessors : int
@@ -131,11 +132,6 @@ namespace RichHudFramework
             /// further in the background. Higher offsets draw later and on top.
             /// </summary>
             sbyte ZOffset { get; }
-
-            /// <summary>
-            /// Adds update delegates for members in the order dictated by the UI tree
-            /// </summary>
-            void GetUpdateAccessors(List<HudUpdateAccessors> UpdateActions, byte preloadDepth);
         }
     }
 }

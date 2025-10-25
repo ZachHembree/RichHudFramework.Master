@@ -367,9 +367,13 @@ namespace RichHudFramework
 
                 public Func<MatrixD> UpdateMatrixFunc { get; }
 
-                public Func<Vector3D> GetNodeOriginFunc { get; }
+				public Func<Vector3D> GetNodeOriginFunc
+				{
+					get { return hudSpaceOriginFunc[0]; }
+					private set { hudSpaceOriginFunc[0] = value; }
+				}
 
-                public bool IsInFront { get; }
+				public bool IsInFront { get; }
 
                 public bool IsFacingCamera { get; }
 

@@ -6,12 +6,34 @@ using VRage;
 using VRage.Utils;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
+using HudNodeHookData = VRage.MyTuple<
+	System.Func<object, int, object>, // 1 -  GetOrSetApiMemberFunc
+	System.Action, // 2 - InputDepthAction
+	System.Action, // 3 - InputAction
+	System.Action, // 4 - SizingAction
+	System.Action<bool>, // 5 - LayoutAction
+	System.Action // 6 - DrawAction
+>;
+using HudNodeStateData = VRage.MyTuple<
+	uint[], // 1 - State
+	uint[], // 2 - NodeVisibleMask
+	uint[] // 3 - NodeInputMask
+>;
+using HudSpaceFunc = System.Func<VRageMath.Vector3D>;
 
 namespace RichHudFramework
 {
 	using Internal;
 	using Server;
-	using HudUpdateAccessors = MyTuple<
+	using HudNodeData = MyTuple<
+		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask }
+		HudSpaceFunc, // 2 - GetNodeOriginFunc
+		int[], // 3 - { 3.1 - zOffset, 3.2 - zOffsetInner, 3.3 - fullZOffset }
+		HudNodeHookData, // 4 - Main hooks
+		object, // 5 - Parent as HudNodeDataHandle
+		List<object> // 6 - Children as IReadOnlyList<HudNodeDataHandle>
+	>;
+	using HudUpdateAccessorsOld = MyTuple<
 		ApiMemberAccessor,
 		MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
 		Action, // DepthTest
@@ -19,8 +41,12 @@ namespace RichHudFramework
 		Action<bool>, // BeforeLayout
 		Action // BeforeDraw
 	>;
+
 	namespace UI.Server
 	{
+		// Read-only length-1 array containing raw UI node data
+		using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
+
 		public sealed partial class HudMain
 		{
 			public sealed class TreeManager
@@ -69,7 +95,7 @@ namespace RichHudFramework
 
 				struct VersionedUpdateList
 				{
-					public IReadOnlyList<HudUpdateAccessors> accessors;
+					public IReadOnlyList<TreeNodeData> accessors;
 					public int vID;
 				}
 
@@ -88,21 +114,23 @@ namespace RichHudFramework
 				private readonly List<Func<Vector3D>> originFunctions;
 				private readonly List<ulong> indexBuffer;
 
+				private readonly HudNodeIterator nodeIterator;
 				private readonly List<VersionedUpdateList> activeUpdateLists;
-				private List<HudUpdateAccessors> activeLateUpdateBuffer, inactiveLateUpdateBuffer;
+				private List<TreeNodeData> activeLateUpdateBuffer, inactiveLateUpdateBuffer;
 
 				// Sorted client data
 				private List<Action> depthTestActions, depthTestActionBuffer;
 				private List<Action> inputActions, inputActionBuffer;
 				private List<Action> drawActions, drawActionBuffer;
-				private List<MyTuple<Action<bool>, int>> sizingActions, sizingActionBuffer;
-				private List<MyTuple<Action<bool>, int>> layoutActions, layoutActionBuffer;
+				private List<Action> sizingActions, sizingActionBuffer;
+				private List<Action<bool>> layoutActions, layoutActionBuffer;
 				private float lastResScale;
 
 				// Stats
 				private readonly Stopwatch treeTimer, drawTimer, inputTimer;
 				private readonly long[] drawTimes, inputTimes, treeTimes;
-
+				
+				// TEMPORARY
 				private ulong usedDelegates;
 				private ulong skippedDelegates;
 
@@ -119,9 +147,10 @@ namespace RichHudFramework
 					updateSwapLock = new FastResourceLock();
 					treeSwapLock = new FastResourceLock();
 
+					nodeIterator = new HudNodeIterator();
 					activeUpdateLists = new List<VersionedUpdateList>();
-					activeLateUpdateBuffer = new List<HudUpdateAccessors>();
-					inactiveLateUpdateBuffer = new List<HudUpdateAccessors>();
+					activeLateUpdateBuffer = new List<TreeNodeData>();
+					inactiveLateUpdateBuffer = new List<TreeNodeData>();
 
 					distMap = new Dictionary<Func<Vector3D>, ushort>(50);
 					originFuncSet = new HashSet<Func<Vector3D>>();
@@ -137,14 +166,14 @@ namespace RichHudFramework
 					drawActions = new List<Action>(200);
 					drawActionBuffer = new List<Action>(200);
 
-					sizingActions = new List<MyTuple<Action<bool>, int>>(200);
-					sizingActionBuffer = new List<MyTuple<Action<bool>, int>>(200);
+					sizingActions = new List<Action>(200);
+					sizingActionBuffer = new List<Action>(200);
 
-					layoutActions = new List<MyTuple<Action<bool>, int>>(200);
-					layoutActionBuffer = new List<MyTuple<Action<bool>, int>>(200);
+					layoutActions = new List<Action<bool>>(200);
+					layoutActionBuffer = new List<Action<bool>>(200);
 
 					clients = new List<TreeClient>();
-					mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
+					mainClient = new TreeClient() { RootNodeHandle = instance._root.DataHandle };
 
 					drawTimer = new Stopwatch();
 					drawTimes = new long[tickResetInterval];
@@ -252,12 +281,12 @@ namespace RichHudFramework
 					for (int n = 0; n < clients.Count; n++)
 					{
 						int clientTick = drawTick + (n % treeRefreshRate);
-						clients[n].Update(clientTick);
+						clients[n].Update(nodeIterator, clientTick);
 					}
 
 					// Manually append cursor update list
 					inactiveLateUpdateBuffer.Clear();
-					instance._cursor.GetUpdateAccessors(inactiveLateUpdateBuffer, 0);
+					nodeIterator.GetNodeData(instance._cursor.DataHandle, inactiveLateUpdateBuffer);
 
 					if (sortTick == 0)
 					{
@@ -316,22 +345,16 @@ namespace RichHudFramework
 
 					// Sizing - vID 13+ only
 					for (int n = sizingActions.Count - 1; n >= 0; n--)
-						sizingActions[n].Item1(false);
+						sizingActions[n]();
 
 					// Older clients (1.0.3-) node spaces require layout refreshes to function
-					// Refresh no longer used in vID 13+ (1.3+). Flag repurposed for explicit
-					// sizing/layout passes.
+					// Flag no longer used for vID 13+ (1.3+).
 					bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
 						refreshLayout = lastResScale != resScale || rebuildLists;
 
 					// Arrange/layout
 					for (int n = 0; n < layoutActions.Count; n++)
-					{
-						int vID = layoutActions[n].Item2;
-						bool isArranging = vID >= (int)APIVersionTable.SizeAndArrangeSupport;
-						// For client vID > 12, true indicates top-down arrange/layout pass
-						layoutActions[n].Item1(refreshLayout || isArranging);
-					}
+						layoutActions[n](refreshLayout);
 
 					// Draw UI elements
 					for (int n = 0; n < drawActions.Count; n++)
@@ -506,7 +529,7 @@ namespace RichHudFramework
 						{
 							for (int j = 0; j < activeUpdateLists[i].accessors.Count; j++)
 							{
-								originFuncSet.Add(activeUpdateLists[i].accessors[j].Item2.Item2);
+								originFuncSet.Add(activeUpdateLists[i].accessors[j].GetPosFunc);
 								activeCount++;
 							}
 						}
@@ -526,12 +549,17 @@ namespace RichHudFramework
 				/// </summary>
 				private void UpdateDistMap()
 				{
+					// SYNCHRONIZE THIS
 					indexBuffer.Clear();
 					Vector3D camPos = PixelToWorldRef[0].Translation;
 
 					for (int i = 0; i < originFunctions.Count; i++)
 					{
 						Func<Vector3D> OriginFunc = originFunctions[i];
+
+						if (OriginFunc == null)
+							throw new Exception("HUD Node origin cannot be null.");
+
 						Vector3D nodeOrigin = OriginFunc();
 						double dist = (float)Math.Round(Vector3D.Distance(nodeOrigin, camPos), 6);
 						ulong index = (ulong)i,
@@ -586,8 +614,8 @@ namespace RichHudFramework
 						{
 							var accessors = activeUpdateLists[i].accessors[j];
 							ulong index = ((uint)i << 16 | (ushort)j),
-							zOffset = accessors.Item2.Item1(),
-							distance = distMap[accessors.Item2.Item2];
+							zOffset = accessors.ZOffset,
+							distance = distMap[accessors.GetPosFunc];
 
 							indexBuffer.Add((distance << 48) | (zOffset << 32) | index);
 						}
@@ -633,7 +661,7 @@ namespace RichHudFramework
 						int i = (int)(index >> 16);
 						int j = (int)(index & 0xFFFF);
 
-						Action depthTestAction = activeUpdateLists[i].accessors[j].Item3;
+						Action depthTestAction = activeUpdateLists[i].accessors[j].Hooks.Item2;
 
 						if (depthTestAction != null)
 						{
@@ -651,8 +679,8 @@ namespace RichHudFramework
 						int i = (int)(index >> 16);
 						int j = (int)(index & 0xFFFF);
 
-						HudUpdateAccessors accessors = activeUpdateLists[i].accessors[j];
-						Action inputAction = activeUpdateLists[i].accessors[j].Item4;
+						TreeNodeData accessors = activeUpdateLists[i].accessors[j];
+						Action inputAction = activeUpdateLists[i].accessors[j].Hooks.Item3;
 
 						if (inputAction != null)
 						{
@@ -670,7 +698,7 @@ namespace RichHudFramework
 						int i = (int)(index >> 16);
 						int j = (int)(index & 0xFFFF);
 
-						Action drawAction = activeUpdateLists[i].accessors[j].Item6;
+						Action drawAction = activeUpdateLists[i].accessors[j].Hooks.Item6;
 
 						if (drawAction != null)
 						{
@@ -686,15 +714,15 @@ namespace RichHudFramework
 					{
 						int vID = activeUpdateLists[i].vID;
 
-						if (vID >= (int)APIVersionTable.SizeAndArrangeSupport)
+						if (vID >= (int)APIVersionTable.HudNodeHandleSupport)
 						{
 							for (int j = 0; j < activeUpdateLists[i].accessors.Count; j++)
 							{
-								Action<bool> sizeAction = activeUpdateLists[i].accessors[j].Item5;
+								Action sizeAction = activeUpdateLists[i].accessors[j].Hooks.Item4;
 
 								if (sizeAction != null)
 								{
-									sizingActionBuffer.Add(new MyTuple<Action<bool>, int>(sizeAction, vID));
+									sizingActionBuffer.Add(sizeAction);
 									usedDelegates++;
 								}
 								else
@@ -706,15 +734,13 @@ namespace RichHudFramework
 					// Build layout list (without sorting)
 					for (int i = 0; i < activeUpdateLists.Count; i++)
 					{
-						int vID = activeUpdateLists[i].vID;
-
 						for (int j = 0; j < activeUpdateLists[i].accessors.Count; j++)
 						{
-							Action<bool> layoutAction = activeUpdateLists[i].accessors[j].Item5;
+							Action<bool> layoutAction = activeUpdateLists[i].accessors[j].Hooks.Item5;
 
 							if (layoutAction != null)
 							{
-								layoutActionBuffer.Add(new MyTuple<Action<bool>, int>(layoutAction, vID));
+								layoutActionBuffer.Add(layoutAction);
 								usedDelegates++;
 							}
 							else
