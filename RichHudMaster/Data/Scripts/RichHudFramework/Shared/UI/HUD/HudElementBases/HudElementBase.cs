@@ -5,9 +5,10 @@ namespace RichHudFramework
 {
 	namespace UI
 	{
-		using Server;
 		using Client;
 		using Internal;
+		using RichHudFramework.UI.Rendering;
+		using Server;
 		using System.Collections.Generic;
 
 		/// <summary>
@@ -294,11 +295,9 @@ namespace RichHudFramework
 					CachedSize = UnpaddedSize + Padding;
 				}
 
-				LayoutCallback?.Invoke();
+				LayoutCallback?.Invoke();				
 
-				if (children.Count > 0)
-					UpdateChildAlignment();
-
+				// Masking configuration
 				if (parentFull != null && (parentFull.State[0] & (uint)HudElementStates.IsMasked) > 0 &&
 					(State[0] & (uint)HudElementStates.CanIgnoreMasking) == 0
 				)
@@ -315,6 +314,30 @@ namespace RichHudFramework
 					maskingBox = parentFull?.maskingBox;
 				else
 					maskingBox = null;
+
+				// Check if masking results in no area
+				bool isDisjoint = false;
+
+				if (maskingBox != null) 
+				{
+					Vector2 halfSize = CachedSize * .5f;
+					var bounds = new BoundingBox2(Position - halfSize, Position + halfSize);
+					isDisjoint = 
+						(bounds.Max.X < maskingBox.Value.Min.X) ||
+						(bounds.Min.X > maskingBox.Value.Max.X) ||
+						(bounds.Max.Y < maskingBox.Value.Min.Y) ||
+						(bounds.Min.Y > maskingBox.Value.Max.Y);
+				}
+
+				if (isDisjoint)
+					State[0] |= (uint)HudElementStates.IsDisjoint;
+				else
+				{
+					State[0] &= ~(uint)HudElementStates.IsDisjoint;
+
+					if (children.Count > 0)
+						UpdateChildAlignment();
+				}
 			}
 
 			/// <summary>
