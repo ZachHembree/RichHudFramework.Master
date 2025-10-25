@@ -242,7 +242,7 @@ namespace RichHudFramework
 			/// </summary>
 			public sealed override void BeginInput()
 			{
-				if (HandleInputCallback != null)
+				if (_handleInputCallback != null)
 				{
 					Vector3 cursorPos = HudSpace.CursorPos;
 					bool canUseCursor = (State[0] & (uint)HudElementStates.CanUseCursor) > 0,
@@ -256,14 +256,14 @@ namespace RichHudFramework
 						if (isMousedOver)
 							State[0] |= (uint)HudElementStates.IsMousedOver;
 
-						HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
+						_handleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
 
 						if (!canShareCursor)
 							HudMain.Cursor.Capture(DataHandle[0].Item2.Item1);
 					}
 					else
 					{
-						HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
+						_handleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
 					}
 				}
 			}

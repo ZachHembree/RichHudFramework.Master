@@ -107,7 +107,17 @@ namespace RichHudFramework
 			/// Updates the input of this UI element. Invocation order affected by z-Offset and depth sorting.
 			/// Executes last, after Draw.
 			/// </summary>
-			protected Action<Vector2> HandleInputCallback;
+			protected Action<Vector2> HandleInputCallback
+			{
+				get { return _handleInputCallback; }
+				set 
+				{ 
+					_handleInputCallback = value;
+
+					if (value != null && _dataHandle[0].Item2.Item3 == null)
+						_dataHandle[0].Item2.Item3 = BeginInput;
+				}
+			}
 
 			/// <summary>
 			/// Updates the sizing of the element. Executes before layout in bottom-up order, before layout.
@@ -136,7 +146,7 @@ namespace RichHudFramework
 
 			#endregion
 
-			// INTERNAL DATA - DO NOT TOUCH
+			// INTERNAL DATA
 			#region INTERNAL DATA
 
 			/// <summary>
@@ -168,6 +178,7 @@ namespace RichHudFramework
 			protected readonly List<object> childHandles;
 			protected readonly List<HudNodeBase> children;
 			protected readonly HudSpaceOriginFunc[] hudSpaceOriginFunc;
+			protected Action<Vector2> _handleInputCallback;
 
 			#endregion
 
@@ -189,7 +200,6 @@ namespace RichHudFramework
 				_dataHandle[0].Item1 = new HudNodeStateData(State, NodeVisibleMask, NodeInputMask, hudSpaceOriginFunc, layerData);
 				// Hooks
 				_dataHandle[0].Item2.Item1 = GetOrSetApiMember; // Required
-				_dataHandle[0].Item2.Item3 = BeginInput;
 				_dataHandle[0].Item2.Item5 = BeginLayout; // Required
 				// Parent
 				_dataHandle[0].Item3 = null;
@@ -211,7 +221,7 @@ namespace RichHudFramework
 			public virtual void BeginInput()
 			{
 				Vector3 cursorPos = HudSpace.CursorPos;
-				HandleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
+				_handleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
 			}
 
 			/// <summary>

@@ -78,7 +78,7 @@ namespace RichHudFramework
 			public override void BeginInput()
 			{
 				Vector3 cursorPos = HudSpace.CursorPos;
-				HandleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
+				_handleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
 			}
 
 			/// <summary>
