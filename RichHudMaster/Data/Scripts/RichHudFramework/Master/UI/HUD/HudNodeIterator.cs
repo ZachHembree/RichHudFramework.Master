@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices.ComTypes;
 using VRage;
@@ -75,6 +76,11 @@ namespace RichHudFramework
 				public HudNodeIterator()
 				{
 					nodeStack = new List<NodeStackData>(100);
+				}
+
+				public void Clear()
+				{
+					nodeStack.Clear();
 				}
 
 				public void GetNodeData(HudNodeDataHandle srcRoot, List<TreeNodeData> dst)
@@ -164,9 +170,59 @@ namespace RichHudFramework
 					}
 				}
 
-				public void Clear()
+				public void UpdateNodeSizing(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> sizingActions)
 				{
-					nodeStack.Clear();
+					foreach (uint index in sizingActions)
+					{
+						HudNodeDataHandle node = clients[(int)index].Node;
+						Action SizingAction = clients[(int)index].Hooks.Item4;
+
+						SizingAction?.Invoke();
+					}
+				}
+
+				public void UpdateNodeLayout(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> layoutActions, bool refresh = false)
+				{
+					foreach (uint index in layoutActions)
+					{
+						HudNodeDataHandle node = clients[(int)index].Node;
+						Action<bool> LayoutAction = clients[(int)index].Hooks.Item5;
+
+						LayoutAction?.Invoke(refresh);
+					}
+				}
+
+				public void DrawNodes(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> drawActions)
+				{
+					foreach (uint index in drawActions)
+					{
+						HudNodeDataHandle node = clients[(int)index].Node;
+						Action DrawAction = clients[(int)index].Hooks.Item6;
+
+						DrawAction?.Invoke();
+					}
+				}
+
+				public void UpdateNodeInputDepth(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> depthTestActions)
+				{
+					foreach (uint index in depthTestActions)
+					{
+						HudNodeDataHandle node = clients[(int)index].Node;
+						Action DepthTestAction = clients[(int)index].Hooks.Item2;
+
+						DepthTestAction?.Invoke();
+					}
+				}
+
+				public void UpdateNodeInput(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> inputActions)
+				{
+					foreach (uint index in inputActions)
+					{
+						HudNodeDataHandle node = clients[(int)index].Node;
+						Action InputAction = clients[(int)index].Hooks.Item3;
+
+						InputAction?.Invoke();
+					}
 				}
 			}
 		}

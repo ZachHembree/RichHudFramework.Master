@@ -107,9 +107,10 @@ namespace RichHudFramework
 				public class TreeClient
 				{
 					/// <summary>
-					/// Read only list of accessor list for UI elements registered to this client
+					/// Read only list of accessor list for UI elements registered to this client to be 
+					/// added to the tree in the next update.
 					/// </summary>
-					public IReadOnlyList<TreeNodeData> UpdateAccessors => activeUpdateBuffer;
+					public IReadOnlyList<TreeNodeData> InactiveNodeData => inactiveNodeData;
 
 					/// <summary>
 					/// Returns true if the client has been registered to the TreeManager
@@ -156,8 +157,8 @@ namespace RichHudFramework
 					public HudNodeDataHandle RootNodeHandle;
 
 					private bool _enableCursor, updatePending;
-					private List<TreeNodeData> activeUpdateBuffer,
-						inactiveUpdateBuffer;
+					private List<TreeNodeData> inactiveNodeData,
+						activeNodeData;
 
 					// Legacy data
 					private Action<List<HudUpdateAccessorsOld>, byte> GetUpdateAccessors;
@@ -168,8 +169,8 @@ namespace RichHudFramework
 					{
 						this.ApiVersion = apiVersion;
 
-						activeUpdateBuffer = new List<TreeNodeData>(200);
-						inactiveUpdateBuffer = new List<TreeNodeData>(200);
+						inactiveNodeData = new List<TreeNodeData>(200);
+						activeNodeData = new List<TreeNodeData>(200);
 						convBuffer = new List<HudUpdateAccessorsOld>();
 
 						Registered = TreeManager.RegisterClient(this);
@@ -182,18 +183,18 @@ namespace RichHudFramework
 
 						if (refreshRequested && (tick % treeRefreshRate) == 0)
 						{
-							inactiveUpdateBuffer.Clear();
+							activeNodeData.Clear();
 
 							if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 							{
 								if (RootNodeHandle != null)
-									nodeIterator.GetNodeData(RootNodeHandle, inactiveUpdateBuffer);
+									nodeIterator.GetNodeData(RootNodeHandle, activeNodeData);
 							}
 							else if (GetUpdateAccessors != null)
 								LegacyNodeUpdate();
 
-							if (inactiveUpdateBuffer.Capacity > inactiveUpdateBuffer.Count * 10)
-								inactiveUpdateBuffer.TrimExcess();
+							if (activeNodeData.Capacity > activeNodeData.Count * 10)
+								activeNodeData.TrimExcess();
 
 							updatePending = true;
 						}
@@ -206,7 +207,7 @@ namespace RichHudFramework
 						
 						foreach (var src in convBuffer)
 						{
-							inactiveUpdateBuffer.Add(new TreeNodeData
+							activeNodeData.Add(new TreeNodeData
 							{
 								Hooks = new HudNodeHookData 
 								{
@@ -236,7 +237,7 @@ namespace RichHudFramework
 					{
 						if (updatePending)
 						{
-							MyUtils.Swap(ref activeUpdateBuffer, ref inactiveUpdateBuffer);
+							MyUtils.Swap(ref inactiveNodeData, ref activeNodeData);
 							updatePending = false;
 						}
 					}
