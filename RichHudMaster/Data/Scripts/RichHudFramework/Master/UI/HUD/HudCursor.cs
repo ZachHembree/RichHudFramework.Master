@@ -137,7 +137,7 @@ namespace RichHudFramework
 					layerData[1] = byte.MaxValue;
 					layerData[2] = ushort.MaxValue;
 
-					State[0] |= (uint)HudElementStates.CanPreload;
+					State[0] |= (uint)(HudElementStates.CanPreload | HudElementStates.IsSpaceNode);
 
                     GetHudSpaceFunc = () => new HudSpaceData(true, 1f, PlaneToWorldRef[0]);
                     GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;

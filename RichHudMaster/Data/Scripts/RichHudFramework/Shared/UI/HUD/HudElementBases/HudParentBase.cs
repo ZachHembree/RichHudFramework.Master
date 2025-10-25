@@ -97,7 +97,11 @@ namespace RichHudFramework
 			/// Used to check whether the cursor is moused over the element and whether its being
 			/// obstructed by another element.
 			/// </summary>
-			protected Action InputDepthCallback;
+			protected Action InputDepthCallback 
+			{ 
+				get { return _dataHandle[0].Item2.Item2; }
+				set { _dataHandle[0].Item2.Item2 = value; }
+			}
 
 			/// <summary>
 			/// Updates the input of this UI element. Invocation order affected by z-Offset and depth sorting.
@@ -108,7 +112,11 @@ namespace RichHudFramework
 			/// <summary>
 			/// Updates the sizing of the element. Executes before layout in bottom-up order, before layout.
 			/// </summary>
-			protected Action UpdateSizeCallback;
+			protected Action UpdateSizeCallback
+			{
+				get { return _dataHandle[0].Item2.Item4; }
+				set { _dataHandle[0].Item2.Item4 = value; }
+			}
 
 			/// <summary>
 			/// Updates the internal layout of the UI element. Executes after sizing in top-down order, before 
@@ -120,7 +128,11 @@ namespace RichHudFramework
 			/// Used to immediately draw billboards. Invocation order affected by z-Offset and depth sorting.
 			/// Executes after Layout and before HandleInput.
 			/// </summary>
-			protected Action DrawCallback;
+			protected Action DrawCallback
+			{
+				get { return _dataHandle[0].Item2.Item6; }
+				set { _dataHandle[0].Item2.Item6 = value; }
+			}
 
 			#endregion
 
@@ -176,12 +188,9 @@ namespace RichHudFramework
 				// Shared state
 				_dataHandle[0].Item1 = new HudNodeStateData(State, NodeVisibleMask, NodeInputMask, hudSpaceOriginFunc, layerData);
 				// Hooks
-				_dataHandle[0].Item2.Item1 = GetOrSetApiMember;
-				_dataHandle[0].Item2.Item2 = BeginInputDepth;
+				_dataHandle[0].Item2.Item1 = GetOrSetApiMember; // Required
 				_dataHandle[0].Item2.Item3 = BeginInput;
-				_dataHandle[0].Item2.Item4 = BeginSizing;
-				_dataHandle[0].Item2.Item5 = BeginLayout;
-				_dataHandle[0].Item2.Item6 = BeginDraw;
+				_dataHandle[0].Item2.Item5 = BeginLayout; // Required
 				// Parent
 				_dataHandle[0].Item3 = null;
 				// Child handle list
@@ -195,75 +204,14 @@ namespace RichHudFramework
 			}
 
 			/// <summary>
-			/// Starts cursor depth check in a try-catch block. Useful for manually updating UI elements.
-			/// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
-			/// If you need to do cursor depth testing use InputDepthCallback;
-			/// </summary>
-			public void BeginInputDepth()
-			{
-				if (!ExceptionHandler.ClientsPaused && InputDepthCallback != null)
-				{
-					try
-					{
-						bool canUseCursor = (State[0] & (uint)HudElementStates.CanUseCursor) > 0,
-							isVisible = (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0],
-							isInputEnabled = (State[0] & NodeInputMask[0]) == NodeInputMask[0];
-
-						if (canUseCursor && isVisible && isInputEnabled)
-							InputDepthCallback();
-					}
-					catch (Exception e)
-					{
-						ExceptionHandler.ReportException(e);
-					}
-				}
-			}
-
-			/// <summary>
 			/// Starts input update in a try-catch block. Useful for manually updating UI elements.
 			/// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
 			/// If you need to update input, use HandleInputCallback.
 			/// </summary>
 			public virtual void BeginInput()
 			{
-				if (!ExceptionHandler.ClientsPaused && HandleInputCallback != null)
-				{
-					try
-					{
-						bool isVisible = (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0],
-							 isInputEnabled = (State[0] & NodeInputMask[0]) == NodeInputMask[0];
-
-						if (isVisible && isInputEnabled)
-						{
-							Vector3 cursorPos = HudSpace.CursorPos;
-							HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
-						}
-					}
-					catch (Exception e)
-					{
-						ExceptionHandler.ReportException(e);
-					}
-				}
-			}
-
-			public virtual void BeginSizing()
-			{
-				if (!ExceptionHandler.ClientsPaused)
-				{
-					try
-					{
-						bool isVisible = (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0];
-
-						if (isVisible)
-						{
-							UpdateSizeCallback?.Invoke();
-						}
-					}
-					catch (Exception e)
-					{
-						ExceptionHandler.ReportException(e);
-					}
-				}
+				Vector3 cursorPos = HudSpace.CursorPos;
+				HandleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
 			}
 
 			/// <summary>
@@ -273,56 +221,12 @@ namespace RichHudFramework
 			/// </summary>
 			public virtual void BeginLayout(bool _)
 			{
-				if (!ExceptionHandler.ClientsPaused)
-				{
-					layerData[2] = ParentUtils.GetFullZOffset(layerData);
+				if (HudSpace != null)
+					State[0] |= (uint)HudElementStates.IsSpaceNodeReady;
+				else
+					State[0] &= ~(uint)HudElementStates.IsSpaceNodeReady;
 
-					if (LayoutCallback == null)
-					{
-						State[0] |= (uint)HudElementStates.IsLayoutReady;
-						return;
-					}
-					else
-						State[0] &= ~(uint)HudElementStates.IsLayoutReady;
-
-					try
-					{
-						bool isVisible = (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0];
-
-						if (isVisible)
-						{
-							LayoutCallback?.Invoke();
-							State[0] |= (uint)HudElementStates.IsLayoutReady;
-						}
-					}
-					catch (Exception e)
-					{
-						ExceptionHandler.ReportException(e);
-					}
-				}
-			}
-
-			/// <summary>
-			/// Starts UI draw in a try-catch block. Useful for manually updating UI elements.
-			/// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
-			/// If you need to draw billboards, use DrawCallback.
-			/// </summary>
-			public void BeginDraw()
-			{
-				if (!ExceptionHandler.ClientsPaused && DrawCallback != null)
-				{
-					try
-					{
-						bool isVisible = (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0];
-
-						if (isVisible && (State[0] & (uint)HudElementStates.IsLayoutReady) > 0)
-							DrawCallback();
-					}
-					catch (Exception e)
-					{
-						ExceptionHandler.ReportException(e);
-					}
-				}
+				LayoutCallback?.Invoke();
 			}
 
 			/// <summary>

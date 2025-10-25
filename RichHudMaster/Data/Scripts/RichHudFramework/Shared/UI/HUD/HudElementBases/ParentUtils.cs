@@ -167,25 +167,6 @@ namespace RichHudFramework
 						}
 					}
 				}
-
-				/// <summary>
-				/// Calculates the full z-offset using the public offset and inner offset.
-				/// </summary>
-				public static ushort GetFullZOffset(int[] layerData, HudParentBase parent = null)
-                {
-                    byte outerOffset = (byte)(layerData[0] - sbyte.MinValue);
-                    ushort innerOffset = (ushort)(layerData[1] << 8);
-
-                    if (parent != null)
-                    {
-                        ushort parentFull = (ushort)parent.layerData[2];
-
-                        outerOffset += (byte)((parentFull & 0x00FF) + sbyte.MinValue);
-                        innerOffset += (ushort)(parentFull & 0xFF00);
-                    }
-
-                    return (ushort)(innerOffset | outerOffset);
-                }
             }
         }
     }

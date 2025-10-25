@@ -6,9 +6,6 @@ using VRage;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using FloatProp = VRage.MyTuple<System.Func<float>, System.Action<float>>;
-using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
-using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
-using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 using HudNodeHookData = VRage.MyTuple<
 	System.Func<object, int, object>, // 1 -  GetOrSetApiMemberFunc
 	System.Action, // 2 - InputDepthAction
@@ -24,7 +21,10 @@ using HudNodeStateData = VRage.MyTuple<
 	System.Func<VRageMath.Vector3D>[],  // 4 - GetNodeOriginFunc
 	int[] // 5 - { 5.0 - zOffset, 5.1 - zOffsetInner, 5.2 - fullZOffset }
 >;
+using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using HudSpaceOriginFunc = System.Func<VRageMath.Vector3D>;
+using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
+using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 
 namespace RichHudFramework
 {
@@ -38,13 +38,12 @@ namespace RichHudFramework
 		Func<ApiMemberAccessor, bool>, // TryRelease
 		ApiMemberAccessor // GetOrSetMember
 	>;
-	using TextBuilderMembers = MyTuple<
-		MyTuple<Func<int, int, object>, Func<int>>, // GetLineMember, GetLineCount
-		Func<Vector2I, int, object>, // GetCharMember
-		ApiMemberAccessor, // GetOrSetMember
-		Action<IList<RichStringMembers>, Vector2I>, // Insert
-		Action<IList<RichStringMembers>>, // SetText
-		Action // Clear
+	using HudNodeData = MyTuple<
+		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask, 1.4 - GetNodeOriginFunc, 1.5 - ZOffsets }
+		HudNodeHookData, // 2 - Main hooks
+		object, // 3 - Parent as HudNodeDataHandle
+		List<object>, // 4 - Children as IReadOnlyList<HudNodeDataHandle>
+		object // 5 - Unused
 	>;
 	// Legacy UI node data
 	using HudUpdateAccessorsOld = MyTuple<
@@ -55,16 +54,19 @@ namespace RichHudFramework
 		Action<bool>, // BeforeLayout
 		Action // BeforeDraw
 	>;
-	using HudNodeData = MyTuple<
-		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask, 1.4 - GetNodeOriginFunc, 1.5 - ZOffsets }
-		HudNodeHookData, // 2 - Main hooks
-		object, // 3 - Parent as HudNodeDataHandle
-		List<object>, // 4 - Children as IReadOnlyList<HudNodeDataHandle>
-		object // 5 - Unused
+	using TextBuilderMembers = MyTuple<
+		MyTuple<Func<int, int, object>, Func<int>>, // GetLineMember, GetLineCount
+		Func<Vector2I, int, object>, // GetCharMember
+		ApiMemberAccessor, // GetOrSetMember
+		Action<IList<RichStringMembers>, Vector2I>, // Insert
+		Action<IList<RichStringMembers>>, // SetText
+		Action // Clear
 	>;
 
 	namespace UI
 	{
+		// Read-only length-1 array containing raw UI node data
+		using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
 		using TextBoardMembers = MyTuple<
 			TextBuilderMembers,
 			FloatProp, // Scale
@@ -82,11 +84,9 @@ namespace RichHudFramework
 			Action<Vector2, MatrixD> // Draw 
 		>;
 
-		// Read-only length-1 array containing raw UI node data
-		using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
-
 		namespace Server
 		{
+			using static RichHudFramework.Server.RichHudMaster;
 			using HudClientMembers = MyTuple<
 				CursorMembers, // Cursor
 				Func<TextBoardMembers>, // GetNewTextBoard
@@ -110,7 +110,7 @@ namespace RichHudFramework
 					/// Read only list of accessor list for UI elements registered to this client to be 
 					/// added to the tree in the next update.
 					/// </summary>
-					public IReadOnlyList<TreeNodeData> InactiveNodeData => inactiveNodeData;
+					public IReadOnlyList<TreeNodeData> InactiveNodeData { get; private set; }
 
 					/// <summary>
 					/// Returns true if the client has been registered to the TreeManager
@@ -156,23 +156,30 @@ namespace RichHudFramework
 					/// </summary>
 					public HudNodeDataHandle RootNodeHandle;
 
+					/// <summary>
+					/// Mod client reference that this TreeClient belongs to
+					/// </summary>
+					public ModClient ModClient { get; private set; }
+
 					private bool _enableCursor, updatePending;
-					private List<TreeNodeData> inactiveNodeData,
-						activeNodeData;
+					private List<TreeNodeData> activeNodeData,
+						inactiveNodeData;
 
 					// Legacy data
 					private Action<List<HudUpdateAccessorsOld>, byte> GetUpdateAccessors;
 					private readonly List<HudUpdateAccessorsOld> convBuffer;
 					private bool refreshRequested, refreshDrawList;
 
-					public TreeClient(int apiVersion = (int)APIVersionTable.Latest)
+					public TreeClient(ModClient modClient = null, int apiVersion = (int)APIVersionTable.Latest)
 					{
+						this.ModClient = modClient;
 						this.ApiVersion = apiVersion;
 
-						inactiveNodeData = new List<TreeNodeData>(200);
 						activeNodeData = new List<TreeNodeData>(200);
-						convBuffer = new List<HudUpdateAccessorsOld>();
+						inactiveNodeData = new List<TreeNodeData>(200);
+						InactiveNodeData = inactiveNodeData;
 
+						convBuffer = new List<HudUpdateAccessorsOld>();
 						Registered = TreeManager.RegisterClient(this);
 					}
 
@@ -188,7 +195,7 @@ namespace RichHudFramework
 							if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 							{
 								if (RootNodeHandle != null)
-									nodeIterator.GetNodeData(RootNodeHandle, activeNodeData);
+									nodeIterator.GetNodeData(RootNodeHandle, activeNodeData, this);
 							}
 							else if (GetUpdateAccessors != null)
 								LegacyNodeUpdate();
@@ -209,17 +216,18 @@ namespace RichHudFramework
 						{
 							activeNodeData.Add(new TreeNodeData
 							{
-								Hooks = new HudNodeHookData 
+								Hooks = new HudNodeHookData
 								{
-									Item1 = src.Item1,	// 1 - GetOrSetApiMemberFunc
-									Item2 = src.Item3,	// 2 - InputDepthAction
-									Item3 = src.Item4,	// 3 - InputAction
-									Item4 = null,		// 4 - SizingAction
-									Item5 = src.Item5,	// 5 - LayoutAction
-									Item6 = src.Item6	// 6 - DrawAction
+									Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
+									Item2 = src.Item3,  // 2 - InputDepthAction
+									Item3 = src.Item4,  // 3 - InputAction
+									Item4 = null,       // 4 - SizingAction
+									Item5 = src.Item5,  // 5 - LayoutAction
+									Item6 = src.Item6   // 6 - DrawAction
 								},
 								GetPosFunc = src.Item2.Item2,
-								ZOffset = src.Item2.Item1()
+								ZOffset = src.Item2.Item1(),
+								Client = this
 							});
 						}
 
@@ -237,7 +245,8 @@ namespace RichHudFramework
 					{
 						if (updatePending)
 						{
-							MyUtils.Swap(ref inactiveNodeData, ref activeNodeData);
+							MyUtils.Swap(ref activeNodeData, ref inactiveNodeData);
+							InactiveNodeData = inactiveNodeData;
 							updatePending = false;
 						}
 					}

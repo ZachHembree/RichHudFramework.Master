@@ -101,7 +101,7 @@ namespace RichHudFramework
 						for (int n = index; n < count; n++)
 						{
 							HudNodeBase node = nodes[n];
-							HudParentBase nodeParent = node._parent;
+							HudParentBase nodeParent = node.Parent;
 
 							if (nodeParent != parent)
 								throw new Exception("The child node specified is not registered to the parent given.");
@@ -128,7 +128,7 @@ namespace RichHudFramework
 						for (int n = index; n < count; n++)
 						{
 							HudNodeBase node = nodes[n].Element;
-							HudParentBase nodeParent = node._parent;
+							HudParentBase nodeParent = node.Parent;
 
 							if (nodeParent != parent)
 								throw new Exception("The child node specified is not registered to the parent given.");

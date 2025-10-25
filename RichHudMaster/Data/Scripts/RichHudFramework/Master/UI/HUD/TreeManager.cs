@@ -84,7 +84,7 @@ namespace RichHudFramework
 				public static bool RefreshRequested;
 
 				// Sync
-				private readonly FastResourceLock clientRegLock, updateSwapLock, treeSwapLock;
+				private readonly FastResourceLock clientRegLock, updateSwapLock;
 				private volatile bool isUpdatingTree, isImmediateUpdateReq;
 				private volatile int sortTick, activeCount;
 
@@ -103,11 +103,10 @@ namespace RichHudFramework
 
 				// Sorted client data
 				private List<TreeNodeData> activeNodeData, inactiveNodeData;
-				private List<uint> activeDepthTests, inactiveDepthTests;
-				private List<uint> activeInputActions, inactiveInputActions;
-				private List<uint> activeDrawActions, inactiveDrawActions;
-				private List<uint> activeSizingActions, inactiveSizingActions;
-				private List<uint> activeLayoutActions, inactiveLayoutActions;
+				private List<int> activeDepthTests, inactiveDepthTests;
+				private List<int> activeInputActions, inactiveInputActions;
+				private List<int> activeDrawActions, inactiveDrawActions;
+				private List<int> activeSizingActions, inactiveSizingActions;
 				private float lastResScale;
 
 				// Stats
@@ -129,7 +128,6 @@ namespace RichHudFramework
 
 					clientRegLock = new FastResourceLock();
 					updateSwapLock = new FastResourceLock();
-					treeSwapLock = new FastResourceLock();
 
 					nodeIterator = new HudNodeIterator();
 
@@ -144,20 +142,17 @@ namespace RichHudFramework
 					originFunctions = new List<Func<Vector3D>>();
 					indexBuffer = new List<ulong>(200);
 
-					activeDepthTests = new List<uint>(200);
-					inactiveDepthTests = new List<uint>(200);
+					activeDepthTests = new List<int>(200);
+					inactiveDepthTests = new List<int>(200);
 
-					activeInputActions = new List<uint>(200);
-					inactiveInputActions = new List<uint>(200);
+					activeInputActions = new List<int>(200);
+					inactiveInputActions = new List<int>(200);
 
-					activeDrawActions = new List<uint>(200);
-					inactiveDrawActions = new List<uint>(200);
+					activeDrawActions = new List<int>(200);
+					inactiveDrawActions = new List<int>(200);
 
-					activeSizingActions = new List<uint>(200);
-					inactiveSizingActions = new List<uint>(200);
-
-					activeLayoutActions = new List<uint>(200);
-					inactiveLayoutActions = new List<uint>(200);
+					activeSizingActions = new List<int>(200);
+					inactiveSizingActions = new List<int>(200);
 
 					clients = new List<TreeClient>();
 					mainClient = new TreeClient() { RootNodeHandle = instance._root.DataHandle };
@@ -277,25 +272,10 @@ namespace RichHudFramework
 
 					if (sortTick == 0)
 					{
-						if (!isSynchronous)
-							treeSwapLock.AcquireExclusive();
+						for (int n = 0; n < clients.Count; n++)
+							clients[n].FinishUpdate();
 
-						try
-						{
-							for (int n = 0; n < clients.Count; n++)
-								clients[n].FinishUpdate();
-
-							MyUtils.Swap(ref activeLateUpdateBuffer, ref inactiveLateUpdateBuffer);
-						}
-						catch (Exception e)
-						{
-							ExceptionHandler.ReportException(e);
-						}
-						finally
-						{
-							if (!isSynchronous)
-								treeSwapLock.ReleaseExclusive();
-						}
+						MyUtils.Swap(ref activeLateUpdateBuffer, ref inactiveLateUpdateBuffer);
 					}
 
 					if (isSynchronous)
@@ -339,7 +319,7 @@ namespace RichHudFramework
 						refreshLayout = lastResScale != resScale || rebuildLists;
 
 					// Arrange/layout
-					nodeIterator.UpdateNodeLayout(activeNodeData, activeLayoutActions, refreshLayout);
+					nodeIterator.UpdateNodeLayout(activeNodeData, refreshLayout);
 
 					// Draw UI elements
 					nodeIterator.DrawNodes(activeNodeData, activeDrawActions);
@@ -428,7 +408,7 @@ namespace RichHudFramework
 					isUpdatingTree = true;
 
 					RebuildUpdateLists(true);
-					UpdateDistMap();
+					UpdateDistances();
 
 					UpdateIndexBuffer();
 					ResetUpdateBuffers();
@@ -454,7 +434,7 @@ namespace RichHudFramework
 						if (sortTick % 3 == 0)
 						{
 							RebuildUpdateLists();
-							instance.EnqueueAction(UpdateDistMap);
+							instance.EnqueueAction(UpdateDistances);
 						}
 
 						if (sortTick % 3 == 1)
@@ -485,30 +465,19 @@ namespace RichHudFramework
 					originFuncSet.Clear();
 					inactiveNodeData.Clear();
 
-					if (!isSynchronous)
-						treeSwapLock.AcquireShared();
+					int nodeCount = inactiveLateUpdateBuffer.Count;
 
-					try
-					{
-						int nodeCount = inactiveLateUpdateBuffer.Count;
+					for (int i = 0; i < clients.Count; i++)
+						nodeCount += clients[i].InactiveNodeData.Count;
 
-						for (int i = 0; i < clients.Count; i++)
-							nodeCount += clients[i].InactiveNodeData.Count;
+					inactiveNodeData.EnsureCapacity(nodeCount);
 
-						inactiveNodeData.EnsureCapacity(nodeCount);
+					for (int i = 0; i < clients.Count; i++)
+						inactiveNodeData.AddRange(clients[i].InactiveNodeData);
 
-						for (int i = 0; i < clients.Count; i++)
-							inactiveNodeData.AddRange(clients[i].InactiveNodeData);
-
-						// Manually append last elements after all clients
-						inactiveNodeData.AddRange(inactiveLateUpdateBuffer);
-						activeCount = nodeCount;
-					}
-					finally
-					{
-						if (!isSynchronous)
-							treeSwapLock.ReleaseShared();
-					}
+					// Manually append last elements after all clients
+					inactiveNodeData.AddRange(inactiveLateUpdateBuffer);
+					activeCount = nodeCount;
 
 					// Build distance func HashSet
 					for (int i = 0; i < inactiveNodeData.Count; i++)
@@ -519,11 +488,12 @@ namespace RichHudFramework
 				}
 
 				/// <summary>
-				/// Builds distance map for HUD Space Nodes
+				/// Begins distance map rebuild
 				/// </summary>
-				private void UpdateDistMap()
+				private void UpdateDistances()
 				{
-					// SYNCHRONIZE THIS
+					HudSpacesRegistered = distMap.Count;
+
 					indexBuffer.Clear();
 					Vector3D camPos = PixelToWorldRef[0].Translation;
 
@@ -548,7 +518,14 @@ namespace RichHudFramework
 						distBits = ((exponent << 23) | mantissa);
 						indexBuffer.Add((distBits << 32) | index);
 					}
+				}
 
+				/// <summary>
+				/// Builds sorted index list for sorted accessor lists
+				/// </summary>
+				private void UpdateIndexBuffer()
+				{
+					// Build distance map
 					indexBuffer.Sort();
 					distMap.Clear();
 
@@ -570,14 +547,7 @@ namespace RichHudFramework
 						distMap.Add(originFunctions[index], (ushort)distID);
 					}
 
-					HudSpacesRegistered = distMap.Count;
-				}
-
-				/// <summary>
-				/// Builds sorted index list for sorted accessor lists
-				/// </summary>
-				private void UpdateIndexBuffer()
-				{
+					// Create sorting keys
 					indexBuffer.Clear();
 					indexBuffer.EnsureCapacity(activeCount);
 
@@ -607,13 +577,11 @@ namespace RichHudFramework
 					inactiveInputActions.Clear();
 					inactiveDrawActions.Clear();
 					inactiveSizingActions.Clear();
-					inactiveLayoutActions.Clear();
 
 					inactiveDepthTests.EnsureCapacity(activeCount);
 					inactiveInputActions.EnsureCapacity(activeCount);
 					inactiveDrawActions.EnsureCapacity(activeCount);
 					inactiveSizingActions.EnsureCapacity(activeCount);
-					inactiveLayoutActions.EnsureCapacity(activeCount);
 				}
 
 				/// <summary>
@@ -627,8 +595,8 @@ namespace RichHudFramework
 					// Build sorted depth test list in forward, top-down order
 					for (int n = 0; n < indexBuffer.Count; n++)
 					{
-						uint index = (uint)indexBuffer[n];
-						Action depthTestAction = inactiveNodeData[(int)index].Hooks.Item2;
+						int index = (int)indexBuffer[n];
+						Action depthTestAction = inactiveNodeData[index].Hooks.Item2;
 
 						if (depthTestAction != null)
 						{
@@ -642,9 +610,9 @@ namespace RichHudFramework
 					// Build sorted input list in reverse, bottom-up order
 					for (int n = indexBuffer.Count - 1; n >= 0; n--)
 					{
-						uint index = (uint)indexBuffer[n];
-						TreeNodeData accessors = inactiveNodeData[(int)index];
-						Action inputAction = inactiveNodeData[(int)index].Hooks.Item3;
+						int index = (int)indexBuffer[n];
+						TreeNodeData accessors = inactiveNodeData[index];
+						Action inputAction = inactiveNodeData[index].Hooks.Item3;
 
 						if (inputAction != null)
 						{
@@ -658,8 +626,8 @@ namespace RichHudFramework
 					// Build sorted draw list in forward, top down order
 					for (int n = 0; n < indexBuffer.Count; n++)
 					{
-						uint index = (uint)indexBuffer[n];
-						Action drawAction = inactiveNodeData[(int)index].Hooks.Item6;
+						int index = (int)indexBuffer[n];
+						Action drawAction = inactiveNodeData[index].Hooks.Item6;
 
 						if (drawAction != null)
 						{
@@ -677,21 +645,7 @@ namespace RichHudFramework
 
 						if (sizeAction != null)
 						{
-							inactiveSizingActions.Add((uint)i);
-							usedDelegates++;
-						}
-						else
-							skippedDelegates++;
-					}
-
-					// Build layout list (without sorting) in forward, top-down order
-					for (int i = 0; i < inactiveNodeData.Count; i++)
-					{
-						Action<bool> layoutAction = inactiveNodeData[i].Hooks.Item5;
-
-						if (layoutAction != null)
-						{
-							inactiveLayoutActions.Add((uint)i);
+							inactiveSizingActions.Add(i);
 							usedDelegates++;
 						}
 						else
@@ -710,7 +664,6 @@ namespace RichHudFramework
 						MyUtils.Swap(ref inactiveInputActions, ref activeInputActions);
 						MyUtils.Swap(ref inactiveDrawActions, ref activeDrawActions);
 						MyUtils.Swap(ref inactiveSizingActions, ref activeSizingActions);
-						MyUtils.Swap(ref inactiveLayoutActions, ref activeLayoutActions);
 					}
 					finally
 					{

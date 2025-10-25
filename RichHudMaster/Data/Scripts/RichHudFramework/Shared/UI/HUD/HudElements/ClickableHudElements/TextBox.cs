@@ -510,7 +510,8 @@ namespace RichHudFramework.UI
                     else if (text.Format.Alignment == TextAlignment.Right)
                         offset.X = textElement.Size.X * .5f - 2f;
 
-                    offset += _parentFull.Padding * .5f;
+                    var parentFull = Parent as HudElementBase;
+                    offset += parentFull.Padding * .5f;
 
                     if (!text.VertCenterText)
                         offset.Y = (text.Size.Y - Height) * .5f - 4f;
@@ -735,7 +736,7 @@ namespace RichHudFramework.UI
 
             protected void Draw()
             {
-                if (lastTextSize != text.Size)
+				if (lastTextSize != text.Size)
                 {
                     lastTextSize = text.Size;
                     ClearSelection();

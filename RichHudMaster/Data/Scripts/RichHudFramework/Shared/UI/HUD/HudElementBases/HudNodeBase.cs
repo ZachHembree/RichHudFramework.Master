@@ -49,25 +49,23 @@ namespace RichHudFramework
 			/// <summary>
 			/// Read-only parent object of the node.
 			/// </summary>
-			IReadOnlyHudParent IReadOnlyHudNode.Parent => _parent;
+			IReadOnlyHudParent IReadOnlyHudNode.Parent => Parent;
 
 			/// <summary>
 			/// Parent object of the node.
 			/// </summary>
-			public virtual HudParentBase Parent { get { return _parent; } protected set { _parent = value; } }
+			public HudParentBase Parent { get; set; }
 
 			/// <summary>
 			/// Indicates whether or not the element has been registered to a parent.
 			/// </summary>
 			public bool Registered => (State[0] & (uint)HudElementStates.IsRegistered) > 0;
 
-			protected HudParentBase _parent;
-
 			public HudNodeBase(HudParentBase parent)
 			{
 				NodeVisibleMask[0] = nodeVisible;
 				NodeInputMask[0] = nodeInputEnabled;
-				State[0] = (uint)(HudElementStates.WasParentVisible | HudElementStates.IsInputEnabled | HudElementStates.IsVisible);
+				State[0] = (uint)(HudElementStates.IsInputEnabled | HudElementStates.IsVisible);
 
 				Register(parent);
 			}
@@ -79,29 +77,8 @@ namespace RichHudFramework
 			/// </summary>
 			public override void BeginInput()
 			{
-				if (!ExceptionHandler.ClientsPaused)
-				{
-					try
-					{
-						if (_parent != null && (_parent.State[0] & _parent.NodeInputMask[0]) == _parent.NodeInputMask[0])
-							State[0] |= (uint)HudElementStates.WasParentInputEnabled;
-						else
-							State[0] &= ~(uint)HudElementStates.WasParentInputEnabled;
-
-						bool isVisible = (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0],
-							 isInputEnabled = (State[0] & NodeInputMask[0]) == NodeInputMask[0];
-
-						if (HandleInputCallback != null && isVisible && isInputEnabled)
-						{
-							Vector3 cursorPos = HudSpace.CursorPos;
-							HandleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
-						}
-					}
-					catch (Exception e)
-					{
-						ExceptionHandler.ReportException(e);
-					}
-				}
+				Vector3 cursorPos = HudSpace.CursorPos;
+				HandleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
 			}
 
 			/// <summary>
@@ -110,35 +87,15 @@ namespace RichHudFramework
 			/// </summary>
 			public override void BeginLayout(bool _)
 			{
-				if (!ExceptionHandler.ClientsPaused)
-				{
-					try
-					{
-						bool isVisible = (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0];
-						State[0] &= ~(uint)HudElementStates.IsLayoutReady;
+				if ((State[0] & (uint)HudElementStates.IsSpaceNode) == 0)
+					HudSpace = Parent?.HudSpace;
 
-						if (isVisible)
-						{
-							LayoutCallback?.Invoke();
-							State[0] |= (uint)HudElementStates.IsLayoutReady;
-						}
+				if (HudSpace != null)
+					State[0] |= (uint)HudElementStates.IsSpaceNodeReady;
+				else
+					State[0] &= ~(uint)HudElementStates.IsSpaceNodeReady;
 
-						// Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
-						// during Layout/Arrange, but Layout should not run before UpdateSize. They need to be delayed.
-						HudSpace = _parent?.HudSpace;
-
-						if (_parent != null && (_parent.State[0] & _parent.NodeVisibleMask[0]) == _parent.NodeVisibleMask[0])
-							State[0] |= (uint)HudElementStates.WasParentVisible;
-						else
-							State[0] &= ~(uint)HudElementStates.WasParentVisible;
-
-						layerData[2] = ParentUtils.GetFullZOffset(layerData, _parent);
-					}
-					catch (Exception e)
-					{
-						ExceptionHandler.ReportException(e);
-					}
-				}
+				LayoutCallback?.Invoke();
 			}
 
 			/// <summary>
@@ -155,7 +112,7 @@ namespace RichHudFramework
 				{
 					Parent = newParent;
 
-					if (_parent.RegisterChild(this))
+					if (Parent.RegisterChild(this))
 						State[0] |= (uint)HudElementStates.IsRegistered;
 					else
 						State[0] &= ~(uint)HudElementStates.IsRegistered;

@@ -63,6 +63,11 @@ namespace RichHudFramework.Server
             public Action<Action> RunOnExceptionHandler { get; private set; }
 
             /// <summary>
+            /// Reports an exception to the client
+            /// </summary>
+            public Action<Exception> ReportException { get; private set; }
+
+            /// <summary>
             /// Accessor delegate for general data access
             /// </summary>
             public ApiMemberAccessor GetOrSetMemberFunc { get; private set; }
@@ -78,7 +83,7 @@ namespace RichHudFramework.Server
                 ReloadAction = data.Item3;
                 apiVersionID = data.Item4;
 
-                hudClient = new HudMain.TreeClient(apiVersionID);
+                hudClient = new HudMain.TreeClient(this, apiVersionID);
                 bindClient = new BindManager.Client(this);
                 menuData = RichHudTerminal.GetClientData(name);
 

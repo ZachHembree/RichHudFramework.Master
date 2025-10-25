@@ -1,4 +1,7 @@
-﻿using System;
+﻿using RichHudFramework.Internal;
+using RichHudFramework.Server;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices.ComTypes;
@@ -46,11 +49,13 @@ namespace RichHudFramework
 				public HudNodeHookData Hooks;
 				public HudSpaceOriginFunc GetPosFunc;
 				public ushort ZOffset;
+				public TreeClient Client;
 			}
 
 			public class HudNodeIterator
 			{
 				private const int maxPreloadDepth = 5;
+				private const HudElementStates nodeReadyFlags = HudElementStates.IsLayoutReady | HudElementStates.IsSpaceNodeReady;
 
 				struct NodeStackData
 				{
@@ -83,7 +88,7 @@ namespace RichHudFramework
 					nodeStack.Clear();
 				}
 
-				public void GetNodeData(HudNodeDataHandle srcRoot, List<TreeNodeData> dst)
+				public void GetNodeData(HudNodeDataHandle srcRoot, List<TreeNodeData> dst, TreeClient client = null)
 				{
 					Clear();
 
@@ -119,7 +124,7 @@ namespace RichHudFramework
 						// Check visibility
 						if ((state & visMask) == visMask)
 						{
-							HudNodeDataHandle parent = stack.node[0].Item3 as HudNodeDataHandle;
+							var parent = stack.node[0].Item3 as HudNodeDataHandle;
 
 							// Propagate HUD Space Node pos func
 							if (parent != null && (state & HudElementStates.IsSpaceNode) == 0)
@@ -151,7 +156,8 @@ namespace RichHudFramework
 								Node = stack.node,
 								Hooks = stack.node[0].Item2,
 								GetPosFunc = stateData.Item4[0],
-								ZOffset = (ushort)layerData[2]
+								ZOffset = (ushort)layerData[2],
+								Client = client
 							});
 
 							// Push children
@@ -170,58 +176,239 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeSizing(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> sizingActions)
+				public void UpdateNodeSizing(IReadOnlyList<TreeNodeData> nodes, IReadOnlyList<int> sizingActions)
 				{
-					foreach (uint index in sizingActions)
+					foreach (int index in sizingActions)
 					{
-						HudNodeDataHandle node = clients[(int)index].Node;
-						Action SizingAction = clients[(int)index].Hooks.Item4;
+						HudNodeDataHandle handle = nodes[index].Node;
+						bool needsUpdate = true;
 
-						SizingAction?.Invoke();
+						if (handle != null)
+						{
+							HudNodeStateData stateData = handle[0].Item1;
+							HudElementStates state = (HudElementStates)stateData.Item1[0];
+							HudElementStates visMask = (HudElementStates)stateData.Item2[0] | nodeReadyFlags;
+							// Check visibility
+							needsUpdate = (state & visMask) == visMask;
+						}
+
+						// Update sizing if needed
+						if (needsUpdate)
+						{
+							try
+							{
+								Action SizingAction = nodes[index].Hooks.Item4;
+								SizingAction?.Invoke();
+							}
+							catch (Exception e)
+							{
+								RichHudMaster.ModClient owner = nodes[index].Client?.ModClient;
+
+								if (owner != null)
+									owner.ReportException(e);
+								else
+									ExceptionHandler.ReportException(e);
+							}
+						}
 					}
 				}
 
-				public void UpdateNodeLayout(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> layoutActions, bool refresh = false)
+				public void UpdateNodeLayout(IReadOnlyList<TreeNodeData> nodes, bool refresh = false)
 				{
-					foreach (uint index in layoutActions)
+					foreach (TreeNodeData data in nodes)
 					{
-						HudNodeDataHandle node = clients[(int)index].Node;
-						Action<bool> LayoutAction = clients[(int)index].Hooks.Item5;
+						HudNodeDataHandle handle = data.Node;
+						uint[] state = null;
+						bool needsUpdate = true;
 
-						LayoutAction?.Invoke(refresh);
+						// Try to get handle
+						if (handle != null)
+						{
+							HudNodeStateData stateData = handle[0].Item1;
+							state = stateData.Item1;
+							var visMask = (HudElementStates)stateData.Item2[0];
+
+							needsUpdate = (state[0] & (uint)visMask) == (uint)visMask;
+							state[0] &= ~(uint)HudElementStates.IsLayoutReady;
+						}
+
+						// Update layout if needed
+						if (needsUpdate)
+						{
+							try
+							{
+								Action<bool> LayoutAction = data.Hooks.Item5;
+								LayoutAction?.Invoke(refresh);
+							}
+							catch (Exception e)
+							{
+								RichHudMaster.ModClient owner = data.Client?.ModClient;
+
+								if (owner != null)
+									owner.ReportException(e);
+								else
+									ExceptionHandler.ReportException(e);
+							}
+						}
+
+						// Update flags after layout
+						if (handle != null)
+						{
+							var parent = handle[0].Item3 as HudNodeDataHandle;
+							
+							if (needsUpdate)
+								state[0] |= (uint)HudElementStates.IsLayoutReady;
+
+							if (parent != null)
+							{
+								var parentState = (HudElementStates)parent[0].Item1.Item1[0];
+								var parentVisMask = (HudElementStates)parent[0].Item1.Item2[0];
+								var parentInputMask = (HudElementStates)parent[0].Item1.Item3[0];
+
+								// Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
+								// during Layout/Arrange, but Layout should not run without UpdateSize. They need to be delayed.
+								if ((parentState & parentVisMask) == parentVisMask)
+									state[0] |= (uint)HudElementStates.WasParentVisible;
+								else
+									state[0] &= ~(uint)HudElementStates.WasParentVisible;
+
+								if ((parentState & parentInputMask) == parentInputMask)
+									state[0] |= (uint)HudElementStates.WasParentInputEnabled;
+								else
+									state[0] &= ~(uint)HudElementStates.WasParentInputEnabled;
+							}
+						}
 					}
 				}
 
-				public void DrawNodes(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> drawActions)
+				public void DrawNodes(IReadOnlyList<TreeNodeData> nodes, IReadOnlyList<int> drawActions)
 				{
-					foreach (uint index in drawActions)
+					foreach (int index in drawActions)
 					{
-						HudNodeDataHandle node = clients[(int)index].Node;
-						Action DrawAction = clients[(int)index].Hooks.Item6;
+						HudNodeDataHandle handle = nodes[index].Node;
+						bool needsUpdate = true;
 
-						DrawAction?.Invoke();
+						if (handle != null)
+						{
+							HudNodeStateData stateData = handle[0].Item1;
+							HudElementStates state = (HudElementStates)stateData.Item1[0];
+							HudElementStates visMask = (HudElementStates)stateData.Item2[0] | nodeReadyFlags;
+							// Check visibility
+							needsUpdate = (state & visMask) == visMask;
+						}
+
+						// Draw if needed
+						if (needsUpdate)
+						{
+							try
+							{
+								Action DrawAction = nodes[index].Hooks.Item6;
+								DrawAction?.Invoke();
+							}
+							catch (Exception e)
+							{
+								RichHudMaster.ModClient owner = nodes[index].Client?.ModClient;
+
+								if (owner != null)
+									owner.ReportException(e);
+								else
+									ExceptionHandler.ReportException(e);
+							}
+						}
 					}
 				}
 
-				public void UpdateNodeInputDepth(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> depthTestActions)
+				public void UpdateNodeInputDepth(IReadOnlyList<TreeNodeData> nodes, IReadOnlyList<int> depthTestActions)
 				{
-					foreach (uint index in depthTestActions)
-					{
-						HudNodeDataHandle node = clients[(int)index].Node;
-						Action DepthTestAction = clients[(int)index].Hooks.Item2;
+					if (HudMain.InputMode == HudInputMode.NoInput)
+						return;
 
-						DepthTestAction?.Invoke();
+					foreach (int index in depthTestActions)
+					{
+						HudNodeDataHandle handle = nodes[index].Node;
+						bool needsUpdate = true;
+
+						if (handle != null)
+						{
+							HudNodeStateData stateData = handle[0].Item1;
+							uint[] state = stateData.Item1;
+							HudElementStates 
+								visMask = (HudElementStates)stateData.Item2[0] | nodeReadyFlags,
+								inputMask = (HudElementStates)stateData.Item3[0];
+							bool 
+								canUseCursor = (state[0] & (uint)HudElementStates.CanUseCursor) > 0,
+								isVisible = (state[0] & (uint)visMask) == (uint)visMask,
+								isInputEnabled = (state[0] & (uint)inputMask) == (uint)inputMask;
+
+							if (!isVisible || !canUseCursor || !isInputEnabled)
+								needsUpdate = false;
+
+							state[0] &= ~(uint)HudElementStates.IsMouseInBounds;
+						}
+
+						// Perform depth testing if needed
+						if (needsUpdate)
+						{
+							try
+							{
+								Action DepthTestAction = nodes[index].Hooks.Item2;
+								DepthTestAction?.Invoke();
+							}
+							catch (Exception e)
+							{
+								RichHudMaster.ModClient owner = nodes[index].Client?.ModClient;
+
+								if (owner != null)
+									owner.ReportException(e);
+								else
+									ExceptionHandler.ReportException(e);
+							}
+						}		
 					}
 				}
 
-				public void UpdateNodeInput(IReadOnlyList<TreeNodeData> clients, IReadOnlyList<uint> inputActions)
+				public void UpdateNodeInput(IReadOnlyList<TreeNodeData> nodes, IReadOnlyList<int> inputActions)
 				{
-					foreach (uint index in inputActions)
+					foreach (int index in inputActions)
 					{
-						HudNodeDataHandle node = clients[(int)index].Node;
-						Action InputAction = clients[(int)index].Hooks.Item3;
+						HudNodeDataHandle handle = nodes[index].Node;
+						bool needsUpdate = true;
 
-						InputAction?.Invoke();
+						if (handle != null)
+						{
+							HudNodeStateData stateData = handle[0].Item1;
+							uint[] state = stateData.Item1;
+							HudElementStates
+								visMask = (HudElementStates)stateData.Item2[0] | nodeReadyFlags,
+								inputMask = (HudElementStates)stateData.Item3[0];
+							bool
+								isVisible = (state[0] & (uint)visMask) == (uint)visMask,
+								isInputEnabled = (state[0] & (uint)inputMask) == (uint)inputMask;
+
+							if (!isVisible || !isInputEnabled)
+								needsUpdate = false;
+
+							state[0] &= ~(uint)HudElementStates.IsMousedOver;
+						}
+
+						// Update input if needed
+						if (needsUpdate)
+						{
+							try
+							{
+								Action InputAction = nodes[index].Hooks.Item3;
+								InputAction?.Invoke();
+							}
+							catch (Exception e)
+							{
+								RichHudMaster.ModClient owner = nodes[index].Client?.ModClient;
+
+								if (owner != null)
+									owner.ReportException(e);
+								else
+									ExceptionHandler.ReportException(e);
+							}
+						}
 					}
 				}
 			}
