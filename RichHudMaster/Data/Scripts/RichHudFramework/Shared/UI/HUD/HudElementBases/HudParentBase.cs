@@ -52,11 +52,11 @@ namespace RichHudFramework
 			public virtual IReadOnlyHudSpaceNode HudSpace { get; protected set; }
 
 			/// <summary>
-			/// Returns true if the element can be drawn and/or accept input
+			/// Returns true if the element is enabled and able to be drawn and accept input.
 			/// </summary>
 			public bool Visible
 			{
-				get { return (State[0] & NodeVisibleMask[0]) == NodeVisibleMask[0]; }
+				get { return (State[0] & (uint)HudElementStates.IsVisible) > 0; }
 				set
 				{
 					if (value)
