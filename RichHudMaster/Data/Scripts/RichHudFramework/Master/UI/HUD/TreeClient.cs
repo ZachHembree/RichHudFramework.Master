@@ -15,7 +15,6 @@ using HudNodeHookData = VRage.MyTuple<
 	System.Action // 6 - DrawAction
 >;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
-using HudSpaceOriginFunc = System.Func<VRageMath.Vector3D>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
 using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRageMath.Vector2>>;
 
@@ -39,15 +38,6 @@ namespace RichHudFramework
 		List<object>, // 5 - Children as IReadOnlyList<HudNodeDataHandle>
 		object // 6 - Unused
 	>;
-	// Legacy UI node data
-	using HudUpdateAccessorsOld = MyTuple<
-		ApiMemberAccessor,
-		MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
-		Action, // DepthTest
-		Action, // HandleInput
-		Action<bool>, // BeforeLayout
-		Action // BeforeDraw
-	>;
 	using TextBuilderMembers = MyTuple<
 		MyTuple<Func<int, int, object>, Func<int>>, // GetLineMember, GetLineCount
 		Func<Vector2I, int, object>, // GetCharMember
@@ -59,8 +49,6 @@ namespace RichHudFramework
 
 	namespace UI
 	{
-		// Read-only length-1 array containing raw UI node data
-		using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
 		using TextBoardMembers = MyTuple<
 			TextBuilderMembers,
 			FloatProp, // Scale
@@ -68,14 +56,6 @@ namespace RichHudFramework
 			Func<Vector2>, // TextSize
 			Vec2Prop, // FixedSize
 			Action<BoundingBox2, BoundingBox2, MatrixD[]> // Draw 
-		>;
-		using TextBoardMembers8 = MyTuple<
-			TextBuilderMembers,
-			FloatProp, // Scale
-			Func<Vector2>, // Size
-			Func<Vector2>, // TextSize
-			Vec2Prop, // FixedSize
-			Action<Vector2, MatrixD> // Draw 
 		>;
 
 		namespace Server
@@ -87,18 +67,12 @@ namespace RichHudFramework
 				ApiMemberAccessor, // GetOrSetMembers
 				Action // Unregister
 			>;
-			using HudClientMembers8 = MyTuple<
-				CursorMembers, // Cursor
-				Func<TextBoardMembers8>, // GetNewTextBoard
-				ApiMemberAccessor, // GetOrSetMembers
-				Action // Unregister
-			>;
 			// Read-only length-1 array containing raw UI node data
 			using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
 
 			public sealed partial class HudMain
 			{
-				public class TreeClient
+				public partial class TreeClient
 				{
 					/// <summary>
 					/// Read only list of accessor list for UI elements registered to this client to be 
@@ -159,9 +133,7 @@ namespace RichHudFramework
 					private List<TreeNodeData> activeNodeData,
 						inactiveNodeData;
 
-					// Legacy data
-					private Action<List<HudUpdateAccessorsOld>, byte> GetUpdateAccessors;
-					private readonly List<HudUpdateAccessorsOld> convBuffer;
+					// Deprecated
 					private bool refreshRequested, refreshDrawList;
 
 					public TreeClient(ModClient modClient = null, int apiVersion = (int)APIVersionTable.Latest)
@@ -173,7 +145,6 @@ namespace RichHudFramework
 						inactiveNodeData = new List<TreeNodeData>(200);
 						InactiveNodeData = inactiveNodeData;
 
-						convBuffer = new List<HudUpdateAccessorsOld>();
 						Registered = TreeManager.RegisterClient(this);
 					}
 
@@ -201,40 +172,6 @@ namespace RichHudFramework
 						}
 					}
 
-					private void LegacyNodeUpdate()
-					{
-						convBuffer.Clear();
-						GetUpdateAccessors?.Invoke(convBuffer, 0);
-						
-						foreach (var src in convBuffer)
-						{
-							activeNodeData.Add(new TreeNodeData
-							{
-								Hooks = new HudNodeHookData
-								{
-									Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
-									Item2 = src.Item3,  // 2 - InputDepthAction
-									Item3 = src.Item4,  // 3 - InputAction
-									Item4 = null,       // 4 - SizingAction
-									Item5 = src.Item5,  // 5 - LayoutAction
-									Item6 = src.Item6   // 6 - DrawAction
-								},
-								GetPosFunc = src.Item2.Item2,
-								ZOffset = src.Item2.Item1(),
-								Client = this
-							});
-						}
-
-						if (convBuffer.Capacity > convBuffer.Count * 10)
-							convBuffer.TrimExcess();
-
-						refreshRequested = false;
-						refreshDrawList = false;
-
-						if (ApiVersion <= (int)APIVersionTable.Version1Base)
-							TreeManager.RefreshRequested = true;
-					}
-
 					public void FinishUpdate()
 					{
 						if (updatePending)
@@ -251,22 +188,6 @@ namespace RichHudFramework
 					public void Unregister()
 					{
 						Registered = !TreeManager.UnregisterClient(this);
-					}
-
-					/// <summary>
-					/// Retrieves API accessor delegates
-					/// </summary>
-					public HudClientMembers8 GetApiData8()
-					{
-						Init();
-
-						return new HudClientMembers8()
-						{
-							Item1 = instance._cursor.GetApiData8(),
-							Item2 = () => new TextBoard().GetApiData8(),
-							Item3 = GetOrSetMember,
-							Item4 = Unregister
-						};
 					}
 
 					/// <summary>
@@ -324,27 +245,6 @@ namespace RichHudFramework
 										_enableCursor = (bool)data;
 									break;
 								}
-							// Deprecated
-							case HudMainAccessors.RefreshDrawList:
-								{
-									if (data == null)
-										return refreshDrawList;
-									else
-										refreshDrawList = (bool)data;
-									break;
-								}
-							// Deprecated
-							case HudMainAccessors.GetUpdateAccessorsOld:
-								{
-									if (data == null)
-										return GetUpdateAccessors;
-									else
-									{
-										GetUpdateAccessors = data as Action<List<HudUpdateAccessorsOld>, byte>;
-										refreshDrawList = true;
-									}
-									break;
-								}
 							case HudMainAccessors.GetFocusOffset:
 								return GetFocusOffset(data as Action<byte>);
 							case HudMainAccessors.GetPixelSpaceFunc:
@@ -367,7 +267,7 @@ namespace RichHudFramework
 								RootNodeHandle = data as HudNodeDataHandle; break;
 						}
 
-						return null;
+						return GetOrSetMemberDeprecated(data, memberEnum);
 					}
 				}
 			}
