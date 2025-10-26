@@ -113,6 +113,9 @@ namespace RichHudFramework
 						State[0] |= (uint)HudElementStates.CanUseCursor;
 					else
 						State[0] &= ~(uint)HudElementStates.CanUseCursor;
+
+					if (value && _dataHandle[0].Item2.Item3 == null)
+						_dataHandle[0].Item2.Item3 = BeginInput;
 				}
 			}
 
@@ -217,7 +220,7 @@ namespace RichHudFramework
 			/// </summary>
 			protected virtual void InputDepth()
 			{
-				if (HudSpace?.IsFacingCamera ?? false)
+				if (HudSpace.IsFacingCamera)
 				{
 					Vector3 cursorPos = HudSpace.CursorPos;
 					Vector2 halfSize = Vector2.Max(CachedSize, new Vector2(minMouseBounds)) * .5f;
@@ -243,29 +246,26 @@ namespace RichHudFramework
 			/// </summary>
 			public sealed override void BeginInput()
 			{
-				if (_handleInputCallback != null)
+				Vector3 cursorPos = HudSpace.CursorPos;
+				bool canUseCursor = (State[0] & (uint)HudElementStates.CanUseCursor) > 0,
+					canShareCursor = (State[0] & (uint)HudElementStates.CanShareCursor) > 0;
+				bool mouseInBounds = (State[0] & (uint)HudElementStates.IsMouseInBounds) > 0;
+
+				if (canUseCursor && mouseInBounds && !HudMain.Cursor.IsCaptured && HudMain.Cursor.IsCapturingSpace(HudSpace.GetHudSpaceFunc))
 				{
-					Vector3 cursorPos = HudSpace.CursorPos;
-					bool canUseCursor = (State[0] & (uint)HudElementStates.CanUseCursor) > 0,
-						canShareCursor = (State[0] & (uint)HudElementStates.CanShareCursor) > 0;
-					bool mouseInBounds = (State[0] & (uint)HudElementStates.IsMouseInBounds) > 0;
+					bool isMousedOver = mouseInBounds;
 
-					if (canUseCursor && mouseInBounds && !HudMain.Cursor.IsCaptured && HudMain.Cursor.IsCapturingSpace(HudSpace.GetHudSpaceFunc))
-					{
-						bool isMousedOver = mouseInBounds;
+					if (isMousedOver)
+						State[0] |= (uint)HudElementStates.IsMousedOver;
 
-						if (isMousedOver)
-							State[0] |= (uint)HudElementStates.IsMousedOver;
+					_handleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
 
-						_handleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
-
-						if (!canShareCursor)
-							HudMain.Cursor.Capture(DataHandle[0].Item2.Item1);
-					}
-					else
-					{
-						_handleInputCallback(new Vector2(cursorPos.X, cursorPos.Y));
-					}
+					if (!canShareCursor)
+						HudMain.Cursor.Capture(DataHandle[0].Item2.Item1);
+				}
+				else
+				{
+					_handleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
 				}
 			}
 
