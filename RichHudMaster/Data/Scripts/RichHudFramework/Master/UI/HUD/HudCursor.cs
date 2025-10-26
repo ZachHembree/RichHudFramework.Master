@@ -18,6 +18,7 @@ namespace RichHudFramework
 
     namespace UI.Server
     {
+        using static RichHudFramework.UI.NodeConfigIndices;
         using Rendering;
         using CursorMembers = MyTuple<
             Func<HudSpaceDelegate, bool>, // IsCapturingSpace
@@ -133,11 +134,11 @@ namespace RichHudFramework
                     IsInFront = true;
                     IsFacingCamera = true;
 
-					layerData[0] = sbyte.MaxValue;
-					layerData[1] = byte.MaxValue;
-					layerData[2] = ushort.MaxValue;
+                    Config[ZOffsetID] = (uint)sbyte.MaxValue;
+                    Config[ZOffsetInnerID] = byte.MaxValue;
+                    Config[FullZOffsetID] = ushort.MaxValue;
 
-					State[0] |= (uint)(HudElementStates.CanPreload | HudElementStates.IsSpaceNode);
+					Config[StateID] |= (uint)(HudElementStates.CanPreload | HudElementStates.IsSpaceNode);
 
                     GetHudSpaceFunc = () => new HudSpaceData(true, 1f, PlaneToWorldRef[0]);
                     GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;

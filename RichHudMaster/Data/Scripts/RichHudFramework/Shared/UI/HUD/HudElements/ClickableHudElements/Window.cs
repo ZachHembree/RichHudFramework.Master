@@ -5,6 +5,7 @@ using RichHudFramework.Internal;
 
 namespace RichHudFramework.UI
 {
+    using static NodeConfigIndices;
     using Client;
     using Server;
 
@@ -238,13 +239,13 @@ namespace RichHudFramework.UI
         /// </summary>
         public virtual void GetFocus()
         {
-			layerData[1] = HudMain.GetFocusOffset(LoseFocusCallback);
+			Config[ZOffsetInnerID] = HudMain.GetFocusOffset(LoseFocusCallback);
             WindowActive = true;
         }
 
         protected virtual void LoseFocus(byte newOffset)
         {
-			layerData[1] = newOffset;
+			Config[ZOffsetInnerID] = newOffset;
             WindowActive = false;
         }
     }

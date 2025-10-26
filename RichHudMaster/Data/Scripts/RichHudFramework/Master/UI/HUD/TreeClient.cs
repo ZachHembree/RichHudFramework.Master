@@ -14,13 +14,6 @@ using HudNodeHookData = VRage.MyTuple<
 	System.Action<bool>, // 5 - LayoutAction
 	System.Action // 6 - DrawAction
 >;
-using HudNodeStateData = VRage.MyTuple<
-	uint[], // 1 - State
-	uint[], // 2 - NodeVisibleMask
-	uint[], // 3 - NodeInputMask
-	System.Func<VRageMath.Vector3D>[],  // 4 - GetNodeOriginFunc
-	int[] // 5 - { 5.0 - zOffset, 5.1 - zOffsetInner, 5.2 - fullZOffset }
->;
 using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.MatrixD>>;
 using HudSpaceOriginFunc = System.Func<VRageMath.Vector3D>;
 using RichStringMembers = VRage.MyTuple<System.Text.StringBuilder, VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>>;
@@ -39,11 +32,12 @@ namespace RichHudFramework
 		ApiMemberAccessor // GetOrSetMember
 	>;
 	using HudNodeData = MyTuple<
-		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask, 1.4 - GetNodeOriginFunc, 1.5 - ZOffsets }
-		HudNodeHookData, // 2 - Main hooks
-		object, // 3 - Parent as HudNodeDataHandle
-		List<object>, // 4 - Children as IReadOnlyList<HudNodeDataHandle>
-		object // 5 - Unused
+		uint[], // 1 - Config { 1.0 - State, 1.1 - NodeVisibleMask, 1.2 - NodeInputMask, 1.3 - zOffset, 1.4 - zOffsetInner, 1.5 - fullZOffset }
+		Func<Vector3D>[],  // 2 - GetNodeOriginFunc
+		HudNodeHookData, // 3 - Main hooks
+		object, // 4 - Parent as HudNodeDataHandle
+		List<object>, // 5 - Children as IReadOnlyList<HudNodeDataHandle>
+		object // 6 - Unused
 	>;
 	// Legacy UI node data
 	using HudUpdateAccessorsOld = MyTuple<

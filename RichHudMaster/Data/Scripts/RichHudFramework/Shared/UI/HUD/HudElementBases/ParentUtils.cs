@@ -1,54 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using VRage;
-using VRageMath;
-using ApiMemberAccessor = System.Func<object, int, object>;
-using HudLayerData = VRage.MyTuple<
-	sbyte, // 1- zOffset
-	byte, // 2 - zOffsetInner
-	ushort // 3 - fullZOffset
->;
-using HudNodeHookData = VRage.MyTuple<
-	System.Func<object, int, object>, // 1 -  GetOrSetApiMemberFunc
-	System.Action, // 2 - InputDepthAction
-	System.Action, // 3 - InputAction
-	System.Action, // 4 - SizingAction
-	System.Action<bool>, // 5 - LayoutAction
-	System.Action // 6 - DrawAction
->;
-using HudNodeStateData = VRage.MyTuple<
-	uint, // 1 - State
-	uint, // 2 - NodeVisibleMask
-	uint // 3 - NodeInputMask
->;
-using HudSpaceFunc = System.Func<VRageMath.Vector3D>;
 
 namespace RichHudFramework
 {
-	using HudNodeData = MyTuple<
-		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask }
-		HudSpaceFunc, // 2 - GetNodeOriginFunc
-		HudLayerData, // 3 - { 3.1 - zOffset, 3.2 - zOffsetInner, 3.3 - fullZOffset }
-		HudNodeHookData, // 4 - Main hooks
-		object, // 5 - Parent as HudNodeDataHandle
-		List<object> // 6 - Children as IReadOnlyList<HudNodeDataHandle>
-	>;
-
 	namespace UI
 	{
-		// Read-only length-1 array containing raw UI node data
-		using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
-		using Client;
-        using Server;
 		using System.Collections.Generic;
 
-        public abstract partial class HudParentBase
-        {
-            /// <summary>
-            /// Utilities used internally to access parent node members
-            /// </summary>
-            protected static class ParentUtils
-            {
+		public abstract partial class HudParentBase
+		{
+			/// <summary>
+			/// Utilities used internally to access parent node members
+			/// </summary>
+			protected static class ParentUtils
+			{
 				/// <summary>
 				/// Used internally quickly register a list of child nodes to a parent.
 				/// </summary>
@@ -59,7 +23,7 @@ namespace RichHudFramework
 					for (int n = 0; n < nodes.Count; n++)
 					{
 						HudNodeBase node = nodes[n];
-						node._dataHandle[0].Item3 = newParent.DataHandle;
+						node._dataHandle[0].Item4 = newParent.DataHandle;
 						newParent.childHandles.Add(node.DataHandle);
 						newParent.children.Add(node);
 					}
@@ -77,7 +41,7 @@ namespace RichHudFramework
 					for (int n = 0; n < nodes.Count; n++)
 					{
 						HudNodeBase node = nodes[n].Element;
-						node._dataHandle[0].Item3 = newParent.DataHandle;
+						node._dataHandle[0].Item4 = newParent.DataHandle;
 						newParent.childHandles.Add(node.DataHandle);
 						newParent.children.Add(node);
 					}
@@ -167,7 +131,7 @@ namespace RichHudFramework
 						}
 					}
 				}
-            }
-        }
-    }
+			}
+		}
+	}
 }

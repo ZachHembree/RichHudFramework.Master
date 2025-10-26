@@ -6,6 +6,8 @@ using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework.UI
 {
+	using static NodeConfigIndices;
+
 	/// <summary>
 	/// Scrollable list of hud elements. Can be oriented vertically or horizontally. Min/Max size determines
 	/// the maximum size of scrollbox elements as well as the scrollbox itself.
@@ -341,9 +343,9 @@ namespace RichHudFramework.UI
 					float elementSize = element.UnpaddedSize[alignAxis] + element.Padding[alignAxis];
 
 					if (UseSmoothScrolling)
-						element.State[0] |= (uint)HudElementStates.IsSelectivelyMasked;
+						element.Config[StateID] |= (uint)HudElementStates.IsSelectivelyMasked;
 					else
-						element.State[0] &= ~(uint)HudElementStates.IsSelectivelyMasked;
+						element.Config[StateID] &= ~(uint)HudElementStates.IsSelectivelyMasked;
 
 					totalEnabledLength += elementSize + Spacing;
 					EnabledCount++;

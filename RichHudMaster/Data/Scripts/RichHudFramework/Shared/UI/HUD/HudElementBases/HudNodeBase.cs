@@ -1,35 +1,11 @@
 using System;
-using System.Collections.Generic;
-using VRage;
 using VRageMath;
-using HudNodeHookData = VRage.MyTuple<
-	System.Func<object, int, object>, // 1 -  GetOrSetApiMemberFunc
-	System.Action, // 2 - InputDepthAction
-	System.Action, // 3 - InputAction
-	System.Action, // 4 - SizingAction
-	System.Action<bool>, // 5 - LayoutAction
-	System.Action // 6 - DrawAction
->;
-using HudNodeStateData = VRage.MyTuple<
-	uint[], // 1 - State
-	uint[], // 2 - NodeVisibleMask
-	uint[], // 3 - NodeInputMask
-	System.Func<VRageMath.Vector3D>[],  // 4 - GetNodeOriginFunc
-	int[] // 5 - { 5.0 - zOffset, 5.1 - zOffsetInner, 5.2 - fullZOffset }
->;
 
 namespace RichHudFramework
 {
-	using HudNodeData = MyTuple<
-		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask, 1.4 - GetNodeOriginFunc, 1.5 - ZOffsets }
-		HudNodeHookData, // 2 - Main hooks
-		object, // 3 - Parent as HudNodeDataHandle
-		List<object>, // 4 - Children as IReadOnlyList<HudNodeDataHandle>
-		object // 5 - Unused
-	>;
-
 	namespace UI
 	{
+		using static RichHudFramework.UI.NodeConfigIndices;
 		using Server;
 		using Client;
 		using Internal;
@@ -59,13 +35,13 @@ namespace RichHudFramework
 			/// <summary>
 			/// Indicates whether or not the element has been registered to a parent.
 			/// </summary>
-			public bool Registered => (State[0] & (uint)HudElementStates.IsRegistered) > 0;
+			public bool Registered => (Config[StateID] & (uint)HudElementStates.IsRegistered) > 0;
 
 			public HudNodeBase(HudParentBase parent)
 			{
-				NodeVisibleMask[0] = nodeVisible;
-				NodeInputMask[0] = nodeInputEnabled;
-				State[0] = (uint)(HudElementStates.IsInputEnabled | HudElementStates.IsVisible);
+				Config[VisMaskID] = nodeVisible;
+				Config[InputMaskID] = nodeInputEnabled;
+				Config[StateID] = (uint)(HudElementStates.IsInputEnabled | HudElementStates.IsVisible);
 
 				Register(parent);
 			}
@@ -87,13 +63,13 @@ namespace RichHudFramework
 			/// </summary>
 			public override void BeginLayout(bool _)
 			{
-				if ((State[0] & (uint)HudElementStates.IsSpaceNode) == 0)
+				if ((Config[StateID] & (uint)HudElementStates.IsSpaceNode) == 0)
 					HudSpace = Parent?.HudSpace;
 
 				if (HudSpace != null)
-					State[0] |= (uint)HudElementStates.IsSpaceNodeReady;
+					Config[StateID] |= (uint)HudElementStates.IsSpaceNodeReady;
 				else
-					State[0] &= ~(uint)HudElementStates.IsSpaceNodeReady;
+					Config[StateID] &= ~(uint)HudElementStates.IsSpaceNodeReady;
 
 				LayoutCallback?.Invoke();
 			}
@@ -113,19 +89,19 @@ namespace RichHudFramework
 					Parent = newParent;
 
 					if (Parent.RegisterChild(this))
-						State[0] |= (uint)HudElementStates.IsRegistered;
+						Config[StateID] |= (uint)HudElementStates.IsRegistered;
 					else
-						State[0] &= ~(uint)HudElementStates.IsRegistered;
+						Config[StateID] &= ~(uint)HudElementStates.IsRegistered;
 				}
 
-				if ((State[0] & (uint)HudElementStates.IsRegistered) > 0)
+				if ((Config[StateID] & (uint)HudElementStates.IsRegistered) > 0)
 				{
-					State[0] &= ~(uint)HudElementStates.WasParentVisible;
+					Config[StateID] &= ~(uint)HudElementStates.WasParentVisible;
 
 					if (canPreload)
-						State[0] |= (uint)HudElementStates.CanPreload;
+						Config[StateID] |= (uint)HudElementStates.CanPreload;
 					else
-						State[0] &= ~(uint)HudElementStates.CanPreload;
+						Config[StateID] &= ~(uint)HudElementStates.CanPreload;
 
 					return true;
 				}
@@ -144,10 +120,10 @@ namespace RichHudFramework
 					Parent = null;
 
 					lastParent.RemoveChild(this);
-					State[0] &= (uint)~(HudElementStates.IsRegistered | HudElementStates.WasParentVisible);
+					Config[StateID] &= (uint)~(HudElementStates.IsRegistered | HudElementStates.WasParentVisible);
 				}
 
-				return !((State[0] & (uint)HudElementStates.IsRegistered) > 0);
+				return !((Config[StateID] & (uint)HudElementStates.IsRegistered) > 0);
 			}
 		}
 	}

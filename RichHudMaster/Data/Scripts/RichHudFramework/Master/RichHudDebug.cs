@@ -166,14 +166,28 @@ namespace RichHudFramework.Server
 			    new TerminalLabel() { Name = "UI Tree Debug" },
 				new TerminalCheckbox
 				{
-					Name = "Enable Default Preloading",
+					Name = "Default Preloading",
 					Value = HudMain.DefaultPreload,
 					ControlChangedHandler = (obj, args) =>
 					{
 						var checkbox = obj as TerminalCheckbox;
 						HudMain.DefaultPreload = checkbox.Value;
-					}
-				}
+					},
+                    ToolTip = "Allows UI nodes to be preloaded by default."
+				},
+                new TerminalSlider()
+                {
+                    Name = "Preload Depth",
+                    Min = 0, Max = 10,
+					Value = HudMain.MaxPreloadDepth,
+					ControlChangedHandler = (obj, args) =>
+                    {
+                        var slider = obj as TerminalSlider;
+                        HudMain.MaxPreloadDepth = (int)slider.Value;
+                        slider.ValueText = HudMain.MaxPreloadDepth.ToString();
+                    },
+                    ToolTip = "Sets maximum search search depth for invisible UI nodes."
+                }
 			};
         }
 

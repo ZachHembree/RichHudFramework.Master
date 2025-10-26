@@ -9,6 +9,8 @@ using EventHandler = RichHudFramework.EventHandler;
 
 namespace RichHudFramework.UI
 {
+    using static NodeConfigIndices;
+
     /// <summary>
     /// Radial selection box. Represents a list of entries as UI elements arranged around
     /// a wheel.
@@ -232,7 +234,7 @@ namespace RichHudFramework.UI
 
         protected override void InputDepth()
         {
-            State[0] &= ~(uint)HudElementStates.IsMouseInBounds;
+            Config[StateID] &= ~(uint)HudElementStates.IsMouseInBounds;
 
             if (HudMain.InputMode != HudInputMode.NoInput && (HudSpace?.IsFacingCamera ?? false))
             {
@@ -248,7 +250,7 @@ namespace RichHudFramework.UI
 
                 if (offsetLen > min && offsetLen < max)
                 {
-                    State[0] |= (uint)HudElementStates.IsMouseInBounds;
+                    Config[StateID] |= (uint)HudElementStates.IsMouseInBounds;
                     HudMain.Cursor.TryCaptureHudSpace(HudSpace.CursorPos.Z, HudSpace.GetHudSpaceFunc);
                 }
             }

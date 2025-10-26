@@ -1,9 +1,7 @@
-using RichHudFramework.Internal;
 using System;
 using System.Collections.Generic;
 using VRage;
 using VRageMath;
-using ApiMemberAccessor = System.Func<object, int, object>;
 using HudNodeHookData = VRage.MyTuple<
 	System.Func<object, int, object>, // 1 -  GetOrSetApiMemberFunc
 	System.Action, // 2 - InputDepthAction
@@ -12,27 +10,22 @@ using HudNodeHookData = VRage.MyTuple<
 	System.Action<bool>, // 5 - LayoutAction
 	System.Action // 6 - DrawAction
 >;
-using HudNodeStateData = VRage.MyTuple<
-	uint[], // 1 - State
-	uint[], // 2 - NodeVisibleMask
-	uint[], // 3 - NodeInputMask
-	System.Func<VRageMath.Vector3D>[],  // 4 - GetNodeOriginFunc
-	int[] // 5 - { 5.0 - zOffset, 5.1 - zOffsetInner, 5.2 - fullZOffset }
->;
 using HudSpaceOriginFunc = System.Func<VRageMath.Vector3D>;
 
 namespace RichHudFramework
 {
 	using HudNodeData = MyTuple<
-		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask, 1.4 - GetNodeOriginFunc, 1.5 - ZOffsets }
-		HudNodeHookData, // 2 - Main hooks
-		object, // 3 - Parent as HudNodeDataHandle
-		List<object>, // 4 - Children as IReadOnlyList<HudNodeDataHandle>
-		object // 5 - Unused
+		uint[], // 1 - Config { 1.0 - State, 1.1 - NodeVisibleMask, 1.2 - NodeInputMask, 1.3 - zOffset, 1.4 - zOffsetInner, 1.5 - fullZOffset }
+		Func<Vector3D>[],  // 2 - GetNodeOriginFunc
+		HudNodeHookData, // 3 - Main hooks
+		object, // 4 - Parent as HudNodeDataHandle
+		List<object>, // 5 - Children as IReadOnlyList<HudNodeDataHandle>
+		object // 6 - Unused
 	>;
 
 	namespace UI
 	{
+		using static RichHudFramework.UI.NodeConfigIndices;
 		using Server;
 		using Client;
 		using Internal;
@@ -56,13 +49,13 @@ namespace RichHudFramework
 			/// </summary>
 			public bool Visible
 			{
-				get { return (State[0] & (uint)HudElementStates.IsVisible) > 0; }
+				get { return (Config[StateID] & (uint)HudElementStates.IsVisible) > 0; }
 				set
 				{
 					if (value)
-						State[0] |= (uint)HudElementStates.IsVisible;
+						Config[StateID] |= (uint)HudElementStates.IsVisible;
 					else
-						State[0] &= ~(uint)HudElementStates.IsVisible;
+						Config[StateID] &= ~(uint)HudElementStates.IsVisible;
 				}
 			}
 
@@ -71,13 +64,13 @@ namespace RichHudFramework
 			/// </summary>
 			public bool InputEnabled
 			{
-				get { return (State[0] & NodeInputMask[0]) == NodeInputMask[0]; }
+				get { return (Config[StateID] & Config[InputMaskID]) == Config[InputMaskID]; }
 				set
 				{
 					if (value)
-						State[0] |= (uint)HudElementStates.IsInputEnabled;
+						Config[StateID] |= (uint)HudElementStates.IsInputEnabled;
 					else
-						State[0] &= ~(uint)HudElementStates.IsInputEnabled;
+						Config[StateID] &= ~(uint)HudElementStates.IsInputEnabled;
 				}
 			}
 
@@ -86,8 +79,8 @@ namespace RichHudFramework
 			/// </summary>
 			public sbyte ZOffset
 			{
-				get { return (sbyte)layerData[0]; }
-				set { layerData[0] = (int)value; }
+				get { return (sbyte)Config[ZOffsetID]; }
+				set { Config[ZOffsetID] = (uint)value; }
 			}
 
 			// Custom Update Hooks - inject custom updates and polling here
@@ -97,10 +90,10 @@ namespace RichHudFramework
 			/// Used to check whether the cursor is moused over the element and whether its being
 			/// obstructed by another element.
 			/// </summary>
-			protected Action InputDepthCallback 
-			{ 
-				get { return _dataHandle[0].Item2.Item2; }
-				set { _dataHandle[0].Item2.Item2 = value; }
+			protected Action InputDepthCallback
+			{
+				get { return _dataHandle[0].Item3.Item2; }
+				set { _dataHandle[0].Item3.Item2 = value; }
 			}
 
 			/// <summary>
@@ -110,12 +103,12 @@ namespace RichHudFramework
 			protected Action<Vector2> HandleInputCallback
 			{
 				get { return _handleInputCallback; }
-				set 
-				{ 
+				set
+				{
 					_handleInputCallback = value;
 
-					if (value != null && _dataHandle[0].Item2.Item3 == null)
-						_dataHandle[0].Item2.Item3 = BeginInput;
+					if (value != null && _dataHandle[0].Item3.Item3 == null)
+						_dataHandle[0].Item3.Item3 = BeginInput;
 				}
 			}
 
@@ -124,8 +117,8 @@ namespace RichHudFramework
 			/// </summary>
 			protected Action UpdateSizeCallback
 			{
-				get { return _dataHandle[0].Item2.Item4; }
-				set { _dataHandle[0].Item2.Item4 = value; }
+				get { return _dataHandle[0].Item3.Item4; }
+				set { _dataHandle[0].Item3.Item4 = value; }
 			}
 
 			/// <summary>
@@ -140,8 +133,8 @@ namespace RichHudFramework
 			/// </summary>
 			protected Action DrawCallback
 			{
-				get { return _dataHandle[0].Item2.Item6; }
-				set { _dataHandle[0].Item2.Item6 = value; }
+				get { return _dataHandle[0].Item3.Item6; }
+				set { _dataHandle[0].Item3.Item6 = value; }
 			}
 
 			#endregion
@@ -157,22 +150,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Internal state tracking flags
 			/// </summary>
-			public uint[] State { get; }
-
-			/// <summary>
-			/// Internal state mask for determining visibility
-			/// </summary>
-			public uint[] NodeVisibleMask { get; }
-
-			/// <summary>
-			/// Internal state mask for determining whether input updates are enabled
-			/// </summary>
-			public uint[] NodeInputMask { get; }
-
-			/// <summary>
-			/// Internal layering keys
-			/// </summary>
-			protected readonly int[] layerData;
+			public uint[] Config { get; }
 
 			protected readonly HudNodeData[] _dataHandle;
 			protected readonly List<object> childHandles;
@@ -188,29 +166,27 @@ namespace RichHudFramework
 				children = new List<HudNodeBase>();
 				childHandles = new List<object>();
 
-				State = new uint[1];
-				NodeVisibleMask = new uint[1];
-				NodeInputMask = new uint[1];
-				layerData = new int[3];
+				Config = new uint[ConfigLength];
 				hudSpaceOriginFunc = new HudSpaceOriginFunc[1];
 
 				// Shared data handle
 				_dataHandle = new HudNodeData[1];
 				// Shared state
-				_dataHandle[0].Item1 = new HudNodeStateData(State, NodeVisibleMask, NodeInputMask, hudSpaceOriginFunc, layerData);
+				_dataHandle[0].Item1 = Config;
+				_dataHandle[0].Item2 = hudSpaceOriginFunc;
 				// Hooks
-				_dataHandle[0].Item2.Item1 = GetOrSetApiMember; // Required
-				_dataHandle[0].Item2.Item5 = BeginLayout; // Required
-				// Parent
-				_dataHandle[0].Item3 = null;
+				_dataHandle[0].Item3.Item1 = GetOrSetApiMember; // Required
+				_dataHandle[0].Item3.Item5 = BeginLayout; // Required
+				// Parent										  
+				_dataHandle[0].Item4 = null; 
 				// Child handle list
-				_dataHandle[0].Item4 = childHandles;
+				_dataHandle[0].Item5 = childHandles;
 				DataHandle = _dataHandle;
 
 				// Initial state
-				NodeVisibleMask[0] = (uint)HudElementStates.IsVisible;
-				NodeInputMask[0] = (uint)HudElementStates.IsInputEnabled;
-				State[0] = (uint)(HudElementStates.IsRegistered | HudElementStates.IsInputEnabled | HudElementStates.IsVisible);
+				Config[VisMaskID] = (uint)HudElementStates.IsVisible;
+				Config[InputMaskID] = (uint)HudElementStates.IsInputEnabled;
+				Config[StateID] = (uint)(HudElementStates.IsRegistered | HudElementStates.IsInputEnabled | HudElementStates.IsVisible);
 			}
 
 			/// <summary>
@@ -232,9 +208,9 @@ namespace RichHudFramework
 			public virtual void BeginLayout(bool _)
 			{
 				if (HudSpace != null)
-					State[0] |= (uint)HudElementStates.IsSpaceNodeReady;
+					Config[StateID] |= (uint)HudElementStates.IsSpaceNodeReady;
 				else
-					State[0] &= ~(uint)HudElementStates.IsSpaceNodeReady;
+					Config[StateID] &= ~(uint)HudElementStates.IsSpaceNodeReady;
 
 				LayoutCallback?.Invoke();
 			}
@@ -247,7 +223,7 @@ namespace RichHudFramework
 			{
 				if (child.Parent == this && !child.Registered)
 				{
-					child._dataHandle[0].Item3 = DataHandle;
+					child._dataHandle[0].Item4 = DataHandle;
 					children.Add(child);
 					childHandles.Add(child.DataHandle);
 					return true;
@@ -270,7 +246,7 @@ namespace RichHudFramework
 					return child.Unregister();
 				else if (child.Parent == null)
 				{
-					child._dataHandle[0].Item3 = null;
+					child._dataHandle[0].Item4 = null;
 					childHandles.Remove(child.DataHandle);
 					return children.Remove(child);
 				}
@@ -287,7 +263,7 @@ namespace RichHudFramework
 					case HudElementAccessors.ZOffset:
 						return (sbyte)ZOffset;
 					case HudElementAccessors.FullZOffset:
-						return (ushort)layerData[2];
+						return (ushort)Config[FullZOffsetID];
 					case HudElementAccessors.Position:
 						return Vector2.Zero;
 					case HudElementAccessors.Size:

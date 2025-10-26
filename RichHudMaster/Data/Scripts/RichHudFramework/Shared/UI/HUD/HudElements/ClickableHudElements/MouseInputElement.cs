@@ -5,6 +5,7 @@ using HudSpaceDelegate = System.Func<VRage.MyTuple<bool, float, VRageMath.Matrix
 
 namespace RichHudFramework.UI
 {
+    using static NodeConfigIndices;
     using Client;
     using Server;
     using Internal;
@@ -143,7 +144,7 @@ namespace RichHudFramework.UI
 
                 if (mouseInBounds)
                 {
-                    State[0] |= (uint)HudElementStates.IsMouseInBounds;
+                    Config[StateID] |= (uint)HudElementStates.IsMouseInBounds;
                     HudMain.Cursor.TryCaptureHudSpace(cursorPos.Z, HudSpace.GetHudSpaceFunc);
                 }
             }

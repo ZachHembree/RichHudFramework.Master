@@ -1,38 +1,14 @@
 using RichHudFramework.UI.Rendering;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using VRage;
 using VRage.Utils;
 using VRageMath;
-using ApiMemberAccessor = System.Func<object, int, object>;
-using HudNodeHookData = VRage.MyTuple<
-	System.Func<object, int, object>, // 1 -  GetOrSetApiMemberFunc
-	System.Action, // 2 - InputDepthAction
-	System.Action, // 3 - InputAction
-	System.Action, // 4 - SizingAction
-	System.Action<bool>, // 5 - LayoutAction
-	System.Action // 6 - DrawAction
->;
-using HudNodeStateData = VRage.MyTuple<
-	uint[], // 1 - State
-	uint[], // 2 - NodeVisibleMask
-	uint[] // 3 - NodeInputMask
->;
-using HudSpaceFunc = System.Func<VRageMath.Vector3D>;
 
 namespace RichHudFramework
 {
 	using Internal;
 	using Server;
-	using HudNodeData = MyTuple<
-		HudNodeStateData, // 1 - { 1.1 - State, 1.2 - NodeVisibleMask, 1.3 - NodeInputMask }
-		HudSpaceFunc, // 2 - GetNodeOriginFunc
-		int[], // 3 - { 3.1 - zOffset, 3.2 - zOffsetInner, 3.3 - fullZOffset }
-		HudNodeHookData, // 4 - Main hooks
-		object, // 5 - Parent as HudNodeDataHandle
-		List<object> // 6 - Children as IReadOnlyList<HudNodeDataHandle>
-	>;
 
 	namespace UI.Server
 	{

@@ -9,6 +9,7 @@ namespace RichHudFramework
 {
 	namespace UI
 	{
+		using static NodeConfigIndices;
 		using Server;
 
 		/// <summary>
@@ -72,7 +73,7 @@ namespace RichHudFramework
 				GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(DrawCursorInHudSpace, 1f, PlaneToWorldRef[0]);
 				GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;
 				PlaneToWorldRef = new MatrixD[1];
-				State[0] |= (uint)HudElementStates.IsSpaceNode;
+				Config[StateID] |= (uint)HudElementStates.IsSpaceNode;
 
 				LayoutCallback = Layout;
 			}

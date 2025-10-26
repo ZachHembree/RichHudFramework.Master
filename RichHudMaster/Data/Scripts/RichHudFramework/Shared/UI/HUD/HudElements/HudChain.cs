@@ -8,6 +8,8 @@ namespace RichHudFramework
 {
     namespace UI
     {
+        using static NodeConfigIndices;
+
         /// <summary>
         /// Used to control sizing behavior of HudChain members and the containing chain element itself. The align axis
         /// is the axis chain elements are arranged on; the off axis is the perpendicular axis. When vertically aligned, Y is 
@@ -209,7 +211,7 @@ namespace RichHudFramework
                     {
                         TElement element = hudCollectionList[i].Element;
 
-                        if ((element.State[0] & (uint)HudElementStates.IsVisible) > 0)
+                        if ((element.Config[StateID] & (uint)HudElementStates.IsVisible) > 0)
                         {
                             Vector2 elementSize = element.UnpaddedSize + element.Padding;
 
@@ -249,7 +251,7 @@ namespace RichHudFramework
                     {
                         TElement element = hudCollectionList[i].Element;
 
-                        if ((element.State[0] & (uint)HudElementStates.IsVisible) > 0)
+                        if ((element.Config[StateID] & (uint)HudElementStates.IsVisible) > 0)
                         {
                             Vector2 elementSize = element.UnpaddedSize + element.Padding;
                             listSize[offAxis] = Math.Max(listSize[offAxis], elementSize[offAxis]);
@@ -364,7 +366,7 @@ namespace RichHudFramework
                 {
                     TElementContainer container = hudCollectionList[i];
 
-                    if ((container.Element.State[0] & (uint)HudElementStates.IsVisible) > 0)
+                    if ((container.Element.Config[StateID] & (uint)HudElementStates.IsVisible) > 0)
                     {
                         totalScale += container.AlignAxisScale;
                         visCount++;
@@ -389,7 +391,7 @@ namespace RichHudFramework
                         TElementContainer container = hudCollectionList[i];
                         TElement element = container.Element;
 
-                        if ((element.State[0] & (uint)HudElementStates.IsVisible) > 0)
+                        if ((element.Config[StateID] & (uint)HudElementStates.IsVisible) > 0)
                         {
                             Vector2 size = element.UnpaddedSize + element.Padding;
 
@@ -433,7 +435,7 @@ namespace RichHudFramework
                     TElementContainer container = hudCollectionList[i];
                     TElement element = container.Element;
 
-                    if ((element.State[0] & (uint)HudElementStates.IsVisible) > 0)
+                    if ((element.Config[StateID] & (uint)HudElementStates.IsVisible) > 0)
                     {
                         Vector2 size = element.UnpaddedSize + element.Padding;
                         

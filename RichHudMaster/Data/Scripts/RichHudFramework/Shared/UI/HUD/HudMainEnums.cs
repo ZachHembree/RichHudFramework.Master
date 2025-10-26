@@ -121,7 +121,7 @@ namespace RichHudFramework
             SetAfterInputCallback = 22,
 
             /// <summary>
-            /// in/out: HudNodeDataHandle
+            /// in/out: object
             /// </summary>
             ClientRootNode = 23,
         }

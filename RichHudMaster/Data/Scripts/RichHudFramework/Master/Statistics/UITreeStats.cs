@@ -216,9 +216,10 @@ namespace RichHudFramework.Server
 					updateTick++;
 					updateTick %= CategoryCount;
 
-					instance.timer.Restart();
-					InternalCounters.Reset();
+					instance.timer.Restart();		
 				}
+
+				InternalCounters.Reset();
 			}
 		}
 	}

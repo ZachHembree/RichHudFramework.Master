@@ -10,6 +10,8 @@ namespace RichHudFramework
 {
     namespace UI.Server
     {
+        using static NodeConfigIndices;
+
         public sealed partial class HudMain : RichHudParallelComponentBase
         {
             public const int tickResetInterval = 240;
@@ -386,7 +388,7 @@ namespace RichHudFramework
                     GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorldRef[0]);
                     GetNodeOriginFunc = () => PixelToWorldRef[0].Translation;
                     PlaneToWorldRef = PixelToWorldRef;
-                    State[0] |= (uint)HudElementStates.IsSpaceNode;
+                    Config[StateID] |= (uint)HudElementStates.IsSpaceNode;
 
                     LayoutCallback = Layout;
                 }
