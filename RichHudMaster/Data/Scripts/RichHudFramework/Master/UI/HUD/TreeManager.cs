@@ -316,18 +316,15 @@ namespace RichHudFramework
 				/// </summary>
 				private void BeginAccessorListsUpdate()
 				{
-					RichHudStats.UI.Tree.BeginTick();
+					if (sortTick == 0)
+						instance.EnqueueAction(RichHudStats.UI.Tree.BeginTick);
+
 					isUpdatingTree = true;
 
 					instance.EnqueueTask(() =>
 					{
 						UpdateAccessorLists();
 						sortTick++;
-
-						if (sortTick == 3)
-							RichHudStats.UI.Tree.EndTick();
-
-						RichHudStats.UI.InternalCounters.HudSpacesRegistered = distMap.Count;
 						sortTick %= 3;
 					});
 				}
@@ -377,6 +374,7 @@ namespace RichHudFramework
 						if (sortTick % 3 == 2)
 						{
 							BuildSortedUpdateLists();
+							instance.EnqueueAction(RichHudStats.UI.Tree.EndTick);
 						}
 					}
 					finally
@@ -446,6 +444,8 @@ namespace RichHudFramework
 						distBits = ((exponent << 23) | mantissa);
 						indexBuffer.Add((distBits << 32) | index);
 					}
+
+					RichHudStats.UI.InternalCounters.HudSpacesRegistered = distMap.Count;
 				}
 
 				/// <summary>
