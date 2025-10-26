@@ -123,9 +123,7 @@ namespace RichHudFramework.UI
 
         protected override void InputDepth()
         {
-            State[0] &= ~(uint)HudElementStates.IsMouseInBounds;
-
-            if (HudMain.InputMode != HudInputMode.NoInput && (HudSpace?.IsFacingCamera ?? false))
+            if (HudSpace.IsFacingCamera)
             {
                 Vector3 cursorPos = HudSpace.CursorPos;
                 Vector2 halfSize = Vector2.Max(CachedSize, new Vector2(minMouseBounds)) * .5f;
