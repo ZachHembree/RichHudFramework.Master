@@ -38,6 +38,11 @@ namespace RichHudFramework
 		public sealed partial class HudMain
 		{
 			/// <summary>
+			/// Enables or disables automatic UI preloading
+			/// </summary>
+			public static bool DefaultPreload = false;
+
+			/// <summary>
 			/// Version agnostic node data format
 			/// </summary>
 			public struct TreeNodeData
@@ -117,11 +122,13 @@ namespace RichHudFramework
 						HudElementStates visMask = (HudElementStates)stateData.Item2[0];
 						state |= HudElementStates.WasParentVisible;
 
+						bool canPreload = DefaultPreload || (state & HudElementStates.CanPreload) > 0;
+
 						// Track depth and preloading
-						if ((state & HudElementStates.IsVisible) == 0 && (state & HudElementStates.CanPreload) > 0)
+						if ((state & HudElementStates.IsVisible) == 0 && canPreload)
 							stack.preloadDepth++;
 
-						if (stack.preloadDepth < maxPreloadDepth && (state & HudElementStates.CanPreload) > 0)
+						if (stack.preloadDepth < maxPreloadDepth && canPreload)
 							state |= HudElementStates.IsVisible;
 
 						// Check visibility
@@ -204,6 +211,9 @@ namespace RichHudFramework
 							{
 								Action SizingAction = nodes[index].Hooks.Item4;
 								SizingAction?.Invoke();
+
+								if (SizingAction != null)
+									RichHudStats.UI.InternalCounters.SizingUpdates++;
 							}
 							catch (Exception e)
 							{
@@ -255,6 +265,9 @@ namespace RichHudFramework
 							{
 								Action<bool> LayoutAction = data.Hooks.Item5;
 								LayoutAction?.Invoke(refresh);
+
+								if (LayoutAction != null)
+									RichHudStats.UI.InternalCounters.LayoutUpdates++;
 							}
 							catch (Exception e)
 							{
@@ -321,6 +334,9 @@ namespace RichHudFramework
 							{
 								Action DrawAction = nodes[index].Hooks.Item6;
 								DrawAction?.Invoke();
+
+								if (DrawAction != null)
+									RichHudStats.UI.InternalCounters.DrawUpdates++;
 							}
 							catch (Exception e)
 							{
@@ -372,6 +388,9 @@ namespace RichHudFramework
 							{
 								Action DepthTestAction = nodes[index].Hooks.Item2;
 								DepthTestAction?.Invoke();
+
+								if (DepthTestAction != null)
+									RichHudStats.UI.InternalCounters.InputDepthUpdates++;
 							}
 							catch (Exception e)
 							{
@@ -419,6 +438,9 @@ namespace RichHudFramework
 							{
 								Action InputAction = nodes[index].Hooks.Item3;
 								InputAction?.Invoke();
+
+								if (InputAction != null)
+									RichHudStats.UI.InternalCounters.InputUpdates++;
 							}
 							catch (Exception e)
 							{

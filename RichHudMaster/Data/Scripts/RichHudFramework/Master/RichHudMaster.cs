@@ -152,6 +152,7 @@ namespace RichHudFramework.Server
 
             ExceptionHandler.RecoveryLimit = 5;
             ExceptionHandler.ModName = modName;
+            ExceptionHandler.DebugLogging = true;
 
             verRegData = new MasterRegData(new MasterVersionData(this, ExceptionHandler.ModName, modID, apiVID, versionID), VersionRegisteredCallback);
             regMessage = new MasterMessage(this, (byte)ModQueryTypes.RegisterInstance, verRegData);
@@ -366,6 +367,7 @@ namespace RichHudFramework.Server
 
                 if (ExceptionHandler.IsClient)
                 {
+                    RichHudStats.Init();
                     FontManager.Init();
                     BindManager.Init();
                     MasterConfig.Load(true);
@@ -473,12 +475,12 @@ namespace RichHudFramework.Server
         public override void BeforeClose()
         {
             if (hasPriority)
-            {
-                UnregisterVersionHandler();
+            {           
                 MasterConfig.Save();
             }
 
-            UnregisterMessageHandler();
+			UnregisterVersionHandler();
+			UnregisterMessageHandler();
             MasterConfig.ClearSubscribers();
 
             if (ExceptionHandler.Reloading)
@@ -493,11 +495,7 @@ namespace RichHudFramework.Server
         public override void Close()
         {
             base.Close();
-
-            if (ExceptionHandler.Unloading)
-            {
-                Instance = null;
-            }
-        }
+			Instance = null;
+		}
     }
 }

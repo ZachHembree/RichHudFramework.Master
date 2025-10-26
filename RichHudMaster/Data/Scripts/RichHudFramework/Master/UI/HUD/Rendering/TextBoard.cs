@@ -10,6 +10,7 @@ using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageM
 
 namespace RichHudFramework
 {
+	using Server;
 	using static VRageRender.MyBillboard;
 	using FloatProp = MyTuple<Func<float>, Action<float>>;
 	using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
@@ -366,10 +367,10 @@ namespace RichHudFramework
 					// If it's not visible, dont bother
 					if (!isDisjoint)
 					{
-						if (!TextDiagnostics.BBCache.Enabled)
+						if (!RichHudStats.Text.BBCache.Enabled)
 							isBbCacheStale = true;
 
-						if (!TextDiagnostics.TypesettingCache.Enabled)
+						if (!RichHudStats.Text.TypesettingCache.Enabled)
 						{
 							areOffsetsStale = true;
 							isLineRangeStale = true;
@@ -385,7 +386,7 @@ namespace RichHudFramework
 						}
 
 						// Re-center matrix transform and bounding boxes
-						if (TextDiagnostics.BBCache.Enabled)
+						if (RichHudStats.Text.BBCache.Enabled)
 						{
 							Vector2 boxOffset = box.Center;
 							textMatrixRef[0] = matrixRef[0];
@@ -419,10 +420,10 @@ namespace RichHudFramework
 						if (isBbCacheStale)
 							UpdateBbCache(box, mask);
 						else
-							TextDiagnostics.BBCache.Hits += (ulong)bbCache.Count;
+							RichHudStats.Text.BBCache.Hits += (ulong)bbCache.Count;
 
 						// Draw text from cached bb data
-						if (TextDiagnostics.BBCache.Enabled)
+						if (RichHudStats.Text.BBCache.Enabled)
 							BillBoardUtils.AddTriangleData(bbCache, textMatrixRef);
 						else
 							BillBoardUtils.AddTriangleData(bbCache, matrixRef);
@@ -456,8 +457,8 @@ namespace RichHudFramework
 
 					isBbCacheStale = false;
 
-					if (TextDiagnostics.BBCache.Enabled)
-						TextDiagnostics.BBCache.Misses += (ulong)bbCache.Count;
+					if (RichHudStats.Text.BBCache.Enabled)
+						RichHudStats.Text.BBCache.Misses += (ulong)bbCache.Count;
 				}
 
 				/// <summary>
@@ -689,11 +690,11 @@ namespace RichHudFramework
 							{
 								UpdateLineOffsets(line);
 
-								if (TextDiagnostics.TypesettingCache.Enabled)
-									TextDiagnostics.TypesettingCache.Misses += (ulong)line.Count;
+								if (RichHudStats.Text.TypesettingCache.Enabled)
+									RichHudStats.Text.TypesettingCache.Misses += (ulong)line.Count;
 							}
-							else if (TextDiagnostics.TypesettingCache.Enabled)
-								TextDiagnostics.TypesettingCache.Hits += (ulong)line.Count;
+							else if (RichHudStats.Text.TypesettingCache.Enabled)
+								RichHudStats.Text.TypesettingCache.Hits += (ulong)line.Count;
 
 							line.isQuadCacheStale = false;
 						}

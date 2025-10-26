@@ -178,10 +178,9 @@ namespace RichHudFramework
                 {
                     UpdateCache();
                     treeManager.Draw();
-                    drawTick++;
 
-                    if (drawTick == tickResetInterval)
-                        drawTick = 0;
+                    drawTick++;
+                    drawTick %= tickResetInterval;
 
                     if (SharedBinds.Escape.IsNewPressed)
                         LoseInputFocusCallback?.Invoke();
