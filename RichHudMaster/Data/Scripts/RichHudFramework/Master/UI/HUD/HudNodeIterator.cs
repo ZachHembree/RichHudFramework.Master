@@ -52,7 +52,9 @@ namespace RichHudFramework
 			public class HudNodeIterator
 			{
 				private const int maxPreloadDepth = 5;
-				private const HudElementStates nodeReadyFlags = HudElementStates.IsLayoutReady | HudElementStates.IsSpaceNodeReady;
+				private const HudElementStates 
+					nodeReadyFlags = HudElementStates.IsLayoutReady | HudElementStates.IsSpaceNodeReady,
+					nodeNotReadyFlags = HudElementStates.IsDisjoint;
 
 				struct NodeStackData
 				{
@@ -85,6 +87,10 @@ namespace RichHudFramework
 					nodeStack.Clear();
 				}
 
+				/// <summary>
+				/// Iterates over UI tree beginning at the given root node and writes it into a flattened list in 
+				/// depth first order.
+				/// </summary>
 				public void GetNodeData(HudNodeDataHandle srcRoot, List<TreeNodeData> dst, TreeClient client = null)
 				{
 					Clear();
@@ -111,7 +117,7 @@ namespace RichHudFramework
 						HudElementStates visMask = (HudElementStates)stateData.Item2[0];
 						state |= HudElementStates.WasParentVisible;
 
-						// Set temporary preload flags and track depth
+						// Track depth and preloading
 						if ((state & HudElementStates.IsVisible) == 0 && (state & HudElementStates.CanPreload) > 0)
 							stack.preloadDepth++;
 
@@ -121,7 +127,7 @@ namespace RichHudFramework
 						// Check visibility
 						if ((state & visMask) == visMask)
 						{
-							var parent = stack.node[0].Item3 as HudNodeDataHandle;
+							var parent = (HudNodeDataHandle)stack.node[0].Item3;
 
 							// Propagate HUD Space Node pos func
 							if (parent != null && (state & HudElementStates.IsSpaceNode) == 0)
@@ -185,8 +191,10 @@ namespace RichHudFramework
 							HudNodeStateData stateData = handle[0].Item1;
 							HudElementStates state = (HudElementStates)stateData.Item1[0];
 							HudElementStates visMask = (HudElementStates)stateData.Item2[0] | nodeReadyFlags;
+
 							// Check visibility
 							needsUpdate = (state & visMask) == visMask;
+							needsUpdate &= ((state & nodeNotReadyFlags) == 0);
 						}
 
 						// Update sizing if needed
@@ -223,7 +231,7 @@ namespace RichHudFramework
 						if (handle != null)
 						{
 							HudNodeStateData stateData = handle[0].Item1;
-							parent = handle[0].Item3 as HudNodeDataHandle;
+							parent = (HudNodeDataHandle)handle[0].Item3;
 							state = stateData.Item1;
 
 							var visMask = (HudElementStates)stateData.Item2[0];
@@ -234,9 +242,7 @@ namespace RichHudFramework
 							if (parent != null)
 							{
 								var parentState = (HudElementStates)parent[0].Item1.Item1[0];
-
-								if ((parentState & HudElementStates.IsDisjoint) > 0)
-									needsUpdate = false;
+								needsUpdate &= ((parentState & HudElementStates.IsDisjoint) == 0);
 							}
 
 							state[0] &= ~(uint)HudElementStates.IsLayoutReady;
@@ -275,12 +281,12 @@ namespace RichHudFramework
 
 								// Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
 								// during Layout/Arrange, but Layout should not run without UpdateSize. They need to be delayed.
-								if ((parentState & parentVisMask) == parentVisMask && (parentState & HudElementStates.IsDisjoint) == 0)
+								if ((parentState & parentVisMask) == parentVisMask && (parentState & nodeNotReadyFlags) == 0)
 									state[0] |= (uint)HudElementStates.WasParentVisible;
 								else
 									state[0] &= ~(uint)HudElementStates.WasParentVisible;
 
-								if ((parentState & parentInputMask) == parentInputMask && (parentState & HudElementStates.IsDisjoint) == 0)
+								if ((parentState & parentInputMask) == parentInputMask && (parentState & nodeNotReadyFlags) == 0)
 									state[0] |= (uint)HudElementStates.WasParentInputEnabled;
 								else
 									state[0] &= ~(uint)HudElementStates.WasParentInputEnabled;
@@ -301,8 +307,11 @@ namespace RichHudFramework
 							HudNodeStateData stateData = handle[0].Item1;
 							HudElementStates state = (HudElementStates)stateData.Item1[0];
 							HudElementStates visMask = (HudElementStates)stateData.Item2[0] | nodeReadyFlags;
+
 							// Check visibility
 							needsUpdate = (state & visMask) == visMask;
+							// Set false if any not ready flags are set
+							needsUpdate &= ((state & nodeNotReadyFlags) == 0);
 						}
 
 						// Draw if needed
@@ -348,9 +357,11 @@ namespace RichHudFramework
 								isVisible = (state[0] & (uint)visMask) == (uint)visMask,
 								isInputEnabled = (state[0] & (uint)inputMask) == (uint)inputMask;
 
-							if (!isVisible || !canUseCursor || !isInputEnabled)
-								needsUpdate = false;
+							needsUpdate = isVisible && canUseCursor && isInputEnabled;
+							// Set false if any not ready flags are set
+							needsUpdate &= ((state[0] & (uint)nodeNotReadyFlags) == 0);
 
+							// Reset mouse bounds check before every update
 							state[0] &= ~(uint)HudElementStates.IsMouseInBounds;
 						}
 
@@ -393,9 +404,11 @@ namespace RichHudFramework
 								isVisible = (state[0] & (uint)visMask) == (uint)visMask,
 								isInputEnabled = (state[0] & (uint)inputMask) == (uint)inputMask;
 
-							if (!isVisible || !isInputEnabled)
-								needsUpdate = false;
+							needsUpdate = isVisible && isInputEnabled;
+							// Set false if any not ready flags are set
+							needsUpdate &= ((state[0] & (uint)nodeNotReadyFlags) == 0);
 
+							// Reset mouse over state before every update
 							state[0] &= ~(uint)HudElementStates.IsMousedOver;
 						}
 
