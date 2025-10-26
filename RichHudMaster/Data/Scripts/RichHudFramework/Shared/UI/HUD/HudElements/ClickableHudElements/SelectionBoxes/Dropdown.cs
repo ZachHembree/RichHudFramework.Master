@@ -414,7 +414,7 @@ namespace RichHudFramework.UI
 
             protected virtual void HandleInput(Vector2 cursorPos)
             {
-                if (MouseInput.HasFocus)
+				if (MouseInput.HasFocus)
                 {
                     if (SharedBinds.Space.IsNewPressed)
                     {
@@ -432,16 +432,19 @@ namespace RichHudFramework.UI
             {
                 if (HighlightEnabled)
                 {
-                    if (!(UseFocusFormatting && MouseInput.HasFocus))
-                    {
+                    if (!UseFocusFormatting || !MouseInput.HasFocus)
                         lastBackgroundColor = Color;
-                        lastTextColor = name.Format.Color;
-                    }
 
-                    Color = HighlightColor;
-                    name.TextBoard.SetFormatting(name.Format.WithColor(lastTextColor));
+                    if (UseFocusFormatting)
+                    {
+						if (!MouseInput.HasFocus)
+							lastTextColor = name.Format.Color;
 
-                    divider.Color = lastTextColor.SetAlphaPct(0.8f);
+						name.TextBoard.SetFormatting(name.Format.WithColor(lastTextColor));
+					}
+
+					Color = HighlightColor;
+					divider.Color = lastTextColor.SetAlphaPct(0.8f);
                     arrow.Color = lastTextColor;
                 }
             }
@@ -461,7 +464,9 @@ namespace RichHudFramework.UI
                     else
                     {
                         Color = lastBackgroundColor;
-                        name.TextBoard.SetFormatting(name.Format.WithColor(lastTextColor));
+
+                        if (UseFocusFormatting)
+                            name.TextBoard.SetFormatting(name.Format.WithColor(lastTextColor));
 
                         divider.Color = lastTextColor.SetAlphaPct(0.8f);
                         arrow.Color = lastTextColor;
