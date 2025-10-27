@@ -74,7 +74,7 @@ namespace RichHudFramework
 					private Action<List<HudUpdateAccessorsOld>, byte> GetUpdateAccessors;
 					private List<HudUpdateAccessorsOld> convBuffer;
 
-					private void LegacyNodeUpdate()
+					private void LegacyNodeUpdate(int clientID)
 					{
 						if (convBuffer == null)
 							convBuffer = new List<HudUpdateAccessorsOld>();
@@ -84,20 +84,23 @@ namespace RichHudFramework
 
 						foreach (var src in convBuffer)
 						{
-							activeNodeData.Add(new TreeNodeData
+							flatTreeBuffer.StateData.Add(new NodeState 
 							{
-								Hooks = new HudNodeHookData
-								{
-									Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
-									Item2 = src.Item3,  // 2 - InputDepthAction
-									Item3 = src.Item4,  // 3 - InputAction
-									Item4 = null,       // 4 - SizingAction
-									Item5 = src.Item5,  // 5 - LayoutAction
-									Item6 = src.Item6   // 6 - DrawAction
-								},
+								ClientID = clientID
+							});
+							flatTreeBuffer.DepthData.Add(new NodeDepthData
+							{
 								GetPosFunc = src.Item2.Item2,
-								ZOffset = src.Item2.Item1(),
-								Client = this
+								ZOffset = src.Item2.Item1()
+							});
+							flatTreeBuffer.HookData.Add(new HudNodeHookData 
+							{
+								Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
+								Item2 = src.Item3,  // 2 - InputDepthAction
+								Item3 = src.Item4,  // 3 - InputAction
+								Item4 = null,       // 4 - SizingAction
+								Item5 = src.Item5,  // 5 - LayoutAction
+								Item6 = src.Item6   // 6 - DrawAction
 							});
 						}
 

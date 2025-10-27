@@ -408,12 +408,12 @@ namespace RichHudFramework.Server
 
         private static void GetHudStats(HudMain.TreeClient client, StringBuilder statsBuilder)
         {
-            if (client.InactiveNodeData.Count == 0)
+            if (client.InactiveNodeData.HookData.Count == 0)
                 return;
 
             statsBuilder.Append($"\t\tHudMain:\n");
             statsBuilder.Append($"\t\t\tEnable Cursor: {client.EnableCursor}\n");
-            statsBuilder.Append($"\t\t\tElements Updating: {client.InactiveNodeData.Count}\n\n");
+            statsBuilder.Append($"\t\t\tElements Updating: {client.InactiveNodeData.HookData.Count}\n\n");
         }
 
         private static void GetBindStats(BindManager.Client client, StringBuilder statsBuilder)

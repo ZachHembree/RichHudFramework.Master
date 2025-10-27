@@ -20,6 +20,7 @@ using Vec2Prop = VRage.MyTuple<System.Func<VRageMath.Vector2>, System.Action<VRa
 
 namespace RichHudFramework
 {
+	using Internal;
 	using Server;
 	using VRage.Utils;
 	using CursorMembers = MyTuple<
@@ -78,7 +79,7 @@ namespace RichHudFramework
 					/// Read only list of accessor list for UI elements registered to this client to be 
 					/// added to the tree in the next update.
 					/// </summary>
-					public IReadOnlyList<TreeNodeData> InactiveNodeData { get; private set; }
+					public FlatTreeData InactiveNodeData { get; private set; }
 
 					/// <summary>
 					/// Returns true if the client has been registered to the TreeManager
@@ -127,58 +128,44 @@ namespace RichHudFramework
 					/// <summary>
 					/// Mod client reference that this TreeClient belongs to
 					/// </summary>
-					public ModClient ModClient { get; private set; }
+					public Action<Exception> ReportExceptionFunc { get; private set; }
 
-					private bool _enableCursor, updatePending;
-					private List<TreeNodeData> activeNodeData,
-						inactiveNodeData;
+					private bool _enableCursor;
+					private FlatTreeData flatTreeBuffer;
 
 					// Deprecated
 					private bool refreshRequested, refreshDrawList;
 
 					public TreeClient(ModClient modClient = null, int apiVersion = (int)APIVersionTable.Latest)
 					{
-						this.ModClient = modClient;
+						this.ReportExceptionFunc = modClient?.ReportException ?? ExceptionHandler.ReportException;
 						this.ApiVersion = apiVersion;
 
-						activeNodeData = new List<TreeNodeData>(200);
-						inactiveNodeData = new List<TreeNodeData>(200);
-						InactiveNodeData = inactiveNodeData;
+						flatTreeBuffer = new FlatTreeData(200);
+						InactiveNodeData = flatTreeBuffer;
 
 						Registered = TreeManager.RegisterClient(this);
 					}
 
-					public void Update(HudNodeIterator nodeIterator, int tick)
+					public void Update(HudNodeIterator nodeIterator, int tick, int clientID)
 					{
 						if (refreshDrawList || ApiVersion > (int)APIVersionTable.Version1Base)
 							refreshRequested = true;
 
 						if (refreshRequested && (tick % treeRefreshRate) == 0)
 						{
-							activeNodeData.Clear();
+							flatTreeBuffer.Clear();
 
 							if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 							{
 								if (RootNodeHandle != null)
-									nodeIterator.GetNodeData(RootNodeHandle, activeNodeData, this);
+									nodeIterator.GetNodeData(RootNodeHandle, flatTreeBuffer, clientID);
 							}
 							else if (GetUpdateAccessors != null)
-								LegacyNodeUpdate();
+								LegacyNodeUpdate(clientID);
 
-							if (activeNodeData.Capacity > activeNodeData.Count * 10)
-								activeNodeData.TrimExcess();
-
-							updatePending = true;
-						}
-					}
-
-					public void FinishUpdate()
-					{
-						if (updatePending)
-						{
-							MyUtils.Swap(ref activeNodeData, ref inactiveNodeData);
-							InactiveNodeData = inactiveNodeData;
-							updatePending = false;
+							if (flatTreeBuffer.StateData.Capacity > flatTreeBuffer.StateData.Count * 10)
+								flatTreeBuffer.TrimExcess();
 						}
 					}
 
