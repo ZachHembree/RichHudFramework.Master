@@ -5,6 +5,7 @@ using RichHudFramework.Internal;
 
 namespace RichHudFramework.UI
 {
+    using static NodeConfigIndices;
     using Client;
     using Server;
 
@@ -149,9 +150,12 @@ namespace RichHudFramework.UI
 
             LoseFocusCallback = LoseFocus;
             GetFocus();
+
+            LayoutCallback = Layout;
+            HandleInputCallback = HandleInput;
         }
 
-        protected override void Layout()
+        protected virtual void Layout()
         {
             body.Height = UnpaddedSize.Y - header.Height;
             body.Width = UnpaddedSize.X;
@@ -181,7 +185,7 @@ namespace RichHudFramework.UI
             Offset = pos - Origin;
         }
 
-        protected override void HandleInput(Vector2 cursorPos)
+        protected virtual void HandleInput(Vector2 cursorPos)
         {
             if (IsMousedOver)
             {
@@ -235,13 +239,13 @@ namespace RichHudFramework.UI
         /// </summary>
         public virtual void GetFocus()
         {
-            layerData.zOffsetInner = HudMain.GetFocusOffset(LoseFocusCallback);
+			Config[ZOffsetInnerID] = HudMain.GetFocusOffset(LoseFocusCallback);
             WindowActive = true;
         }
 
         protected virtual void LoseFocus(byte newOffset)
         {
-            layerData.zOffsetInner = newOffset;
+			Config[ZOffsetInnerID] = newOffset;
             WindowActive = false;
         }
     }

@@ -8,6 +8,7 @@ using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageM
 
 namespace RichHudFramework
 {
+	using Server;
 	using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
 
 	namespace UI
@@ -261,7 +262,7 @@ namespace RichHudFramework
 							SetCapacity(Count + 1);
 
 						// DIAGNOSTICS
-						if (!TextDiagnostics.LineTextCache.Enabled)
+						if (!RichHudStats.Text.LineTextCache.Enabled)
 							canTextBeEqual = false;
 
 						if (canTextBeEqual)
@@ -298,12 +299,12 @@ namespace RichHudFramework
 						}
 
 						// DIAGNOSTICS
-						if (TextDiagnostics.LineTextCache.Enabled)
+						if (RichHudStats.Text.LineTextCache.Enabled)
 						{
 							if (canTextBeEqual)
-								TextDiagnostics.LineTextCache.Hits++;
+								RichHudStats.Text.LineTextCache.Hits++;
 							else
-								TextDiagnostics.LineTextCache.Misses++;
+								RichHudStats.Text.LineTextCache.Misses++;
 						}
 
 						Count++;
@@ -399,7 +400,7 @@ namespace RichHudFramework
 						if (srcCount > 0)
 						{
 							// DIAGNOSTICS
-							if (!TextDiagnostics.LineTextCache.Enabled)
+							if (!RichHudStats.Text.LineTextCache.Enabled)
 								canTextBeEqual = false;
 
 							int newCount = srcCount + Count;
@@ -481,19 +482,19 @@ namespace RichHudFramework
 							}
 
 							// DIAGNOSTICS
-							if (TextDiagnostics.LineTextCache.Enabled)
+							if (RichHudStats.Text.LineTextCache.Enabled)
 							{
 								if (canTextBeEqual)
 									// Tentative hits. If a change occurs later in the Line update, the entire
 									// line will be invalidated.
-									TextDiagnostics.LineTextCache.Hits += (ulong)srcCount;
+									RichHudStats.Text.LineTextCache.Hits += (ulong)srcCount;
 								else
 								{
 									// Line invalidated. Remove tentative hits.
 									if (wasCached)
-										TextDiagnostics.LineTextCache.Hits -= (ulong)Count;
+										RichHudStats.Text.LineTextCache.Hits -= (ulong)Count;
 
-									TextDiagnostics.LineTextCache.Misses += (ulong)newCount;
+									RichHudStats.Text.LineTextCache.Misses += (ulong)newCount;
 								}
 							}
 
@@ -522,7 +523,7 @@ namespace RichHudFramework
 
 							if (Count == 0)
 							{
-								if (!canTextBeEqual || !TextDiagnostics.LineTextCache.Enabled)
+								if (!canTextBeEqual || !RichHudStats.Text.LineTextCache.Enabled)
 									isQuadCacheStale = true;
 
 								canTextBeEqual = true;
@@ -537,7 +538,7 @@ namespace RichHudFramework
 					/// </summary>
 					public void Clear()
 					{
-						if (!canTextBeEqual || !TextDiagnostics.LineTextCache.Enabled)
+						if (!canTextBeEqual || !RichHudStats.Text.LineTextCache.Enabled)
 							isQuadCacheStale = true;
 
 						isSizeStale = true;
@@ -586,7 +587,7 @@ namespace RichHudFramework
 
 					public void RestartTextUpdate()
 					{
-						if (!TextDiagnostics.LineTextCache.Enabled)
+						if (!RichHudStats.Text.LineTextCache.Enabled)
 							canTextBeEqual = false;
 
 						if (isFormatStale)
@@ -595,7 +596,7 @@ namespace RichHudFramework
 						if (isSizeStale)
 							UpdateSize();
 
-						if (!canTextBeEqual || Count != lastCount || !TextDiagnostics.GlyphCache.Enabled)
+						if (!canTextBeEqual || Count != lastCount || !RichHudStats.Text.GlyphCache.Enabled)
 							isQuadCacheStale = true;
 
 						canTextBeEqual = true;
@@ -689,8 +690,8 @@ namespace RichHudFramework
 							if (glyphBoards.Count > 20 && glyphBoards.Capacity > 5 * glyphBoards.Count)
 								glyphBoards.TrimExcess();
 
-							if (TextDiagnostics.GlyphCache.Enabled)
-								TextDiagnostics.GlyphCache.Misses += (ulong)glyphBoards.Count;
+							if (RichHudStats.Text.GlyphCache.Enabled)
+								RichHudStats.Text.GlyphCache.Misses += (ulong)glyphBoards.Count;
 						}
 						// Color cache thrash supression
 						else if (isColorStale)
@@ -715,10 +716,10 @@ namespace RichHudFramework
 							if (isColorEqual)
 								isColorStale = false;
 
-							TextDiagnostics.GlyphCache.Hits += (ulong)glyphBoards.Count;
+							RichHudStats.Text.GlyphCache.Hits += (ulong)glyphBoards.Count;
 						}
 						else
-							TextDiagnostics.GlyphCache.Hits += (ulong)glyphBoards.Count;
+							RichHudStats.Text.GlyphCache.Hits += (ulong)glyphBoards.Count;
 					}
 				}
 			}

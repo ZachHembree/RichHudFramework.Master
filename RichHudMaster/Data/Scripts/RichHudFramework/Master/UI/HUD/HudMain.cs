@@ -10,6 +10,8 @@ namespace RichHudFramework
 {
     namespace UI.Server
     {
+        using static NodeConfigIndices;
+
         public sealed partial class HudMain : RichHudParallelComponentBase
         {
             public const int tickResetInterval = 240;
@@ -178,10 +180,9 @@ namespace RichHudFramework
                 {
                     UpdateCache();
                     treeManager.Draw();
-                    drawTick++;
 
-                    if (drawTick == tickResetInterval)
-                        drawTick = 0;
+                    drawTick++;
+                    drawTick %= tickResetInterval;
 
                     if (SharedBinds.Escape.IsNewPressed)
                         LoseInputFocusCallback?.Invoke();
@@ -367,9 +368,13 @@ namespace RichHudFramework
 
                 public Func<MatrixD> UpdateMatrixFunc { get; }
 
-                public Func<Vector3D> GetNodeOriginFunc { get; }
+				public Func<Vector3D> GetNodeOriginFunc
+				{
+					get { return hudSpaceOriginFunc[0]; }
+					private set { hudSpaceOriginFunc[0] = value; }
+				}
 
-                public bool IsInFront { get; }
+				public bool IsInFront { get; }
 
                 public bool IsFacingCamera { get; }
 
@@ -383,9 +388,12 @@ namespace RichHudFramework
                     GetHudSpaceFunc = () => new MyTuple<bool, float, MatrixD>(true, 1f, PixelToWorldRef[0]);
                     GetNodeOriginFunc = () => PixelToWorldRef[0].Translation;
                     PlaneToWorldRef = PixelToWorldRef;
+                    Config[StateID] |= (uint)HudElementStates.IsSpaceNode;
+
+                    LayoutCallback = Layout;
                 }
 
-                protected override void Layout()
+                private void Layout()
                 {
                     PlaneToWorldRef[0] = PixelToWorld;
                     CursorPos = new Vector3(Cursor.ScreenPos.X, Cursor.ScreenPos.Y, 0f);

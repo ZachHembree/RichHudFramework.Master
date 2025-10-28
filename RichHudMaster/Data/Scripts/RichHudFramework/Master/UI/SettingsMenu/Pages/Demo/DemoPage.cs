@@ -97,7 +97,6 @@ namespace RichHudFramework
                         Spacing = 10f,
                         CollectionContainer = { screenSpaceToggle, xAxisBar, yAxisBar, zAxisBar, angleBar },
                     };
-                    transformCol1.Size = transformCol1.GetRangeSize();
 
                     // Column 2
                     resScaleToggle = new NamedCheckBox() { Name = "High DPI Scaling" };
@@ -112,7 +111,6 @@ namespace RichHudFramework
                         CollectionContainer = { resScaleToggle, scaleBar, xPosBar, yPosBar, zPosBar },
                         
                     };
-                    transformCol2.Size = transformCol2.GetRangeSize();
 
                     spawnControls = new HudChain(false)
                     {
@@ -127,7 +125,6 @@ namespace RichHudFramework
                         SizingMode = HudChainSizingModes.ClampMembersOffAxis | HudChainSizingModes.AlignMembersCenter,
                         CollectionContainer = { transformCol1, transformCol2 },
                     };
-                    transformControls.Size = transformControls.GetRangeSize();
 
                     var layout = new HudChain(true, this)
                     {
@@ -140,9 +137,11 @@ namespace RichHudFramework
 
                     Padding = new Vector2(40f, 8f);
                     demoRoot = new HudCollection(HudMain.HighDpiRoot);
-                }
 
-                protected override void HandleInput(Vector2 cursorPos)
+                    HandleInputCallback = HandleInput;
+				}
+
+                protected void HandleInput(Vector2 cursorPos)
                 {
                     UpdateSliderValueText();
                     UpdateInstanceNames();

@@ -142,15 +142,6 @@ namespace RichHudFramework
 
                 protected override void Layout()
                 {
-                    foreach (var groupBoxEntry in Collection)
-                    {
-                        if (groupBoxEntry.Enabled && groupBoxEntry.Element.Visible)
-                        {
-                            BindGroupBox bgBox = groupBoxEntry.Element;
-                            bgBox.Size = bgBox.GetRangeSize();
-                        }
-                    }
-
                     base.Layout();
 
                     SliderBar slider = ScrollBar.slide;
@@ -176,10 +167,11 @@ namespace RichHudFramework
                 private readonly Label name;
                 private readonly BorderedButton resetButton;
                 private readonly int bindOffset;
+
                 public BindGroupBox(bool isAliased, IBindGroup group, BindDefinition[] defaults = null) : base(null)
                 {
                     AlignVertical = true;
-                    SizingMode = HudChainSizingModes.FitMembersOffAxis;
+                    SizingMode = HudChainSizingModes.FitMembersOffAxis | HudChainSizingModes.FitChainBoth;
                     Spacing = lineSpacing;
 
                     var divider1 = new TexturedBox()
@@ -339,6 +331,7 @@ namespace RichHudFramework
                     };
 
                     Height = lineHeight;
+                    HandleInputCallback = HandleInput;
                 }
 
                 public void Reset()
@@ -358,7 +351,7 @@ namespace RichHudFramework
                     this.group.BindChanged += OnBindChanged;
                 }
 
-                protected override void HandleInput(Vector2 cursorPos)
+                protected void HandleInput(Vector2 cursorPos)
                 {
                     if (combos[0].IsMousedOver)
                     {

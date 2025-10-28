@@ -18,6 +18,7 @@ namespace RichHudFramework
 
     namespace UI.Server
     {
+        using static RichHudFramework.UI.NodeConfigIndices;
         using Rendering;
         using CursorMembers = MyTuple<
             Func<HudSpaceDelegate, bool>, // IsCapturingSpace
@@ -102,15 +103,19 @@ namespace RichHudFramework
                 /// </summary>
                 public MatrixD[] PlaneToWorldRef { get; }
 
-                /// <summary>
-                /// Returns the world space position of the node's origin.
-                /// </summary>
-                public Func<Vector3D> GetNodeOriginFunc { get; }
+				/// <summary>
+				/// Returns the world space position of the node's origin.
+				/// </summary>
+				public Func<Vector3D> GetNodeOriginFunc
+				{
+					get { return hudSpaceOriginFunc[0]; }
+					private set { hudSpaceOriginFunc[0] = value; }
+				}
 
-                /// <summary>
-                /// True if the origin of the HUD space is in front of the camera
-                /// </summary>
-                public bool IsInFront { get; }
+				/// <summary>
+				/// True if the origin of the HUD space is in front of the camera
+				/// </summary>
+				public bool IsInFront { get; }
 
                 /// <summary>
                 /// True if the XY plane of the HUD space is in front and facing toward the camera
@@ -129,10 +134,11 @@ namespace RichHudFramework
                     IsInFront = true;
                     IsFacingCamera = true;
 
-                    layerData.zOffset = sbyte.MaxValue;
-                    layerData.zOffsetInner = byte.MaxValue;
-                    layerData.fullZOffset = ushort.MaxValue;
-                    State |= HudElementStates.CanPreload;
+                    Config[ZOffsetID] = (uint)sbyte.MaxValue;
+                    Config[ZOffsetInnerID] = byte.MaxValue;
+                    Config[FullZOffsetID] = ushort.MaxValue;
+
+					Config[StateID] |= (uint)(HudElementStates.CanPreload | HudElementStates.IsSpaceNode);
 
                     GetHudSpaceFunc = () => new HudSpaceData(true, 1f, PlaneToWorldRef[0]);
                     GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;
@@ -162,6 +168,8 @@ namespace RichHudFramework
                         BuilderMode = TextBuilderModes.Lined,
                         AutoResize = true
                     };
+
+                    LayoutCallback = Layout;
                 }
 
                 /// <summary>
@@ -292,7 +300,7 @@ namespace RichHudFramework
                     ScreenPos = screenPos;
                 }
 
-                protected override void Layout()
+                private void Layout()
                 {
                     // Update custom hud space and tooltips
                     HudSpaceData? hudSpaceData = GetCapturedHudSpaceFunc?.Invoke();

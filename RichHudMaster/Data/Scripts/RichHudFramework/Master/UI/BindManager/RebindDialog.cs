@@ -1,330 +1,332 @@
 ﻿using RichHudFramework.Internal;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using VRageMath;
-using System;
-using VRage.Utils;
-using System.Linq;
-using VRage;
 
 namespace RichHudFramework.UI.Server
 {
-    /// <summary>
-    /// GUI used to change binds in <see cref="BindManager.Group"/>s
-    /// </summary>
-    public sealed class RebindDialog : RichHudComponentBase
-    {
-        public static bool Open { get; private set; }
+	using static RichHudFramework.UI.NodeConfigIndices;
 
-        private static RebindDialog instance;
-        private const long comboConfirmDelayMS = 1000, chatterDelayMS = 50;
+	/// <summary>
+	/// GUI used to change binds in <see cref="BindManager.Group"/>s
+	/// </summary>
+	public sealed class RebindDialog : RichHudComponentBase
+	{
+		public static bool Open { get; private set; }
 
-        private readonly RebindHud popup;
-        private readonly IReadOnlyList<ControlHandle> blacklist;
-        private readonly IControl escape, back;
+		private static RebindDialog instance;
+		private const long comboConfirmDelayMS = 1000, chatterDelayMS = 50;
 
-        private readonly List<ControlHandle> pressedControls;
-        private readonly List<ControlHandle> lastPressedControls;
-        private readonly List<long> lastConPressTime;
-        private readonly List<Vector2I> lastConPressCount;
-        private readonly Stopwatch comboConfirmTimer;
-        private readonly StringBuilder sb;
+		private readonly RebindHud popup;
+		private readonly IReadOnlyList<ControlHandle> blacklist;
+		private readonly IControl escape, back;
 
-        private IBind bind;
-        private int alias;
-        private Action CallbackFunc;
+		private readonly List<ControlHandle> pressedControls;
+		private readonly List<ControlHandle> lastPressedControls;
+		private readonly List<long> lastConPressTime;
+		private readonly List<Vector2I> lastConPressCount;
+		private readonly Stopwatch comboConfirmTimer;
+		private readonly StringBuilder sb;
 
-        private RebindDialog() : base(false, true)
-        {
-            popup = new RebindHud();
-            escape = BindManager.GetControl(RichHudControls.Escape);
-            back = BindManager.GetControl(RichHudControls.Back);
-            blacklist = new List<ControlHandle>
-            {
-                RichHudControls.Escape,
-                RichHudControls.Back,
-                RichHudControls.RightStickX,
-                RichHudControls.RightStickY,
-            };
+		private IBind bind;
+		private int alias;
+		private Action CallbackFunc;
 
-            sb = new StringBuilder();
-            comboConfirmTimer = new Stopwatch();
-            pressedControls = new List<ControlHandle>();
-            lastPressedControls = new List<ControlHandle>();
-            lastConPressTime = new List<long>();
-            lastConPressCount = new List<Vector2I>();
-            Open = false;
-        }
+		private RebindDialog() : base(false, true)
+		{
+			popup = new RebindHud();
+			escape = BindManager.GetControl(RichHudControls.Escape);
+			back = BindManager.GetControl(RichHudControls.Back);
+			blacklist = new List<ControlHandle>
+			{
+				RichHudControls.Escape,
+				RichHudControls.Back,
+				RichHudControls.RightStickX,
+				RichHudControls.RightStickY,
+			};
 
-        public static void Init()
-        {
-            if (instance == null)
-                instance = new RebindDialog();
-        }
+			sb = new StringBuilder();
+			comboConfirmTimer = new Stopwatch();
+			pressedControls = new List<ControlHandle>();
+			lastPressedControls = new List<ControlHandle>();
+			lastConPressTime = new List<long>();
+			lastConPressCount = new List<Vector2I>();
+			Open = false;
+		}
 
-        public override void Close()
-        {
-            Exit();
-            instance = null;
-        }
+		public static void Init()
+		{
+			if (instance == null)
+				instance = new RebindDialog();
+		}
 
-        /// <summary>
-        /// Opens the rebind dialog for the control at the specified position.
-        /// </summary>
-        public static void UpdateBind(IBind bind, int alias, Action CallbackFunc = null) =>
-            instance.UpdateBindInternal(bind, alias, CallbackFunc);
+		public override void Close()
+		{
+			Exit();
+			instance = null;
+		}
 
-        /// <summary>
-        /// Opens the rebind dialog for the control at the specified position.
-        /// </summary>
-        private void UpdateBindInternal(IBind bind, int alias, Action CallbackFunc = null)
-        {
-            this.bind = bind;
-            this.alias = alias;
-            this.CallbackFunc = CallbackFunc;
+		/// <summary>
+		/// Opens the rebind dialog for the control at the specified position.
+		/// </summary>
+		public static void UpdateBind(IBind bind, int alias, Action CallbackFunc = null) =>
+			instance.UpdateBindInternal(bind, alias, CallbackFunc);
 
-            comboConfirmTimer.Restart();
-            popup.Visible = true;
-            Open = true;
-        }
+		/// <summary>
+		/// Opens the rebind dialog for the control at the specified position.
+		/// </summary>
+		private void UpdateBindInternal(IBind bind, int alias, Action CallbackFunc = null)
+		{
+			this.bind = bind;
+			this.alias = alias;
+			this.CallbackFunc = CallbackFunc;
 
-        public override void HandleInput()
-        {
-            if (Open && bind != null)
-            {
-                BindManager.RequestTempBlacklist(SeBlacklistModes.Full);
+			comboConfirmTimer.Restart();
+			popup.Visible = true;
+			Open = true;
+		}
 
-                if (escape.IsPressed || back.IsPressed)
-                {
-                    Exit();
-                }
-                else
-                {
-                    IReadOnlyList<ControlHandle> controls = BindManager.Controls;
-                    bool didComboChange = false;
-                    pressedControls.Clear();
+		public override void HandleInput()
+		{
+			if (Open && bind != null)
+			{
+				BindManager.RequestTempBlacklist(SeBlacklistModes.Full);
 
-                    foreach (ControlHandle con in controls)
-                    {
-                        if (!blacklist.Contains(con))
-                        {
-                            IControl control = con.Control;
-                            int lastIndex = lastPressedControls.FindIndex(x => (x.id == con.id));
-                            long currentTimeMS = comboConfirmTimer.ElapsedMilliseconds;
-                            bool isPressed = control.IsPressed,
-                                wasPressed = false;
+				if (escape.IsPressed || back.IsPressed)
+				{
+					Exit();
+				}
+				else
+				{
+					IReadOnlyList<ControlHandle> controls = BindManager.Controls;
+					bool didComboChange = false;
+					pressedControls.Clear();
 
-                            // Check previously pressed controls
-                            if (lastIndex != -1)
-                            {
-                                long effectiveDelay = chatterDelayMS;
-                                Vector2I pressReleaseCount = lastConPressCount[lastIndex];
+					foreach (ControlHandle con in controls)
+					{
+						if (!blacklist.Contains(con))
+						{
+							IControl control = con.Control;
+							int lastIndex = lastPressedControls.FindIndex(x => (x.id == con.id));
+							long currentTimeMS = comboConfirmTimer.ElapsedMilliseconds;
+							bool isPressed = control.IsPressed,
+								wasPressed = false;
 
-                                // Chatter compensation
-                                if (isPressed)
-                                {
-                                    lastConPressTime[lastIndex] = currentTimeMS;
-                                    pressReleaseCount.X++;
-                                }
-                                else
-                                    pressReleaseCount.Y++;
+							// Check previously pressed controls
+							if (lastIndex != -1)
+							{
+								long effectiveDelay = chatterDelayMS;
+								Vector2I pressReleaseCount = lastConPressCount[lastIndex];
 
-                                lastConPressCount[lastIndex] = pressReleaseCount;
+								// Chatter compensation
+								if (isPressed)
+								{
+									lastConPressTime[lastIndex] = currentTimeMS;
+									pressReleaseCount.X++;
+								}
+								else
+									pressReleaseCount.Y++;
 
-                                if (pressReleaseCount.X > 3 && pressReleaseCount.Y > 3)
-                                    effectiveDelay = comboConfirmDelayMS;
+								lastConPressCount[lastIndex] = pressReleaseCount;
 
-                                long lastTimeDeltaMS = currentTimeMS - lastConPressTime[lastIndex];
+								if (pressReleaseCount.X > 3 && pressReleaseCount.Y > 3)
+									effectiveDelay = comboConfirmDelayMS;
 
-                                // Still pressed or delay not elapsed
-                                if (isPressed || (lastTimeDeltaMS < effectiveDelay))
-                                    wasPressed = true;
+								long lastTimeDeltaMS = currentTimeMS - lastConPressTime[lastIndex];
 
-                                // Release delay elapsed
-                                if (!wasPressed)
-                                {
-                                    lastPressedControls.RemoveAt(lastIndex);
-                                    lastConPressTime.RemoveAt(lastIndex);
-                                    lastConPressCount.RemoveAt(lastIndex);
+								// Still pressed or delay not elapsed
+								if (isPressed || (lastTimeDeltaMS < effectiveDelay))
+									wasPressed = true;
 
-                                    for (int i = 0; i < lastConPressCount.Count; i++)
-                                        lastConPressCount[i] = new Vector2I(1, 0);
+								// Release delay elapsed
+								if (!wasPressed)
+								{
+									lastPressedControls.RemoveAt(lastIndex);
+									lastConPressTime.RemoveAt(lastIndex);
+									lastConPressCount.RemoveAt(lastIndex);
 
-                                    didComboChange = true;
-                                }
-                            }
+									for (int i = 0; i < lastConPressCount.Count; i++)
+										lastConPressCount[i] = new Vector2I(1, 0);
 
-                            // Add currently pressed controls
-                            if (isPressed || wasPressed)
-                            {
-                                pressedControls.Add(con);
+									didComboChange = true;
+								}
+							}
 
-                                if (isPressed && !wasPressed)
-                                {
-                                    for (int i = 0; i < lastConPressCount.Count; i++)
-                                        lastConPressCount[i] = new Vector2I(1, 0);
+							// Add currently pressed controls
+							if (isPressed || wasPressed)
+							{
+								pressedControls.Add(con);
 
-                                    lastPressedControls.Add(con);
-                                    lastConPressTime.Add(currentTimeMS);
-                                    lastConPressCount.Add(new Vector2I(1, 0));
+								if (isPressed && !wasPressed)
+								{
+									for (int i = 0; i < lastConPressCount.Count; i++)
+										lastConPressCount[i] = new Vector2I(1, 0);
 
-                                    didComboChange = true;
-                                }
+									lastPressedControls.Add(con);
+									lastConPressTime.Add(currentTimeMS);
+									lastConPressCount.Add(new Vector2I(1, 0));
 
-                                if (pressedControls.Count >= BindManager.MaxBindLength)
-                                    break;
-                            }
-                        }
-                    }
+									didComboChange = true;
+								}
 
-                    if (didComboChange || pressedControls.Count == 0)
-                        comboConfirmTimer.Restart();
+								if (pressedControls.Count >= BindManager.MaxBindLength)
+									break;
+							}
+						}
+					}
 
-                    if (comboConfirmTimer.ElapsedMilliseconds > comboConfirmDelayMS)
-                        Confirm();
+					if (didComboChange || pressedControls.Count == 0)
+						comboConfirmTimer.Restart();
 
-                    popup.ComboProgress = (float)(comboConfirmTimer.ElapsedMilliseconds / (double)comboConfirmDelayMS);
+					if (comboConfirmTimer.ElapsedMilliseconds > comboConfirmDelayMS)
+						Confirm();
 
-                    if (popup.ComboProgress > .05f)
-                    {
-                        sb.Clear();
-                        sb.Append(pressedControls[0].Control.DisplayName);
+					popup.ComboProgress = (float)(comboConfirmTimer.ElapsedMilliseconds / (double)comboConfirmDelayMS);
 
-                        for (int i = 1; i < pressedControls.Count; i++)
-                        {
-                            sb.Append(" + ");
-                            sb.Append(pressedControls[i].Control.DisplayName);
-                        }
+					if (popup.ComboProgress > .05f)
+					{
+						sb.Clear();
+						sb.Append(pressedControls[0].Control.DisplayName);
 
-                        popup.SetMessage(sb);
-                    }
-                    else
-                        popup.ResetMessage();
-                }
-            }
-        }
+						for (int i = 1; i < pressedControls.Count; i++)
+						{
+							sb.Append(" + ");
+							sb.Append(pressedControls[i].Control.DisplayName);
+						}
 
-        /// <summary>
-        /// Adds the new control at the index given, applies the new combo and closes the dialog.
-        /// </summary>
-        private void Confirm()
-        {
-            if (Open)
-            {
-                bind.TrySetCombo(pressedControls, alias, false);
-                Exit();
-            }
-        }
+						popup.SetMessage(sb);
+					}
+					else
+						popup.ResetMessage();
+				}
+			}
+		}
 
-        /// <summary>
-        /// Closes and resets the dialog.
-        /// </summary>
-        private void Exit()
-        {
-            if (Open)
-            {
-                popup.Visible = false;
-                popup.ResetMessage();
-                lastPressedControls.Clear();
-                lastConPressTime.Clear();
-                lastConPressCount.Clear();
-                Open = false;
+		/// <summary>
+		/// Adds the new control at the index given, applies the new combo and closes the dialog.
+		/// </summary>
+		private void Confirm()
+		{
+			if (Open)
+			{
+				bind.TrySetCombo(pressedControls, alias, false);
+				Exit();
+			}
+		}
 
-                CallbackFunc?.Invoke();
-                CallbackFunc = null;
-                bind = null;
-            }
-        }
+		/// <summary>
+		/// Closes and resets the dialog.
+		/// </summary>
+		private void Exit()
+		{
+			if (Open)
+			{
+				popup.Visible = false;
+				popup.ResetMessage();
+				lastPressedControls.Clear();
+				lastConPressTime.Clear();
+				lastConPressCount.Clear();
+				Open = false;
 
-        /// <summary>
-        /// Popup for the <see cref="RebindDialog"/>
-        /// </summary>
-        private class RebindHud : HudElementBase
-        {
-            public float ComboProgress { get; set; }
+				CallbackFunc?.Invoke();
+				CallbackFunc = null;
+				bind = null;
+			}
+		}
 
-            private readonly TexturedBox background, divider, progressBar;
-            private readonly BorderBox border;
-            private readonly Label header, subheader;
+		/// <summary>
+		/// Popup for the <see cref="RebindDialog"/>
+		/// </summary>
+		private class RebindHud : HudElementBase
+		{
+			public float ComboProgress { get; set; }
 
-            public RebindHud() : base(HudMain.HighDpiRoot)
-            {
-                background = new TexturedBox(this)
-                {
-                    Color = new Color(37, 46, 53),
-                    DimAlignment = DimAlignments.Size,
-                };
+			private readonly TexturedBox background, divider, progressBar;
+			private readonly BorderBox border;
+			private readonly Label header, subheader;
 
-                border = new BorderBox(this)
-                {
-                    Thickness = 2f,
-                    Color = new Color(53, 66, 75),
-                    DimAlignment = DimAlignments.Size,
-                };
+			public RebindHud() : base(HudMain.HighDpiRoot)
+			{
+				background = new TexturedBox(this)
+				{
+					Color = new Color(37, 46, 53),
+					DimAlignment = DimAlignments.Size,
+				};
 
-                header = new Label(this)
-                {
-                    AutoResize = false, 
-                    DimAlignment = DimAlignments.UnpaddedWidth,
-                    Height = 24f,
-                    ParentAlignment = ParentAlignments.PaddedInnerTop,
-                    Offset = new Vector2(0f, -42f),
-                    Format = new GlyphFormat(Color.White, TextAlignment.Center, 1.25f),
-                    Text = "REBIND COMBO",
-                };
+				border = new BorderBox(this)
+				{
+					Thickness = 2f,
+					Color = new Color(53, 66, 75),
+					DimAlignment = DimAlignments.Size,
+				};
 
-                divider = new TexturedBox(header)
-                {
-                    DimAlignment = DimAlignments.Width,
-                    Height = 1f,
-                    ParentAlignment = ParentAlignments.Bottom,
-                    Offset = new Vector2(0f, -10f),
-                    Color = new Color(84, 98, 111),
-                };
+				header = new Label(this)
+				{
+					AutoResize = false,
+					DimAlignment = DimAlignments.UnpaddedWidth,
+					Height = 24f,
+					ParentAlignment = ParentAlignments.PaddedInnerTop,
+					Offset = new Vector2(0f, -42f),
+					Format = new GlyphFormat(Color.White, TextAlignment.Center, 1.25f),
+					Text = "REBIND COMBO",
+				};
 
-                progressBar = new TexturedBox(divider)
-                {
-                    Height = 3f,
-                    Width = 0f,
-                    Color = TerminalFormatting.Mint,
-                };
+				divider = new TexturedBox(header)
+				{
+					DimAlignment = DimAlignments.Width,
+					Height = 1f,
+					ParentAlignment = ParentAlignments.Bottom,
+					Offset = new Vector2(0f, -10f),
+					Color = new Color(84, 98, 111),
+				};
 
-                subheader = new Label(divider)
-                {
-                    AutoResize = false,
-                    DimAlignment = DimAlignments.Width,
-                    Height = 24f,
-                    ParentAlignment = ParentAlignments.Bottom,
-                    Offset = new Vector2(0f, -41f),
-                    Format = new GlyphFormat(GlyphFormat.Blueish.Color, TextAlignment.Center, 1.25f),
-                    Text = "Press and hold new combo",
-                };
+				progressBar = new TexturedBox(divider)
+				{
+					Height = 3f,
+					Width = 0f,
+					Color = TerminalFormatting.Mint,
+				};
 
-                Padding = new Vector2(372f, 0f);
-                Size = new Vector2(1210f, 288f);
+				subheader = new Label(divider)
+				{
+					AutoResize = false,
+					DimAlignment = DimAlignments.Width,
+					Height = 24f,
+					ParentAlignment = ParentAlignments.Bottom,
+					Offset = new Vector2(0f, -41f),
+					Format = new GlyphFormat(GlyphFormat.Blueish.Color, TextAlignment.Center, 1.25f),
+					Text = "Press and hold new combo",
+				};
 
-                ZOffset = sbyte.MaxValue - 1;
-                layerData.zOffsetInner = byte.MaxValue - 1;
-                Visible = false;
-            }
+				Padding = new Vector2(372f, 0f);
+				Size = new Vector2(1210f, 288f);
 
-            public void SetMessage(StringBuilder message)
-            {
-                subheader.Text = message;
-            }
+				Config[ZOffsetID] = sbyte.MaxValue - 1;
+				Config[ZOffsetInnerID] = byte.MaxValue - 1;
+				Visible = false;
 
-            public void ResetMessage()
-            {
-                subheader.Text = "Press and hold new combo";
-            }
+				LayoutCallback = Layout;
+			}
 
-            protected override void Layout()
-            {
-                background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
-                ComboProgress = MathHelper.Clamp(ComboProgress, 0f, 1f);
-                progressBar.Width = ComboProgress * divider.Width;
-            }
-        }
-    }
+			public void SetMessage(StringBuilder message)
+			{
+				subheader.Text = message;
+			}
+
+			public void ResetMessage()
+			{
+				subheader.Text = "Press and hold new combo";
+			}
+
+			protected void Layout()
+			{
+				background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
+				ComboProgress = MathHelper.Clamp(ComboProgress, 0f, 1f);
+				progressBar.Width = ComboProgress * divider.Width;
+			}
+		}
+	}
 }

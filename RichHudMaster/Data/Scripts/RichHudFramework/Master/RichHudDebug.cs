@@ -22,7 +22,6 @@ namespace RichHudFramework.Server
 
         private static RichHudDebug instance;
         private readonly Stopwatch updateTimer;
-        private readonly UpdateStats updateStats;
 
         private readonly TextPage statisticsPage;
         private readonly TerminalPageCategory debugCategory;
@@ -40,7 +39,6 @@ namespace RichHudFramework.Server
                 throw new Exception($"Only one instance of {GetType().Name} can exist at any given time.");
 
             EnableDebug = false;
-            updateStats = new UpdateStats();
             updateTimer = new Stopwatch();
             updateTimer.Start();
 
@@ -94,8 +92,9 @@ namespace RichHudFramework.Server
                 Enabled = false
             };
 
-            category.PageContainer.Add(statisticsPage);
-            category.PageContainer.Add(CreateSettingsPage());
+            category.Add(statisticsPage);
+            category.Add(CreateSettingsPage());
+
             return category;
         }
 
@@ -112,8 +111,10 @@ namespace RichHudFramework.Server
                 SubheaderText = ""
             };
 
-            controlCategory.TileContainer.Add(CreateOverlayControlTile());
-            controlCategory.TileContainer.Add(CreateCacheControlTile());
+            controlCategory.Add(CreateOverlayControlTile());
+            controlCategory.Add(CreateCacheControlTile());
+            controlCategory.Add(CreateTreeDebugTile());
+
             settingsPage.CategoryContainer.Add(controlCategory);
             return settingsPage;
         }
@@ -146,33 +147,66 @@ namespace RichHudFramework.Server
                 new TerminalButton()
                 {
                     Name = "Tare Timers",
-                    ControlChangedHandler = (obj, args) => { updateStats.Tare(); },
+                    ControlChangedHandler = (obj, args) => { RichHudStats.UI.Tare(); },
                     ToolTip = "Sets the current update times as the baseline."
                 },
                 new TerminalButton()
                 {
                     Name = "Clear Tare",
-                    ControlChangedHandler = (obj, args) => { updateStats.ClearTare(); },
+                    ControlChangedHandler = (obj, args) => { RichHudStats.UI.ClearTare(); },
                     ToolTip = "Resets timer tare to zero."
                 }
             };
+        }
+
+        private ControlTile CreateTreeDebugTile()
+        {
+            return new ControlTile()
+            {
+			    new TerminalLabel() { Name = "UI Tree Debug" },
+				new TerminalCheckbox
+				{
+					Name = "Default Preloading",
+					Value = HudMain.DefaultPreload,
+					ControlChangedHandler = (obj, args) =>
+					{
+						var checkbox = obj as TerminalCheckbox;
+						HudMain.DefaultPreload = checkbox.Value;
+					},
+                    ToolTip = "Allows UI nodes to be preloaded by default."
+				},
+                new TerminalSlider()
+                {
+                    Name = "Preload Depth",
+                    Min = 0, Max = 10,
+					Value = HudMain.MaxPreloadDepth,
+					ControlChangedHandler = (obj, args) =>
+                    {
+                        var slider = obj as TerminalSlider;
+                        HudMain.MaxPreloadDepth = (int)slider.Value;
+                        slider.ValueText = HudMain.MaxPreloadDepth.ToString();
+                    },
+                    ToolTip = "Sets maximum search search depth for invisible UI nodes."
+                }
+			};
         }
 
         private ControlTile CreateCacheControlTile()
         {
             return new ControlTile
             {
-                CreateCacheCheckbox("Text Cache", () => TextDiagnostics.LineTextCache.Enabled,
-                    value => TextDiagnostics.LineTextCache.Enabled = value,
+                new TerminalLabel() { Name = "Text Debug" },
+                CreateCacheCheckbox("Text Cache", () => RichHudStats.Text.LineTextCache.Enabled,
+                    value => RichHudStats.Text.LineTextCache.Enabled = value,
                     "Controls all text-related caching.\nRequired by glyph, typesetting and billboard caches."),
-                CreateCacheCheckbox("Glyph Cache", () => TextDiagnostics.GlyphCache.Enabled,
-                    value => TextDiagnostics.GlyphCache.Enabled = value,
+                CreateCacheCheckbox("Glyph Cache", () => RichHudStats.Text.GlyphCache.Enabled,
+                    value => RichHudStats.Text.GlyphCache.Enabled = value,
                     "Controls caching of text font data.\nRequires text cache."),
-                CreateCacheCheckbox("Typesetting Cache", () => TextDiagnostics.TypesettingCache.Enabled,
-                    value => TextDiagnostics.TypesettingCache.Enabled = value,
+                CreateCacheCheckbox("Typesetting Cache", () => RichHudStats.Text.TypesettingCache.Enabled,
+                    value => RichHudStats.Text.TypesettingCache.Enabled = value,
                     "Controls caching for character placement within a UI element.\nRequires glyph and text caches."),
-                CreateCacheCheckbox("Billboard Cache", () => TextDiagnostics.BBCache.Enabled,
-                    value => TextDiagnostics.BBCache.Enabled = value,
+                CreateCacheCheckbox("Billboard Cache", () => RichHudStats.Text.BBCache.Enabled,
+                    value => RichHudStats.Text.BBCache.Enabled = value,
                     "Controls caching of finalized billboard data used for text rendering.\nRequires typesetting, glyph and text caches.")
             };
         }
@@ -194,8 +228,6 @@ namespace RichHudFramework.Server
 
         private void UpdateDisplayInternal()
         {
-            TextDiagnostics.Update();
-
             if (EnableDebug && (statisticsPage.Element.Visible || enableOverlay) && updateTimer.ElapsedMilliseconds > 100)
             {
                 statsBuilder.Clear();
@@ -203,7 +235,9 @@ namespace RichHudFramework.Server
                 AppendHudMainStats(statsBuilder);
                 AppendBillboardStats(statsBuilder);
                 AppendUpdateTimerStats(statsBuilder);
+                AppendNodeUpdateStats(statsBuilder);
                 AppendTextCachingStats(statsBuilder);
+
                 overlay.SetText(statsBuilder);
 
                 if (statisticsPage.Element.Visible)
@@ -254,8 +288,8 @@ namespace RichHudFramework.Server
         private void AppendHudMainStats(StringBuilder statsBuilder)
         {
             statsBuilder.Append("\n\tHudMain:\n");
-            statsBuilder.Append($"\t\tHUD Spaces Updating: {HudMain.TreeManager.HudSpacesRegistered}\n");
-            statsBuilder.Append($"\t\tElements Updating: {HudMain.TreeManager.ElementRegistered}\n");
+            statsBuilder.Append($"\t\tHUD Spaces Updating: {RichHudStats.UI.HudSpacesRegistered}\n");
+            statsBuilder.Append($"\t\tElements Updating: {RichHudStats.UI.ElementsRegistered}\n");
             statsBuilder.Append($"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n");
         }
 
@@ -273,15 +307,14 @@ namespace RichHudFramework.Server
 
         private void AppendUpdateTimerStats(StringBuilder statsBuilder)
         {
-            updateStats.Update();
             statsBuilder.Append($"\t\tUpdate Timers (IsHighResolution: {Stopwatch.IsHighResolution}):\n");
             AddGrid(statsBuilder, new string[,]
             {
                 { "Name", "Avg", "50th", "99th" },
-                { "Draw", $"{updateStats.AvgDrawTime:F2}ms", $"{updateStats.Draw50th:F2}ms", $"{updateStats.Draw99th:F2}ms" },
-                { "Input", $"{updateStats.AvgInputTime:F2}ms", $"{updateStats.Input50th:F2}ms", $"{updateStats.Input99th:F2}ms" },
-                { "Total", $"{updateStats.AvgTotalTime:F2}ms", $"{updateStats.Total50th:F2}ms", $"{updateStats.Total99th:F2}ms" },
-                { "Tree*", $"{updateStats.AvgTreeTime:F2}ms", $"{updateStats.Tree50th:F2}ms", $"{updateStats.Tree99th:F2}ms" }
+                { "Draw", $"{RichHudStats.UI.DrawAvg:F2}ms", $"{RichHudStats.UI.Draw50th:F2}ms", $"{RichHudStats.UI.Draw99th:F2}ms" },
+                { "Input", $"{RichHudStats.UI.InputAvg:F2}ms", $"{RichHudStats.UI.Input50th:F2}ms", $"{RichHudStats.UI.Input99th:F2}ms" },
+                { "Total", $"{RichHudStats.UI.TotalAvg:F2}ms", $"{RichHudStats.UI.Total50th:F2}ms", $"{RichHudStats.UI.Total99th:F2}ms" },
+                { "Tree*", $"{RichHudStats.UI.TreeAvg:F2}ms", $"{RichHudStats.UI.Tree50th:F2}ms", $"{RichHudStats.UI.Tree99th:F2}ms" }
             }, 3, 4);
         }
 
@@ -291,14 +324,24 @@ namespace RichHudFramework.Server
             AddGrid(statsBuilder, new string[,]
             {
                 { "Cache", "Enabled", "Hit Pct" },
-                { "Text", TextDiagnostics.LineTextCache.Enabled.ToString(), $"{TextDiagnostics.LineTextCache.GetHitPct():F2}%" },
-                { "Glyphs", TextDiagnostics.GlyphCache.Enabled.ToString(), $"{TextDiagnostics.GlyphCache.GetHitPct():F2}%" },
-                { "Typesetting", TextDiagnostics.TypesettingCache.Enabled.ToString(), $"{TextDiagnostics.TypesettingCache.GetHitPct():F2}%" },
-                { "Billboards", TextDiagnostics.BBCache.Enabled.ToString(), $"{TextDiagnostics.BBCache.GetHitPct():F2}%" }
+                { "Text", RichHudStats.Text.LineTextCache.Enabled.ToString(), $"{RichHudStats.Text.LineTextCache.GetHitPct():F2}%" },
+                { "Glyphs", RichHudStats.Text.GlyphCache.Enabled.ToString(), $"{RichHudStats.Text.GlyphCache.GetHitPct():F2}%" },
+                { "Typesetting", RichHudStats.Text.TypesettingCache.Enabled.ToString(), $"{RichHudStats.Text.TypesettingCache.GetHitPct():F2}%" },
+                { "Billboards", RichHudStats.Text.BBCache.Enabled.ToString(), $"{RichHudStats.Text.BBCache.GetHitPct():F2}%" }
             }, 3, 4);
         }
 
-        private void AppendCursorStats(StringBuilder statsBuilder)
+		private void AppendNodeUpdateStats(StringBuilder statsBuilder)
+		{
+			statsBuilder.Append($"\t\tNode Update Counts:\n");
+			AddGrid(statsBuilder, new string[,]
+			{
+				{ "Name", "Avg", "50th", "99th" },
+				{ "Total", $"{RichHudStats.UI.AvgNodeUpdateCount:F0}", $"{RichHudStats.UI.NodeUpdate50th:F0}", $"{RichHudStats.UI.NodeUpdate99th:F0}" }
+			}, 3, 4);
+		}
+
+		private void AppendCursorStats(StringBuilder statsBuilder)
         {
             var cursor = HudMain.Cursor as HudMain.HudCursor;
             statsBuilder.Append("\n\tCursor:\n");
@@ -365,12 +408,12 @@ namespace RichHudFramework.Server
 
         private static void GetHudStats(HudMain.TreeClient client, StringBuilder statsBuilder)
         {
-            if (client.UpdateAccessors.Count == 0)
+            if (client.InactiveNodeData.HookData.Count == 0)
                 return;
 
             statsBuilder.Append($"\t\tHudMain:\n");
             statsBuilder.Append($"\t\t\tEnable Cursor: {client.EnableCursor}\n");
-            statsBuilder.Append($"\t\t\tElements Updating: {client.UpdateAccessors.Count}\n\n");
+            statsBuilder.Append($"\t\t\tElements Updating: {client.InactiveNodeData.HookData.Count}\n\n");
         }
 
         private static void GetBindStats(BindManager.Client client, StringBuilder statsBuilder)
@@ -416,97 +459,6 @@ namespace RichHudFramework.Server
                 }
 
                 builder.Append("\n");
-            }
-        }
-
-        /// <summary>
-        /// Collects and processes update statistics for HUD components.
-        /// </summary>
-        internal class UpdateStats
-        {
-            public double AvgTreeTime => _treeStats.AvgTime - _treeStats.TareTime;
-            public double Tree50th => _treeStats.Pct50th - _treeStats.TareTime;
-            public double Tree99th => _treeStats.Pct99th - _treeStats.TareTime;
-
-            public double AvgDrawTime => _drawStats.AvgTime - _drawStats.TareTime;
-            public double Draw50th => _drawStats.Pct50th - _drawStats.TareTime;
-            public double Draw99th => _drawStats.Pct99th - _drawStats.TareTime;
-
-            public double AvgInputTime => _inputStats.AvgTime - _inputStats.TareTime;
-            public double Input50th => _inputStats.Pct50th - _inputStats.TareTime;
-            public double Input99th => _inputStats.Pct99th - _inputStats.TareTime;
-
-            public double AvgTotalTime => AvgDrawTime + AvgInputTime;
-            public double Total50th => Draw50th + Input50th;
-            public double Total99th => Draw99th + Input99th;
-
-            private readonly TickStats _drawStats;
-            private readonly TickStats _inputStats;
-            private readonly TickStats _treeStats;
-            private readonly List<long> _tickBuffer;
-
-            public UpdateStats()
-            {
-                _tickBuffer = new List<long>();
-                _drawStats = new TickStats();
-                _inputStats = new TickStats();
-                _treeStats = new TickStats();
-            }
-
-            public void Tare()
-            {
-                _treeStats.Tare();
-                _drawStats.Tare();
-                _inputStats.Tare();
-            }
-
-            public void ClearTare()
-            {
-                _treeStats.ClearTare();
-                _drawStats.ClearTare();
-                _inputStats.ClearTare();
-            }
-
-            public void Update()
-            {
-                _treeStats.Update(HudMain.TreeManager.TreeElapsedTicks, _tickBuffer);
-                _drawStats.Update(HudMain.TreeManager.DrawElapsedTicks, _tickBuffer);
-                _inputStats.Update(HudMain.TreeManager.InputElapsedTicks, _tickBuffer);
-            }
-
-            internal class TickStats
-            {
-                public double AvgTime { get; private set; }
-                public double Pct50th { get; private set; }
-                public double Pct99th { get; private set; }
-                public double TareTime { get; private set; }
-
-                public void Tare()
-                {
-                    TareTime = AvgTime;
-                }
-
-                public void ClearTare()
-                {
-                    TareTime = 0d;
-                }
-
-                public void Update(IReadOnlyList<long> ticks, List<long> tickBuffer)
-                {
-                    double tpms = TimeSpan.TicksPerMillisecond;
-                    tickBuffer.Clear();
-                    tickBuffer.AddRange(ticks);
-                    tickBuffer.Sort();
-
-                    long totalTicks = 0;
-                    for (int n = 0; n < tickBuffer.Count; n++)
-                        totalTicks += tickBuffer[n];
-
-                    TareTime = Math.Min(TareTime, Math.Min(Pct50th, AvgTime));
-                    AvgTime = (totalTicks / (double)tickBuffer.Count) / tpms;
-                    Pct50th = tickBuffer[(int)(tickBuffer.Count * 0.5d)] / tpms;
-                    Pct99th = tickBuffer[(int)(tickBuffer.Count * 0.99d)] / tpms;
-                }
             }
         }
     }

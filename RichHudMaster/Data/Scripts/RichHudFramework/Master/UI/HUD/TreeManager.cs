@@ -1,42 +1,22 @@
 using RichHudFramework.UI.Rendering;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using VRage;
 using VRage.Utils;
 using VRageMath;
-using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
 	using Internal;
 	using Server;
+	using System.Reflection;
 
 	namespace UI.Server
 	{
-		using HudUpdateAccessors = MyTuple<
-			ApiMemberAccessor,
-			MyTuple<Func<ushort>, Func<Vector3D>>, // ZOffset + GetOrigin
-			Action, // DepthTest
-			Action, // HandleInput
-			Action<bool>, // BeforeLayout
-			Action // BeforeDraw
-		>;
-
 		public sealed partial class HudMain
 		{
 			public sealed class TreeManager
 			{
-				/// <summary>
-				/// Number of unique HUD spaces registered
-				/// </summary>
-				public static int HudSpacesRegistered { get; private set; }
-
-				/// <summary>
-				/// Number of UI elements registered from all clients
-				/// </summary>
-				public static int ElementRegistered { get; private set; }
-
 				/// <summary>
 				/// Read-only list of registered tree clients
 				/// </summary>
@@ -48,35 +28,23 @@ namespace RichHudFramework
 				public static TreeClient MainClient => treeManager.mainClient;
 
 				/// <summary>
-				/// Read-only list of the last 120 (tickResetInterval) draw update times. Updated as a circular array.
-				/// Order not preserved.
-				/// </summary>
-				public static IReadOnlyList<long> DrawElapsedTicks => treeManager.drawTimes;
-
-				/// <summary>
-				/// Read-only list of the last 120 (tickResetInterval) input update times. Updated as a circular array.
-				/// Order not preserved.
-				/// </summary>
-				public static IReadOnlyList<long> InputElapsedTicks => treeManager.inputTimes;
-
-				/// <summary>
-				/// Ticks elapsed during last rebuild
-				/// </summary>
-				public static IReadOnlyList<long> TreeElapsedTicks => treeManager.treeTimes;
-
-				/// <summary>
-				/// Used to indicate older clients requesting tree updates. Deprecated.
+				/// Used to indicate whether older clients are requesting tree updates. 
+				/// Deprecated.
 				/// </summary>
 				public static bool RefreshRequested;
 
-				// Sync
-				private readonly FastResourceLock clientRegLock, updateSwapLock, treeSwapLock;
-				private volatile bool isUpdatingTree, isImmediateUpdateReq;
-				private volatile int sortTick, activeCount;
+				// Active tree node data and next node set
+				private SortedTreeData activeTree, inactiveTree;
+
+				// Subtree search and data gathering
+				private readonly HudNodeIterator nodeIterator;
+				private readonly FlatTreeData nodeBuffer;
 
 				// Client data
 				private readonly List<TreeClient> clients;
 				private readonly TreeClient mainClient;
+				// Cursor subtree
+				private readonly FlatTreeData lateUpdateBuffer;
 
 				// Sorting buffers
 				private readonly Dictionary<Func<Vector3D>, ushort> distMap;
@@ -84,19 +52,12 @@ namespace RichHudFramework
 				private readonly List<Func<Vector3D>> originFunctions;
 				private readonly List<ulong> indexBuffer;
 
-				private readonly List<IReadOnlyList<HudUpdateAccessors>> activeUpdateLists;
-				private List<HudUpdateAccessors> activeLateUpdateBuffer, inactiveLateUpdateBuffer;
+				// Sync
+				private readonly FastResourceLock clientRegLock, updateSwapLock;
+				private volatile bool isUpdatingTree, isImmediateUpdateReq;
+				private volatile int sortTick, activeCount;
 
-				// Sorted client data
-				private List<Action> depthTestActions, depthTestActionBuffer;
-				private List<Action> inputActions, inputActionBuffer;
-				private List<Action> drawActions, drawActionBuffer;
-				private List<Action<bool>> layoutActions, layoutActionBuffer;
 				private float lastResScale;
-
-				// Stats
-				private readonly Stopwatch treeTimer, drawTimer, inputTimer;
-				private readonly long[] drawTimes, inputTimes, treeTimes;
 
 				private TreeManager()
 				{
@@ -109,41 +70,23 @@ namespace RichHudFramework
 
 					clientRegLock = new FastResourceLock();
 					updateSwapLock = new FastResourceLock();
-					treeSwapLock = new FastResourceLock();
-
-					activeUpdateLists = new List<IReadOnlyList<HudUpdateAccessors>>();
-					activeLateUpdateBuffer = new List<HudUpdateAccessors>();
-					inactiveLateUpdateBuffer = new List<HudUpdateAccessors>();
 
 					distMap = new Dictionary<Func<Vector3D>, ushort>(50);
 					originFuncSet = new HashSet<Func<Vector3D>>();
 					originFunctions = new List<Func<Vector3D>>();
 					indexBuffer = new List<ulong>(200);
 
-					depthTestActions = new List<Action>(200);
-					depthTestActionBuffer = new List<Action>(200);
-
-					inputActions = new List<Action>(200);
-					inputActionBuffer = new List<Action>(200);
-
-					drawActions = new List<Action>(200);
-					drawActionBuffer = new List<Action>(200);
-
-					layoutActions = new List<Action<bool>>(200);
-					layoutActionBuffer = new List<Action<bool>>(200);
-
 					clients = new List<TreeClient>();
-					mainClient = new TreeClient() { GetUpdateAccessors = instance._root.GetUpdateAccessors };
+					mainClient = new TreeClient() { RootNodeHandle = instance._root.DataHandle };
+					lateUpdateBuffer = new FlatTreeData(20);
 
-					drawTimer = new Stopwatch();
-					drawTimes = new long[tickResetInterval];
+					nodeIterator = new HudNodeIterator();
+					nodeBuffer = new FlatTreeData(200);
 
-					inputTimer = new Stopwatch();
-					inputTimes = new long[tickResetInterval];
-
-					treeTimer = new Stopwatch();
-					treeTimes = new long[tickResetInterval];
+					activeTree = new SortedTreeData(200);
+					inactiveTree = new SortedTreeData(200);
 				}
+
 
 				public static void Init()
 				{
@@ -207,7 +150,7 @@ namespace RichHudFramework
 				}
 
 				/// <summary>
-				/// Updates UI tree, updates layout and draws
+				/// Updates UI tree and invokes sizing, layout and draw callbacks
 				/// </summary>
 				public void Draw()
 				{
@@ -216,6 +159,9 @@ namespace RichHudFramework
 
 					try
 					{
+						// If the parallel tree update was scheduled especially late or ran
+						// long, skip and recheck on the next frame. Sorting cannot run 
+						// concurrently with client subtree searches.
 						if (!isUpdatingTree)
 							UpdateTree(isImmediateUpdateReq);
 
@@ -233,6 +179,10 @@ namespace RichHudFramework
 					}
 				}
 
+				/// <summary>
+				/// Updates client subtree polling then starts the next tree rebuild step in 
+				/// parallel.
+				/// </summary>
 				private void UpdateTree(bool isSynchronous)
 				{
 					int drawTick = instance.drawTick;
@@ -241,34 +191,14 @@ namespace RichHudFramework
 					for (int n = 0; n < clients.Count; n++)
 					{
 						int clientTick = drawTick + (n % treeRefreshRate);
-						clients[n].Update(clientTick);
+						clients[n].Update(nodeIterator, clientTick, n);
 					}
-
-					// Manually append cursor update list
-					inactiveLateUpdateBuffer.Clear();
-					instance._cursor.GetUpdateAccessors(inactiveLateUpdateBuffer, 0);
 
 					if (sortTick == 0)
 					{
-						if (!isSynchronous)
-							treeSwapLock.AcquireExclusive();
-
-						try
-						{
-							for (int n = 0; n < clients.Count; n++)
-								clients[n].FinishUpdate();
-
-							MyUtils.Swap(ref inactiveLateUpdateBuffer, ref activeLateUpdateBuffer);
-						}
-						catch (Exception e)
-						{
-							ExceptionHandler.ReportException(e);
-						}
-						finally
-						{
-							if (!isSynchronous)
-								treeSwapLock.ReleaseExclusive();
-						}
+						// Manually append cursor update list
+						lateUpdateBuffer.Clear();
+						nodeIterator.GetNodeData(instance._cursor.DataHandle, lateUpdateBuffer);
 					}
 
 					if (isSynchronous)
@@ -280,6 +210,8 @@ namespace RichHudFramework
 				private void DrawUI()
 				{
 					BillBoardUtils.BeginDraw();
+					RichHudStats.UI.InternalCounters.ElementsRegistered = activeTree.Hooks.LayoutActions.Count;
+
 					float resScale = ResScale;
 					int drawTick = instance.drawTick;
 
@@ -292,36 +224,37 @@ namespace RichHudFramework
 							instance._cursor.DrawCursor = true;
 					}
 
-					treeTimes[drawTick] = treeTimer.ElapsedTicks;
-					drawTimer.Restart();
+					RichHudStats.UI.Draw.BeginTick();
 
 					// Invoke before draw callbacks on clients
 					for (int n = 0; n < clients.Count; n++)
 						clients[n].BeforeDrawCallback?.Invoke();
 
+					// Sizing - vID 13+ only
+					nodeIterator.UpdateNodeSizing(clients, activeTree);
+
 					// Older clients (1.0.3-) node spaces require layout refreshes to function
+					// Flag no longer used for vID 13+ (1.3+).
 					bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
 						refreshLayout = lastResScale != resScale || rebuildLists;
 
-					for (int n = 0; n < layoutActions.Count; n++)
-						layoutActions[n](refreshLayout);
+					// Arrange/layout
+					nodeIterator.UpdateNodeLayout(clients, activeTree, refreshLayout);
 
 					// Draw UI elements
-					for (int n = 0; n < drawActions.Count; n++)
-						drawActions[n]();
+					nodeIterator.DrawNodes(clients, activeTree);
 
-					drawTimer.Stop();
+					// Try to exclude stats render time
+					RichHudStats.UI.Draw.PauseTick();
 					RichHudDebug.UpdateDisplay();
-					drawTimer.Start();
+					RichHudStats.UI.Draw.ResumeTick();
 
 					// Invoke after draw callbacks on clients
 					for (int n = 0; n < clients.Count; n++)
 						clients[n].AfterDrawCallback?.Invoke();
 
 					BillBoardUtils.FinishDraw();
-
-					drawTimer.Stop();
-					drawTimes[drawTick] = drawTimer.ElapsedTicks;
+					RichHudStats.UI.Draw.EndTick();
 
 					if (rebuildLists)
 						RefreshRequested = false;
@@ -342,24 +275,21 @@ namespace RichHudFramework
 
 					try
 					{
-						inputTimer.Restart();
+						RichHudStats.UI.Input.BeginTick();
 
 						// Invoke after draw callbacks on clients
 						for (int n = 0; n < clients.Count; n++)
 							clients[n].BeforeInputCallback?.Invoke();
 
-						for (int n = 0; n < depthTestActions.Count; n++)
-							depthTestActions[n]();
+						nodeIterator.UpdateNodeInputDepth(clients, activeTree);
 
-						for (int n = inputActions.Count - 1; n >= 0; n--)
-							inputActions[n]();
+						nodeIterator.UpdateNodeInput(clients, activeTree);
 
 						// Invoke after draw callbacks on clients
 						for (int n = 0; n < clients.Count; n++)
 							clients[n].AfterInputCallback?.Invoke();
 
-						inputTimer.Stop();
-						inputTimes[instance.drawTick] = inputTimer.ElapsedTicks;
+						RichHudStats.UI.Input.EndTick();
 					}
 					catch (Exception e)
 					{
@@ -373,10 +303,14 @@ namespace RichHudFramework
 				}
 
 				/// <summary>
-				/// Dispatches parallel tree update divided over 3 ticks
+				/// Dispatches parallel tree update divided over 3 ticks to run between frames, 
+				/// semi-concurrent with draw, but not with client subtree searches.
 				/// </summary>
 				private void BeginAccessorListsUpdate()
 				{
+					if (sortTick == 0)
+						instance.EnqueueAction(RichHudStats.UI.Tree.BeginTick);
+
 					isUpdatingTree = true;
 
 					instance.EnqueueTask(() =>
@@ -392,18 +326,18 @@ namespace RichHudFramework
 				/// </summary>
 				private void UpdateAccessorListsImmediate()
 				{
-					treeTimer.Restart();
+					RichHudStats.UI.Tree.BeginTick();
 					isUpdatingTree = true;
 
 					RebuildUpdateLists(true);
-					UpdateDistMap();
+					UpdateDistances();
 
 					UpdateIndexBuffer();
 					ResetUpdateBuffers();
 
 					BuildSortedUpdateLists(true);
 
-					treeTimer.Stop();
+					RichHudStats.UI.Tree.EndTick();
 					isUpdatingTree = false;
 					isImmediateUpdateReq = false;
 				}
@@ -417,12 +351,10 @@ namespace RichHudFramework
 
 					try
 					{
-						treeTimer.Restart();
-
 						if (sortTick % 3 == 0)
 						{
 							RebuildUpdateLists();
-							instance.EnqueueAction(UpdateDistMap);
+							instance.EnqueueAction(UpdateDistances);
 						}
 
 						if (sortTick % 3 == 1)
@@ -434,7 +366,7 @@ namespace RichHudFramework
 						if (sortTick % 3 == 2)
 						{
 							BuildSortedUpdateLists();
-							treeTimer.Stop();
+							instance.EnqueueAction(RichHudStats.UI.Tree.EndTick);
 						}
 					}
 					finally
@@ -451,45 +383,34 @@ namespace RichHudFramework
 				{
 					// Clear update lists and rebuild accessor lists from HUD tree
 					originFuncSet.Clear();
-					activeUpdateLists.Clear();
+					nodeBuffer.Clear();
 
-					if (!isSynchronous)
-						treeSwapLock.AcquireShared();
+					int nodeCount = lateUpdateBuffer.DepthData.Count;
 
-					try
-					{
-						for (int i = 0; i < clients.Count; i++)
-							activeUpdateLists.Add(clients[i].UpdateAccessors);
+					for (int i = 0; i < clients.Count; i++)
+						nodeCount += clients[i].InactiveNodeData.DepthData.Count;
 
-						// Manually append last elements after all clients
-						activeUpdateLists.Add(activeLateUpdateBuffer);
+					nodeBuffer.EnsureCapacity(nodeCount);
 
-						// Build distance func HashSet
-						activeCount = 0;
+					for (int i = 0; i < clients.Count; i++)
+						nodeBuffer.AddRange(clients[i].InactiveNodeData);
 
-						for (int i = 0; i < activeUpdateLists.Count; i++)
-						{
-							for (int j = 0; j < activeUpdateLists[i].Count; j++)
-							{
-								originFuncSet.Add(activeUpdateLists[i][j].Item2.Item2);
-								activeCount++;
-							}
-						}
-					}
-					finally
-					{
-						if (!isSynchronous)
-							treeSwapLock.ReleaseShared();
-					}
+					// Manually append last elements after all clients
+					nodeBuffer.AddRange(lateUpdateBuffer);
+					activeCount = nodeCount;
+
+					// Build distance func HashSet
+					for (int i = 0; i < nodeBuffer.DepthData.Count; i++)
+						originFuncSet.Add(nodeBuffer.DepthData[i].GetPosFunc);
 
 					originFunctions.Clear();
 					originFunctions.AddRange(originFuncSet);
 				}
 
 				/// <summary>
-				/// Builds distance map for HUD Space Nodes
+				/// Begins distance map rebuild
 				/// </summary>
-				private void UpdateDistMap()
+				private void UpdateDistances()
 				{
 					indexBuffer.Clear();
 					Vector3D camPos = PixelToWorldRef[0].Translation;
@@ -497,6 +418,10 @@ namespace RichHudFramework
 					for (int i = 0; i < originFunctions.Count; i++)
 					{
 						Func<Vector3D> OriginFunc = originFunctions[i];
+
+						if (OriginFunc == null)
+							throw new Exception("HUD Node origin cannot be null.");
+
 						Vector3D nodeOrigin = OriginFunc();
 						double dist = (float)Math.Round(Vector3D.Distance(nodeOrigin, camPos), 6);
 						ulong index = (ulong)i,
@@ -512,6 +437,15 @@ namespace RichHudFramework
 						indexBuffer.Add((distBits << 32) | index);
 					}
 
+					RichHudStats.UI.InternalCounters.HudSpacesRegistered = distMap.Count;
+				}
+
+				/// <summary>
+				/// Builds sorted index list for sorted accessor lists
+				/// </summary>
+				private void UpdateIndexBuffer()
+				{
+					// Build distance map
 					indexBuffer.Sort();
 					distMap.Clear();
 
@@ -533,29 +467,18 @@ namespace RichHudFramework
 						distMap.Add(originFunctions[index], (ushort)distID);
 					}
 
-					HudSpacesRegistered = distMap.Count;
-				}
-
-				/// <summary>
-				/// Builds sorted index list for sorted accessor lists
-				/// </summary>
-				private void UpdateIndexBuffer()
-				{
+					// Create sorting keys
 					indexBuffer.Clear();
 					indexBuffer.EnsureCapacity(activeCount);
 
 					// Build index list and sort by zOffset
-					for (int i = 0; i < activeUpdateLists.Count; i++)
+					for (int i = 0; i < nodeBuffer.DepthData.Count; i++)
 					{
-						for (int j = 0; j < activeUpdateLists[i].Count; j++)
-						{
-							var accessors = activeUpdateLists[i][j];
-							ulong index = ((uint)i << 16 | (ushort)j),
-							zOffset = accessors.Item2.Item1(),
-							distance = distMap[accessors.Item2.Item2];
+						NodeDepthData depthData = nodeBuffer.DepthData[i];
+						ulong zOffset = depthData.ZOffset,
+						distance = distMap[depthData.GetPosFunc];
 
-							indexBuffer.Add((distance << 48) | (zOffset << 32) | index);
-						}
+						indexBuffer.Add((distance << 48) | (zOffset << 32) | (uint)i);
 					}
 
 					if (indexBuffer.Capacity > indexBuffer.Count * 3 && indexBuffer.Count > 200)
@@ -570,15 +493,8 @@ namespace RichHudFramework
 				/// </summary>
 				private void ResetUpdateBuffers()
 				{
-					depthTestActionBuffer.Clear();
-					inputActionBuffer.Clear();
-					drawActionBuffer.Clear();
-					layoutActionBuffer.Clear();
-
-					depthTestActionBuffer.EnsureCapacity(activeCount);
-					inputActionBuffer.EnsureCapacity(activeCount);
-					drawActionBuffer.EnsureCapacity(activeCount);
-					layoutActionBuffer.EnsureCapacity(activeCount);
+					inactiveTree.Clear();
+					inactiveTree.EnsureCapacity(activeCount);
 				}
 
 				/// <summary>
@@ -586,68 +502,89 @@ namespace RichHudFramework
 				/// </summary>
 				private void BuildSortedUpdateLists(bool isSynchronous = false)
 				{
-					// Build sorted depth test list
+					// Build sorted depth test list in forward, back to front order
 					for (int n = 0; n < indexBuffer.Count; n++)
 					{
-						uint index = (uint)indexBuffer[n];
-						int i = (int)(index >> 16);
-						int j = (int)(index & 0xFFFF);
+						int index = (int)indexBuffer[n];
+						Action depthTestAction = nodeBuffer.HookData[index].Item2;
 
-						HudUpdateAccessors accessors = activeUpdateLists[i][j];
-						depthTestActionBuffer.Add(accessors.Item3);
-					}
-
-					// Build sorted input list
-					for (int n = 0; n < indexBuffer.Count; n++)
-					{
-						uint index = (uint)indexBuffer[n];
-						int i = (int)(index >> 16);
-						int j = (int)(index & 0xFFFF);
-
-						HudUpdateAccessors accessors = activeUpdateLists[i][j];
-						inputActionBuffer.Add(accessors.Item4);
-					}
-
-					// Build sorted draw list
-					for (int n = 0; n < indexBuffer.Count; n++)
-					{
-						uint index = (uint)indexBuffer[n];
-						int i = (int)(index >> 16);
-						int j = (int)(index & 0xFFFF);
-
-						HudUpdateAccessors accessors = activeUpdateLists[i][j];
-						drawActionBuffer.Add(accessors.Item6);
-					}
-
-					// Build layout list (without sorting)
-					for (int i = 0; i < activeUpdateLists.Count; i++)
-					{
-						for (int j = 0; j < activeUpdateLists[i].Count; j++)
+						if (depthTestAction != null)
 						{
-							var accessors = activeUpdateLists[i][j];
-							layoutActionBuffer.Add(accessors.Item5);
+							inactiveTree.Hooks.InputDepthActions.Add(new NodeHook 
+							{ 
+								Callback = depthTestAction,
+								NodeID = index
+							});
 						}
 					}
 
-					if (depthTestActionBuffer.Capacity > depthTestActionBuffer.Count * 3 && depthTestActionBuffer.Count > 200)
+					// Build sorted input list in reverse, front to back order
+					for (int n = indexBuffer.Count - 1; n >= 0; n--)
 					{
-						depthTestActionBuffer.TrimExcess();
-						inputActionBuffer.TrimExcess();
-						drawActionBuffer.TrimExcess();
-						layoutActionBuffer.TrimExcess();
+						int index = (int)indexBuffer[n];
+						Action inputAction = nodeBuffer.HookData[index].Item3;
+
+						if (inputAction != null)
+						{
+							inactiveTree.Hooks.InputActions.Add(new NodeHook 
+							{
+								Callback = inputAction,
+								NodeID = index
+							});
+						}
 					}
 
-					// Make results visible
+					// Build sorted draw list in forward, back to front order
+					for (int n = 0; n < indexBuffer.Count; n++)
+					{
+						int index = (int)indexBuffer[n];
+						Action drawAction = nodeBuffer.HookData[index].Item6;
+
+						if (drawAction != null)
+						{
+							inactiveTree.Hooks.DrawActions.Add(new NodeHook 
+							{
+								Callback = drawAction,
+								NodeID = index
+							});
+						}
+					}
+
+					// Build sizing list (without sorting) in reverse, bottom-up order
+					for (int i = nodeBuffer.HookData.Count - 1; i >= 0; i--)
+					{
+						Action sizeAction = nodeBuffer.HookData[i].Item4;
+
+						if (sizeAction != null)
+						{
+							inactiveTree.Hooks.SizingActions.Add(new NodeHook 
+							{
+								Callback = sizeAction,
+								NodeID = i
+							});
+						}
+					}
+
+					// Build layout list (without sorting) in forward, top-down order
+					for (int i = 0; i < nodeBuffer.HookData.Count; i++)
+					{
+						Action<bool> layoutAction = nodeBuffer.HookData[i].Item5;
+						inactiveTree.Hooks.LayoutActions.Add(new NodeHook<bool>
+						{
+							Callback = layoutAction,
+							NodeID = i
+						});
+					}
+
+					MyUtils.Swap(ref inactiveTree.StateData, ref nodeBuffer.StateData);
+
+					// Make results active
 					if (!isSynchronous)
 						updateSwapLock.AcquireExclusive();
 
 					try
 					{
-						ElementRegistered = activeCount;
-						MyUtils.Swap(ref depthTestActionBuffer, ref depthTestActions);
-						MyUtils.Swap(ref inputActionBuffer, ref inputActions);
-						MyUtils.Swap(ref drawActionBuffer, ref drawActions);
-						MyUtils.Swap(ref layoutActionBuffer, ref layoutActions);
+						MyUtils.Swap(ref inactiveTree, ref activeTree);
 					}
 					finally
 					{
