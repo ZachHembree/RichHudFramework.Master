@@ -1,7 +1,6 @@
 ﻿using RichHudFramework.Server;
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using VRage;
 using VRageMath;
 using HudNodeHookData = VRage.MyTuple<
@@ -68,8 +67,8 @@ namespace RichHudFramework
 				/// Iterates over UI tree beginning at the given root node and writes it into a flattened list in 
 				/// depth first order. Returns the number of nodes added.
 				/// </summary>
-				public int GetNodeData(HudNodeDataHandle srcRoot, List<FlatSubtree> dst, 
-					ObjectPool<FlatSubtree> bufferPool, int clientID = 0)
+				public int GetNodeData(HudNodeDataHandle srcRoot, List<FlatSubtree> dst,
+					ObjectPool<FlatSubtree> bufferPool, TreeClient owner)
 				{
 					Clear();
 
@@ -165,6 +164,8 @@ namespace RichHudFramework
 
 									// If the subtree was already using these values, it may be unchanged
 									canBeEqual = (config == subtree.RootConfig && GetOriginFunc == subtree.GetOriginFunc);
+
+									subtree.Owner = owner;
 									subtree.RootConfig = config;
 									subtree.GetOriginFunc = GetOriginFunc;
 
@@ -183,7 +184,7 @@ namespace RichHudFramework
 							{
 								if (canBeEqual)
 								{
-									byte lastOuterOffset = (byte)subtree.Inactive.DepthData[subtreePos].OuterZOffset;
+									byte lastOuterOffset = subtree.Inactive.OuterOffsets[subtreePos];
 									byte outerOffset = (byte)config[FullZOffsetID];
 
 									// If the config reference matches, the node is the same
@@ -192,24 +193,18 @@ namespace RichHudFramework
 									canBeEqual &= outerOffset == lastOuterOffset;
 								}
 
-								// Confg/state
-								subtree.Inactive.StateData[subtreePos] = new NodeState
-								{
-									Config = config,
-									ParentConfig = parent?[0].Item1,
-									ClientID = clientID
-								};
-								
 								// If the tree members are unchanged and don't require resorting, this is 
 								// unnecessary.
 								if (!canBeEqual)
 								{
-									// Sorting info
-									subtree.Inactive.DepthData[subtreePos] = new NodeDepthData
+									// Confg/state
+									subtree.Inactive.StateData[subtreePos] = new NodeState
 									{
-										GetPosFunc = stack.node[0].Item2[0],
-										OuterZOffset = (byte)config[FullZOffsetID]
+										Config = config,
+										ParentConfig = parent?[0].Item1
 									};
+									// Sorting info
+									subtree.Inactive.OuterOffsets[subtreePos] = (byte)config[FullZOffsetID];
 									// Callbacks
 									subtree.Inactive.HookData[subtreePos] = stack.node[0].Item3;
 								}
@@ -223,15 +218,10 @@ namespace RichHudFramework
 								subtree.Inactive.StateData.Add(new NodeState
 								{
 									Config = config,
-									ParentConfig = parent?[0].Item1,
-									ClientID = clientID
+									ParentConfig = parent?[0].Item1
 								});
 								// Sorting info
-								subtree.Inactive.DepthData.Add(new NodeDepthData
-								{
-									GetPosFunc = stack.node[0].Item2[0],
-									OuterZOffset = (byte)config[FullZOffsetID]
-								});
+								subtree.Inactive.OuterOffsets.Add((byte)config[FullZOffsetID]);
 								// Callbacks
 								subtree.Inactive.HookData.Add(stack.node[0].Item3);
 							}
@@ -275,9 +265,9 @@ namespace RichHudFramework
 					return nodeCount;
 				}
 
-				public void UpdateNodeSizing(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees)
+				public void UpdateNodeSizing(IReadOnlyList<FlatSubtree> subtrees)
 				{
-					foreach (FlatSubtree subtree in subtrees) 
+					foreach (FlatSubtree subtree in subtrees)
 					{
 						var active = subtree.Active;
 
@@ -309,15 +299,15 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									int clientID = active.StateData[sizingUpdate.NodeID].ClientID;
-									clients[clientID].ReportExceptionFunc(e);
+									subtree.Owner.ReportExceptionFunc(e);
+									break;
 								}
 							}
 						}
 					}
 				}
 
-				public void UpdateNodeLayout(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees, bool refresh = false)
+				public void UpdateNodeLayout(IReadOnlyList<FlatSubtree> subtrees, bool refresh = false)
 				{
 					foreach (FlatSubtree subtree in subtrees)
 					{
@@ -360,8 +350,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									int clientID = state.ClientID;
-									clients[clientID].ReportExceptionFunc(e);
+									subtree.Owner.ReportExceptionFunc(e);
+									break;
 								}
 							}
 
@@ -394,7 +384,7 @@ namespace RichHudFramework
 					}
 				}
 
-				public void DrawNodes(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees)
+				public void DrawNodes(IReadOnlyList<FlatSubtree> subtrees)
 				{
 					foreach (FlatSubtree subtree in subtrees)
 					{
@@ -428,15 +418,15 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									int clientID = state.ClientID;
-									clients[clientID].ReportExceptionFunc(e);
+									subtree.Owner.ReportExceptionFunc(e);
+									break;
 								}
 							}
 						}
-					}	
+					}
 				}
 
-				public void UpdateNodeInputDepth(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees)
+				public void UpdateNodeInputDepth(IReadOnlyList<FlatSubtree> subtrees)
 				{
 					if (HudMain.InputMode == HudInputMode.NoInput)
 						return;
@@ -482,15 +472,15 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									int clientID = state.ClientID;
-									clients[clientID].ReportExceptionFunc(e);
+									subtree.Owner.ReportExceptionFunc(e);
+									break;
 								}
 							}
 						}
 					}
 				}
 
-				public void UpdateNodeInput(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees)
+				public void UpdateNodeInput(IReadOnlyList<FlatSubtree> subtrees)
 				{
 					foreach (FlatSubtree subtree in subtrees)
 					{
@@ -528,8 +518,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									int clientID = state.ClientID;
-									clients[clientID].ReportExceptionFunc(e);
+									subtree.Owner.ReportExceptionFunc(e);
+									break;
 								}
 							}
 						}

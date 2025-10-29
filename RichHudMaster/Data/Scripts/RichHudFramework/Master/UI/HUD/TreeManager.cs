@@ -119,11 +119,11 @@ namespace RichHudFramework
 					for (int n = 0; n < clients.Count; n++)
 					{
 						int clientTick = drawTick + (n % treeRefreshRate);
-						clients[n].Update(nodeIterator, subtreePool, clientTick, n);
+						clients[n].Update(nodeIterator, subtreePool, clientTick);
 					}
 
 					// Manually append cursor update list
-					nodeIterator.GetNodeData(instance._cursor.DataHandle, lateUpdateBuffer, subtreePool);
+					nodeIterator.GetNodeData(instance._cursor.DataHandle, lateUpdateBuffer, subtreePool, clients[0]);
 
 					SortSubtrees();
 					RichHudStats.UI.Tree.EndTick();
@@ -153,7 +153,7 @@ namespace RichHudFramework
 						clients[n].BeforeDrawCallback?.Invoke();
 
 					// Sizing - vID 13+ only
-					nodeIterator.UpdateNodeSizing(clients, activeSubtrees);
+					nodeIterator.UpdateNodeSizing(activeSubtrees);
 
 					// Older clients (1.0.3-) node spaces require layout refreshes to function
 					// Flag no longer used for vID 13+ (1.3+).
@@ -161,10 +161,10 @@ namespace RichHudFramework
 						refreshLayout = lastResScale != resScale || rebuildLists;
 
 					// Arrange/layout
-					nodeIterator.UpdateNodeLayout(clients, activeSubtrees, refreshLayout);
+					nodeIterator.UpdateNodeLayout(activeSubtrees, refreshLayout);
 
 					// Draw UI elements
-					nodeIterator.DrawNodes(clients, activeSubtrees);
+					nodeIterator.DrawNodes(activeSubtrees);
 
 					// Try to exclude stats render time
 					RichHudStats.UI.Draw.PauseTick();
@@ -195,8 +195,8 @@ namespace RichHudFramework
 					for (int n = 0; n < clients.Count; n++)
 						clients[n].BeforeInputCallback?.Invoke();
 
-					nodeIterator.UpdateNodeInputDepth(clients, activeSubtrees);
-					nodeIterator.UpdateNodeInput(clients, activeSubtrees);
+					nodeIterator.UpdateNodeInputDepth(activeSubtrees);
+					nodeIterator.UpdateNodeInput(activeSubtrees);
 
 					// Invoke after input callbacks on clients
 					for (int n = 0; n < clients.Count; n++)
@@ -246,7 +246,7 @@ namespace RichHudFramework
 					int nodeCount = 0;
 
 					for (int i = 0; i < clients.Count; i++)
-						subtreeBuffer.AddRange(clients[i].InactiveNodeData);
+						subtreeBuffer.AddRange(clients[i].Subtrees);
 
 					// Manually append last elements after all clients
 					subtreeBuffer.AddRange(lateUpdateBuffer);
@@ -263,7 +263,7 @@ namespace RichHudFramework
 					for (int i = 0; i < subtreeBuffer.Count; i++)
 					{
 						originFuncSet.Add(subtreeBuffer[i].GetOriginFunc);
-						activeCount += subtreeBuffer[i].Inactive.DepthData.Count;
+						activeCount += subtreeBuffer[i].Inactive.OuterOffsets.Count;
 					}
 
 					RichHudStats.UI.InternalCounters.ElementsRegistered = activeCount;
@@ -332,14 +332,14 @@ namespace RichHudFramework
 					{
 						if (subtree.IsActiveStale)
 						{
-							RichHudStats.UI.InternalCounters.ElementSortingUpdates += subtree.Inactive.DepthData.Count;
+							RichHudStats.UI.InternalCounters.ElementSortingUpdates += subtree.Inactive.OuterOffsets.Count;
 
 							indexBuffer.Clear();
-							IReadOnlyList<NodeDepthData> depthData = subtree.Inactive.DepthData;
+							IReadOnlyList<byte> outerOffsets = subtree.Inactive.OuterOffsets;
 
-							for (int i = 0; i < depthData.Count; i++)
+							for (int i = 0; i < outerOffsets.Count; i++)
 							{
-								ulong zOffset = depthData[i].OuterZOffset;
+								ulong zOffset = outerOffsets[i];
 								indexBuffer.Add((zOffset << 32) | (uint)i);
 							}
 

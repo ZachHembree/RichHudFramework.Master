@@ -76,10 +76,9 @@ namespace RichHudFramework
 				public partial class TreeClient
 				{
 					/// <summary>
-					/// Read only list of accessor list for UI elements registered to this client to be 
-					/// added to the tree in the next update.
+					/// Read only UI node subtrees registered to this client
 					/// </summary>
-					public IReadOnlyList<FlatSubtree> InactiveNodeData { get; private set; }
+					public IReadOnlyList<FlatSubtree> Subtrees { get; private set; }
 
 					/// <summary>
 					/// Number of elements registered to the client
@@ -152,12 +151,12 @@ namespace RichHudFramework
 						this.ApiVersion = apiVersion;
 
 						subtreeBuffers = new List<FlatSubtree>();
-						InactiveNodeData = subtreeBuffers;
+						Subtrees = subtreeBuffers;
 
 						Registered = TreeManager.RegisterClient(this);
 					}
 
-					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, int tick, int clientID)
+					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, int tick)
 					{
 						if (refreshDrawList || ApiVersion > (int)APIVersionTable.Version1Base)
 							refreshRequested = true;
@@ -167,10 +166,10 @@ namespace RichHudFramework
 							if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 							{
 								if (RootNodeHandle != null)
-									ElementsUpdating = nodeIterator.GetNodeData(RootNodeHandle, subtreeBuffers, bufferPool, clientID);
+									ElementsUpdating = nodeIterator.GetNodeData(RootNodeHandle, subtreeBuffers, bufferPool, this);
 							}
 							else if (GetUpdateAccessors != null)
-								ElementsUpdating = LegacyNodeUpdate(bufferPool, clientID);
+								ElementsUpdating = LegacyNodeUpdate(bufferPool);
 
 							SubtreesUpdating = subtreeBuffers.Count;
 						}

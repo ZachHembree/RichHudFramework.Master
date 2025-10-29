@@ -26,17 +26,6 @@ namespace RichHudFramework
 			{
 				public IReadOnlyList<uint> ParentConfig;
 				public uint[] Config;
-				public int ClientID;
-			}
-
-			/// <summary>
-			/// Contains information required to sort a UI node to the appropriate depth
-			/// </summary>
-			public struct NodeDepthData
-			{
-				// Sorting Data
-				public HudSpaceOriginFunc GetPosFunc;
-				public byte OuterZOffset;
 			}
 
 			public struct NodeHook<T>
@@ -141,6 +130,11 @@ namespace RichHudFramework
 				/// </summary>
 				public HudSpaceOriginFunc GetOriginFunc;
 
+				/// <summary>
+				/// Reference to the tree client that owns the subtree
+				/// </summary>
+				public TreeClient Owner;
+
 				public readonly FlatSubtreeData Inactive;
 				public readonly SortedSubtreeData Active;
 
@@ -152,15 +146,15 @@ namespace RichHudFramework
 				}
 
 				public void Clear()
-				{
-					Inactive.Clear(); 
-					Active.Clear();
-
+				{			
 					IsActiveStale = true;
-
 					RootConfig = null;
 					GetLayerFuncOld = null;
 					GetOriginFunc = null;
+
+					Inactive.Clear();
+					Active.Clear();
+					Owner = null;
 				}
 			}
 
@@ -168,20 +162,20 @@ namespace RichHudFramework
 			{
 				// Parallel - state data null for vID 12 and older
 				public List<NodeState> StateData;
-				public List<NodeDepthData> DepthData; // Sorting only
+				public List<byte> OuterOffsets; // Sorting only
 				public List<HudNodeHookData> HookData;
 
 				public FlatSubtreeData(int capacity = 0)
 				{
 					StateData = new List<NodeState>(capacity);
-					DepthData = new List<NodeDepthData>(capacity);
+					OuterOffsets = new List<byte>(capacity);
 					HookData = new List<HudNodeHookData>(capacity);
 				}
 
 				public void TrimExcess()
 				{
 					StateData.TrimExcess();
-					DepthData.TrimExcess();
+					OuterOffsets.TrimExcess();
 					HookData.TrimExcess();
 				}
 
@@ -197,21 +191,21 @@ namespace RichHudFramework
 					int count = StateData.Count - newLength;
 
 					StateData.RemoveRange(start, count);
-					DepthData.RemoveRange(start, count);
+					OuterOffsets.RemoveRange(start, count);
 					HookData.RemoveRange(start, count);
 				}
 
 				public void EnsureCapacity(int capacity)
 				{
 					StateData.EnsureCapacity(capacity);
-					DepthData.EnsureCapacity(capacity);
+					OuterOffsets.EnsureCapacity(capacity);
 					HookData.EnsureCapacity(capacity);
 				}
 
 				public void Clear()
 				{
 					StateData.Clear();
-					DepthData.Clear();
+					OuterOffsets.Clear();
 					HookData.Clear();
 				}
 			}

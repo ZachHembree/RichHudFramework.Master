@@ -75,7 +75,7 @@ namespace RichHudFramework
 					private Action<List<HudUpdateAccessorsOld>, byte> GetUpdateAccessors;
 					private List<HudUpdateAccessorsOld> convBuffer;
 
-					private int LegacyNodeUpdate(ObjectPool<FlatSubtree> bufferPool, int clientID)
+					private int LegacyNodeUpdate(ObjectPool<FlatSubtree> bufferPool)
 					{
 						if (convBuffer == null)
 							convBuffer = new List<HudUpdateAccessorsOld>();
@@ -86,7 +86,7 @@ namespace RichHudFramework
 						if (convBuffer.Count == 0)
 							return 0;
 
-						GetLegacyNodeData(convBuffer, subtreeBuffers, bufferPool, clientID);
+						GetLegacyNodeData(convBuffer, subtreeBuffers, bufferPool, this);
 						
 						if (convBuffer.Capacity > convBuffer.Count * 10)
 							convBuffer.TrimExcess();
@@ -101,7 +101,7 @@ namespace RichHudFramework
 					}
 
 					private static void GetLegacyNodeData(List<HudUpdateAccessorsOld> srcBuffer, List<FlatSubtree> dst,
-						ObjectPool<FlatSubtree> bufferPool, int clientID)
+						ObjectPool<FlatSubtree> bufferPool, TreeClient owner)
 					{
 						FlatSubtree subtree = null;
 
@@ -149,6 +149,8 @@ namespace RichHudFramework
 
 								// If the subtree was already using these values, it may be unchanged
 								canBeEqual = (GetLayerFuncOld == subtree.GetLayerFuncOld && GetOriginFunc == subtree.GetOriginFunc);
+
+								subtree.Owner = owner;
 								subtree.GetLayerFuncOld = GetLayerFuncOld;
 								subtree.GetOriginFunc = GetOriginFunc;
 
@@ -162,7 +164,7 @@ namespace RichHudFramework
 							{
 								if (canBeEqual)
 								{
-									byte lastOuterOffset = (byte)subtree.Inactive.DepthData[subtreePos].OuterZOffset;
+									byte lastOuterOffset = subtree.Inactive.OuterOffsets[subtreePos];
 									byte outerOffset = (byte)FullZOffset;
 
 									// If the GetOrSetApiMemberFunc is the same as the last, it's the same node
@@ -171,20 +173,11 @@ namespace RichHudFramework
 									canBeEqual &= outerOffset == lastOuterOffset;
 								}
 
-								subtree.Inactive.StateData[subtreePos] = new NodeState
-								{
-									ClientID = clientID
-								};
-
 								// If the tree members are unchanged and don't require resorting, this is 
 								// unnecessary.
 								if (!canBeEqual)
 								{
-									subtree.Inactive.DepthData[subtreePos] = new NodeDepthData
-									{
-										GetPosFunc = GetOriginFunc,
-										OuterZOffset = (byte)FullZOffset
-									};
+									subtree.Inactive.OuterOffsets[subtreePos] = (byte)FullZOffset;
 									subtree.Inactive.HookData[subtreePos] = new HudNodeHookData
 									{
 										Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
@@ -201,15 +194,9 @@ namespace RichHudFramework
 								// If there were new additions, it can't be equal
 								canBeEqual = false;
 
-								subtree.Inactive.StateData.Add(new NodeState
-								{
-									ClientID = clientID
-								});
-								subtree.Inactive.DepthData.Add(new NodeDepthData
-								{
-									GetPosFunc = GetOriginFunc,
-									OuterZOffset = (byte)FullZOffset
-								});
+								// Unused node state list needs to be padded to remain parallel
+								subtree.Inactive.StateData.Add(default(NodeState));
+								subtree.Inactive.OuterOffsets.Add((byte)FullZOffset);
 								subtree.Inactive.HookData.Add(new HudNodeHookData
 								{
 									Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
