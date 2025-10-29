@@ -82,22 +82,22 @@ namespace RichHudFramework
             /// <summary>
             /// Adds an element of type <see cref="TElement"/> to the chain.
             /// </summary>
-            public virtual void Add(TElement element, bool preload = false)
+            public virtual void Add(TElement element)
             {
                 var newContainer = new TElementContainer();
                 newContainer.SetElement(element);
-                Add(newContainer, preload);
+                Add(newContainer);
             }
 
             /// <summary>
             /// Adds an element of type <see cref="TElementContainer"/> to the chain.
             /// </summary>
-            public virtual void Add(TElementContainer container, bool preload = false)
+            public virtual void Add(TElementContainer container)
             {
                 if (container.Element.Registered)
                     throw new Exception("HUD Element already registered!");
 
-                if (container.Element.Register(this, preload))
+                if (container.Element.Register(this))
                     hudCollectionList.Add(container);
                 else
                     throw new Exception("HUD Element registration failed.");
@@ -106,18 +106,18 @@ namespace RichHudFramework
             /// <summary>
             /// Add the given range to the end of the chain.
             /// </summary>
-            public virtual void AddRange(IReadOnlyList<TElementContainer> newContainers, bool preload = false)
+            public virtual void AddRange(IReadOnlyList<TElementContainer> newContainers)
             {
-                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, newContainers, preload);
+                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, newContainers);
                 hudCollectionList.AddRange(newContainers);
             }
 
             /// <summary>
             /// Adds an element of type <see cref="TElementContainer"/> at the given index.
             /// </summary>
-            public virtual void Insert(int index, TElementContainer container, bool preload = false)
+            public virtual void Insert(int index, TElementContainer container)
             {
-                if (container.Element.Register(this, preload))
+                if (container.Element.Register(this))
                     hudCollectionList.Insert(index, container);
                 else
                     throw new Exception("HUD Element registration failed.");
@@ -126,9 +126,9 @@ namespace RichHudFramework
             /// <summary>
             /// Insert the given range into the chain.
             /// </summary>
-            public virtual void InsertRange(int index, IReadOnlyList<TElementContainer> newContainers, bool preload = false)
+            public virtual void InsertRange(int index, IReadOnlyList<TElementContainer> newContainers)
             {
-                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, newContainers, preload);
+                NodeUtils.RegisterNodes<TElementContainer, TElement>(this, newContainers);
                 hudCollectionList.InsertRange(index, newContainers);
             }
 

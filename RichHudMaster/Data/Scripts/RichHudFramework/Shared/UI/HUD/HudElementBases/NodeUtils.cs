@@ -18,9 +18,9 @@ namespace RichHudFramework
 				/// <summary>
 				/// Used internally quickly register a list of child nodes to a parent.
 				/// </summary>
-				public static void RegisterNodes(HudParentBase newParent, IReadOnlyList<HudNodeBase> nodes, bool canPreload)
+				public static void RegisterNodes(HudParentBase newParent, IReadOnlyList<HudNodeBase> nodes)
 				{
-					ParentUtils.RegisterNodes(newParent, nodes, canPreload);
+					ParentUtils.RegisterNodes(newParent, nodes);
 
 					for (int n = 0; n < nodes.Count; n++)
 					{
@@ -29,22 +29,17 @@ namespace RichHudFramework
 
 						node.Config[StateID] |= (uint)HudElementStates.IsRegistered;
 						node.Config[StateID] &= ~(uint)HudElementStates.WasParentVisible;
-
-						if (canPreload)
-							node.Config[StateID] |= (uint)HudElementStates.CanPreload;
-						else
-							node.Config[StateID] &= ~(uint)HudElementStates.CanPreload;
 					}
 				}
 
 				/// <summary>
 				/// Used internally quickly register a list of child nodes to a parent.
 				/// </summary>
-				public static void RegisterNodes<TCon, TNode>(HudParentBase newParent, IReadOnlyList<TCon> nodes, bool canPreload)
+				public static void RegisterNodes<TCon, TNode>(HudParentBase newParent, IReadOnlyList<TCon> nodes)
 					where TCon : IHudElementContainer<TNode>, new()
 					where TNode : HudNodeBase
 				{
-					ParentUtils.RegisterNodes<TCon, TNode>(newParent, nodes, canPreload);
+					ParentUtils.RegisterNodes<TCon, TNode>(newParent, nodes);
 
 					for (int n = 0; n < nodes.Count; n++)
 					{
@@ -53,11 +48,6 @@ namespace RichHudFramework
 
 						node.Config[StateID] |= (uint)HudElementStates.IsRegistered;
 						node.Config[StateID] &= ~(uint)HudElementStates.WasParentVisible;
-
-						if (canPreload)
-							node.Config[StateID] |= (uint)HudElementStates.CanPreload;
-						else
-							node.Config[StateID] &= ~(uint)HudElementStates.CanPreload;
 					}
 				}
 

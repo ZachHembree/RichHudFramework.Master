@@ -21,13 +21,13 @@ namespace RichHudFramework
             /// <summary>
             /// Root parent for all HUD elements.
             /// </summary>
-            public static HudParentBase Root => instance._root;
+            public static HudParentBase Root { get; private set; }
 
-            /// <summary>
-            /// Root node for high DPI scaling at > 1080p. Draw matrix automatically rescales to comensate
-            /// for decrease in apparent size due to high DPI displays.
-            /// </summary>
-            public static HudParentBase HighDpiRoot => instance._highDpiRoot;
+			/// <summary>
+			/// Root node for high DPI scaling at > 1080p. Draw matrix automatically rescales to comensate
+			/// for decrease in apparent size due to high DPI displays.
+			/// </summary>
+			public static HudParentBase HighDpiRoot { get; private set; }
 
             /// <summary>
             /// Cursor shared between mods.
@@ -148,8 +148,12 @@ namespace RichHudFramework
                     throw new Exception("Only one instance of HudMain can exist at any given time.");
 
                 _root = new HudRoot();
-                _highDpiRoot = new ScaledSpaceNode(_root) { UpdateScaleFunc = () => ResScale };
-                _cursor = new HudCursor();
+				Root = _root;
+
+				_highDpiRoot = new ScaledSpaceNode(_root) { UpdateScaleFunc = () => ResScale };
+				HighDpiRoot = _highDpiRoot;
+
+				_cursor = new HudCursor();
 
                 UpdateScreenScaling();
                 TreeManager.Init();
@@ -169,6 +173,9 @@ namespace RichHudFramework
                 EnableCursor = false;
                 instance = null;
                 treeManager = null;
+
+                Root = null;
+                HighDpiRoot = null;
             }
 
             /// <summary>
@@ -352,11 +359,11 @@ namespace RichHudFramework
             }
 
             /// <summary>
-            /// Root parent for all hud elements.
+            /// Root node for all GUI elements
             /// </summary>
             private sealed class HudRoot : HudParentBase, IReadOnlyHudSpaceNode
             {
-                public bool DrawCursorInHudSpace { get; }
+				public bool DrawCursorInHudSpace { get; }
 
                 public Vector3 CursorPos { get; private set; }
 

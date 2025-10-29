@@ -160,7 +160,7 @@ namespace RichHudFramework.UI
                 ParentAlignment = ParentAlignments.Bottom,
                 HighlightPadding = Vector2.Zero
             };
-            selectionBox.Register(labelButton, true);
+            selectionBox.Register(labelButton);
             selectionBox.hudChain.SizingMode = HudChainSizingModes.FitMembersOffAxis;
 
             Width = 200f;

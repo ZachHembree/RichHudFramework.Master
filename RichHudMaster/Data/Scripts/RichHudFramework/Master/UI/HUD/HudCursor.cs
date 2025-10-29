@@ -138,18 +138,17 @@ namespace RichHudFramework
                     Config[ZOffsetInnerID] = byte.MaxValue;
                     Config[FullZOffsetID] = ushort.MaxValue;
 
-					Config[StateID] |= (uint)(HudElementStates.CanPreload | HudElementStates.IsSpaceNode);
+					Config[StateID] |= (uint)HudElementStates.IsSpaceNode;
 
                     GetHudSpaceFunc = () => new HudSpaceData(true, 1f, PlaneToWorldRef[0]);
                     GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;
                     PlaneToWorldRef = new MatrixD[1];
 
-                    cursorBox = new TexturedBox()
+                    cursorBox = new TexturedBox(this)
                     {
                         Material = new Material(MyStringId.GetOrCompute("MouseCursor"), new Vector2(64f)),
                         Size = new Vector2(64f)
                     };
-                    cursorBox.Register(this, true);
 
                     var shadow = new TexturedBox(cursorBox)
                     {

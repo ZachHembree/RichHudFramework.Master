@@ -173,7 +173,7 @@ namespace RichHudFramework.UI
                 Text = "None"
             };
 
-            listBox = new ListBox<TContainer, TElement, TValue>()
+            listBox = new ListBox<TContainer, TElement, TValue>(this)
             {
                 Visible = false,
                 CanIgnoreMasking = true,
@@ -182,7 +182,6 @@ namespace RichHudFramework.UI
                 ParentAlignment = ParentAlignments.Bottom,
                 TabColor = new Color(0, 0, 0, 0),
             };
-            listBox.Register(display, true);
             
             Size = new Vector2(331f, 43f);
             DropdownHeight = 100f;

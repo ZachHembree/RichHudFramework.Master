@@ -61,12 +61,11 @@ namespace RichHudFramework.UI
                 DimAlignment = DimAlignments.Size,
             };
 
-            tickBox = new TexturedBox()
+            tickBox = new TexturedBox(this)
             {
                 DimAlignment = DimAlignments.UnpaddedSize,
                 Padding = new Vector2(17f),
             };
-            tickBox.Register(this, true);
 
             IsBoxChecked = true;
 			Size = new Vector2(37f);

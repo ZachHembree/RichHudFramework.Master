@@ -16,7 +16,7 @@ namespace RichHudFramework
 				/// <summary>
 				/// Used internally quickly register a list of child nodes to a parent.
 				/// </summary>
-				public static void RegisterNodes(HudParentBase newParent, IReadOnlyList<HudNodeBase> nodes, bool canPreload)
+				public static void RegisterNodes(HudParentBase newParent, IReadOnlyList<HudNodeBase> nodes)
 				{
 					newParent.children.EnsureCapacity(newParent.children.Count + nodes.Count);
 
@@ -32,7 +32,7 @@ namespace RichHudFramework
 				/// <summary>
 				/// Used internally quickly register a list of child nodes to a parent.
 				/// </summary>
-				public static void RegisterNodes<TCon, TNode>(HudParentBase newParent, IReadOnlyList<TCon> nodes, bool canPreload)
+				public static void RegisterNodes<TCon, TNode>(HudParentBase newParent, IReadOnlyList<TCon> nodes)
 					where TCon : IHudElementContainer<TNode>, new()
 					where TNode : HudNodeBase
 				{

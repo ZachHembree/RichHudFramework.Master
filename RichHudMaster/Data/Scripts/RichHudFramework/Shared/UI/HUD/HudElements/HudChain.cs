@@ -184,13 +184,12 @@ namespace RichHudFramework
             /// </summary>
             /// <param name="alignAxisScale">Scale of the element relative to the chain along the align axis, less padding and space
             /// required for other chain members. 0f == constant size (default); 1f = auto</param>
-            /// <param name="preload"></param>
-            public virtual void Add(TElement element, float alignAxisScale, bool preload = false)
+            public virtual void Add(TElement element, float alignAxisScale)
             {
                 var newContainer = new TElementContainer();
                 newContainer.SetElement(element);
                 newContainer.AlignAxisScale = alignAxisScale;
-                Add(newContainer, preload);
+                Add(newContainer);
             }
 
             /// <summary>

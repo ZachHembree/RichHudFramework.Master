@@ -68,9 +68,9 @@ namespace RichHudFramework
 			IsMouseInBounds = 1 << 6,
 
 			/// <summary>
-			/// DEPRECATED
+			/// Internal flag used to indicate when the structure of the active UI tree may have changed.
 			/// </summary>
-			CanPreload = 1 << 7,
+			IsStructureStale = 1 << 7,
 
 			/// <summary>
 			/// Indicates the element is being clipped (masked) by its parent's bounding box or masking configuration. 

@@ -20,7 +20,6 @@ namespace RichHudFramework
 			protected const uint
 				nodeVisible = (uint)(HudElementStates.IsVisible | HudElementStates.WasParentVisible),
 				nodeInputEnabled = (uint)(HudElementStates.IsInputEnabled | HudElementStates.WasParentInputEnabled);
-			protected const int maxPreloadDepth = 5;
 
 			/// <summary>
 			/// Read-only parent object of the node.
@@ -77,9 +76,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Registers the element to the given parent object.
 			/// </summary>
-			/// <param name="canPreload">Indicates whether or not the element's accessors can be loaded into the update tree
-			/// before the element is visible. Useful for preventing flicker in scrolling lists.</param>
-			public virtual bool Register(HudParentBase newParent, bool canPreload = false)
+			public virtual bool Register(HudParentBase newParent)
 			{
 				if (newParent == this)
 					throw new Exception("Types of HudNodeBase cannot be parented to themselves!");
@@ -97,12 +94,6 @@ namespace RichHudFramework
 				if ((Config[StateID] & (uint)HudElementStates.IsRegistered) > 0)
 				{
 					Config[StateID] &= ~(uint)HudElementStates.WasParentVisible;
-
-					if (canPreload)
-						Config[StateID] |= (uint)HudElementStates.CanPreload;
-					else
-						Config[StateID] &= ~(uint)HudElementStates.CanPreload;
-
 					return true;
 				}
 				else
