@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using VRageMath;
 using HudNodeHookData = VRage.MyTuple<
 	System.Func<object, int, object>, // 1 -  GetOrSetApiMemberFunc
 	System.Action, // 2 - InputDepthAction
@@ -23,7 +24,6 @@ namespace RichHudFramework
 			{
 				public IReadOnlyList<uint> ParentConfig;
 				public uint[] Config;
-				public int ChlidCount;
 				public int ClientID;
 			}
 
@@ -112,26 +112,50 @@ namespace RichHudFramework
 				}
 			}
 
-			// Data before sorting
-			public class FlatTreeData
+			public class FlatSubtree
+			{
+				public bool IsStale;
+
+				/// <summary>
+				/// Starting inner ZOffset in the subtree's range
+				/// </summary>
+				public byte BaseZOffset;
+				public double Distance;
+				public HudSpaceOriginFunc OriginFunc;
+
+				public readonly FlatSubtreeData Inactive;
+				public readonly SortedSubtreeData Active;
+
+				public FlatSubtree(int capacity = 0)
+				{
+					Inactive = new FlatSubtreeData(capacity);
+					Active = new SortedSubtreeData(capacity);
+				}
+
+				public void Clear()
+				{
+					Inactive.Clear(); 
+					Active.Clear();
+
+					IsStale = true;
+					BaseZOffset = 0;
+					Distance = 0;
+					OriginFunc = null;
+				}
+			}
+
+			public class FlatSubtreeData
 			{
 				// Parallel - state data null for vID 12 and older
 				public List<NodeState> StateData;
 				public List<NodeDepthData> DepthData; // Sorting only
 				public List<HudNodeHookData> HookData;
 
-				public FlatTreeData(int capacity)
+				public FlatSubtreeData(int capacity = 0)
 				{
 					StateData = new List<NodeState>(capacity);
 					DepthData = new List<NodeDepthData>(capacity);
 					HookData = new List<HudNodeHookData>(capacity);
-				}
-
-				public void AddRange(FlatTreeData other)
-				{
-					StateData.AddRange(other.StateData);
-					DepthData.AddRange(other.DepthData);
-					HookData.AddRange(other.HookData);
 				}
 
 				public void TrimExcess()
@@ -156,12 +180,12 @@ namespace RichHudFramework
 				}
 			}
 
-			public class SortedTreeData
+			public class SortedSubtreeData
 			{
 				public List<NodeState> StateData;
 				public NodeHooks Hooks;
 
-				public SortedTreeData(int capacity)
+				public SortedSubtreeData(int capacity = 0)
 				{
 					StateData = new List<NodeState>(capacity);
 					Hooks = new NodeHooks(capacity);

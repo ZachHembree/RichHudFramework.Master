@@ -79,7 +79,17 @@ namespace RichHudFramework
 					/// Read only list of accessor list for UI elements registered to this client to be 
 					/// added to the tree in the next update.
 					/// </summary>
-					public FlatTreeData InactiveNodeData { get; private set; }
+					public IReadOnlyList<FlatSubtree> InactiveNodeData { get; private set; }
+
+					/// <summary>
+					/// Number of elements registered to the client
+					/// </summary>
+					public int ElementsUpdating { get; private set; }
+
+					/// <summary>
+					/// Number of subtrees registered to the client
+					/// </summary>
+					public int SubtreesUpdating { get; private set; }
 
 					/// <summary>
 					/// Returns true if the client has been registered to the TreeManager
@@ -131,7 +141,7 @@ namespace RichHudFramework
 					public Action<Exception> ReportExceptionFunc { get; private set; }
 
 					private bool _enableCursor;
-					private FlatTreeData flatTreeBuffer;
+					private readonly List<FlatSubtree> subtreeBuffers;
 
 					// Deprecated
 					private bool refreshRequested, refreshDrawList;
@@ -141,31 +151,31 @@ namespace RichHudFramework
 						this.ReportExceptionFunc = modClient?.ReportException ?? ExceptionHandler.ReportException;
 						this.ApiVersion = apiVersion;
 
-						flatTreeBuffer = new FlatTreeData(200);
-						InactiveNodeData = flatTreeBuffer;
+						subtreeBuffers = new List<FlatSubtree>();
+						InactiveNodeData = subtreeBuffers;
 
 						Registered = TreeManager.RegisterClient(this);
 					}
 
-					public void Update(HudNodeIterator nodeIterator, int tick, int clientID)
+					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, int tick, int clientID)
 					{
 						if (refreshDrawList || ApiVersion > (int)APIVersionTable.Version1Base)
 							refreshRequested = true;
 
 						if (refreshRequested && (tick % treeRefreshRate) == 0)
 						{
-							flatTreeBuffer.Clear();
+							bufferPool.ReturnRange(subtreeBuffers);
+							subtreeBuffers.Clear();
 
 							if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 							{
 								if (RootNodeHandle != null)
-									nodeIterator.GetNodeData(RootNodeHandle, flatTreeBuffer, clientID);
+									ElementsUpdating = nodeIterator.GetNodeData(RootNodeHandle, subtreeBuffers, bufferPool, clientID);
 							}
 							else if (GetUpdateAccessors != null)
-								LegacyNodeUpdate(clientID);
+								ElementsUpdating = LegacyNodeUpdate(bufferPool, clientID);
 
-							if (flatTreeBuffer.StateData.Capacity > flatTreeBuffer.StateData.Count * 10)
-								flatTreeBuffer.TrimExcess();
+							SubtreesUpdating = subtreeBuffers.Count;
 						}
 					}
 

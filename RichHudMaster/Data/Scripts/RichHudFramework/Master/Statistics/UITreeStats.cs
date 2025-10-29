@@ -13,7 +13,7 @@ namespace RichHudFramework.Server
 	{
 		public class UI
 		{
-			private const int CategoryCount = 4;
+			private const int CategoryCount = 6;
 
 			private const int TimeWindowSize = 240;
 			private const int TimeOutlierTrim = 0;
@@ -37,10 +37,27 @@ namespace RichHudFramework.Server
 			/// </summary>
 			public static double NodeUpdate99th { get; private set; }
 
+			public static double SubtreeSortAvgCount { get; private set; }
+
+			public static double SubtreeSort50th { get; private set; }
+
+			public static double SubtreeSort99th { get; private set; }
+
+			public static double ElementSortAvgCount { get; private set; }
+
+			public static double ElementSort50th { get; private set; }
+
+			public static double ElementSort99th { get; private set; }
+
 			/// <summary>
 			/// Number of unique HUD spaces registered
 			/// </summary>
 			public static int HudSpacesRegistered { get; private set; }
+
+			/// <summary>
+			/// Number of unique HUD spaces registered
+			/// </summary>
+			public static int SubtreesRegistered { get; private set; }
 
 			/// <summary>
 			/// Number of UI elements registered from all clients
@@ -85,7 +102,13 @@ namespace RichHudFramework.Server
 			{
 				public static int HudSpacesRegistered = 0;
 
+				public static int SubtreesRegistered = 0;
+
 				public static int ElementsRegistered = 0;
+
+				public static long SubtreeSortingUpdates = 0;
+
+				public static long ElementSortingUpdates = 0;
 
 				public static long SizingUpdates = 0;
 
@@ -97,7 +120,7 @@ namespace RichHudFramework.Server
 
 				public static long InputUpdates = 0;
 
-				public static long GetTotal()
+				public static long GetTotalUpdates()
 				{
 					return SizingUpdates + LayoutUpdates + DrawUpdates + InputDepthUpdates + InputUpdates;
 				}
@@ -106,6 +129,10 @@ namespace RichHudFramework.Server
 				{
 					HudSpacesRegistered = 0;
 					ElementsRegistered = 0;
+					SubtreesRegistered = 0;
+
+					SubtreeSortingUpdates = 0;
+					ElementSortingUpdates = 0;
 
 					SizingUpdates = 0;
 					LayoutUpdates = 0;
@@ -117,6 +144,8 @@ namespace RichHudFramework.Server
 
 			private static UI instance;
 
+			private readonly CounterStats elementSortStats;
+			private readonly CounterStats subtreeSortStats;
 			private readonly CounterStats nodeStats;
 			private readonly List<long> sortBuffer;
 			private static int updateTick;
@@ -137,6 +166,8 @@ namespace RichHudFramework.Server
 				timer = new Stopwatch();
 				timer.Start();
 
+				elementSortStats = new CounterStats(CounterWindowSize, CounterOutlierTrim);
+				subtreeSortStats = new CounterStats(CounterWindowSize, CounterOutlierTrim);
 				nodeStats = new CounterStats(CounterWindowSize, CounterOutlierTrim);
 				sortBuffer = new List<long>();
 				updateTick = 0;
@@ -176,7 +207,11 @@ namespace RichHudFramework.Server
 			{
 				HudSpacesRegistered = InternalCounters.HudSpacesRegistered;
 				ElementsRegistered = InternalCounters.ElementsRegistered;
-				instance.nodeStats.AddCount(InternalCounters.GetTotal());
+				SubtreesRegistered = InternalCounters.SubtreesRegistered;
+
+				instance.subtreeSortStats.AddCount(InternalCounters.SubtreeSortingUpdates);
+				instance.elementSortStats.AddCount(InternalCounters.ElementSortingUpdates);
+				instance.nodeStats.AddCount(InternalCounters.GetTotalUpdates());
 
 				if (instance.timer.ElapsedMilliseconds > UpdateIntervalMS)
 				{
@@ -207,6 +242,20 @@ namespace RichHudFramework.Server
 						AvgNodeUpdateCount = instance.nodeStats.AvgCount;
 						NodeUpdate50th = instance.nodeStats.Pct50th;
 						NodeUpdate99th = instance.nodeStats.Pct99th;
+					}
+					else if (updateTick == 4)
+					{
+						instance.subtreeSortStats.Update(instance.sortBuffer);
+						SubtreeSortAvgCount = instance.subtreeSortStats.AvgCount;
+						SubtreeSort50th = instance.subtreeSortStats.Pct50th;
+						SubtreeSort99th = instance.subtreeSortStats.Pct99th;
+					}
+					else if (updateTick == 5)
+					{
+						instance.elementSortStats.Update(instance.sortBuffer);
+						ElementSortAvgCount = instance.elementSortStats.AvgCount;
+						ElementSort50th = instance.elementSortStats.Pct50th;
+						ElementSort99th = instance.elementSortStats.Pct99th;
 					}
 
 					TotalAvg = DrawAvg + InputAvg;

@@ -74,7 +74,7 @@ namespace RichHudFramework
 					private Action<List<HudUpdateAccessorsOld>, byte> GetUpdateAccessors;
 					private List<HudUpdateAccessorsOld> convBuffer;
 
-					private void LegacyNodeUpdate(int clientID)
+					private int LegacyNodeUpdate(ObjectPool<FlatSubtree> bufferPool, int clientID)
 					{
 						if (convBuffer == null)
 							convBuffer = new List<HudUpdateAccessorsOld>();
@@ -82,18 +82,41 @@ namespace RichHudFramework
 						convBuffer.Clear();
 						GetUpdateAccessors?.Invoke(convBuffer, 0);
 
-						foreach (var src in convBuffer)
+						if (convBuffer.Count == 0)
+							return 0;
+
+						FlatSubtree subtree = null;
+						byte lastInnerOffset = 0;
+						Func<Vector3D> lastOriginFunc = null;
+
+						for (int i = 0; i < convBuffer.Count; i++)
 						{
-							flatTreeBuffer.StateData.Add(new NodeState 
+							var src = convBuffer[i];
+							byte innerOffset = (byte)(convBuffer[i].Item2.Item1() >> 8);
+							Func<Vector3D> originFunc = convBuffer[i].Item2.Item2;
+
+							// Start new subtree on new layer or coordinate space
+							if (innerOffset != lastInnerOffset || lastOriginFunc != originFunc)
+							{
+								subtree = bufferPool.Get();
+								subtree.BaseZOffset = innerOffset;
+								subtree.OriginFunc = originFunc;
+								subtreeBuffers.Add(subtree);
+
+								lastInnerOffset = innerOffset;
+								lastOriginFunc = originFunc;
+							}
+
+							subtree.Inactive.StateData.Add(new NodeState 
 							{
 								ClientID = clientID
 							});
-							flatTreeBuffer.DepthData.Add(new NodeDepthData
+							subtree.Inactive.DepthData.Add(new NodeDepthData
 							{
 								GetPosFunc = src.Item2.Item2,
 								ZOffset = src.Item2.Item1()
 							});
-							flatTreeBuffer.HookData.Add(new HudNodeHookData 
+							subtree.Inactive.HookData.Add(new HudNodeHookData 
 							{
 								Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
 								Item2 = src.Item3,  // 2 - InputDepthAction
@@ -112,6 +135,8 @@ namespace RichHudFramework
 
 						if (ApiVersion <= (int)APIVersionTable.Version1Base)
 							TreeManager.RefreshRequested = true;
+
+						return convBuffer.Count;
 					}
 
 					/// <summary>

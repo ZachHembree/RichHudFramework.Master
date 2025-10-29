@@ -32,16 +32,6 @@ namespace RichHudFramework
 
 		public sealed partial class HudMain
 		{
-			/// <summary>
-			/// Enables or disables automatic UI preloading
-			/// </summary>
-			public static bool DefaultPreload = false;
-
-			/// <summary>
-			/// Determines the maximum search depth for preloading invisible elements
-			/// </summary>
-			public static int MaxPreloadDepth = 3;
-
 			public class HudNodeIterator
 			{
 				private const HudElementStates
@@ -59,44 +49,39 @@ namespace RichHudFramework
 					/// Recursive depth of the node in the tree
 					/// </summary>
 					public int depth;
-
-					/// <summary>
-					/// Recursive iteration count since the first preloaded, but 
-					/// invisible parent.
-					/// </summary>
-					public byte preloadDepth;
 				}
 
 				private readonly List<NodeStackData> nodeStack;
-				private readonly List<int> indexStack;
 
 				public HudNodeIterator()
 				{
 					nodeStack = new List<NodeStackData>(100);
-					indexStack = new List<int>(100);
 				}
 
 				public void Clear()
 				{
 					nodeStack.Clear();
-					indexStack.Clear();
 				}
 
 				/// <summary>
 				/// Iterates over UI tree beginning at the given root node and writes it into a flattened list in 
-				/// depth first order.
+				/// depth first order. Returns the number of nodes added.
 				/// </summary>
-				public void GetNodeData(HudNodeDataHandle srcRoot, FlatTreeData dst, int clientID = 0)
+				public int GetNodeData(HudNodeDataHandle srcRoot, List<FlatSubtree> subtreeList, 
+					ObjectPool<FlatSubtree> bufferPool, int clientID = 0)
 				{
 					Clear();
 
+					FlatSubtree subtree = null;
+					byte lastInnerOffset = 0;
+					Func<Vector3D> lastOriginFunc = null;
+					int count = 0;
+
 					// Push root onto the stack
-					int startIndex = dst.StateData.Count;
 					nodeStack.Add(new NodeStackData
 					{
 						node = srcRoot,
-						depth = 0,
-						preloadDepth = 0
+						depth = 0
 					});
 
 					// Depth-first iteration
@@ -105,31 +90,12 @@ namespace RichHudFramework
 					while (nodeStack.Count > 0)
 					{
 						var stack = nodeStack.Pop();
-
-						if (stack.depth < lastDepth)
-						{
-							int parentIndex = indexStack.Pop();
-							int currentIndex = dst.StateData.Count;
-							var parentData = dst.StateData[parentIndex];
-							parentData.ChlidCount = currentIndex - parentIndex - 1;
-							dst.StateData[parentIndex] = parentData;
-						}
-
 						lastDepth = stack.depth;
 
 						uint[] config = stack.node[0].Item1;
 						var state = (HudElementStates)config[StateID];
 						var visMask = (HudElementStates)config[VisMaskID];
 						state |= HudElementStates.WasParentVisible;
-
-						bool canPreload = DefaultPreload || (state & HudElementStates.CanPreload) > 0;
-
-						// Track depth and preloading
-						if ((state & HudElementStates.IsVisible) == 0 && canPreload)
-							stack.preloadDepth++;
-
-						if (stack.preloadDepth <= MaxPreloadDepth && canPreload)
-							state |= HudElementStates.IsVisible;
 
 						// Check visibility
 						if ((state & visMask) == visMask)
@@ -157,28 +123,44 @@ namespace RichHudFramework
 								config[FullZOffsetID] = (ushort)(innerOffset | outerOffset);
 							}
 
+							// Get subtree buffer
+							{
+								byte innerOffset = (byte)(config[FullZOffsetID] >> 8);
+								Func<Vector3D> originFunc = stack.node[0].Item2[0];
+
+								// Start new subtree on new layer or coordinate space
+								if (innerOffset != lastInnerOffset || lastOriginFunc != originFunc)
+								{
+									subtree = bufferPool.Get();
+									subtree.BaseZOffset = innerOffset;
+									subtree.OriginFunc = originFunc;
+									subtreeList.Add(subtree);
+
+									lastInnerOffset = innerOffset;
+									lastOriginFunc = originFunc;
+								}
+							}
+
 							var children = stack.node[0].Item5;
-							int nodeID = dst.StateData.Count;
+							int nodeID = subtree.Inactive.StateData.Count;
 
 							// Add node
-							if (children.Count > 0)
-								indexStack.Add(nodeID);
-
 							// Confg/state
-							dst.StateData.Add(new NodeState
+							subtree.Inactive.StateData.Add(new NodeState
 							{
 								Config = config,
 								ParentConfig = parent?[0].Item1,
 								ClientID = clientID
 							});
 							// Sorting info
-							dst.DepthData.Add(new NodeDepthData
+							subtree.Inactive.DepthData.Add(new NodeDepthData
 							{
 								GetPosFunc = stack.node[0].Item2[0],
 								ZOffset = (ushort)config[FullZOffsetID]
 							});
 							// Callbacks
-							dst.HookData.Add(stack.node[0].Item3);
+							subtree.Inactive.HookData.Add(stack.node[0].Item3);
+							count++;
 
 							// Push children
 							for (int i = children.Count - 1; i >= 0; i--)
@@ -186,249 +168,271 @@ namespace RichHudFramework
 								nodeStack.Add(new NodeStackData
 								{
 									node = (HudNodeDataHandle)children[i],
-									depth = lastDepth + 1,
-									preloadDepth = stack.preloadDepth
+									depth = lastDepth + 1
 								});
 							}
 						}
 					}
 
-					var rootData = dst.StateData[0];
-					rootData.ChlidCount = dst.StateData.Count - startIndex - 1;
-					dst.StateData[0] = rootData;
+					return count;
 				}
 
-				public void UpdateNodeSizing(IReadOnlyList<TreeClient> clients, SortedTreeData tree)
+				public void UpdateNodeSizing(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees)
 				{
-					foreach (NodeHook sizingUpdate in tree.Hooks.SizingActions)
+					foreach (FlatSubtree subtree in subtrees) 
 					{
-						uint[] config = tree.StateData[sizingUpdate.NodeID].Config;
-						bool needsUpdate = true;
+						var active = subtree.Active;
 
-						if (config != null)
+						foreach (NodeHook sizingUpdate in active.Hooks.SizingActions)
 						{
-							var state = (HudElementStates)config[StateID];
-							var visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags;
+							uint[] config = active.StateData[sizingUpdate.NodeID].Config;
+							bool needsUpdate = true;
 
-							// Check visibility
-							needsUpdate = (state & visMask) == visMask;
-							needsUpdate &= ((state & nodeNotReadyFlags) == 0);
-						}
-
-						// Update sizing if needed
-						if (needsUpdate)
-						{
-							try
+							if (config != null)
 							{
-								if (sizingUpdate.Callback != null)
-								{
-									sizingUpdate.Callback();
-									RichHudStats.UI.InternalCounters.SizingUpdates++;
-								}
-							}
-							catch (Exception e)
-							{
-								int clientID = tree.StateData[sizingUpdate.NodeID].ClientID;
-								clients[clientID].ReportExceptionFunc(e);
-							}
-						}
-					}
-				}
+								var state = (HudElementStates)config[StateID];
+								var visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags;
 
-				public void UpdateNodeLayout(IReadOnlyList<TreeClient> clients, SortedTreeData tree, bool refresh = false)
-				{
-					for (int i = 0; i < tree.StateData.Count; i++)
-					{
-						NodeState state = tree.StateData[i];
-						IReadOnlyList<uint> parentConfig = state.ParentConfig;
-						uint[] config = state.Config;
-						bool needsUpdate = true;
-
-						if (config != null)
-						{
-							needsUpdate = (config[StateID] & config[VisMaskID]) == config[VisMaskID];
-
-							// If the parent is disjoint, it needs to correct itself before this
-							// node can resume updating.
-							if (parentConfig != null)
-							{
-								var parentState = (HudElementStates)parentConfig[StateID];
-								needsUpdate &= ((parentState & HudElementStates.IsDisjoint) == 0);
+								// Check visibility
+								needsUpdate = (state & visMask) == visMask;
+								needsUpdate &= ((state & nodeNotReadyFlags) == 0);
 							}
 
-							config[StateID] &= ~(uint)HudElementStates.IsLayoutReady;
-						}
-
-						// Update layout if needed
-						if (needsUpdate)
-						{
-							try
-							{
-								Action<bool> LayoutUpdate = tree.Hooks.LayoutActions[i].Callback;
-
-								if (LayoutUpdate != null)
-								{
-									LayoutUpdate(refresh);
-									RichHudStats.UI.InternalCounters.LayoutUpdates++;
-								}
-							}
-							catch (Exception e)
-							{
-								int clientID = state.ClientID;
-								clients[clientID].ReportExceptionFunc(e);
-							}
-						}
-
-						// Propagate flags after layout
-						if (config != null)
-						{
+							// Update sizing if needed
 							if (needsUpdate)
-								config[StateID] |= (uint)HudElementStates.IsLayoutReady;
-
-							if (parentConfig != null)
 							{
-								var parentState = (HudElementStates)parentConfig[StateID];
-								var parentVisMask = (HudElementStates)parentConfig[VisMaskID];
-								var parentInputMask = (HudElementStates)parentConfig[InputMaskID];
-
-								// Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
-								// during Layout/Arrange, but Layout should not run without UpdateSize. They need to be delayed.
-								if ((parentState & parentVisMask) == parentVisMask && (parentState & nodeNotReadyFlags) == 0)
-									config[StateID] |= (uint)HudElementStates.WasParentVisible;
-								else
-									config[StateID] &= ~(uint)HudElementStates.WasParentVisible;
-
-								if ((parentState & parentInputMask) == parentInputMask && (parentState & nodeNotReadyFlags) == 0)
-									config[StateID] |= (uint)HudElementStates.WasParentInputEnabled;
-								else
-									config[StateID] &= ~(uint)HudElementStates.WasParentInputEnabled;
-							}
-						}
-					}
-				}
-
-				public void DrawNodes(IReadOnlyList<TreeClient> clients, SortedTreeData tree)
-				{
-					foreach (NodeHook drawUpdate in tree.Hooks.DrawActions)
-					{
-						NodeState state = tree.StateData[drawUpdate.NodeID];
-						uint[] config = state.Config;
-						bool needsUpdate = true;
-
-						if (config != null)
-						{
-							var visMask = config[VisMaskID] | (uint)nodeReadyFlags;
-							// Check visibility
-							needsUpdate = (config[StateID] & visMask) == visMask;
-							// Set false if any not ready flags are set
-							needsUpdate &= ((config[StateID] & (uint)nodeNotReadyFlags) == 0);
-						}
-
-						// Draw if needed
-						if (needsUpdate)
-						{
-							try
-							{
-								if (drawUpdate.Callback != null)
+								try
 								{
-									drawUpdate.Callback();
-									RichHudStats.UI.InternalCounters.DrawUpdates++;
+									if (sizingUpdate.Callback != null)
+									{
+										sizingUpdate.Callback();
+										RichHudStats.UI.InternalCounters.SizingUpdates++;
+									}
+								}
+								catch (Exception e)
+								{
+									int clientID = active.StateData[sizingUpdate.NodeID].ClientID;
+									clients[clientID].ReportExceptionFunc(e);
 								}
 							}
-							catch (Exception e)
+						}
+					}
+				}
+
+				public void UpdateNodeLayout(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees, bool refresh = false)
+				{
+					foreach (FlatSubtree subtree in subtrees)
+					{
+						var active = subtree.Active;
+
+						for (int i = 0; i < active.StateData.Count; i++)
+						{
+							NodeState state = active.StateData[i];
+							IReadOnlyList<uint> parentConfig = state.ParentConfig;
+							uint[] config = state.Config;
+							bool needsUpdate = true;
+
+							if (config != null)
 							{
-								int clientID = state.ClientID;
-								clients[clientID].ReportExceptionFunc(e);
+								needsUpdate = (config[StateID] & config[VisMaskID]) == config[VisMaskID];
+
+								// If the parent is disjoint, it needs to correct itself before this
+								// node can resume updating.
+								if (parentConfig != null)
+								{
+									var parentState = (HudElementStates)parentConfig[StateID];
+									needsUpdate &= ((parentState & HudElementStates.IsDisjoint) == 0);
+								}
+
+								config[StateID] &= ~(uint)HudElementStates.IsLayoutReady;
+							}
+
+							// Update layout if needed
+							if (needsUpdate)
+							{
+								try
+								{
+									Action<bool> LayoutUpdate = active.Hooks.LayoutActions[i].Callback;
+
+									if (LayoutUpdate != null)
+									{
+										LayoutUpdate(refresh);
+										RichHudStats.UI.InternalCounters.LayoutUpdates++;
+									}
+								}
+								catch (Exception e)
+								{
+									int clientID = state.ClientID;
+									clients[clientID].ReportExceptionFunc(e);
+								}
+							}
+
+							// Propagate flags after layout
+							if (config != null)
+							{
+								if (needsUpdate)
+									config[StateID] |= (uint)HudElementStates.IsLayoutReady;
+
+								if (parentConfig != null)
+								{
+									var parentState = (HudElementStates)parentConfig[StateID];
+									var parentVisMask = (HudElementStates)parentConfig[VisMaskID];
+									var parentInputMask = (HudElementStates)parentConfig[InputMaskID];
+
+									// Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
+									// during Layout/Arrange, but Layout should not run without UpdateSize. They need to be delayed.
+									if ((parentState & parentVisMask) == parentVisMask && (parentState & nodeNotReadyFlags) == 0)
+										config[StateID] |= (uint)HudElementStates.WasParentVisible;
+									else
+										config[StateID] &= ~(uint)HudElementStates.WasParentVisible;
+
+									if ((parentState & parentInputMask) == parentInputMask && (parentState & nodeNotReadyFlags) == 0)
+										config[StateID] |= (uint)HudElementStates.WasParentInputEnabled;
+									else
+										config[StateID] &= ~(uint)HudElementStates.WasParentInputEnabled;
+								}
 							}
 						}
 					}
 				}
 
-				public void UpdateNodeInputDepth(IReadOnlyList<TreeClient> clients, SortedTreeData tree)
+				public void DrawNodes(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees)
+				{
+					foreach (FlatSubtree subtree in subtrees)
+					{
+						var active = subtree.Active;
+
+						foreach (NodeHook drawUpdate in active.Hooks.DrawActions)
+						{
+							NodeState state = active.StateData[drawUpdate.NodeID];
+							uint[] config = state.Config;
+							bool needsUpdate = true;
+
+							if (config != null)
+							{
+								var visMask = config[VisMaskID] | (uint)nodeReadyFlags;
+								// Check visibility
+								needsUpdate = (config[StateID] & visMask) == visMask;
+								// Set false if any not ready flags are set
+								needsUpdate &= ((config[StateID] & (uint)nodeNotReadyFlags) == 0);
+							}
+
+							// Draw if needed
+							if (needsUpdate)
+							{
+								try
+								{
+									if (drawUpdate.Callback != null)
+									{
+										drawUpdate.Callback();
+										RichHudStats.UI.InternalCounters.DrawUpdates++;
+									}
+								}
+								catch (Exception e)
+								{
+									int clientID = state.ClientID;
+									clients[clientID].ReportExceptionFunc(e);
+								}
+							}
+						}
+					}	
+				}
+
+				public void UpdateNodeInputDepth(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees)
 				{
 					if (HudMain.InputMode == HudInputMode.NoInput)
 						return;
 
-					foreach (NodeHook depthTest in tree.Hooks.InputDepthActions)
+					foreach (FlatSubtree subtree in subtrees)
 					{
-						NodeState state = tree.StateData[depthTest.NodeID];
-						uint[] config = state.Config;
-						bool needsUpdate = true;
+						var active = subtree.Active;
 
-						if (config != null)
+						foreach (NodeHook depthTest in active.Hooks.InputDepthActions)
 						{
-							HudElementStates
-								visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags,
-								inputMask = (HudElementStates)config[InputMaskID];
-							bool
-								canUseCursor = (config[StateID] & (uint)HudElementStates.CanUseCursor) > 0,
-								isVisible = (config[StateID] & (uint)visMask) == (uint)visMask,
-								isInputEnabled = (config[StateID] & (uint)inputMask) == (uint)inputMask;
+							NodeState state = active.StateData[depthTest.NodeID];
+							uint[] config = state.Config;
+							bool needsUpdate = true;
 
-							needsUpdate = isVisible && canUseCursor && isInputEnabled;
-							// Set false if any not ready flags are set
-							needsUpdate &= ((config[StateID] & (uint)nodeNotReadyFlags) == 0);
-
-							// Reset mouse bounds check before every update
-							config[StateID] &= ~(uint)HudElementStates.IsMouseInBounds;
-						}
-
-						// Perform depth testing if needed
-						if (needsUpdate)
-						{
-							try
+							if (config != null)
 							{
-								if (depthTest.Callback != null)
-								{
-									depthTest.Callback();
-									RichHudStats.UI.InternalCounters.InputDepthUpdates++;
-								}
+								HudElementStates
+									visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags,
+									inputMask = (HudElementStates)config[InputMaskID];
+								bool
+									canUseCursor = (config[StateID] & (uint)HudElementStates.CanUseCursor) > 0,
+									isVisible = (config[StateID] & (uint)visMask) == (uint)visMask,
+									isInputEnabled = (config[StateID] & (uint)inputMask) == (uint)inputMask;
+
+								needsUpdate = isVisible && canUseCursor && isInputEnabled;
+								// Set false if any not ready flags are set
+								needsUpdate &= ((config[StateID] & (uint)nodeNotReadyFlags) == 0);
+
+								// Reset mouse bounds check before every update
+								config[StateID] &= ~(uint)HudElementStates.IsMouseInBounds;
 							}
-							catch (Exception e)
+
+							// Perform depth testing if needed
+							if (needsUpdate)
 							{
-								int clientID = state.ClientID;
-								clients[clientID].ReportExceptionFunc(e);
+								try
+								{
+									if (depthTest.Callback != null)
+									{
+										depthTest.Callback();
+										RichHudStats.UI.InternalCounters.InputDepthUpdates++;
+									}
+								}
+								catch (Exception e)
+								{
+									int clientID = state.ClientID;
+									clients[clientID].ReportExceptionFunc(e);
+								}
 							}
 						}
 					}
 				}
 
-				public void UpdateNodeInput(IReadOnlyList<TreeClient> clients, SortedTreeData tree)
+				public void UpdateNodeInput(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees)
 				{
-					foreach (NodeHook inputUpdate in tree.Hooks.InputActions)
+					foreach (FlatSubtree subtree in subtrees)
 					{
-						NodeState state = tree.StateData[inputUpdate.NodeID];
-						uint[] config = state.Config;
-						bool needsUpdate = true;
+						var active = subtree.Active;
 
-						if (config != null)
+						foreach (NodeHook inputUpdate in active.Hooks.InputActions)
 						{
-							var visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags;
-							bool isVisible = (config[StateID] & (uint)visMask) == (uint)visMask,
-								isInputEnabled = (config[StateID] & config[InputMaskID]) == config[InputMaskID];
+							NodeState state = active.StateData[inputUpdate.NodeID];
+							uint[] config = state.Config;
+							bool needsUpdate = true;
 
-							needsUpdate = isVisible && isInputEnabled;
-							// Set false if any not ready flags are set
-							needsUpdate &= ((config[StateID] & (uint)nodeNotReadyFlags) == 0);
-							// Reset mouse over state before every update
-							config[StateID] &= ~(uint)HudElementStates.IsMousedOver;
-						}
-
-						// Update input if needed
-						if (needsUpdate)
-						{
-							try
+							if (config != null)
 							{
-								if (inputUpdate.Callback != null)
-								{
-									inputUpdate.Callback();
-									RichHudStats.UI.InternalCounters.InputUpdates++;
-								}
+								var visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags;
+								bool isVisible = (config[StateID] & (uint)visMask) == (uint)visMask,
+									isInputEnabled = (config[StateID] & config[InputMaskID]) == config[InputMaskID];
+
+								needsUpdate = isVisible && isInputEnabled;
+								// Set false if any not ready flags are set
+								needsUpdate &= ((config[StateID] & (uint)nodeNotReadyFlags) == 0);
+								// Reset mouse over state before every update
+								config[StateID] &= ~(uint)HudElementStates.IsMousedOver;
 							}
-							catch (Exception e)
+
+							// Update input if needed
+							if (needsUpdate)
 							{
-								int clientID = state.ClientID;
-								clients[clientID].ReportExceptionFunc(e);
+								try
+								{
+									if (inputUpdate.Callback != null)
+									{
+										inputUpdate.Callback();
+										RichHudStats.UI.InternalCounters.InputUpdates++;
+									}
+								}
+								catch (Exception e)
+								{
+									int clientID = state.ClientID;
+									clients[clientID].ReportExceptionFunc(e);
+								}
 							}
 						}
 					}

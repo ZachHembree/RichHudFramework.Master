@@ -59,7 +59,7 @@ namespace RichHudFramework.Server
                 Format = new GlyphFormat(new Color(255, 191, 0))
             };
             overlayPos = new Vector2(0.5f, 0.5f);
-            enableOverlay = false;
+            enableOverlay = ExceptionHandler.DebugLogging;
             statsBuilder = new StringBuilder();
         }
 
@@ -113,7 +113,6 @@ namespace RichHudFramework.Server
 
             controlCategory.Add(CreateOverlayControlTile());
             controlCategory.Add(CreateCacheControlTile());
-            controlCategory.Add(CreateTreeDebugTile());
 
             settingsPage.CategoryContainer.Add(controlCategory);
             return settingsPage;
@@ -157,38 +156,6 @@ namespace RichHudFramework.Server
                     ToolTip = "Resets timer tare to zero."
                 }
             };
-        }
-
-        private ControlTile CreateTreeDebugTile()
-        {
-            return new ControlTile()
-            {
-			    new TerminalLabel() { Name = "UI Tree Debug" },
-				new TerminalCheckbox
-				{
-					Name = "Default Preloading",
-					Value = HudMain.DefaultPreload,
-					ControlChangedHandler = (obj, args) =>
-					{
-						var checkbox = obj as TerminalCheckbox;
-						HudMain.DefaultPreload = checkbox.Value;
-					},
-                    ToolTip = "Allows UI nodes to be preloaded by default."
-				},
-                new TerminalSlider()
-                {
-                    Name = "Preload Depth",
-                    Min = 0, Max = 10,
-					Value = HudMain.MaxPreloadDepth,
-					ControlChangedHandler = (obj, args) =>
-                    {
-                        var slider = obj as TerminalSlider;
-                        HudMain.MaxPreloadDepth = (int)slider.Value;
-                        slider.ValueText = HudMain.MaxPreloadDepth.ToString();
-                    },
-                    ToolTip = "Sets maximum search search depth for invisible UI nodes."
-                }
-			};
         }
 
         private ControlTile CreateCacheControlTile()
@@ -289,7 +256,8 @@ namespace RichHudFramework.Server
         {
             statsBuilder.Append("\n\tHudMain:\n");
             statsBuilder.Append($"\t\tHUD Spaces Updating: {RichHudStats.UI.HudSpacesRegistered}\n");
-            statsBuilder.Append($"\t\tElements Updating: {RichHudStats.UI.ElementsRegistered}\n");
+			statsBuilder.Append($"\t\tSubtrees Updating: {RichHudStats.UI.SubtreesRegistered}\n");
+			statsBuilder.Append($"\t\tElements Updating: {RichHudStats.UI.ElementsRegistered}\n");
             statsBuilder.Append($"\t\tClients Registered: {HudMain.TreeManager.Clients.Count}\n");
         }
 
@@ -333,11 +301,13 @@ namespace RichHudFramework.Server
 
 		private void AppendNodeUpdateStats(StringBuilder statsBuilder)
 		{
-			statsBuilder.Append($"\t\tNode Update Counts:\n");
+			statsBuilder.Append($"\t\tUpdate Counts:\n");
 			AddGrid(statsBuilder, new string[,]
 			{
 				{ "Name", "Avg", "50th", "99th" },
-				{ "Total", $"{RichHudStats.UI.AvgNodeUpdateCount:F0}", $"{RichHudStats.UI.NodeUpdate50th:F0}", $"{RichHudStats.UI.NodeUpdate99th:F0}" }
+				{ "Callbacks", $"{RichHudStats.UI.AvgNodeUpdateCount:F0}", $"{RichHudStats.UI.NodeUpdate50th:F0}", $"{RichHudStats.UI.NodeUpdate99th:F0}" },
+				{ "Subtree Sort\t", $"{RichHudStats.UI.SubtreeSortAvgCount:F0}", $"{RichHudStats.UI.SubtreeSort50th:F0}", $"{RichHudStats.UI.SubtreeSort99th:F0}" },
+				{ "Element Sort\t", $"{RichHudStats.UI.ElementSortAvgCount:F0}", $"{RichHudStats.UI.ElementSort50th:F0}", $"{RichHudStats.UI.ElementSort99th:F0}" }
 			}, 3, 4);
 		}
 
@@ -408,15 +378,16 @@ namespace RichHudFramework.Server
 
         private static void GetHudStats(HudMain.TreeClient client, StringBuilder statsBuilder)
         {
-            if (client.InactiveNodeData.HookData.Count == 0)
+            if (client.ElementsUpdating == 0)
                 return;
 
             statsBuilder.Append($"\t\tHudMain:\n");
             statsBuilder.Append($"\t\t\tEnable Cursor: {client.EnableCursor}\n");
-            statsBuilder.Append($"\t\t\tElements Updating: {client.InactiveNodeData.HookData.Count}\n\n");
-        }
+			statsBuilder.Append($"\t\t\tSubtrees Updating: {client.SubtreesUpdating}\n");
+			statsBuilder.Append($"\t\t\tElements Updating: {client.ElementsUpdating}\n");
+		}
 
-        private static void GetBindStats(BindManager.Client client, StringBuilder statsBuilder)
+		private static void GetBindStats(BindManager.Client client, StringBuilder statsBuilder)
         {
             IReadOnlyList<IBindGroup> bindGroups = client.Groups;
 
