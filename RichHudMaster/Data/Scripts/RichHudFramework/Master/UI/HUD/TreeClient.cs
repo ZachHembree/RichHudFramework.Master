@@ -164,9 +164,6 @@ namespace RichHudFramework
 
 						if (refreshRequested && (tick % treeRefreshRate) == 0)
 						{
-							bufferPool.ReturnRange(subtreeBuffers);
-							subtreeBuffers.Clear();
-
 							if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 							{
 								if (RootNodeHandle != null)

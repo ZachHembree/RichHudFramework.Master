@@ -59,6 +59,7 @@ namespace RichHudFramework
 
 		namespace Server
 		{
+			using static RichHudFramework.UI.Server.BindManager;
 			using HudClientMembers8 = MyTuple<
 				CursorMembers, // Cursor
 				Func<TextBoardMembers8>, // GetNewTextBoard
@@ -85,48 +86,8 @@ namespace RichHudFramework
 						if (convBuffer.Count == 0)
 							return 0;
 
-						FlatSubtree subtree = null;
-						byte lastInnerOffset = 0;
-						Func<Vector3D> lastOriginFunc = null;
-
-						for (int i = 0; i < convBuffer.Count; i++)
-						{
-							var src = convBuffer[i];
-							byte innerOffset = (byte)(convBuffer[i].Item2.Item1() >> 8);
-							Func<Vector3D> originFunc = convBuffer[i].Item2.Item2;
-
-							// Start new subtree on new layer or coordinate space
-							if (innerOffset != lastInnerOffset || lastOriginFunc != originFunc)
-							{
-								subtree = bufferPool.Get();
-								subtree.BaseZOffset = innerOffset;
-								subtree.OriginFunc = originFunc;
-								subtreeBuffers.Add(subtree);
-
-								lastInnerOffset = innerOffset;
-								lastOriginFunc = originFunc;
-							}
-
-							subtree.Inactive.StateData.Add(new NodeState 
-							{
-								ClientID = clientID
-							});
-							subtree.Inactive.DepthData.Add(new NodeDepthData
-							{
-								GetPosFunc = src.Item2.Item2,
-								ZOffset = src.Item2.Item1()
-							});
-							subtree.Inactive.HookData.Add(new HudNodeHookData 
-							{
-								Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
-								Item2 = src.Item3,  // 2 - InputDepthAction
-								Item3 = src.Item4,  // 3 - InputAction
-								Item4 = null,       // 4 - SizingAction
-								Item5 = src.Item5,  // 5 - LayoutAction
-								Item6 = src.Item6   // 6 - DrawAction
-							});
-						}
-
+						GetLegacyNodeData(convBuffer, subtreeBuffers, bufferPool, clientID);
+						
 						if (convBuffer.Capacity > convBuffer.Count * 10)
 							convBuffer.TrimExcess();
 
@@ -137,6 +98,152 @@ namespace RichHudFramework
 							TreeManager.RefreshRequested = true;
 
 						return convBuffer.Count;
+					}
+
+					private static void GetLegacyNodeData(List<HudUpdateAccessorsOld> srcBuffer, List<FlatSubtree> dst,
+						ObjectPool<FlatSubtree> bufferPool, int clientID)
+					{
+						FlatSubtree subtree = null;
+
+						// Subtree detection
+						Func<Vector3D> lastGetOriginFunc = null;
+						byte lastInnerOffset = 0;
+						// Subtree position
+						int subtreeCount = 0;
+						int subtreePos = 0;
+						// Set true if the contents of the subtree match the current node structure
+						bool canBeEqual = false;
+
+						for (int i = 0; i < srcBuffer.Count; i++)
+						{
+							var src = srcBuffer[i];
+							Func<ushort> GetLayerFuncOld = src.Item2.Item1;
+							Func<Vector3D> GetOriginFunc = src.Item2.Item2;
+							ushort FullZOffset = GetLayerFuncOld();
+							byte innerOffset = (byte)(FullZOffset >> 8);
+
+							// Check if a new subtree needs to be started
+							if (innerOffset != lastInnerOffset || lastGetOriginFunc != GetOriginFunc)
+							{
+								// Finalize previous subtree
+								if (subtree != null)
+								{
+									if (subtree.Inactive.StateData.Count > subtreePos)
+									{
+										subtree.Inactive.Truncate(subtreePos);
+										canBeEqual = false;
+									}
+
+									if (!canBeEqual)
+										subtree.IsActiveStale = true;
+								}
+
+								// Use an existing buffer if available
+								if (subtreeCount < dst.Count)
+									subtree = dst[subtreeCount];
+								else
+								{
+									subtree = bufferPool.Get();
+									dst.Add(subtree);
+								}
+
+								// If the subtree was already using these values, it may be unchanged
+								canBeEqual = (GetLayerFuncOld == subtree.GetLayerFuncOld && GetOriginFunc == subtree.GetOriginFunc);
+								subtree.GetLayerFuncOld = GetLayerFuncOld;
+								subtree.GetOriginFunc = GetOriginFunc;
+
+								lastInnerOffset = innerOffset;
+								lastGetOriginFunc = GetOriginFunc;
+								subtreePos = 0;
+								subtreeCount++;
+							}
+
+							if (subtreePos < subtree.Inactive.StateData.Count)
+							{
+								if (canBeEqual)
+								{
+									byte lastOuterOffset = (byte)subtree.Inactive.DepthData[subtreePos].OuterZOffset;
+									byte outerOffset = (byte)FullZOffset;
+
+									// If the GetOrSetApiMemberFunc is the same as the last, it's the same node
+									canBeEqual &= subtree.Inactive.HookData[subtreePos].Item1 == src.Item1;
+									// If the outer/public sorting has changed, the members will need to be resorted
+									canBeEqual &= outerOffset == lastOuterOffset;
+								}
+
+								subtree.Inactive.StateData[subtreePos] = new NodeState
+								{
+									ClientID = clientID
+								};
+
+								// If the tree members are unchanged and don't require resorting, this is 
+								// unnecessary.
+								if (!canBeEqual)
+								{
+									subtree.Inactive.DepthData[subtreePos] = new NodeDepthData
+									{
+										GetPosFunc = GetOriginFunc,
+										OuterZOffset = (byte)FullZOffset
+									};
+									subtree.Inactive.HookData[subtreePos] = new HudNodeHookData
+									{
+										Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
+										Item2 = src.Item3,  // 2 - InputDepthAction
+										Item3 = src.Item4,  // 3 - InputAction
+										Item4 = null,       // 4 - SizingAction
+										Item5 = src.Item5,  // 5 - LayoutAction
+										Item6 = src.Item6   // 6 - DrawAction
+									};
+								}
+							}
+							else
+							{
+								// If there were new additions, it can't be equal
+								canBeEqual = false;
+
+								subtree.Inactive.StateData.Add(new NodeState
+								{
+									ClientID = clientID
+								});
+								subtree.Inactive.DepthData.Add(new NodeDepthData
+								{
+									GetPosFunc = GetOriginFunc,
+									OuterZOffset = (byte)FullZOffset
+								});
+								subtree.Inactive.HookData.Add(new HudNodeHookData
+								{
+									Item1 = src.Item1,  // 1 - GetOrSetApiMemberFunc
+									Item2 = src.Item3,  // 2 - InputDepthAction
+									Item3 = src.Item4,  // 3 - InputAction
+									Item4 = null,       // 4 - SizingAction
+									Item5 = src.Item5,  // 5 - LayoutAction
+									Item6 = src.Item6   // 6 - DrawAction
+								});
+							}
+
+							subtreePos++;
+						}
+
+						// Finalize trailing subtree
+						if (subtree != null)
+						{
+							if (subtree.Inactive.StateData.Count > subtreePos)
+							{
+								subtree.Inactive.Truncate(subtreePos);
+								canBeEqual = false;
+							}
+							
+							if (!canBeEqual)
+								subtree.IsActiveStale = true;
+						}
+
+						// Trim and return unused buffers
+						if (subtreeCount < dst.Count)
+						{
+							int start = subtreeCount, length = dst.Count - start;
+							bufferPool.ReturnRange(dst, start, length);
+							dst.RemoveRange(start, length);
+						}
 					}
 
 					/// <summary>

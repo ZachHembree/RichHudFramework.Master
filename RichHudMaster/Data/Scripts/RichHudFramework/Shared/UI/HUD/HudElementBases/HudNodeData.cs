@@ -52,16 +52,20 @@ namespace RichHudFramework
 			public const int InputMaskID = 2;
 
 			/// <summary>
+			/// Stores publicly exposed sorting offset local to a UI node.
 			/// type: sbyte
 			/// </summary>
 			public const int ZOffsetID = 3;
 
 			/// <summary>
+			/// Stores private inner offset used for window layering local to the UI node.
 			/// type: byte
 			/// </summary>
 			public const int ZOffsetInnerID = 4;
 
 			/// <summary>
+			/// Stores private combined inner and outer offsets, including total offsets of all preceeding
+			/// parent nodes.
 			/// type: ushort
 			/// </summary>
 			public const int FullZOffsetID = 5;

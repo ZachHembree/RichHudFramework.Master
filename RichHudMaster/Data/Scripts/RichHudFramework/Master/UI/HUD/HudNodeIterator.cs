@@ -1,6 +1,7 @@
 ﻿using RichHudFramework.Server;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using VRage;
 using VRageMath;
 using HudNodeHookData = VRage.MyTuple<
@@ -67,15 +68,22 @@ namespace RichHudFramework
 				/// Iterates over UI tree beginning at the given root node and writes it into a flattened list in 
 				/// depth first order. Returns the number of nodes added.
 				/// </summary>
-				public int GetNodeData(HudNodeDataHandle srcRoot, List<FlatSubtree> subtreeList, 
+				public int GetNodeData(HudNodeDataHandle srcRoot, List<FlatSubtree> dst, 
 					ObjectPool<FlatSubtree> bufferPool, int clientID = 0)
 				{
 					Clear();
 
 					FlatSubtree subtree = null;
+					int nodeCount = 0;
+
+					// Subtree detection
+					Func<Vector3D> lastGetOriginFunc = null;
 					byte lastInnerOffset = 0;
-					Func<Vector3D> lastOriginFunc = null;
-					int count = 0;
+					// Subtree position
+					int subtreeCount = 0;
+					int subtreePos = 0;
+					// Set true if the contents of the subtree match the current node structure
+					bool canBeEqual = false;
 
 					// Push root onto the stack
 					nodeStack.Add(new NodeStackData
@@ -113,6 +121,8 @@ namespace RichHudFramework
 								byte outerOffset = (byte)(config[ZOffsetID] - sbyte.MinValue);
 								ushort innerOffset = (ushort)(config[ZOffsetInnerID] << 8);
 
+								// Combine local node inner and outer offsets with parent and pack into
+								// full ZOffset
 								if (parent != null)
 								{
 									ushort parentFull = (ushort)parent[0].Item1[FullZOffsetID];
@@ -123,21 +133,45 @@ namespace RichHudFramework
 								config[FullZOffsetID] = (ushort)(innerOffset | outerOffset);
 							}
 
-							// Get subtree buffer
+							// Check if a new subtree needs to be started
 							{
 								byte innerOffset = (byte)(config[FullZOffsetID] >> 8);
-								Func<Vector3D> originFunc = stack.node[0].Item2[0];
+								Func<Vector3D> GetOriginFunc = stack.node[0].Item2[0];
 
 								// Start new subtree on new layer or coordinate space
-								if (innerOffset != lastInnerOffset || lastOriginFunc != originFunc)
+								if (innerOffset != lastInnerOffset || lastGetOriginFunc != GetOriginFunc)
 								{
-									subtree = bufferPool.Get();
-									subtree.BaseZOffset = innerOffset;
-									subtree.OriginFunc = originFunc;
-									subtreeList.Add(subtree);
+									// Finalize previous subtree
+									if (subtree != null)
+									{
+										if (subtree.Inactive.StateData.Count > subtreePos)
+										{
+											subtree.Inactive.Truncate(subtreePos);
+											canBeEqual = false;
+										}
+
+										if (!canBeEqual)
+											subtree.IsActiveStale = true;
+									}
+
+									// Use an existing buffer if available
+									if (subtreeCount < dst.Count)
+										subtree = dst[subtreeCount];
+									else
+									{
+										subtree = bufferPool.Get();
+										dst.Add(subtree);
+									}
+
+									// If the subtree was already using these values, it may be unchanged
+									canBeEqual = (config == subtree.RootConfig && GetOriginFunc == subtree.GetOriginFunc);
+									subtree.RootConfig = config;
+									subtree.GetOriginFunc = GetOriginFunc;
 
 									lastInnerOffset = innerOffset;
-									lastOriginFunc = originFunc;
+									lastGetOriginFunc = GetOriginFunc;
+									subtreePos = 0;
+									subtreeCount++;
 								}
 							}
 
@@ -145,22 +179,65 @@ namespace RichHudFramework
 							int nodeID = subtree.Inactive.StateData.Count;
 
 							// Add node
-							// Confg/state
-							subtree.Inactive.StateData.Add(new NodeState
+							if (subtreePos < subtree.Inactive.StateData.Count)
 							{
-								Config = config,
-								ParentConfig = parent?[0].Item1,
-								ClientID = clientID
-							});
-							// Sorting info
-							subtree.Inactive.DepthData.Add(new NodeDepthData
+								if (canBeEqual)
+								{
+									byte lastOuterOffset = (byte)subtree.Inactive.DepthData[subtreePos].OuterZOffset;
+									byte outerOffset = (byte)config[FullZOffsetID];
+
+									// If the config reference matches, the node is the same
+									canBeEqual &= subtree.Inactive.StateData[subtreePos].Config == config;
+									// If the outer/public sorting has changed, the members will need to be resorted
+									canBeEqual &= outerOffset == lastOuterOffset;
+								}
+
+								// Confg/state
+								subtree.Inactive.StateData[subtreePos] = new NodeState
+								{
+									Config = config,
+									ParentConfig = parent?[0].Item1,
+									ClientID = clientID
+								};
+								
+								// If the tree members are unchanged and don't require resorting, this is 
+								// unnecessary.
+								if (!canBeEqual)
+								{
+									// Sorting info
+									subtree.Inactive.DepthData[subtreePos] = new NodeDepthData
+									{
+										GetPosFunc = stack.node[0].Item2[0],
+										OuterZOffset = (byte)config[FullZOffsetID]
+									};
+									// Callbacks
+									subtree.Inactive.HookData[subtreePos] = stack.node[0].Item3;
+								}
+							}
+							else
 							{
-								GetPosFunc = stack.node[0].Item2[0],
-								ZOffset = (ushort)config[FullZOffsetID]
-							});
-							// Callbacks
-							subtree.Inactive.HookData.Add(stack.node[0].Item3);
-							count++;
+								// If there were new additions, it can't be equal
+								canBeEqual = false;
+
+								// Confg/state
+								subtree.Inactive.StateData.Add(new NodeState
+								{
+									Config = config,
+									ParentConfig = parent?[0].Item1,
+									ClientID = clientID
+								});
+								// Sorting info
+								subtree.Inactive.DepthData.Add(new NodeDepthData
+								{
+									GetPosFunc = stack.node[0].Item2[0],
+									OuterZOffset = (byte)config[FullZOffsetID]
+								});
+								// Callbacks
+								subtree.Inactive.HookData.Add(stack.node[0].Item3);
+							}
+
+							subtreePos++;
+							nodeCount++;
 
 							// Push children
 							for (int i = children.Count - 1; i >= 0; i--)
@@ -174,7 +251,28 @@ namespace RichHudFramework
 						}
 					}
 
-					return count;
+					// Finalize trailing subtree
+					if (subtree != null)
+					{
+						if (subtree.Inactive.StateData.Count > subtreePos)
+						{
+							subtree.Inactive.Truncate(subtreePos);
+							canBeEqual = false;
+						}
+
+						if (!canBeEqual)
+							subtree.IsActiveStale = true;
+					}
+
+					// Trim and return unused buffers
+					if (subtreeCount < dst.Count)
+					{
+						int start = subtreeCount, length = dst.Count - start;
+						bufferPool.ReturnRange(dst, start, length);
+						dst.RemoveRange(start, length);
+					}
+
+					return nodeCount;
 				}
 
 				public void UpdateNodeSizing(IReadOnlyList<TreeClient> clients, IReadOnlyList<FlatSubtree> subtrees)

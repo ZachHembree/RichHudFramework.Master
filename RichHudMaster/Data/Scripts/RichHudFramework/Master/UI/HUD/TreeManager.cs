@@ -123,8 +123,6 @@ namespace RichHudFramework
 					}
 
 					// Manually append cursor update list
-					subtreePool.ReturnRange(lateUpdateBuffer);
-					lateUpdateBuffer.Clear();
 					nodeIterator.GetNodeData(instance._cursor.DataHandle, lateUpdateBuffer, subtreePool);
 
 					SortSubtrees();
@@ -218,8 +216,8 @@ namespace RichHudFramework
 					// Create sorting keys using distance ranks
 					for (int i = 0; i < subtreeBuffer.Count; i++)
 					{
-						ulong zOffset = subtreeBuffer[i].BaseZOffset,
-							distance = distMap[subtreeBuffer[i].OriginFunc];
+						ulong zOffset = subtreeBuffer[i].InnerZLayer,
+							distance = distMap[subtreeBuffer[i].GetOriginFunc];
 
 						indexBuffer.Add((distance << 48) | (zOffset << 32) | (uint)i);
 					}
@@ -264,7 +262,7 @@ namespace RichHudFramework
 					// Build distance func HashSet
 					for (int i = 0; i < subtreeBuffer.Count; i++)
 					{
-						originFuncSet.Add(subtreeBuffer[i].OriginFunc);
+						originFuncSet.Add(subtreeBuffer[i].GetOriginFunc);
 						activeCount += subtreeBuffer[i].Inactive.DepthData.Count;
 					}
 
@@ -332,7 +330,7 @@ namespace RichHudFramework
 				{
 					foreach (FlatSubtree subtree in activeSubtrees)
 					{
-						if (subtree.IsStale)
+						if (subtree.IsActiveStale)
 						{
 							RichHudStats.UI.InternalCounters.ElementSortingUpdates += subtree.Inactive.DepthData.Count;
 
@@ -341,7 +339,7 @@ namespace RichHudFramework
 
 							for (int i = 0; i < depthData.Count; i++)
 							{
-								ulong zOffset = depthData[i].ZOffset;
+								ulong zOffset = depthData[i].OuterZOffset;
 								indexBuffer.Add((zOffset << 32) | (uint)i);
 							}
 
@@ -427,7 +425,7 @@ namespace RichHudFramework
 							}
 
 							subtree.Active.StateData.AddRange(subtree.Inactive.StateData);
-							subtree.IsStale = false;
+							subtree.IsActiveStale = false;
 						}
 					}
 				}

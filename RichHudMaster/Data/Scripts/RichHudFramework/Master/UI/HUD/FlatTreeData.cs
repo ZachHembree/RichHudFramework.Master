@@ -15,6 +15,8 @@ namespace RichHudFramework
 {
 	namespace UI.Server
 	{
+		using static NodeConfigIndices;
+
 		public partial class HudMain
 		{
 			/// <summary>
@@ -34,7 +36,7 @@ namespace RichHudFramework
 			{
 				// Sorting Data
 				public HudSpaceOriginFunc GetPosFunc;
-				public ushort ZOffset;
+				public byte OuterZOffset;
 			}
 
 			public struct NodeHook<T>
@@ -114,14 +116,30 @@ namespace RichHudFramework
 
 			public class FlatSubtree
 			{
-				public bool IsStale;
+				/// <summary>
+				/// Set true if active, sorted members need to be rebuilt from inactive data
+				/// </summary>
+				public bool IsActiveStale;
 
 				/// <summary>
-				/// Starting inner ZOffset in the subtree's range
+				/// Returns the inner Z-sorting offset used for the subtree
 				/// </summary>
-				public byte BaseZOffset;
-				public double Distance;
-				public HudSpaceOriginFunc OriginFunc;
+				public byte InnerZLayer => (byte)((RootConfig?[FullZOffsetID] ?? GetLayerFuncOld()) >> 8);
+
+				/// <summary>
+				/// Configuration reference to subtree root
+				/// </summary>
+				public uint[] RootConfig;
+
+				/// <summary>
+				/// Legacy ZOffset delegate for subtree root
+				/// </summary>
+				public Func<ushort> GetLayerFuncOld;
+
+				/// <summary>
+				/// Delegate for retrieving the origin of the subtree in world space
+				/// </summary>
+				public HudSpaceOriginFunc GetOriginFunc;
 
 				public readonly FlatSubtreeData Inactive;
 				public readonly SortedSubtreeData Active;
@@ -130,6 +148,7 @@ namespace RichHudFramework
 				{
 					Inactive = new FlatSubtreeData(capacity);
 					Active = new SortedSubtreeData(capacity);
+					IsActiveStale = true;
 				}
 
 				public void Clear()
@@ -137,10 +156,11 @@ namespace RichHudFramework
 					Inactive.Clear(); 
 					Active.Clear();
 
-					IsStale = true;
-					BaseZOffset = 0;
-					Distance = 0;
-					OriginFunc = null;
+					IsActiveStale = true;
+
+					RootConfig = null;
+					GetLayerFuncOld = null;
+					GetOriginFunc = null;
 				}
 			}
 
@@ -163,6 +183,22 @@ namespace RichHudFramework
 					StateData.TrimExcess();
 					DepthData.TrimExcess();
 					HookData.TrimExcess();
+				}
+
+				/// <summary>
+				/// Truncates the buffers to the given length
+				/// </summary>
+				public void Truncate(int newLength)
+				{
+					if (newLength >= StateData.Count)
+						return;
+
+					int start = newLength;
+					int count = StateData.Count - newLength;
+
+					StateData.RemoveRange(start, count);
+					DepthData.RemoveRange(start, count);
+					HookData.RemoveRange(start, count);
 				}
 
 				public void EnsureCapacity(int capacity)
