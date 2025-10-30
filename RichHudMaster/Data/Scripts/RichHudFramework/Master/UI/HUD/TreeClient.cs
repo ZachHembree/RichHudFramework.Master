@@ -22,7 +22,6 @@ namespace RichHudFramework
 {
 	using Internal;
 	using Server;
-	using VRage.Utils;
 	using CursorMembers = MyTuple<
 		Func<HudSpaceDelegate, bool>, // IsCapturingSpace
 		Func<float, HudSpaceDelegate, bool>, // TryCaptureHudSpace
@@ -61,6 +60,7 @@ namespace RichHudFramework
 
 		namespace Server
 		{
+			using static NodeConfigIndices;
 			using static RichHudFramework.Server.RichHudMaster;
 			using HudClientMembers = MyTuple<
 				CursorMembers, // Cursor
@@ -142,9 +142,6 @@ namespace RichHudFramework
 					private bool _enableCursor;
 					private readonly List<FlatSubtree> subtreeBuffers;
 
-					// Deprecated
-					private bool refreshRequested, refreshDrawList;
-
 					public TreeClient(ModClient modClient = null, int apiVersion = (int)APIVersionTable.Latest)
 					{
 						this.ReportExceptionFunc = modClient?.ReportException ?? ExceptionHandler.ReportException;
@@ -156,23 +153,30 @@ namespace RichHudFramework
 						Registered = TreeManager.RegisterClient(this);
 					}
 
-					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, int tick)
+					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, uint tick)
 					{
-						if (refreshDrawList || ApiVersion > (int)APIVersionTable.Version1Base)
-							refreshRequested = true;
-
-						if (refreshRequested && (tick % treeRefreshRate) == 0)
+						if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 						{
-							if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
+							if (RootNodeHandle != null)
 							{
-								if (RootNodeHandle != null)
-									ElementsUpdating = nodeIterator.GetNodeData(RootNodeHandle, subtreeBuffers, bufferPool, this);
-							}
-							else if (GetUpdateAccessors != null)
-								ElementsUpdating = LegacyNodeUpdate(bufferPool);
+								uint[] rootConfig = RootNodeHandle[0].Item1;
+								bool isStale = (rootConfig[StateID] & (uint)HudElementStates.IsStructureStale) > 0;
 
-							SubtreesUpdating = subtreeBuffers.Count;
+								if (isStale)
+								{
+									ElementsUpdating = nodeIterator.GetNodeData(RootNodeHandle, subtreeBuffers, bufferPool, this);
+									rootConfig[StateID] &= ~(uint)HudElementStates.IsStructureStale;
+								}
+							}
 						}
+						// Legacy client updates are slow and batched
+						else if ((tick % TreeManager.LegacyTreeRefreshRate) == 0)
+						{
+							if (GetUpdateAccessors != null)
+								ElementsUpdating = LegacyNodeUpdate(bufferPool);
+						}
+
+						SubtreesUpdating = subtreeBuffers.Count;
 					}
 
 					/// <summary>

@@ -168,6 +168,7 @@ namespace RichHudFramework
 									subtree.Owner = owner;
 									subtree.RootConfig = config;
 									subtree.GetOriginFunc = GetOriginFunc;
+									subtree.InactiveTare = 0;
 
 									lastInnerOffset = innerOffset;
 									lastGetOriginFunc = GetOriginFunc;
@@ -322,7 +323,14 @@ namespace RichHudFramework
 
 							if (config != null)
 							{
+								config[FrameNumberID] = HudMain.FrameNumber;
 								needsUpdate = (config[StateID] & config[VisMaskID]) == config[VisMaskID];
+
+								// If invisible nodes are encountered, they need to be pruned at some point
+								if (!needsUpdate)
+									subtree.InactiveCount++;
+								else
+									subtree.ActiveCount++;
 
 								// If the parent is disjoint, it needs to correct itself before this
 								// node can resume updating.

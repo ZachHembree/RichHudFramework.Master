@@ -135,6 +135,27 @@ namespace RichHudFramework
 				/// </summary>
 				public TreeClient Owner;
 
+				/// <summary>
+				/// Number of active UI nodes loaded in the subtree
+				/// </summary>
+				public int ActiveCount;
+
+				/// <summary>
+				/// Number of inactive UI nodes loaded in the subtree
+				/// </summary>
+				public int InactiveCount;
+
+				/// <summary>
+				/// Adaptive bias applied to increase the inactive element threshold required for 
+				/// pruning.
+				/// </summary>
+				public int InactiveTare;
+
+				/// <summary>
+				/// Tracks the last time the subtree was pruned or rebuilt
+				/// </summary>
+				public int PruneTick;
+
 				public readonly FlatSubtreeData Inactive;
 				public readonly SortedSubtreeData Active;
 
@@ -155,6 +176,20 @@ namespace RichHudFramework
 					Inactive.Clear();
 					Active.Clear();
 					Owner = null;
+
+					ActiveCount = 0;
+					InactiveCount = 0;
+					PruneTick = 0;
+					InactiveTare = 0;
+				}
+
+				public void ResetCounters()
+				{
+					if (InactiveTare == 0)
+						InactiveTare = InactiveCount;
+
+					ActiveCount = 0;
+					InactiveCount = 0;
 				}
 			}
 

@@ -52,6 +52,17 @@ namespace RichHudFramework
 				get { return (Config[StateID] & (uint)HudElementStates.IsVisible) > 0; }
 				set
 				{
+					// Signal potential structural change on invisible -> visible transitions, but 
+					// only if the node is inactive
+					if (value && ((Config[StateID] & (uint)HudElementStates.IsVisible) == 0))
+					{
+						// Depending on where this is called, the frame number might be off by one
+						bool isActive = Math.Abs(Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
+
+						if (!isActive)
+							HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
+					}
+
 					if (value)
 						Config[StateID] |= (uint)HudElementStates.IsVisible;
 					else
@@ -80,7 +91,18 @@ namespace RichHudFramework
 			public sbyte ZOffset
 			{
 				get { return (sbyte)Config[ZOffsetID]; }
-				set { Config[ZOffsetID] = (uint)value; }
+				set 
+				{
+					// Signal potential structural change on offset change if visible
+					bool isVisible = (Config[StateID] & Config[VisMaskID]) == Config[VisMaskID];
+
+					if (isVisible && Config[ZOffsetID] != (uint)value)
+					{
+						HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
+					}
+
+					Config[ZOffsetID] = (uint)value;
+				}
 			}
 
 			// Custom Update Hooks - inject custom updates and polling here
@@ -143,15 +165,18 @@ namespace RichHudFramework
 			#region INTERNAL DATA
 
 			/// <summary>
-			/// Handle to node data used for registering with the Tree Manager
+			/// Handle to node data used for registering with the Tree Manager. Do not modify.
 			/// </summary>
 			public HudNodeDataHandle DataHandle { get; }
 
 			/// <summary>
-			/// Internal state tracking flags
+			/// Internal state tracking fields. Do not modify.
 			/// </summary>
 			public uint[] Config { get; }
 
+			/// <summary>
+			/// Handle to node data used for registering with the Tree Manager. Do not modify.
+			/// </summary>
 			protected readonly HudNodeData[] _dataHandle;
 			protected readonly List<object> childHandles;
 			protected readonly List<HudNodeBase> children;
@@ -177,7 +202,7 @@ namespace RichHudFramework
 				// Hooks
 				_dataHandle[0].Item3.Item1 = GetOrSetApiMember; // Required
 				_dataHandle[0].Item3.Item5 = BeginLayout; // Required
-				// Parent										  
+				// Parent
 				_dataHandle[0].Item4 = null; 
 				// Child handle list
 				_dataHandle[0].Item5 = childHandles;
@@ -187,6 +212,48 @@ namespace RichHudFramework
 				Config[VisMaskID] = (uint)HudElementStates.IsVisible;
 				Config[InputMaskID] = (uint)HudElementStates.IsInputEnabled;
 				Config[StateID] = (uint)(HudElementStates.IsRegistered | HudElementStates.IsInputEnabled | HudElementStates.IsVisible);
+			}
+
+			/// <summary>
+			/// Causes a window to be brought to the foreground. Overriding methods must call the 
+			/// base implementation.
+			/// </summary>
+			protected virtual void GetWindowFocus()
+			{
+				byte newLayer = HudMain.GetFocusOffset(LoseWindowFocus);
+				byte currentLayer = (byte)Config[ZOffsetInnerID];
+				bool isVisible = (Config[StateID] & Config[VisMaskID]) == Config[VisMaskID];
+
+				// If the node is visible and active flag the root as potentially stale
+				if (isVisible && newLayer != currentLayer)
+				{
+					bool isActive = Math.Abs(Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
+
+					if (isActive)
+						HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
+				}
+
+				Config[ZOffsetInnerID] = newLayer;
+			}
+
+			/// <summary>
+			/// Invoked when a window that previously had focus loses it. Overriding methods must call 
+			/// the base implementation.
+			/// </summary>
+			protected virtual void LoseWindowFocus(byte newLayer)
+			{
+				byte currentLayer = (byte)Config[ZOffsetInnerID];
+				bool isVisible = (Config[StateID] & Config[VisMaskID]) == Config[VisMaskID];
+
+				if (isVisible && newLayer != currentLayer)
+				{
+					bool isActive = Math.Abs(Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
+
+					if (isActive)
+						HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
+				}
+
+				Config[ZOffsetInnerID] = newLayer;
 			}
 
 			/// <summary>
@@ -226,6 +293,15 @@ namespace RichHudFramework
 					child._dataHandle[0].Item4 = DataHandle;
 					children.Add(child);
 					childHandles.Add(child.DataHandle);
+
+					if ((Config[StateID] & Config[VisMaskID]) == Config[VisMaskID])
+					{
+						bool isActive = Math.Abs(Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
+
+						if (isActive)
+							HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
+					}
+
 					return true;
 				}
 				else if (child.Parent == null)

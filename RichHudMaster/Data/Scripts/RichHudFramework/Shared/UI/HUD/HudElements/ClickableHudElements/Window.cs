@@ -91,7 +91,6 @@ namespace RichHudFramework.UI
         protected readonly MouseInputElement inputInner, resizeInput;
         protected readonly TexturedBox windowBg;
 
-        protected readonly Action<byte> LoseFocusCallback;
         protected float cornerSize = 16f;
         protected bool canMoveWindow;
         protected Vector2 resizeDir, cursorOffset, _minimumSize;
@@ -148,9 +147,7 @@ namespace RichHudFramework.UI
             IsMasking = true;
             MinimumSize = new Vector2(200f, 200f);
 
-            LoseFocusCallback = LoseFocus;
             GetFocus();
-
             LayoutCallback = Layout;
             HandleInputCallback = HandleInput;
         }
@@ -239,13 +236,13 @@ namespace RichHudFramework.UI
         /// </summary>
         public virtual void GetFocus()
         {
-			Config[ZOffsetInnerID] = HudMain.GetFocusOffset(LoseFocusCallback);
+            GetWindowFocus();
             WindowActive = true;
         }
 
-        protected virtual void LoseFocus(byte newOffset)
+        protected override void LoseWindowFocus(byte newOffset)
         {
-			Config[ZOffsetInnerID] = newOffset;
+            base.LoseWindowFocus(newOffset);
             WindowActive = false;
         }
     }

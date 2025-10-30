@@ -18,7 +18,7 @@ namespace RichHudFramework
 		public abstract partial class HudNodeBase : HudParentBase, IReadOnlyHudNode
 		{
 			protected const uint
-				nodeVisible = (uint)(HudElementStates.IsVisible | HudElementStates.WasParentVisible),
+				nodeVisible = (uint)(HudElementStates.IsVisible | HudElementStates.WasParentVisible | HudElementStates.IsRegistered),
 				nodeInputEnabled = (uint)(HudElementStates.IsInputEnabled | HudElementStates.WasParentInputEnabled);
 
 			/// <summary>

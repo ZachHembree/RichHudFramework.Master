@@ -5,14 +5,35 @@ using VRageMath;
 
 namespace RichHudFramework
 {
+	using RichHudFramework.Internal;
 	using Server;
 
 	namespace UI.Server
 	{
+		using static NodeConfigIndices;
+
 		public sealed partial class HudMain
 		{
 			public sealed class TreeManager
 			{
+				/// <summary>
+				/// Limits polling rate of legacy client UI trees. Higher values result in less
+				/// frequent polling.
+				/// </summary>
+				public const uint LegacyTreeRefreshRate = 5;
+
+				/// <summary>
+				/// Inactive node thresholds for subtree pruning. Both thresholds must be met for pruning.
+				/// </summary>
+				private const uint SubtreeMinPruneThreshold = 10;
+				private const float SubtreeInactivePrunePct = 20f;
+
+				/// <summary>
+				/// Sets the maximum frequency at which subtrees can be rebuilt for node pruning.
+				/// Higher values result in less frequent polling.
+				/// </summary>
+				private const uint SubtreePruningRate = 10;
+
 				/// <summary>
 				/// Read-only list of registered tree clients
 				/// </summary>
@@ -113,19 +134,43 @@ namespace RichHudFramework
 				private void UpdateTree()
 				{
 					RichHudStats.UI.Tree.BeginTick();
-					int drawTick = instance.drawTick;
 
-					// Spread out client tree updates
+					// Update clients
 					for (int n = 0; n < clients.Count; n++)
 					{
-						int clientTick = drawTick + (n % treeRefreshRate);
+						uint clientTick = HudMain.FrameNumber + (uint)(n % LegacyTreeRefreshRate);
 						clients[n].Update(nodeIterator, subtreePool, clientTick);
 					}
 
 					// Manually append cursor update list
 					nodeIterator.GetNodeData(instance._cursor.DataHandle, lateUpdateBuffer, subtreePool, clients[0]);
 
+					// Prepare active subtrees
 					SortSubtrees();
+
+					// Check if pruning is required
+					foreach (FlatSubtree subtree in activeSubtrees)
+					{
+						int total = Math.Max(1, subtree.ActiveCount + subtree.InactiveCount - subtree.InactiveTare);
+						int effectiveInactive = Math.Max(0, subtree.InactiveCount - subtree.InactiveTare);
+						float inactivePct = (100f * effectiveInactive) / total;
+
+						if (effectiveInactive > SubtreeMinPruneThreshold && inactivePct > SubtreeInactivePrunePct)
+						{
+							// Failsafe tick limiter - if the threshold heuristic breaks it wont be a disaster
+							if (subtree.PruneTick > SubtreePruningRate)
+							{
+								uint[] rootConfig = subtree.Owner.RootNodeHandle[0].Item1;
+								rootConfig[StateID] |= (uint)HudElementStates.IsStructureStale;
+								subtree.PruneTick = 0;
+							}
+							else
+								subtree.PruneTick++;
+						}
+						else
+							subtree.PruneTick = 0;
+					}
+
 					RichHudStats.UI.Tree.EndTick();
 				}
 
@@ -135,7 +180,6 @@ namespace RichHudFramework
 					RichHudStats.UI.InternalCounters.SubtreesRegistered = activeSubtrees.Count;
 
 					float resScale = ResScale;
-					int drawTick = instance.drawTick;
 
 					clients[0].EnableCursor = EnableCursor;
 					instance._cursor.DrawCursor = false;
@@ -152,12 +196,15 @@ namespace RichHudFramework
 					for (int n = 0; n < clients.Count; n++)
 						clients[n].BeforeDrawCallback?.Invoke();
 
+					foreach (FlatSubtree subtree in activeSubtrees)
+						subtree.ResetCounters();
+
 					// Sizing - vID 13+ only
 					nodeIterator.UpdateNodeSizing(activeSubtrees);
 
 					// Older clients (1.0.3-) node spaces require layout refreshes to function
 					// Flag no longer used for vID 13+ (1.3+).
-					bool rebuildLists = RefreshRequested && (drawTick % treeRefreshRate) == 0,
+					bool rebuildLists = RefreshRequested && (HudMain.FrameNumber % LegacyTreeRefreshRate) == 0,
 						refreshLayout = lastResScale != resScale || rebuildLists;
 
 					// Arrange/layout

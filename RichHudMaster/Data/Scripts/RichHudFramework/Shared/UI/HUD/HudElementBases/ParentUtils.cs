@@ -4,6 +4,8 @@ namespace RichHudFramework
 {
 	namespace UI
 	{
+		using static NodeConfigIndices;
+		using RichHudFramework.UI.Server;
 		using System.Collections.Generic;
 
 		public abstract partial class HudParentBase
@@ -18,6 +20,9 @@ namespace RichHudFramework
 				/// </summary>
 				public static void RegisterNodes(HudParentBase newParent, IReadOnlyList<HudNodeBase> nodes)
 				{
+					if (nodes.Count == 0)
+						return;
+
 					newParent.children.EnsureCapacity(newParent.children.Count + nodes.Count);
 
 					for (int n = 0; n < nodes.Count; n++)
@@ -26,6 +31,14 @@ namespace RichHudFramework
 						node._dataHandle[0].Item4 = newParent.DataHandle;
 						newParent.childHandles.Add(node.DataHandle);
 						newParent.children.Add(node);
+					}
+
+					if ((newParent.Config[StateID] & newParent.Config[VisMaskID]) == newParent.Config[VisMaskID])
+					{
+						bool isActive = Math.Abs(newParent.Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
+
+						if (isActive)
+							HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
 					}
 				}
 
@@ -36,6 +49,9 @@ namespace RichHudFramework
 					where TCon : IHudElementContainer<TNode>, new()
 					where TNode : HudNodeBase
 				{
+					if (nodes.Count == 0)
+						return;
+
 					newParent.children.EnsureCapacity(newParent.children.Count + nodes.Count);
 
 					for (int n = 0; n < nodes.Count; n++)
@@ -44,6 +60,14 @@ namespace RichHudFramework
 						node._dataHandle[0].Item4 = newParent.DataHandle;
 						newParent.childHandles.Add(node.DataHandle);
 						newParent.children.Add(node);
+					}
+
+					if ((newParent.Config[StateID] & newParent.Config[VisMaskID]) == newParent.Config[VisMaskID])
+					{
+						bool isActive = Math.Abs(newParent.Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
+
+						if (isActive)
+							HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
 					}
 				}
 

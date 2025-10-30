@@ -70,7 +70,13 @@ namespace RichHudFramework
 			/// </summary>
 			public const int FullZOffsetID = 5;
 
-			public const int ConfigLength = 6;
+			/// <summary>
+			/// Stores the frame number of the last time the node was updated.
+			/// type: uint
+			/// </summary>
+			public const int FrameNumberID = 6;
+
+			public const int ConfigLength = 7;
 		}
 
 		/// <summary>

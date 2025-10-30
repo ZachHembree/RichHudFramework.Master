@@ -59,7 +59,6 @@ namespace RichHudFramework
 
 		namespace Server
 		{
-			using static RichHudFramework.UI.Server.BindManager;
 			using HudClientMembers8 = MyTuple<
 				CursorMembers, // Cursor
 				Func<TextBoardMembers8>, // GetNewTextBoard
@@ -74,28 +73,31 @@ namespace RichHudFramework
 					// Legacy data
 					private Action<List<HudUpdateAccessorsOld>, byte> GetUpdateAccessors;
 					private List<HudUpdateAccessorsOld> convBuffer;
+					private bool refreshDrawList;
 
 					private int LegacyNodeUpdate(ObjectPool<FlatSubtree> bufferPool)
 					{
-						if (convBuffer == null)
-							convBuffer = new List<HudUpdateAccessorsOld>();
+						if (refreshDrawList || ApiVersion > (int)APIVersionTable.Version1Base)
+						{
+							if (convBuffer == null)
+								convBuffer = new List<HudUpdateAccessorsOld>();
 
-						convBuffer.Clear();
-						GetUpdateAccessors?.Invoke(convBuffer, 0);
+							convBuffer.Clear();
+							GetUpdateAccessors?.Invoke(convBuffer, 0);
 
-						if (convBuffer.Count == 0)
-							return 0;
+							if (convBuffer.Count == 0)
+								return 0;
 
-						GetLegacyNodeData(convBuffer, subtreeBuffers, bufferPool, this);
-						
-						if (convBuffer.Capacity > convBuffer.Count * 10)
-							convBuffer.TrimExcess();
+							GetLegacyNodeData(convBuffer, subtreeBuffers, bufferPool, this);
 
-						refreshRequested = false;
-						refreshDrawList = false;
+							if (convBuffer.Capacity > convBuffer.Count * 10)
+								convBuffer.TrimExcess();
 
-						if (ApiVersion <= (int)APIVersionTable.Version1Base)
-							TreeManager.RefreshRequested = true;
+							refreshDrawList = false;
+
+							if (ApiVersion <= (int)APIVersionTable.Version1Base)
+								TreeManager.RefreshRequested = true;
+						}
 
 						return convBuffer.Count;
 					}
@@ -219,7 +221,7 @@ namespace RichHudFramework
 								subtree.Inactive.Truncate(subtreePos);
 								canBeEqual = false;
 							}
-							
+
 							if (!canBeEqual)
 								subtree.IsActiveStale = true;
 						}

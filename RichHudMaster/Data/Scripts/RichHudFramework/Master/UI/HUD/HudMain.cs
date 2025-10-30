@@ -14,9 +14,7 @@ namespace RichHudFramework
 
         public sealed partial class HudMain : RichHudParallelComponentBase
         {
-            public const int tickResetInterval = 240;
             private const byte WindowBaseOffset = 1, WindowMaxOffset = 250;
-            private const int treeRefreshRate = 5;
 
             /// <summary>
             /// Root parent for all HUD elements.
@@ -116,9 +114,9 @@ namespace RichHudFramework
             public static HudInputMode InputMode { get; private set; }
 
             /// <summary>
-            /// Tick interval at which the UI tree updates. Lower is faster, higher is slower.
+            /// Current frame number. Incremented after every frame. Used internally to track updates.
             /// </summary>
-            public static int TreeRefreshRate { get; }
+            public static uint FrameNumber { get; private set; }
 
             private static HudMain instance;
             private static TreeManager treeManager;
@@ -132,11 +130,9 @@ namespace RichHudFramework
             private Action<byte> LoseFocusCallback;
             private Action LoseInputFocusCallback;
             private byte unfocusedOffset;
-            private int drawTick;
 
             static HudMain()
             {
-                TreeRefreshRate = treeRefreshRate;
                 PixelToWorldRef = new MatrixD[1];
             }
 
@@ -154,6 +150,7 @@ namespace RichHudFramework
 				HighDpiRoot = _highDpiRoot;
 
 				_cursor = new HudCursor();
+                FrameNumber = 0;
 
                 UpdateScreenScaling();
                 TreeManager.Init();
@@ -188,9 +185,6 @@ namespace RichHudFramework
                     UpdateCache();
                     treeManager.Draw();
 
-                    drawTick++;
-                    drawTick %= tickResetInterval;
-
                     if (SharedBinds.Escape.IsNewPressed)
                         LoseInputFocusCallback?.Invoke();
                 });
@@ -214,12 +208,14 @@ namespace RichHudFramework
                 // Reset cursor
                 _cursor.Release();
                 treeManager.HandleInput();
-            }
 
-            /// <summary>
-            /// Updates cached values for screen scaling and fov.
-            /// </summary>
-            private void UpdateCache()
+				FrameNumber++;
+			}
+
+			/// <summary>
+			/// Updates cached values for screen scaling and fov.
+			/// </summary>
+			private void UpdateCache()
             {
                 UpdateScreenScaling();
                 UiBkOpacity = MyAPIGateway.Session.Config.UIBkOpacity;
