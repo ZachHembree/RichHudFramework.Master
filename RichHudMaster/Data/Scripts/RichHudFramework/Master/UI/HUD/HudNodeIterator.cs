@@ -284,7 +284,6 @@ namespace RichHudFramework
 
 								// Check visibility
 								needsUpdate = (state & visMask) == visMask;
-								needsUpdate &= ((state & nodeNotReadyFlags) == 0);
 							}
 
 							// Update sizing if needed
@@ -332,14 +331,6 @@ namespace RichHudFramework
 								else
 									subtree.ActiveCount++;
 
-								// If the parent is disjoint, it needs to correct itself before this
-								// node can resume updating.
-								if (parentConfig != null)
-								{
-									var parentState = (HudElementStates)parentConfig[StateID];
-									needsUpdate &= ((parentState & HudElementStates.IsDisjoint) == 0);
-								}
-
 								config[StateID] &= ~(uint)HudElementStates.IsLayoutReady;
 							}
 
@@ -377,12 +368,12 @@ namespace RichHudFramework
 
 									// Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
 									// during Layout/Arrange, but Layout should not run without UpdateSize. They need to be delayed.
-									if ((parentState & parentVisMask) == parentVisMask && (parentState & nodeNotReadyFlags) == 0)
+									if ((parentState & parentVisMask) == parentVisMask)
 										config[StateID] |= (uint)HudElementStates.WasParentVisible;
 									else
 										config[StateID] &= ~(uint)HudElementStates.WasParentVisible;
 
-									if ((parentState & parentInputMask) == parentInputMask && (parentState & nodeNotReadyFlags) == 0)
+									if ((parentState & parentInputMask) == parentInputMask)
 										config[StateID] |= (uint)HudElementStates.WasParentInputEnabled;
 									else
 										config[StateID] &= ~(uint)HudElementStates.WasParentInputEnabled;
@@ -507,8 +498,6 @@ namespace RichHudFramework
 									isInputEnabled = (config[StateID] & config[InputMaskID]) == config[InputMaskID];
 
 								needsUpdate = isVisible && isInputEnabled;
-								// Set false if any not ready flags are set
-								needsUpdate &= ((config[StateID] & (uint)nodeNotReadyFlags) == 0);
 								// Reset mouse over state before every update
 								config[StateID] &= ~(uint)HudElementStates.IsMousedOver;
 							}

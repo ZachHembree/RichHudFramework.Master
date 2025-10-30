@@ -316,7 +316,7 @@ namespace RichHudFramework
 				// Check if masking results in no area
 				bool isDisjoint = false;
 
-				if (maskingBox != null)
+				if ((Config[StateID] & (uint)HudElementStates.IsMasking) > 0 && maskingBox != null)
 				{
 					Vector2 halfSize = CachedSize * .5f;
 					var bounds = new BoundingBox2(Position - halfSize, Position + halfSize);
@@ -330,12 +330,10 @@ namespace RichHudFramework
 				if (isDisjoint)
 					Config[StateID] |= (uint)HudElementStates.IsDisjoint;
 				else
-				{
 					Config[StateID] &= ~(uint)HudElementStates.IsDisjoint;
 
-					if (children.Count > 0)
-						UpdateChildAlignment();
-				}
+				if (children.Count > 0)
+					UpdateChildAlignment();
 			}
 
 			/// <summary>
