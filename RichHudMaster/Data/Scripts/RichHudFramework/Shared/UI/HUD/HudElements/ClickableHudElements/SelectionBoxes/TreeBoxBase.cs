@@ -172,8 +172,7 @@ namespace RichHudFramework.UI
             labelButton.Name = "NewTreeBox";
             labelButton.MouseInput.LeftClicked += ToggleList;
 
-            LayoutCallback = Layout;
-            HandleInputCallback = HandleInput;
+            UpdateSizeCallback = UpdateSize;
         }
 
         public TreeBoxBase() : this(null)
@@ -217,29 +216,22 @@ namespace RichHudFramework.UI
             ListOpen = false;
         }
 
-        protected virtual void Layout()
-        {
-            if (ListOpen)
-            {
-                selectionBox.Width = CachedSize.X - 2f * IndentSize - Padding.X;
-                selectionBox.Offset = new Vector2(IndentSize, 0f);
-                selectionBox.Height = UnpaddedSize.Y - labelButton.Height;
-            }
-        }
+		protected virtual void UpdateSize()
+		{
+			selectionBox.Visible = ListOpen;
 
-        protected virtual void HandleInput(Vector2 cursorPos)
-        {
-            selectionBox.Visible = ListOpen;
-
-            if (ListOpen)
-            {
-                Height = selectionBox.GetRangeSize().Y + labelButton.Height + Padding.Y;
-            }
-            else
-            {
-                Height = labelButton.Height + Padding.Y;
-            }
-        }
+			if (ListOpen)
+			{
+				Height = selectionBox.GetRangeSize().Y + labelButton.Height + Padding.Y;
+				selectionBox.Width = UnpaddedSize.X - 2f * IndentSize;
+				selectionBox.Offset = new Vector2(IndentSize, 0f);
+				selectionBox.Height = UnpaddedSize.Y - labelButton.Height;
+			}
+			else
+			{
+				Height = labelButton.Height + Padding.Y;
+			}
+		}
 
         public IEnumerator<TContainer> GetEnumerator() =>
             selectionBox.GetEnumerator();

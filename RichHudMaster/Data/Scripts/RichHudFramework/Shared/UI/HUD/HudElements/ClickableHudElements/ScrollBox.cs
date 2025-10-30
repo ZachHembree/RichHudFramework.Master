@@ -9,8 +9,7 @@ namespace RichHudFramework.UI
 	using static NodeConfigIndices;
 
 	/// <summary>
-	/// Scrollable list of hud elements. Can be oriented vertically or horizontally. Min/Max size determines
-	/// the maximum size of scrollbox elements as well as the scrollbox itself.
+	/// Scrollable list of hud elements. Can be oriented vertically or horizontally.
 	/// </summary>
 	public class ScrollBox<TElementContainer, TElement> : HudChain<TElementContainer, TElement>
 		where TElementContainer : IScrollBoxEntry<TElement>, new()
@@ -501,8 +500,7 @@ namespace RichHudFramework.UI
 	}
 
 	/// <summary>
-	/// Scrollable list of hud elements. Can be oriented vertically or horizontally. Min/Max size determines
-	/// the maximum size of scrollbox elements as well as the scrollbox itself.
+	/// Scrollable list of hud elements. Can be oriented vertically or horizontally.
 	/// </summary>
 	public class ScrollBox<TElementContainer> : ScrollBox<TElementContainer, HudElementBase>
 		where TElementContainer : IScrollBoxEntry<HudElementBase>, new()
@@ -515,8 +513,7 @@ namespace RichHudFramework.UI
 	}
 
 	/// <summary>
-	/// Scrollable list of hud elements. Can be oriented vertically or horizontally. Min/Max size determines
-	/// the maximum size of scrollbox elements as well as the scrollbox itself.
+	/// Scrollable list of hud elements. Can be oriented vertically or horizontally.
 	/// </summary>
 	public class ScrollBox : ScrollBox<ScrollBoxEntry>
 	{

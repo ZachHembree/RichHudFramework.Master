@@ -452,8 +452,7 @@ namespace RichHudFramework
         }
 
         /// <summary>
-        /// HUD element used to organize other elements into straight lines, either horizontal or vertical. Min/Max size
-        /// determines the minimum and maximum size of chain members.
+        /// HUD element used to organize other elements into straight lines, either horizontal or vertical.
         /// </summary>
         public class HudChain<TElementContainer> : HudChain<TElementContainer, HudElementBase>
             where TElementContainer : IChainElementContainer<HudElementBase>, new()
@@ -466,8 +465,7 @@ namespace RichHudFramework
         }
 
         /// <summary>
-        /// HUD element used to organize other elements into straight lines, either horizontal or vertical. Min/Max size
-        /// determines the minimum and maximum size of chain members.
+        /// HUD element used to organize other elements into straight lines, either horizontal or vertical.
         /// </summary>
         public class HudChain : HudChain<HudElementContainer<HudElementBase>, HudElementBase>
         {
