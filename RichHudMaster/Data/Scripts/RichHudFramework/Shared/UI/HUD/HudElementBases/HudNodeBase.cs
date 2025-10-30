@@ -46,6 +46,60 @@ namespace RichHudFramework
 			}
 
 			/// <summary>
+			/// Causes a window to be brought to the foreground. Overriding methods must call the 
+			/// base implementation.
+			/// </summary>
+			protected virtual void GetWindowFocus()
+			{
+				byte newLayer = HudMain.GetFocusOffset(LoseWindowFocus);
+				Config[ZOffsetInnerID] = newLayer;
+
+				// Update combined ZOffset for layer sorting
+				{
+					byte outerOffset = (byte)(Config[ZOffsetID] - sbyte.MinValue);
+					ushort innerOffset = (ushort)(Config[ZOffsetInnerID] << 8);
+
+					// Combine local node inner and outer offsets with parent and pack into
+					// full ZOffset
+					if (Parent != null)
+					{
+						ushort parentFull = (ushort)Parent.Config[FullZOffsetID];
+						outerOffset += (byte)((parentFull & 0x00FF) + sbyte.MinValue);
+						innerOffset += (ushort)(parentFull & 0xFF00);
+					}
+
+					Config[FullZOffsetID] = (ushort)(innerOffset | outerOffset);
+				}
+			}
+
+			/// <summary>
+			/// Invoked when a window that previously had focus loses it. Overriding methods must call 
+			/// the base implementation.
+			/// </summary>
+			protected virtual void LoseWindowFocus(byte newLayer)
+			{
+				byte currentLayer = (byte)Config[ZOffsetInnerID];
+				Config[ZOffsetInnerID] = newLayer;
+
+				// Update combined ZOffset for layer sorting
+				{
+					byte outerOffset = (byte)(Config[ZOffsetID] - sbyte.MinValue);
+					ushort innerOffset = (ushort)(Config[ZOffsetInnerID] << 8);
+
+					// Combine local node inner and outer offsets with parent and pack into
+					// full ZOffset
+					if (Parent != null)
+					{
+						ushort parentFull = (ushort)Parent.Config[FullZOffsetID];
+						outerOffset += (byte)((parentFull & 0x00FF) + sbyte.MinValue);
+						innerOffset += (ushort)(parentFull & 0xFF00);
+					}
+
+					Config[FullZOffsetID] = (ushort)(innerOffset | outerOffset);
+				}
+			}
+
+			/// <summary>
 			/// Starts input update in a try-catch block. Useful for manually updating UI elements.
 			/// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
 			/// If you need to update input, use HandleInputCallback.

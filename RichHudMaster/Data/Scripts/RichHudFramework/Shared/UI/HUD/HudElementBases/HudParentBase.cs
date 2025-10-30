@@ -215,48 +215,6 @@ namespace RichHudFramework
 			}
 
 			/// <summary>
-			/// Causes a window to be brought to the foreground. Overriding methods must call the 
-			/// base implementation.
-			/// </summary>
-			protected virtual void GetWindowFocus()
-			{
-				byte newLayer = HudMain.GetFocusOffset(LoseWindowFocus);
-				byte currentLayer = (byte)Config[ZOffsetInnerID];
-				bool isVisible = (Config[StateID] & Config[VisMaskID]) == Config[VisMaskID];
-
-				// If the node is visible and active flag the root as potentially stale
-				if (isVisible && newLayer != currentLayer)
-				{
-					bool isActive = Math.Abs(Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
-
-					if (isActive)
-						HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
-				}
-
-				Config[ZOffsetInnerID] = newLayer;
-			}
-
-			/// <summary>
-			/// Invoked when a window that previously had focus loses it. Overriding methods must call 
-			/// the base implementation.
-			/// </summary>
-			protected virtual void LoseWindowFocus(byte newLayer)
-			{
-				byte currentLayer = (byte)Config[ZOffsetInnerID];
-				bool isVisible = (Config[StateID] & Config[VisMaskID]) == Config[VisMaskID];
-
-				if (isVisible && newLayer != currentLayer)
-				{
-					bool isActive = Math.Abs(Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
-
-					if (isActive)
-						HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
-				}
-
-				Config[ZOffsetInnerID] = newLayer;
-			}
-
-			/// <summary>
 			/// Starts input update in a try-catch block. Useful for manually updating UI elements.
 			/// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
 			/// If you need to update input, use HandleInputCallback.
