@@ -1,8 +1,5 @@
 using System;
-using System.Runtime.InteropServices;
-using VRage;
 using VRageMath;
-using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework.UI
 {
@@ -352,12 +349,13 @@ namespace RichHudFramework.UI
 			}
 
 			totalEnabledLength -= Spacing;
-			ScrollBar.Percent = (float)Math.Round(ScrollBar.Percent, 6);
-			ScrollBar.Max = (float)Math.Round(Math.Max(totalEnabledLength - maxLength, 0f), 6);
+			ScrollBar.Percent = (float)Math.Round(ScrollBar.Percent, 2);
+			ScrollBar.Max = (float)Math.Round(Math.Max(totalEnabledLength - maxLength, 0f), 2);
 
 			// Calculate chain layout offset
 			float scrollCurrent = ScrollBar.Current,
-				scrollDelta = -scrollCurrent - maxLength;
+				epsilon = UseSmoothScrolling ? 1E-2f : 0f,
+				scrollDelta = (float)Math.Round(-scrollCurrent - maxLength + epsilon, 2);
 
 			_intEnd = -1;
 			scrollOffset = scrollCurrent;
@@ -383,14 +381,12 @@ namespace RichHudFramework.UI
 				}
 			}
 
-			VisCount = 0;
-
 			// Update logical range
 			// Clamp indices
 			int max = hudCollectionList.Count - 1;
 			firstEnabled = MathHelper.Clamp(firstEnabled, 0, max);
 			_intEnd = MathHelper.Clamp(_intEnd, firstEnabled, max);
-			_intStart = MathHelper.Clamp(_intStart, firstEnabled, max);
+			_intStart = MathHelper.Clamp(_intEnd, firstEnabled, max);
 
 			// Find start of visible range
 			for (int i = _intEnd; i >= firstEnabled; i--)
@@ -444,7 +440,7 @@ namespace RichHudFramework.UI
 			VisStart = GetVisibleIndex(_intStart);
 
 			for (int i = 0; i < hudCollectionList.Count; i++)
-				hudCollectionList[i].Element.Visible = (i >= _intStart && i <= _intEnd) && hudCollectionList[i].Enabled;
+				hudCollectionList[i].Element.Visible = (i >= _start && i <= _end) && hudCollectionList[i].Enabled;
 		}
 
 		/// <summary>
@@ -477,7 +473,7 @@ namespace RichHudFramework.UI
 					offset = .1f;
 
 				if (getEnd)
-					offset -= CachedSize[alignAxis] - Padding[alignAxis] + Spacing;
+					offset -= UnpaddedSize[alignAxis] + Spacing;
 				else
 				{
 					index--;
