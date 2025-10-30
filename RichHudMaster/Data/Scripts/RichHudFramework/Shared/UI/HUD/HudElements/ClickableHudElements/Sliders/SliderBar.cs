@@ -244,11 +244,15 @@ namespace RichHudFramework.UI
 		{
 			base.HandleInput(cursorPos);
 
-			if (slider.IsMousedOver)
-				startCursorOffset = cursorPos - slider.Position;
-
 			if (!canMoveSlider && IsNewLeftClicked)
+			{
 				canMoveSlider = true;
+
+				if (slider.IsMousedOver)
+					startCursorOffset = cursorPos - slider.Position;
+				else
+					startCursorOffset = Vector2.Zero;
+			}
 			else if (canMoveSlider && !SharedBinds.LeftButton.IsPressed)
 				canMoveSlider = false;
 
