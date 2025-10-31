@@ -143,7 +143,8 @@ namespace RichHudFramework.Server
 
                     VersionID = (Vector4I)(GetOrSetMemberFunc(null, (int)ClientDataAccessors.GetVersionID) ?? new Vector4I(0, 0, 0, 0));
                     ClientSubtype = (ClientSubtypes)(GetOrSetMemberFunc(null, (int)ClientDataAccessors.GetSubtype) ?? ClientSubtypes.Full);
-
+					ReportException = (Action<Exception>)GetOrSetMemberFunc(null, (int)ClientDataAccessors.ReportException);
+					
                     if (VersionID.X > 0)
                         VersionString = $"{VersionID.X}.{VersionID.Y}.{VersionID.Z}.{VersionID.W} ({apiVersionID})";
                 }

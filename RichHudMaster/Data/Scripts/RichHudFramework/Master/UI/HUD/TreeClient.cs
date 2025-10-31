@@ -141,9 +141,11 @@ namespace RichHudFramework
 
 					private bool _enableCursor;
 					private readonly List<FlatSubtree> subtreeBuffers;
+					private readonly ModClient owner;
 
 					public TreeClient(ModClient modClient = null, int apiVersion = (int)APIVersionTable.Latest)
 					{
+						this.owner = modClient;
 						this.ReportExceptionFunc = modClient?.ReportException ?? ExceptionHandler.ReportException;
 						this.ApiVersion = apiVersion;
 
@@ -155,6 +157,8 @@ namespace RichHudFramework
 
 					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, uint tick)
 					{
+						this.ReportExceptionFunc = owner?.ReportException ?? ExceptionHandler.ReportException;
+
 						if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 						{
 							if (RootNodeHandle != null)
