@@ -461,7 +461,6 @@ namespace RichHudFramework
 								}
 							}
 
-							subtree.Active.StateData.AddRange(subtree.Inactive.StateData);
 							subtree.IsActiveStale = false;
 						}
 					}

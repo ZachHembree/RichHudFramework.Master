@@ -1,4 +1,5 @@
-﻿using RichHudFramework.Server;
+﻿using ProtoBuf.Meta;
+using RichHudFramework.Server;
 using System;
 using System.Collections.Generic;
 using VRage;
@@ -143,9 +144,9 @@ namespace RichHudFramework
 									// Finalize previous subtree
 									if (subtree != null)
 									{
-										if (subtree.Inactive.StateData.Count > subtreePos)
+										if (subtree.StateData.Count > subtreePos)
 										{
-											subtree.Inactive.Truncate(subtreePos);
+											subtree.TruncateInactive(subtreePos);
 											canBeEqual = false;
 										}
 
@@ -178,10 +179,10 @@ namespace RichHudFramework
 							}
 
 							var children = stack.node[0].Item5;
-							int nodeID = subtree.Inactive.StateData.Count;
+							int nodeID = subtree.StateData.Count;
 
 							// Add node
-							if (subtreePos < subtree.Inactive.StateData.Count)
+							if (subtreePos < subtree.StateData.Count)
 							{
 								if (canBeEqual)
 								{
@@ -189,7 +190,7 @@ namespace RichHudFramework
 									byte outerOffset = (byte)config[FullZOffsetID];
 
 									// If the config reference matches, the node is the same
-									canBeEqual &= subtree.Inactive.StateData[subtreePos].Config == config;
+									canBeEqual &= subtree.StateData[subtreePos].Config == config;
 									// If the outer/public sorting has changed, the members will need to be resorted
 									canBeEqual &= outerOffset == lastOuterOffset;
 								}
@@ -199,7 +200,7 @@ namespace RichHudFramework
 								if (!canBeEqual)
 								{
 									// Confg/state
-									subtree.Inactive.StateData[subtreePos] = new NodeState
+									subtree.StateData[subtreePos] = new NodeState
 									{
 										Config = config,
 										ParentConfig = parent?[0].Item1
@@ -216,7 +217,7 @@ namespace RichHudFramework
 								canBeEqual = false;
 
 								// Confg/state
-								subtree.Inactive.StateData.Add(new NodeState
+								subtree.StateData.Add(new NodeState
 								{
 									Config = config,
 									ParentConfig = parent?[0].Item1
@@ -245,9 +246,9 @@ namespace RichHudFramework
 					// Finalize trailing subtree
 					if (subtree != null)
 					{
-						if (subtree.Inactive.StateData.Count > subtreePos)
+						if (subtree.StateData.Count > subtreePos)
 						{
-							subtree.Inactive.Truncate(subtreePos);
+							subtree.TruncateInactive(subtreePos);
 							canBeEqual = false;
 						}
 
@@ -270,20 +271,22 @@ namespace RichHudFramework
 				{
 					for (int i = subtrees.Count - 1; i >= 0; i--)
 					{
-						var active = subtrees[i].Active;
+						FlatSubtree subtree = subtrees[i];
+						var active = subtree.Active;
 
 						foreach (NodeHook sizingUpdate in active.Hooks.SizingActions)
 						{
-							uint[] config = active.StateData[sizingUpdate.NodeID].Config;
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[sizingUpdate.NodeID] : default(NodeState);
+							uint[] config = state.Config;
 							bool needsUpdate = true;
 
 							if (config != null)
 							{
-								var state = (HudElementStates)config[StateID];
+								var flags = (HudElementStates)config[StateID];
 								var visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags;
 
 								// Check visibility
-								needsUpdate = (state & visMask) == visMask;
+								needsUpdate = (flags & visMask) == visMask;
 							}
 
 							// Update sizing if needed
@@ -315,9 +318,9 @@ namespace RichHudFramework
 						FlatSubtree subtree = subtrees[i];
 						var active = subtrees[i].Active;
 
-						for (int j = 0; j < active.StateData.Count; j++)
+						for (int j = 0; j < active.Hooks.LayoutActions.Count; j++)
 						{
-							NodeState state = active.StateData[j];
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[j] : default(NodeState);
 							IReadOnlyList<uint> parentConfig = state.ParentConfig;
 							uint[] config = state.Config;
 							bool needsUpdate = true;
@@ -391,11 +394,12 @@ namespace RichHudFramework
 					for (int i = 0; i < indices.Count; i++)
 					{
 						int index = (int)indices[i];
-						var active = subtrees[index].Active;
+						var subtree = subtrees[index];
+						var active = subtree.Active;
 
 						foreach (NodeHook drawUpdate in active.Hooks.DrawActions)
 						{
-							NodeState state = active.StateData[drawUpdate.NodeID];
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[drawUpdate.NodeID] : default(NodeState);
 							uint[] config = state.Config;
 							bool needsUpdate = true;
 
@@ -421,7 +425,7 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtrees[index].Owner.ReportExceptionFunc(e);
+									subtree.Owner.ReportExceptionFunc(e);
 									indices.RemoveAt(i); i--;
 									break;
 								}
@@ -438,11 +442,12 @@ namespace RichHudFramework
 					for (int i = 0; i < indices.Count; i++)
 					{
 						int index = (int)indices[i];
-						var active = subtrees[index].Active;
+						var subtree = subtrees[index];
+						var active = subtree.Active;
 
 						foreach (NodeHook depthTest in active.Hooks.InputDepthActions)
 						{
-							NodeState state = active.StateData[depthTest.NodeID];
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[depthTest.NodeID] : default(NodeState);
 							uint[] config = state.Config;
 							bool needsUpdate = true;
 
@@ -477,7 +482,7 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtrees[index].Owner.ReportExceptionFunc(e);
+									subtree.Owner.ReportExceptionFunc(e);
 									indices.RemoveAt(i); i--;
 									break;
 								}
@@ -491,11 +496,12 @@ namespace RichHudFramework
 					for (int i = indices.Count - 1; i >= 0; i--)
 					{
 						int index = (int)indices[i];
-						var active = subtrees[index].Active;
+						var subtree = subtrees[index];
+						var active = subtree.Active;
 
 						foreach (NodeHook inputUpdate in active.Hooks.InputActions)
 						{
-							NodeState state = active.StateData[inputUpdate.NodeID];
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[inputUpdate.NodeID] : default(NodeState);
 							uint[] config = state.Config;
 							bool needsUpdate = true;
 

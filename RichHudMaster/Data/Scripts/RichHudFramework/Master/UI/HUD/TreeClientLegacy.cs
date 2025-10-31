@@ -130,9 +130,9 @@ namespace RichHudFramework
 								// Finalize previous subtree
 								if (subtree != null)
 								{
-									if (subtree.Inactive.StateData.Count > subtreePos)
+									if (subtree.Inactive.OuterOffsets.Count > subtreePos)
 									{
-										subtree.Inactive.Truncate(subtreePos);
+										subtree.TruncateInactive(subtreePos);
 										canBeEqual = false;
 									}
 
@@ -162,7 +162,7 @@ namespace RichHudFramework
 								subtreeCount++;
 							}
 
-							if (subtreePos < subtree.Inactive.StateData.Count)
+							if (subtreePos < subtree.Inactive.OuterOffsets.Count)
 							{
 								if (canBeEqual)
 								{
@@ -197,7 +197,6 @@ namespace RichHudFramework
 								canBeEqual = false;
 
 								// Unused node state list needs to be padded to remain parallel
-								subtree.Inactive.StateData.Add(default(NodeState));
 								subtree.Inactive.OuterOffsets.Add((byte)FullZOffset);
 								subtree.Inactive.HookData.Add(new HudNodeHookData
 								{
@@ -216,9 +215,9 @@ namespace RichHudFramework
 						// Finalize trailing subtree
 						if (subtree != null)
 						{
-							if (subtree.Inactive.StateData.Count > subtreePos)
+							if (subtree.Inactive.OuterOffsets.Count > subtreePos)
 							{
-								subtree.Inactive.Truncate(subtreePos);
+								subtree.TruncateInactive(subtreePos);
 								canBeEqual = false;
 							}
 
