@@ -7,6 +7,7 @@ namespace RichHudFramework
 		using static NodeConfigIndices;
 		using RichHudFramework.UI.Server;
 		using System.Collections.Generic;
+		using Client;
 
 		public abstract partial class HudParentBase
 		{
@@ -29,6 +30,8 @@ namespace RichHudFramework
 					{
 						HudNodeBase node = nodes[n];
 						node._dataHandle[0].Item4 = newParent.DataHandle;
+						node.HudSpace = newParent.HudSpace;
+
 						newParent.childHandles.Add(node.DataHandle);
 						newParent.children.Add(node);
 					}
@@ -58,6 +61,8 @@ namespace RichHudFramework
 					{
 						HudNodeBase node = nodes[n].Element;
 						node._dataHandle[0].Item4 = newParent.DataHandle;
+						node.HudSpace = newParent.HudSpace;
+
 						newParent.childHandles.Add(node.DataHandle);
 						newParent.children.Add(node);
 					}
