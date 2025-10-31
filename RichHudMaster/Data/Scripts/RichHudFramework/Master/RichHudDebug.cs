@@ -40,7 +40,11 @@ namespace RichHudFramework.Server
 
             EnableDebug = false;
             updateTimer = new Stopwatch();
-            updateTimer.Start();
+			overlayPos = new Vector2(0.5f, 0.5f);
+			enableOverlay = ExceptionHandler.DebugLogging;
+			statsBuilder = new StringBuilder();
+
+			updateTimer.Start();
 
             statisticsPage = new TextPage()
             {
@@ -58,9 +62,6 @@ namespace RichHudFramework.Server
                 Scale = 0.8f,
                 Format = new GlyphFormat(new Color(255, 191, 0))
             };
-            overlayPos = new Vector2(0.5f, 0.5f);
-            enableOverlay = ExceptionHandler.DebugLogging;
-            statsBuilder = new StringBuilder();
         }
 
         public static void Init()
@@ -301,12 +302,11 @@ namespace RichHudFramework.Server
 
 		private void AppendNodeUpdateStats(StringBuilder statsBuilder)
 		{
-			statsBuilder.Append($"\t\tUpdate Counts:\n");
+			statsBuilder.Append($"\t\tNode Updates:\n");
 			AddGrid(statsBuilder, new string[,]
 			{
 				{ "Name", "Avg", "50th", "99th" },
 				{ "Callbacks", $"{RichHudStats.UI.AvgNodeUpdateCount:F0}", $"{RichHudStats.UI.NodeUpdate50th:F0}", $"{RichHudStats.UI.NodeUpdate99th:F0}" },
-				{ "Subtree Sort\t", $"{RichHudStats.UI.SubtreeSortAvgCount:F0}", $"{RichHudStats.UI.SubtreeSort50th:F0}", $"{RichHudStats.UI.SubtreeSort99th:F0}" },
 				{ "Element Sort\t", $"{RichHudStats.UI.ElementSortAvgCount:F0}", $"{RichHudStats.UI.ElementSort50th:F0}", $"{RichHudStats.UI.ElementSort99th:F0}" }
 			}, 3, 4);
 		}

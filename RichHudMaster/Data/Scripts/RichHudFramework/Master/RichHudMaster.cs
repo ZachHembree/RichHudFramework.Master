@@ -164,6 +164,7 @@ namespace RichHudFramework.Server
 
         protected override void AfterLoadData()
         {
+            Instance = this;
             priorityVersion = default(MasterRegEntry);
             SendModMessage(regMessage);
 

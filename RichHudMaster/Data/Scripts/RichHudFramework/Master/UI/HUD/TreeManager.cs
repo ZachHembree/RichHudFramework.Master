@@ -282,7 +282,6 @@ namespace RichHudFramework
 						activeSubtrees.Add(subtreeBuffer[index]);
 					}
 
-					RichHudStats.UI.InternalCounters.SubtreeSortingUpdates += activeSubtrees.Count;
 					SortSubtreeMembers();
 				}
 
