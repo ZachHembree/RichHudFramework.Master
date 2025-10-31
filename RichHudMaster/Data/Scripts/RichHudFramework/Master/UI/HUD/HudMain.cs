@@ -83,6 +83,16 @@ namespace RichHudFramework
             public static float ScreenHeight { get; private set; }
 
             /// <summary>
+            /// Current screen dimensions ScreenWidth x ScreenHeight in pixels
+            /// </summary>
+            public static Vector2 ScreenDim { get; private set; }
+
+			/// <summary>
+			/// Current screen dimensions ScreenWidth x ScreenHeight with high DPI scaling
+			/// </summary>
+			public static Vector2 ScreenDimHighDPI { get; private set; }
+
+            /// <summary>
             /// The current field of view
             /// </summary>
             public static float Fov { get; private set; }
@@ -273,6 +283,9 @@ namespace RichHudFramework
                 ScreenHeight = MyAPIGateway.Session.Camera.ViewportSize.Y;
                 AspectRatio = (ScreenWidth / ScreenHeight);
                 ResScale = (ScreenHeight > 1080f) ? ScreenHeight / 1080f : 1f;
+
+                ScreenDim = new Vector2(ScreenWidth, ScreenHeight);
+                ScreenDimHighDPI = ScreenDim / ResScale;
 
                 Fov = MyAPIGateway.Session.Camera.FovWithZoom;
                 FovScale = (float)(0.1f * Math.Tan(Fov / 2d));
