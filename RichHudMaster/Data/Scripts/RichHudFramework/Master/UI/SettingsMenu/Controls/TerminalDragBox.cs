@@ -139,15 +139,7 @@ namespace RichHudFramework.UI.Server
             /// <summary>
             /// Returns the absolute position of the window in screen space on [-0.5, 0.5]
             /// </summary>
-            public Vector2 AbsolutePosition
-            {
-                get { return _absolutePosition; } 
-                set 
-                {
-                    value = Vector2.Clamp(value, -Vector2.One * .5f, Vector2.One * .5f);
-                    _absolutePosition = value; 
-                } 
-            }
+            public Vector2 AbsolutePosition { get; set; }
 
             /// <summary>
             /// If set to true, then the window will align its position to the screen 
@@ -157,7 +149,7 @@ namespace RichHudFramework.UI.Server
 
             private readonly BorderedButton confirmButton;
             private readonly Action DragUpdateAction;
-            private Vector2 alignment, _absolutePosition;
+            private Vector2 alignment;
 
             public DragWindow(Action UpdateAction) : base(HudMain.HighDpiRoot)
             {
@@ -180,46 +172,63 @@ namespace RichHudFramework.UI.Server
                 confirmButton.MouseInput.LeftClicked += (sender, args) => Confirmed?.Invoke();
             }
 
-            protected override void Layout()
-            {
-                Offset = HudMain.GetPixelVector(_absolutePosition) / HudMain.ResScale - Origin - alignment;
+			protected override void Layout()
+			{
+				base.Layout();
 
-                base.Layout();
-
-                _absolutePosition = HudMain.GetAbsoluteVector((Position + alignment) * HudMain.ResScale);
-                _absolutePosition.X = (float)Math.Round(_absolutePosition.X, 4);
-                _absolutePosition.Y = (float)Math.Round(_absolutePosition.Y, 4);
-
-                UpdateAlignment();
-            }
-
-            private void UpdateAlignment()
-            {
-                alignment = new Vector2();
-
-                if (AlignToEdge)
-                {
-                    if (Position.X > 0f)
-                        alignment.X = Width * .5f;
-                    else
-                        alignment.X = -Width * .5f;
-
-                    if (Position.Y > 0f)
-                        alignment.Y = Height * .5f;
-                    else
-                        alignment.Y = -Height * .5f;
-                }
-            }
+				// Recalculate offset from last normalized position
+				Offset = HudMain.GetPixelVector(AbsolutePosition) / HudMain.ResScale - Origin - alignment;
+			}
 
             protected override void HandleInput(Vector2 cursorPos)
             {
-                base.HandleInput(cursorPos);
+				base.HandleInput(cursorPos);
 
-                if (SharedBinds.Escape.IsNewPressed)
-                    Confirmed?.Invoke();
+				// Clamp to screen edges
+				Vector2 halfScreen = 0.5f * HudMain.ScreenDimHighDPI,
+					halfSize = 0.5f * CachedSize;
+				Offset = Vector2.Clamp(Offset, -halfScreen + halfSize, halfScreen - halfSize);
 
-                DragUpdateAction();
-            }
+				if (canMoveWindow)
+                {
+					UpdateAlignment();
+
+					// Calculate next normalized position from last position
+					Vector2 nextPos = HudMain.GetAbsoluteVector((Position + alignment) * HudMain.ResScale);
+					nextPos = new Vector2((float)Math.Round(nextPos.X, 4), (float)Math.Round(nextPos.Y, 4));
+
+					AbsolutePosition = nextPos;
+					DragUpdateAction();
+				}
+
+				if (SharedBinds.Escape.IsNewPressed)
+					Confirmed?.Invoke();
+			}
+
+			private void UpdateAlignment()
+			{
+				const float epsilon = 1E-2f;
+				Vector2 pos = Position;
+				pos.X = (float)Math.Round(pos.X, 4);
+				pos.Y = (float)Math.Round(pos.Y, 4);
+				alignment = Vector2.Zero;
+
+				if (AlignToEdge)
+				{
+					if (pos.X > epsilon)
+						alignment.X = Width * .5f;
+					else if (pos.X < -epsilon)
+						alignment.X = -Width * .5f;
+
+					if (pos.Y > epsilon)
+						alignment.Y = Height * .5f;
+					else if (pos.Y < -epsilon)
+						alignment.Y = -Height * .5f;
+				}
+
+				alignment.X = (float)Math.Round(alignment.X, 4);
+				alignment.Y = (float)Math.Round(alignment.Y, 4);
+			}
         }
     }
 }
