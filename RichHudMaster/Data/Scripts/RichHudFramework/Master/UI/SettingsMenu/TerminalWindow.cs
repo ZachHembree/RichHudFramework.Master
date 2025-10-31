@@ -291,12 +291,9 @@ namespace RichHudFramework
                             Thickness = 1f,
                             Color = new Color(53, 66, 75),
                         };
-
-                        HandleInputCallback = HandleInput;
-                        LayoutCallback = Layout;
                     }
 
-                    private void HandleInput(Vector2 cursorPos)
+					protected override void HandleInput(Vector2 cursorPos)
                     {
                         var nextRoot = listInput.Selection;
                         var nextCategory = nextRoot?.SelectedSubcategory;
@@ -335,7 +332,7 @@ namespace RichHudFramework
                         listInput.ListSize = listSize;
                     }
 
-                    private void Layout()
+					protected override void Layout()
                     {
                         header.Color = TerminalFormatting.Dark.SetAlphaPct(HudMain.UiBkOpacity);
                         scrollBox.Color = TerminalFormatting.DarkSlateGrey.SetAlphaPct(HudMain.UiBkOpacity);

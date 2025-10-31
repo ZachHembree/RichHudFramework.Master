@@ -25,11 +25,9 @@ namespace RichHudFramework
 
 	namespace UI
 	{
-		using static RichHudFramework.UI.NodeConfigIndices;
-		using Server;
-		using Client;
 		using Internal;
-
+		using Server;
+		using static RichHudFramework.UI.NodeConfigIndices;
 		// Read-only length-1 array containing raw UI node data
 		using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
 
@@ -105,62 +103,6 @@ namespace RichHudFramework
 				}
 			}
 
-			// Custom Update Hooks - inject custom updates and polling here
-			#region CUSTOM UPDATE HOOKS
-
-			/// <summary>
-			/// Used to check whether the cursor is moused over the element and whether its being
-			/// obstructed by another element.
-			/// </summary>
-			protected Action InputDepthCallback
-			{
-				get { return _dataHandle[0].Item3.Item2; }
-				set { _dataHandle[0].Item3.Item2 = value; }
-			}
-
-			/// <summary>
-			/// Updates the input of this UI element. Invocation order affected by z-Offset and depth sorting.
-			/// Executes last, after Draw.
-			/// </summary>
-			protected Action<Vector2> HandleInputCallback
-			{
-				get { return _handleInputCallback; }
-				set
-				{
-					_handleInputCallback = value;
-
-					if (value != null && _dataHandle[0].Item3.Item3 == null)
-						_dataHandle[0].Item3.Item3 = BeginInput;
-				}
-			}
-
-			/// <summary>
-			/// Updates the sizing of the element. Executes before layout in bottom-up order, before layout.
-			/// </summary>
-			protected Action UpdateSizeCallback
-			{
-				get { return _dataHandle[0].Item3.Item4; }
-				set { _dataHandle[0].Item3.Item4 = value; }
-			}
-
-			/// <summary>
-			/// Updates the internal layout of the UI element. Executes after sizing in top-down order, before 
-			/// input and draw. Not affected by depth or z-Offset sorting.
-			/// </summary>
-			protected Action LayoutCallback;
-
-			/// <summary>
-			/// Used to immediately draw billboards. Invocation order affected by z-Offset and depth sorting.
-			/// Executes after Layout and before HandleInput.
-			/// </summary>
-			protected Action DrawCallback
-			{
-				get { return _dataHandle[0].Item3.Item6; }
-				set { _dataHandle[0].Item3.Item6 = value; }
-			}
-
-			#endregion
-
 			// INTERNAL DATA
 			#region INTERNAL DATA
 
@@ -181,7 +123,6 @@ namespace RichHudFramework
 			protected readonly List<object> childHandles;
 			protected readonly List<HudNodeBase> children;
 			protected readonly HudSpaceOriginFunc[] hudSpaceOriginFunc;
-			protected Action<Vector2> _handleInputCallback;
 
 			#endregion
 
@@ -201,8 +142,12 @@ namespace RichHudFramework
 				_dataHandle[0].Item2 = hudSpaceOriginFunc;
 				// Hooks
 				_dataHandle[0].Item3.Item1 = GetOrSetApiMember; // Required
+				_dataHandle[0].Item3.Item2 = InputDepth;
+				_dataHandle[0].Item3.Item3 = BeginInput;
+				_dataHandle[0].Item3.Item4 = UpdateSize;
 				_dataHandle[0].Item3.Item5 = BeginLayout; // Required
-														  // Parent
+				_dataHandle[0].Item3.Item6 = Draw;
+				// Parent
 				_dataHandle[0].Item4 = null;
 				// Child handle list
 				_dataHandle[0].Item5 = childHandles;
@@ -214,6 +159,9 @@ namespace RichHudFramework
 				Config[StateID] = (uint)(HudElementStates.IsRegistered | HudElementStates.IsInputEnabled | HudElementStates.IsVisible);
 			}
 
+			protected virtual void InputDepth()
+			{ }
+
 			/// <summary>
 			/// Starts input update in a try-catch block. Useful for manually updating UI elements.
 			/// Exceptions are reported client-side. Do not override this unless you have a good reason for it.
@@ -222,8 +170,11 @@ namespace RichHudFramework
 			public virtual void BeginInput()
 			{
 				Vector3 cursorPos = HudSpace.CursorPos;
-				_handleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
+				HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
 			}
+
+			protected virtual void HandleInput(Vector2 cursorPos)
+			{ }
 
 			/// <summary>
 			/// Starts layout update in a try-catch block. Useful for manually updating UI elements.
@@ -237,8 +188,17 @@ namespace RichHudFramework
 				else
 					Config[StateID] &= ~(uint)HudElementStates.IsSpaceNodeReady;
 
-				LayoutCallback?.Invoke();
+				Layout();
 			}
+
+			protected virtual void UpdateSize()
+			{ }
+
+			protected virtual void Layout()
+			{ }
+
+			protected virtual void Draw()
+			{ }
 
 			/// <summary>
 			/// Registers a child node to the object.

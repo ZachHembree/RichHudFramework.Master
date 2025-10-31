@@ -148,11 +148,9 @@ namespace RichHudFramework.UI
             MinimumSize = new Vector2(200f, 200f);
 
             GetFocus();
-            LayoutCallback = Layout;
-            HandleInputCallback = HandleInput;
         }
 
-        protected virtual void Layout()
+		protected override void Layout()
         {
             body.Height = UnpaddedSize.Y - header.Height;
             body.Width = UnpaddedSize.X;
@@ -182,7 +180,7 @@ namespace RichHudFramework.UI
             Offset = pos - Origin;
         }
 
-        protected virtual void HandleInput(Vector2 cursorPos)
+		protected override void HandleInput(Vector2 cursorPos)
         {
             if (IsMousedOver)
             {

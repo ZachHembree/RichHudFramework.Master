@@ -107,7 +107,7 @@ namespace RichHudFramework
 			public override void BeginInput()
 			{
 				Vector3 cursorPos = HudSpace.CursorPos;
-				_handleInputCallback?.Invoke(new Vector2(cursorPos.X, cursorPos.Y));
+				HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
 			}
 
 			/// <summary>
@@ -124,7 +124,7 @@ namespace RichHudFramework
 				else
 					Config[StateID] &= ~(uint)HudElementStates.IsSpaceNodeReady;
 
-				LayoutCallback?.Invoke();
+				Layout();
 			}
 
 			/// <summary>

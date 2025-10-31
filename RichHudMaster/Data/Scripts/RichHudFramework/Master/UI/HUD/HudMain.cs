@@ -405,11 +405,9 @@ namespace RichHudFramework
                     GetNodeOriginFunc = () => PixelToWorldRef[0].Translation;
                     PlaneToWorldRef = PixelToWorldRef;
                     Config[StateID] |= (uint)HudElementStates.IsSpaceNode;
-
-                    LayoutCallback = Layout;
                 }
 
-                private void Layout()
+				protected override void Layout()
                 {
                     PlaneToWorldRef[0] = PixelToWorld;
                     CursorPos = new Vector3(Cursor.ScreenPos.X, Cursor.ScreenPos.Y, 0f);

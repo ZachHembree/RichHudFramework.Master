@@ -253,8 +253,6 @@ namespace RichHudFramework
                         Width = 334f;
                     else
                         Height = 328f;
-
-                    LayoutCallback = Layout;
                 }
 
                 public void Add(TMember tile)
@@ -262,7 +260,7 @@ namespace RichHudFramework
                     scrollBox.Add(tile);
                 }
 
-                private void Layout()
+				protected override void Layout()
                 {
                     SliderBar slider = scrollBox.ScrollBar.slide;
                     slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);

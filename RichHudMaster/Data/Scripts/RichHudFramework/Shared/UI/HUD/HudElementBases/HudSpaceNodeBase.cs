@@ -74,11 +74,9 @@ namespace RichHudFramework
 				GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;
 				PlaneToWorldRef = new MatrixD[1];
 				Config[StateID] |= (uint)HudElementStates.IsSpaceNode;
-
-				LayoutCallback = Layout;
 			}
 
-			protected virtual void Layout()
+			protected override void Layout()
 			{
 				// Determine whether the node is in front of the camera and pointed toward it
 				MatrixD camMatrix = MyAPIGateway.Session.Camera.WorldMatrix;
