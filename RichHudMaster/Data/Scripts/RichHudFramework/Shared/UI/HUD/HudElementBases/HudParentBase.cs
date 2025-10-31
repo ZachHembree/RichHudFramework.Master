@@ -124,7 +124,6 @@ namespace RichHudFramework
 			protected readonly HudNodeData[] _dataHandle;
 			protected readonly List<object> childHandles;
 			protected readonly List<HudNodeBase> children;
-			protected readonly HudSpaceOriginFunc[] hudSpaceOriginFunc;
 
 			#endregion
 
@@ -135,13 +134,12 @@ namespace RichHudFramework
 				childHandles = new List<object>();
 
 				Config = new uint[ConfigLength];
-				hudSpaceOriginFunc = new HudSpaceOriginFunc[1];
 
 				// Shared data handle
 				_dataHandle = new HudNodeData[1];
 				// Shared state
 				_dataHandle[0].Item1 = Config;
-				_dataHandle[0].Item2 = hudSpaceOriginFunc;
+				_dataHandle[0].Item2 = new HudSpaceOriginFunc[1];
 				// Hooks
 				_dataHandle[0].Item3.Item1 = GetOrSetApiMember; // Required
 				_dataHandle[0].Item3.Item2 = InputDepth;
