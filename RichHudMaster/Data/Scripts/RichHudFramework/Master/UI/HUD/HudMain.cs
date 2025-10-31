@@ -220,6 +220,7 @@ namespace RichHudFramework
                 treeManager.HandleInput();
 
 				FrameNumber++;
+                FrameNumber %= int.MaxValue;
 			}
 
 			/// <summary>

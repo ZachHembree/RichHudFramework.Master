@@ -86,7 +86,9 @@ namespace RichHudFramework
 			}
 
 			/// <summary>
-			/// Determines whether the UI element will be drawn in the Back, Mid or Foreground
+			/// Moves the UI element up or down in draw order. -1 will darw an element behind its immediate 
+			/// parent. +1 will draw it on top of siblings. Higher values will allow it to draw behind or over 
+			/// more distantly related elements.
 			/// </summary>
 			public sbyte ZOffset
 			{

@@ -118,7 +118,7 @@ namespace RichHudFramework
 
 							// Update combined ZOffset for layer sorting
 							{
-								byte outerOffset = (byte)(config[ZOffsetID] - sbyte.MinValue);
+								byte outerOffset = (byte)((sbyte)config[ZOffsetID] - sbyte.MinValue);
 								ushort innerOffset = (ushort)(config[ZOffsetInnerID] << 8);
 
 								// Combine local node inner and outer offsets with parent and pack into
@@ -126,8 +126,11 @@ namespace RichHudFramework
 								if (parent != null)
 								{
 									ushort parentFull = (ushort)parent[0].Item1[FullZOffsetID];
-									outerOffset += (byte)((parentFull & 0x00FF) + sbyte.MinValue);
-									innerOffset += (ushort)(parentFull & 0xFF00);
+									byte parentOuter = (byte)((parentFull & 0x00FF) + sbyte.MinValue);
+									ushort parentInner = (ushort)(parentFull & 0xFF00);
+
+									outerOffset = (byte)Math.Min((outerOffset + parentOuter), byte.MaxValue);
+									innerOffset = (ushort)Math.Min(innerOffset + parentInner, 0xFF00);
 								}
 
 								config[FullZOffsetID] = (ushort)(innerOffset | outerOffset);

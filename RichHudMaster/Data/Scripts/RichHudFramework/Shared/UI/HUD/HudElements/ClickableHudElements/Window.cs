@@ -147,7 +147,7 @@ namespace RichHudFramework.UI
             IsMasking = true;
             MinimumSize = new Vector2(200f, 200f);
 
-            GetFocus();
+			GetWindowFocus();
         }
 
 		protected override void Layout()
@@ -185,7 +185,7 @@ namespace RichHudFramework.UI
             if (IsMousedOver)
             {
                 if (SharedBinds.LeftButton.IsNewPressed && !WindowActive)
-                    GetFocus();
+					GetWindowFocus();
             }
 
             if (AllowResizing && resizeInput.IsNewLeftClicked && !inputInner.IsMousedOver)
@@ -229,19 +229,24 @@ namespace RichHudFramework.UI
                 Resize(cursorPos);
         }
 
-        /// <summary>
-        /// Brings the window into the foreground
-        /// </summary>
-        public virtual void GetFocus()
-        {
-            GetWindowFocus();
-            WindowActive = true;
-        }
+		/// <summary>
+		/// Causes a window to be brought to the foreground. Overriding methods must call the 
+		/// base implementation.
+		/// </summary>
+		public virtual void GetWindowFocus()
+		{
+			OverlayOffset = HudMain.GetFocusOffset(LoseWindowFocus);
+			WindowActive = true;
+		}
 
-        protected override void LoseWindowFocus(byte newOffset)
-        {
-            base.LoseWindowFocus(newOffset);
-            WindowActive = false;
-        }
-    }
+		/// <summary>
+		/// Invoked when a window that previously had focus loses it. Overriding methods must call 
+		/// the base implementation.
+		/// </summary>
+		protected virtual void LoseWindowFocus(byte newLayer)
+		{
+			OverlayOffset = newLayer;
+			WindowActive = false;
+		}
+	}
 }

@@ -163,7 +163,7 @@ namespace RichHudFramework
                     {
                         Visible = true;
                         HudMain.EnableCursor = true;
-                        GetFocus();
+						GetWindowFocus();
                     }
                 }
 
