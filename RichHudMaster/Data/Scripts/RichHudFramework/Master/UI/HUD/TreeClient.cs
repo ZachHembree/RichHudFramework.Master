@@ -176,6 +176,7 @@ namespace RichHudFramework
 								{
 									ElementsUpdating = nodeIterator.GetNodeData(RootNodeHandle, subtreeBuffers, bufferPool, this);
 									rootConfig[StateID] &= ~(uint)HudElementStates.IsStructureStale;
+									RichHudStats.UI.InternalCounters.SubtreeUpdates += subtreeBuffers.Count;
 								}
 							}
 						}
@@ -184,6 +185,8 @@ namespace RichHudFramework
 						{
 							if (GetUpdateAccessors != null)
 								ElementsUpdating = LegacyNodeUpdate(bufferPool);
+
+							RichHudStats.UI.InternalCounters.SubtreeUpdates += subtreeBuffers.Count;
 						}
 
 						SubtreesUpdating = subtreeBuffers.Count;

@@ -307,6 +307,7 @@ namespace RichHudFramework.Server
 			{
 				{ "Name", "Avg", "50th", "99th" },
 				{ "Callbacks", $"{RichHudStats.UI.AvgNodeUpdateCount:F0}", $"{RichHudStats.UI.NodeUpdate50th:F0}", $"{RichHudStats.UI.NodeUpdate99th:F0}" },
+				{ "Subtree", $"{RichHudStats.UI.SubtreeUpdateAvg:F0}", $"{RichHudStats.UI.SubtreeUpdate50th:F0}", $"{RichHudStats.UI.SubtreeUpdate99th:F0}" },
 				{ "Element Sort\t", $"{RichHudStats.UI.ElementSortAvgCount:F0}", $"{RichHudStats.UI.ElementSort50th:F0}", $"{RichHudStats.UI.ElementSort99th:F0}" }
 			}, 3, 4);
 		}
