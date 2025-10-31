@@ -266,11 +266,11 @@ namespace RichHudFramework
 					return nodeCount;
 				}
 
-				public void UpdateNodeSizing(IReadOnlyList<FlatSubtree> subtrees)
+				public void UpdateNodeSizing(List<FlatSubtree> subtrees)
 				{
-					foreach (FlatSubtree subtree in subtrees)
+					for (int i = 0; i < subtrees.Count; i++)
 					{
-						var active = subtree.Active;
+						var active = subtrees[i].Active;
 
 						foreach (NodeHook sizingUpdate in active.Hooks.SizingActions)
 						{
@@ -299,7 +299,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtree.Owner.ReportExceptionFunc(e);
+									subtrees[i].Owner.ReportExceptionFunc(e);
+									subtrees.RemoveAt(i); i--;
 									break;
 								}
 							}
@@ -307,15 +308,16 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeLayout(IReadOnlyList<FlatSubtree> subtrees, bool refresh = false)
+				public void UpdateNodeLayout(List<FlatSubtree> subtrees, bool refresh = false)
 				{
-					foreach (FlatSubtree subtree in subtrees)
+					for (int i = 0; i < subtrees.Count; i++)
 					{
-						var active = subtree.Active;
+						FlatSubtree subtree = subtrees[i];
+						var active = subtrees[i].Active;
 
-						for (int i = 0; i < active.StateData.Count; i++)
+						for (int j = 0; j < active.StateData.Count; j++)
 						{
-							NodeState state = active.StateData[i];
+							NodeState state = active.StateData[j];
 							IReadOnlyList<uint> parentConfig = state.ParentConfig;
 							uint[] config = state.Config;
 							bool needsUpdate = true;
@@ -339,7 +341,7 @@ namespace RichHudFramework
 							{
 								try
 								{
-									Action<bool> LayoutUpdate = active.Hooks.LayoutActions[i].Callback;
+									Action<bool> LayoutUpdate = active.Hooks.LayoutActions[j].Callback;
 
 									if (LayoutUpdate != null)
 									{
@@ -350,6 +352,7 @@ namespace RichHudFramework
 								catch (Exception e)
 								{
 									subtree.Owner.ReportExceptionFunc(e);
+									subtrees.RemoveAt(i); i--;
 									break;
 								}
 							}
@@ -383,11 +386,11 @@ namespace RichHudFramework
 					}
 				}
 
-				public void DrawNodes(IReadOnlyList<FlatSubtree> subtrees)
+				public void DrawNodes(List<FlatSubtree> subtrees)
 				{
-					foreach (FlatSubtree subtree in subtrees)
+					for (int i = 0; i < subtrees.Count; i++)
 					{
-						var active = subtree.Active;
+						var active = subtrees[i].Active;
 
 						foreach (NodeHook drawUpdate in active.Hooks.DrawActions)
 						{
@@ -417,7 +420,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtree.Owner.ReportExceptionFunc(e);
+									subtrees[i].Owner.ReportExceptionFunc(e);
+									subtrees.RemoveAt(i); i--;
 									break;
 								}
 							}
@@ -425,14 +429,14 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeInputDepth(IReadOnlyList<FlatSubtree> subtrees)
+				public void UpdateNodeInputDepth(List<FlatSubtree> subtrees)
 				{
 					if (HudMain.InputMode == HudInputMode.NoInput)
 						return;
 
-					foreach (FlatSubtree subtree in subtrees)
+					for (int i = 0; i < subtrees.Count; i++)
 					{
-						var active = subtree.Active;
+						var active = subtrees[i].Active;
 
 						foreach (NodeHook depthTest in active.Hooks.InputDepthActions)
 						{
@@ -471,7 +475,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtree.Owner.ReportExceptionFunc(e);
+									subtrees[i].Owner.ReportExceptionFunc(e);
+									subtrees.RemoveAt(i); i--;
 									break;
 								}
 							}
@@ -479,11 +484,11 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeInput(IReadOnlyList<FlatSubtree> subtrees)
+				public void UpdateNodeInput(List<FlatSubtree> subtrees)
 				{
-					foreach (FlatSubtree subtree in subtrees)
+					for (int i = 0; i < subtrees.Count; i++)
 					{
-						var active = subtree.Active;
+						var active = subtrees[i].Active;
 
 						foreach (NodeHook inputUpdate in active.Hooks.InputActions)
 						{
@@ -515,7 +520,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtree.Owner.ReportExceptionFunc(e);
+									subtrees[i].Owner.ReportExceptionFunc(e);
+									subtrees.RemoveAt(i); i--;
 									break;
 								}
 							}

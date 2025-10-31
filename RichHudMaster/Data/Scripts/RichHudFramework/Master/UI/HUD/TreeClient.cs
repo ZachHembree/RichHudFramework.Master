@@ -139,6 +139,11 @@ namespace RichHudFramework
 					/// </summary>
 					public Action<Exception> ReportExceptionFunc { get; private set; }
 
+					/// <summary>
+					/// True if the client is paused and not accepting updates
+					/// </summary>
+					public bool IsPaused { get; private set; }
+
 					private bool _enableCursor;
 					private readonly List<FlatSubtree> subtreeBuffers;
 					private readonly ModClient owner;
@@ -158,6 +163,7 @@ namespace RichHudFramework
 					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, uint tick)
 					{
 						this.ReportExceptionFunc = owner?.ReportException ?? ExceptionHandler.ReportException;
+						IsPaused = owner?.GetIsPausedFunc?.Invoke() ?? ExceptionHandler.ClientsPaused;
 
 						if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 						{

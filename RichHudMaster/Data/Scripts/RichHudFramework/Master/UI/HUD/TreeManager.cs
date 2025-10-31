@@ -293,7 +293,10 @@ namespace RichHudFramework
 					int nodeCount = 0;
 
 					for (int i = 0; i < clients.Count; i++)
-						subtreeBuffer.AddRange(clients[i].Subtrees);
+					{
+						if (!clients[i].IsPaused) // Exclude paused clients
+							subtreeBuffer.AddRange(clients[i].Subtrees);
+					}
 
 					// Manually append last elements after all clients
 					subtreeBuffer.AddRange(lateUpdateBuffer);

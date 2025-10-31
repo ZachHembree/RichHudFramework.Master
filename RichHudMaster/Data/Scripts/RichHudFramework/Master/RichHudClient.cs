@@ -63,6 +63,11 @@ namespace RichHudFramework.Server
             public Action<Action> RunOnExceptionHandler { get; private set; }
 
             /// <summary>
+            /// Returns true if the client is paused
+            /// </summary>
+            public Func<bool> GetIsPausedFunc { get; private set; }
+
+            /// <summary>
             /// Reports an exception to the client
             /// </summary>
             public Action<Exception> ReportException { get; private set; }
@@ -144,8 +149,9 @@ namespace RichHudFramework.Server
                     VersionID = (Vector4I)(GetOrSetMemberFunc(null, (int)ClientDataAccessors.GetVersionID) ?? new Vector4I(0, 0, 0, 0));
                     ClientSubtype = (ClientSubtypes)(GetOrSetMemberFunc(null, (int)ClientDataAccessors.GetSubtype) ?? ClientSubtypes.Full);
 					ReportException = (Action<Exception>)GetOrSetMemberFunc(null, (int)ClientDataAccessors.ReportException);
-					
-                    if (VersionID.X > 0)
+					GetIsPausedFunc = (Func<bool>)GetOrSetMemberFunc(null, (int)ClientDataAccessors.GetIsPausedFunc);
+
+					if (VersionID.X > 0)
                         VersionString = $"{VersionID.X}.{VersionID.Y}.{VersionID.Z}.{VersionID.W} ({apiVersionID})";
                 }
             }
