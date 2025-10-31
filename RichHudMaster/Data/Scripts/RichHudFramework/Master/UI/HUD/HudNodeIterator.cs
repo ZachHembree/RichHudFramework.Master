@@ -268,7 +268,7 @@ namespace RichHudFramework
 
 				public void UpdateNodeSizing(List<FlatSubtree> subtrees)
 				{
-					for (int i = 0; i < subtrees.Count; i++)
+					for (int i = subtrees.Count - 1; i >= 0; i--)
 					{
 						var active = subtrees[i].Active;
 
@@ -386,11 +386,12 @@ namespace RichHudFramework
 					}
 				}
 
-				public void DrawNodes(List<FlatSubtree> subtrees)
+				public void DrawNodes(IReadOnlyList<FlatSubtree> subtrees, List<ulong> indices)
 				{
-					for (int i = 0; i < subtrees.Count; i++)
+					for (int i = 0; i < indices.Count; i++)
 					{
-						var active = subtrees[i].Active;
+						int index = (int)indices[i];
+						var active = subtrees[index].Active;
 
 						foreach (NodeHook drawUpdate in active.Hooks.DrawActions)
 						{
@@ -420,8 +421,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtrees[i].Owner.ReportExceptionFunc(e);
-									subtrees.RemoveAt(i); i--;
+									subtrees[index].Owner.ReportExceptionFunc(e);
+									indices.RemoveAt(i); i--;
 									break;
 								}
 							}
@@ -429,14 +430,15 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeInputDepth(List<FlatSubtree> subtrees)
+				public void UpdateNodeInputDepth(IReadOnlyList<FlatSubtree> subtrees, List<ulong> indices)
 				{
 					if (HudMain.InputMode == HudInputMode.NoInput)
 						return;
 
-					for (int i = 0; i < subtrees.Count; i++)
+					for (int i = 0; i < indices.Count; i++)
 					{
-						var active = subtrees[i].Active;
+						int index = (int)indices[i];
+						var active = subtrees[index].Active;
 
 						foreach (NodeHook depthTest in active.Hooks.InputDepthActions)
 						{
@@ -475,8 +477,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtrees[i].Owner.ReportExceptionFunc(e);
-									subtrees.RemoveAt(i); i--;
+									subtrees[index].Owner.ReportExceptionFunc(e);
+									indices.RemoveAt(i); i--;
 									break;
 								}
 							}
@@ -484,11 +486,12 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeInput(List<FlatSubtree> subtrees)
+				public void UpdateNodeInput(List<FlatSubtree> subtrees, List<ulong> indices)
 				{
-					for (int i = 0; i < subtrees.Count; i++)
+					for (int i = indices.Count - 1; i >= 0; i--)
 					{
-						var active = subtrees[i].Active;
+						int index = (int)indices[i];
+						var active = subtrees[index].Active;
 
 						foreach (NodeHook inputUpdate in active.Hooks.InputActions)
 						{
@@ -520,8 +523,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtrees[i].Owner.ReportExceptionFunc(e);
-									subtrees.RemoveAt(i); i--;
+									subtrees[index].Owner.ReportExceptionFunc(e);
+									indices.RemoveAt(i); i--;
 									break;
 								}
 							}
