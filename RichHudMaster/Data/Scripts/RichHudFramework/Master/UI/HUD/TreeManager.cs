@@ -20,7 +20,7 @@ namespace RichHudFramework
 				/// Limits polling rate of legacy client UI trees. Higher values result in less
 				/// frequent polling.
 				/// </summary>
-				public const uint LegacyTreeRefreshRate = 5;
+				public const int LegacyTreeRefreshRate = 5;
 
 				/// <summary>
 				/// Inactive node thresholds for subtree pruning. Both thresholds must be met for pruning.
@@ -138,7 +138,7 @@ namespace RichHudFramework
 					// Update clients
 					for (int n = 0; n < clients.Count; n++)
 					{
-						uint clientTick = HudMain.FrameNumber + (uint)(n % LegacyTreeRefreshRate);
+						int clientTick = HudMain.FrameNumber + (n % LegacyTreeRefreshRate);
 						clients[n].Update(nodeIterator, subtreePool, clientTick);
 					}
 

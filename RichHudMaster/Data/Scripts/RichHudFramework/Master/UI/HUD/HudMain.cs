@@ -126,7 +126,7 @@ namespace RichHudFramework
             /// <summary>
             /// Current frame number. Incremented after every frame. Used internally to track updates.
             /// </summary>
-            public static uint FrameNumber { get; private set; }
+            public static int FrameNumber { get; private set; }
 
             private static HudMain instance;
             private static TreeManager treeManager;

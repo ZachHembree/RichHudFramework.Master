@@ -55,10 +55,12 @@ namespace RichHudFramework
 					if (value && ((Config[StateID] & (uint)HudElementStates.IsVisible) == 0))
 					{
 						// Depending on where this is called, the frame number might be off by one
-						bool isActive = Math.Abs(Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
+						bool isActive = Math.Abs((int)Config[FrameNumberID] - (int)HudMain.Root.Config[FrameNumberID]) < 2;
 
-						if (!isActive)
+						if (!isActive && (HudMain.Root.Config[StateID] & (uint)HudElementStates.IsStructureStale) == 0)
+						{
 							HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
+						}
 					}
 
 					if (value)
@@ -216,10 +218,13 @@ namespace RichHudFramework
 
 					if ((Config[StateID] & Config[VisMaskID]) == Config[VisMaskID])
 					{
-						bool isActive = Math.Abs(Config[FrameNumberID] - HudMain.Root.Config[FrameNumberID]) < 2;
+						// Depending on where this is called, the frame number might be off by one
+						bool isActive = Math.Abs((int)Config[FrameNumberID] - (int)HudMain.Root.Config[FrameNumberID]) < 2;
 
-						if (isActive)
+						if (isActive && (HudMain.Root.Config[StateID] & (uint)HudElementStates.IsStructureStale) == 0)
+						{
 							HudMain.Root.Config[StateID] |= (uint)HudElementStates.IsStructureStale;
+						}
 					}
 
 					return true;

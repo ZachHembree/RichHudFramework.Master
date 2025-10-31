@@ -160,7 +160,7 @@ namespace RichHudFramework
 						Registered = TreeManager.RegisterClient(this);
 					}
 
-					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, uint tick)
+					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, int tick)
 					{
 						this.ReportExceptionFunc = owner?.ReportException ?? ExceptionHandler.ReportException;
 						IsPaused = owner?.GetIsPausedFunc?.Invoke() ?? ExceptionHandler.ClientsPaused;

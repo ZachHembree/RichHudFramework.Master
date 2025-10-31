@@ -327,7 +327,7 @@ namespace RichHudFramework
 
 							if (config != null)
 							{
-								config[FrameNumberID] = HudMain.FrameNumber;
+								config[FrameNumberID] = (uint)HudMain.FrameNumber;
 								needsUpdate = (config[StateID] & config[VisMaskID]) == config[VisMaskID];
 
 								// If invisible nodes are encountered, they need to be pruned at some point
