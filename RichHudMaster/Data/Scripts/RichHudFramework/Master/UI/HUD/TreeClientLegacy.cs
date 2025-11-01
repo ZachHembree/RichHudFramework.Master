@@ -243,7 +243,7 @@ namespace RichHudFramework
 
 						return new HudClientMembers8()
 						{
-							Item1 = instance._cursor.GetApiData8(),
+							Item1 = Instance._cursor.GetApiData8(),
 							Item2 = () => new TextBoard().GetApiData8(),
 							Item3 = GetOrSetMember,
 							Item4 = Unregister

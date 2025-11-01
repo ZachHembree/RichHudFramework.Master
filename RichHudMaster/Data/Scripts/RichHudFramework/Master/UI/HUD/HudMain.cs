@@ -30,7 +30,7 @@ namespace RichHudFramework
             /// <summary>
             /// Cursor shared between mods.
             /// </summary>
-            public static ICursor Cursor => instance._cursor;
+            public static ICursor Cursor => Instance._cursor;
 
             /// <summary>
             /// Shared clipboard.
@@ -39,20 +39,20 @@ namespace RichHudFramework
             {
                 get
                 {
-                    if (instance == null)
+                    if (Instance == null)
                         Init();
 
-                    if (instance._clipBoard == null)
-                        instance._clipBoard = new RichText();
+                    if (Instance._clipBoard == null)
+                        Instance._clipBoard = new RichText();
 
-                    return instance._clipBoard?.GetCopy();
+                    return Instance._clipBoard?.GetCopy();
                 }
                 set
                 {
-                    if (instance == null)
+                    if (Instance == null)
                         Init();
 
-                    instance._clipBoard = new RichText(value);
+                    Instance._clipBoard = new RichText(value);
                 }
             }
 
@@ -128,11 +128,13 @@ namespace RichHudFramework
             /// </summary>
             public static int FrameNumber { get; private set; }
 
-            private static HudMain instance;
+            public static HudMain Instance;
+
+            public readonly HudParentBase _root;
+
             private static TreeManager treeManager;
 
             private readonly HudCursor _cursor;
-            private readonly HudRoot _root;
             private readonly ScaledSpaceNode _highDpiRoot;
 
             private RichText _clipBoard;
@@ -148,8 +150,8 @@ namespace RichHudFramework
 
             private HudMain() : base(false, true)
             {
-                if (instance == null)
-                    instance = this;
+                if (Instance == null)
+                    Instance = this;
                 else
                     throw new Exception("Only one instance of HudMain can exist at any given time.");
 
@@ -170,7 +172,7 @@ namespace RichHudFramework
             {
                 BillBoardUtils.Init();   
 
-                if (instance == null)
+                if (Instance == null)
                     new HudMain();
             }
 
@@ -178,7 +180,7 @@ namespace RichHudFramework
             {
                 InputMode = HudInputMode.NoInput;
                 EnableCursor = false;
-                instance = null;
+                Instance = null;
                 treeManager = null;
 
                 Root = null;
@@ -202,7 +204,7 @@ namespace RichHudFramework
 
             public override void HandleInput()
             {
-                if (instance._cursor.DrawCursor)
+                if (Instance._cursor.DrawCursor)
                 {
                     if (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible)
                         InputMode = HudInputMode.Full;
@@ -298,10 +300,10 @@ namespace RichHudFramework
             /// </summary>
             public static byte GetFocusOffset(Action<byte> LoseFocusCallback)
             {
-                if (instance == null)
+                if (Instance == null)
                     Init();
 
-                return instance.GetFocusOffsetInternal(LoseFocusCallback);
+                return Instance.GetFocusOffsetInternal(LoseFocusCallback);
             }
 
             /// <summary>
@@ -310,10 +312,10 @@ namespace RichHudFramework
             /// </summary>
             public static void GetInputFocus(Action LoseFocusCallback)
             {
-                if (LoseFocusCallback != null && (LoseFocusCallback != instance.LoseInputFocusCallback))
+                if (LoseFocusCallback != null && (LoseFocusCallback != Instance.LoseInputFocusCallback))
                 {
-                    instance.LoseInputFocusCallback?.Invoke();
-                    instance.LoseInputFocusCallback = LoseFocusCallback;
+                    Instance.LoseInputFocusCallback?.Invoke();
+                    Instance.LoseInputFocusCallback = LoseFocusCallback;
                 }
             }
 
@@ -343,7 +345,7 @@ namespace RichHudFramework
             /// </summary>
             public static Vector2 GetPixelVector(Vector2 scaledVec)
             {
-                if (instance == null)
+                if (Instance == null)
                     Init();
 
                 return new Vector2
@@ -358,7 +360,7 @@ namespace RichHudFramework
             /// </summary>
             public static Vector2 GetAbsoluteVector(Vector2 pixelVec)
             {
-                if (instance == null)
+                if (Instance == null)
                     Init();
 
                 return new Vector2

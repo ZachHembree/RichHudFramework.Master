@@ -84,7 +84,7 @@ namespace RichHudFramework
 					indexBuffer = new List<ulong>(200);
 
 					clients = new List<TreeClient>();
-					var mainClient = new TreeClient() { RootNodeHandle = instance._root.DataHandle };
+					var mainClient = new TreeClient() { RootNodeHandle = Instance._root.DataHandle };
 
 					lateUpdateBuffer = new List<FlatSubtree>();
 					activeSubtrees = new List<FlatSubtree>();
@@ -143,7 +143,7 @@ namespace RichHudFramework
 					}
 
 					// Manually append cursor update list
-					nodeIterator.GetNodeData(instance._cursor.DataHandle, lateUpdateBuffer, subtreePool, clients[0]);
+					nodeIterator.GetNodeData(Instance._cursor.DataHandle, lateUpdateBuffer, subtreePool, clients[0]);
 
 					// Prepare active subtrees
 					SortSubtrees();
@@ -182,12 +182,12 @@ namespace RichHudFramework
 					float resScale = ResScale;
 
 					clients[0].EnableCursor = EnableCursor;
-					instance._cursor.DrawCursor = false;
+					Instance._cursor.DrawCursor = false;
 
 					for (int n = 0; n < clients.Count; n++)
 					{
 						if (clients[n].EnableCursor)
-							instance._cursor.DrawCursor = true;
+							Instance._cursor.DrawCursor = true;
 					}
 
 					RichHudStats.UI.Draw.BeginTick();

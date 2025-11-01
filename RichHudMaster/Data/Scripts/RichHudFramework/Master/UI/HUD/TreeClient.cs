@@ -209,7 +209,7 @@ namespace RichHudFramework
 
 						return new HudClientMembers()
 						{
-							Item1 = instance._cursor.GetApiData(),
+							Item1 = Instance._cursor.GetApiData(),
 							Item2 = () => new TextBoard().GetApiData(),
 							Item3 = GetOrSetMember,
 							Item4 = Unregister
@@ -258,9 +258,9 @@ namespace RichHudFramework
 							case HudMainAccessors.GetFocusOffset:
 								return GetFocusOffset(data as Action<byte>);
 							case HudMainAccessors.GetPixelSpaceFunc:
-								return instance._root.GetHudSpaceFunc;
+								return ((HudRoot)Instance._root).GetHudSpaceFunc;
 							case HudMainAccessors.GetPixelSpaceOriginFunc:
-								return instance._root.GetNodeOriginFunc;
+								return ((HudRoot)Instance._root).GetNodeOriginFunc;
 							case HudMainAccessors.GetInputFocus:
 								GetInputFocus(data as Action); break;
 							case HudMainAccessors.InputMode:
