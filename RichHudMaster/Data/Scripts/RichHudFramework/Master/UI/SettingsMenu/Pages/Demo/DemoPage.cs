@@ -137,11 +137,9 @@ namespace RichHudFramework
 
                     Padding = new Vector2(40f, 8f);
                     demoRoot = new HudCollection(HudMain.HighDpiRoot);
-
-                    HandleInputCallback = HandleInput;
 				}
 
-                protected void HandleInput(Vector2 cursorPos)
+				protected override void HandleInput(Vector2 cursorPos)
                 {
                     UpdateSliderValueText();
                     UpdateInstanceNames();

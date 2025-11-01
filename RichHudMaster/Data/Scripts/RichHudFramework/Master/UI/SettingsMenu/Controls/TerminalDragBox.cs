@@ -85,7 +85,7 @@ namespace RichHudFramework.UI.Server
             RichHudTerminal.CloseMenu();
             HudMain.EnableCursor = true;
             window.Visible = true;
-            window.GetFocus();
+            window.GetWindowFocus();
         }
 
         private void ConfirmPosition()

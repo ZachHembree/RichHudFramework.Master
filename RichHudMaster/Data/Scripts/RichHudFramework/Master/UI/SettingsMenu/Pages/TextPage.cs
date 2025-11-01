@@ -174,12 +174,9 @@ namespace RichHudFramework
 
                     UseCursor = true;
                     ShareCursor = true;
-
-                    LayoutCallback = Layout;
-                    HandleInputCallback = HandleInput;
                 }
 
-                protected void Layout()
+				protected override void Layout()
                 {
                     ITextBoard textBoard = textBox.TextBoard;
 
@@ -194,7 +191,7 @@ namespace RichHudFramework
                     subheader.Width = textBox.Width;
                 }
 
-                protected void HandleInput(Vector2 cursorPos)
+				protected override void HandleInput(Vector2 cursorPos)
                 {
                     ITextBoard textBoard = textBox.TextBoard;
                     IMouseInput vertControl = verticalScroll.slide.MouseInput;

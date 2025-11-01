@@ -156,14 +156,36 @@ namespace RichHudFramework
 				/// </summary>
 				public int PruneTick;
 
+				// Parallel with inactive data for vID 13+ - unused for vID 12 and older
+				public readonly List<NodeState> StateData;
+
 				public readonly FlatSubtreeData Inactive;
 				public readonly SortedSubtreeData Active;
 
 				public FlatSubtree(int capacity = 0)
 				{
+					StateData = new List<NodeState>(capacity);
 					Inactive = new FlatSubtreeData(capacity);
 					Active = new SortedSubtreeData(capacity);
 					IsActiveStale = true;
+				}
+
+				/// <summary>
+				/// Truncates the buffers to the given length
+				/// </summary>
+				public void TruncateInactive(int newLength)
+				{
+					if (newLength >= Inactive.OuterOffsets.Count)
+						return;
+
+					int start = newLength;
+					int count = Inactive.OuterOffsets.Count - newLength;
+
+					if (StateData.Count != 0)
+						StateData.RemoveRange(start, count);
+
+					Inactive.OuterOffsets.RemoveRange(start, count);
+					Inactive.HookData.RemoveRange(start, count);
 				}
 
 				public void Clear()
@@ -173,6 +195,7 @@ namespace RichHudFramework
 					GetLayerFuncOld = null;
 					GetOriginFunc = null;
 
+					StateData.Clear();
 					Inactive.Clear();
 					Active.Clear();
 					Owner = null;
@@ -195,51 +218,29 @@ namespace RichHudFramework
 
 			public class FlatSubtreeData
 			{
-				// Parallel - state data null for vID 12 and older
-				public List<NodeState> StateData;
 				public List<byte> OuterOffsets; // Sorting only
 				public List<HudNodeHookData> HookData;
 
 				public FlatSubtreeData(int capacity = 0)
 				{
-					StateData = new List<NodeState>(capacity);
 					OuterOffsets = new List<byte>(capacity);
 					HookData = new List<HudNodeHookData>(capacity);
 				}
 
 				public void TrimExcess()
 				{
-					StateData.TrimExcess();
 					OuterOffsets.TrimExcess();
 					HookData.TrimExcess();
 				}
 
-				/// <summary>
-				/// Truncates the buffers to the given length
-				/// </summary>
-				public void Truncate(int newLength)
-				{
-					if (newLength >= StateData.Count)
-						return;
-
-					int start = newLength;
-					int count = StateData.Count - newLength;
-
-					StateData.RemoveRange(start, count);
-					OuterOffsets.RemoveRange(start, count);
-					HookData.RemoveRange(start, count);
-				}
-
 				public void EnsureCapacity(int capacity)
 				{
-					StateData.EnsureCapacity(capacity);
 					OuterOffsets.EnsureCapacity(capacity);
 					HookData.EnsureCapacity(capacity);
 				}
 
 				public void Clear()
 				{
-					StateData.Clear();
 					OuterOffsets.Clear();
 					HookData.Clear();
 				}
@@ -247,30 +248,25 @@ namespace RichHudFramework
 
 			public class SortedSubtreeData
 			{
-				public List<NodeState> StateData;
 				public NodeHooks Hooks;
 
 				public SortedSubtreeData(int capacity = 0)
 				{
-					StateData = new List<NodeState>(capacity);
 					Hooks = new NodeHooks(capacity);
 				}
 
 				public void TrimExcess()
 				{
-					StateData.TrimExcess();
 					Hooks.TrimExcess();
 				}
 
 				public void EnsureCapacity(int capacity)
 				{
-					StateData.EnsureCapacity(capacity);
 					Hooks.EnsureCapacity(capacity);
 				}
 
 				public void Clear()
 				{
-					StateData.Clear();
 					Hooks.Clear();
 				}
 			}

@@ -1,4 +1,5 @@
-﻿using RichHudFramework.Server;
+﻿using ProtoBuf.Meta;
+using RichHudFramework.Server;
 using System;
 using System.Collections.Generic;
 using VRage;
@@ -117,7 +118,7 @@ namespace RichHudFramework
 
 							// Update combined ZOffset for layer sorting
 							{
-								byte outerOffset = (byte)(config[ZOffsetID] - sbyte.MinValue);
+								byte outerOffset = (byte)((sbyte)config[ZOffsetID] - sbyte.MinValue);
 								ushort innerOffset = (ushort)(config[ZOffsetInnerID] << 8);
 
 								// Combine local node inner and outer offsets with parent and pack into
@@ -125,8 +126,11 @@ namespace RichHudFramework
 								if (parent != null)
 								{
 									ushort parentFull = (ushort)parent[0].Item1[FullZOffsetID];
-									outerOffset += (byte)((parentFull & 0x00FF) + sbyte.MinValue);
-									innerOffset += (ushort)(parentFull & 0xFF00);
+									byte parentOuter = (byte)((parentFull & 0x00FF) + sbyte.MinValue);
+									ushort parentInner = (ushort)(parentFull & 0xFF00);
+
+									outerOffset = (byte)Math.Min((outerOffset + parentOuter), byte.MaxValue);
+									innerOffset = (ushort)Math.Min(innerOffset + parentInner, 0xFF00);
 								}
 
 								config[FullZOffsetID] = (ushort)(innerOffset | outerOffset);
@@ -143,9 +147,9 @@ namespace RichHudFramework
 									// Finalize previous subtree
 									if (subtree != null)
 									{
-										if (subtree.Inactive.StateData.Count > subtreePos)
+										if (subtree.StateData.Count > subtreePos)
 										{
-											subtree.Inactive.Truncate(subtreePos);
+											subtree.TruncateInactive(subtreePos);
 											canBeEqual = false;
 										}
 
@@ -178,10 +182,10 @@ namespace RichHudFramework
 							}
 
 							var children = stack.node[0].Item5;
-							int nodeID = subtree.Inactive.StateData.Count;
+							int nodeID = subtree.StateData.Count;
 
 							// Add node
-							if (subtreePos < subtree.Inactive.StateData.Count)
+							if (subtreePos < subtree.StateData.Count)
 							{
 								if (canBeEqual)
 								{
@@ -189,7 +193,7 @@ namespace RichHudFramework
 									byte outerOffset = (byte)config[FullZOffsetID];
 
 									// If the config reference matches, the node is the same
-									canBeEqual &= subtree.Inactive.StateData[subtreePos].Config == config;
+									canBeEqual &= subtree.StateData[subtreePos].Config == config;
 									// If the outer/public sorting has changed, the members will need to be resorted
 									canBeEqual &= outerOffset == lastOuterOffset;
 								}
@@ -199,7 +203,7 @@ namespace RichHudFramework
 								if (!canBeEqual)
 								{
 									// Confg/state
-									subtree.Inactive.StateData[subtreePos] = new NodeState
+									subtree.StateData[subtreePos] = new NodeState
 									{
 										Config = config,
 										ParentConfig = parent?[0].Item1
@@ -216,7 +220,7 @@ namespace RichHudFramework
 								canBeEqual = false;
 
 								// Confg/state
-								subtree.Inactive.StateData.Add(new NodeState
+								subtree.StateData.Add(new NodeState
 								{
 									Config = config,
 									ParentConfig = parent?[0].Item1
@@ -245,9 +249,9 @@ namespace RichHudFramework
 					// Finalize trailing subtree
 					if (subtree != null)
 					{
-						if (subtree.Inactive.StateData.Count > subtreePos)
+						if (subtree.StateData.Count > subtreePos)
 						{
-							subtree.Inactive.Truncate(subtreePos);
+							subtree.TruncateInactive(subtreePos);
 							canBeEqual = false;
 						}
 
@@ -268,22 +272,24 @@ namespace RichHudFramework
 
 				public void UpdateNodeSizing(List<FlatSubtree> subtrees)
 				{
-					for (int i = 0; i < subtrees.Count; i++)
+					for (int i = subtrees.Count - 1; i >= 0; i--)
 					{
-						var active = subtrees[i].Active;
+						FlatSubtree subtree = subtrees[i];
+						var active = subtree.Active;
 
 						foreach (NodeHook sizingUpdate in active.Hooks.SizingActions)
 						{
-							uint[] config = active.StateData[sizingUpdate.NodeID].Config;
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[sizingUpdate.NodeID] : default(NodeState);
+							uint[] config = state.Config;
 							bool needsUpdate = true;
 
 							if (config != null)
 							{
-								var state = (HudElementStates)config[StateID];
+								var flags = (HudElementStates)config[StateID];
 								var visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags;
 
 								// Check visibility
-								needsUpdate = (state & visMask) == visMask;
+								needsUpdate = (flags & visMask) == visMask;
 							}
 
 							// Update sizing if needed
@@ -315,16 +321,16 @@ namespace RichHudFramework
 						FlatSubtree subtree = subtrees[i];
 						var active = subtrees[i].Active;
 
-						for (int j = 0; j < active.StateData.Count; j++)
+						for (int j = 0; j < active.Hooks.LayoutActions.Count; j++)
 						{
-							NodeState state = active.StateData[j];
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[j] : default(NodeState);
 							IReadOnlyList<uint> parentConfig = state.ParentConfig;
 							uint[] config = state.Config;
 							bool needsUpdate = true;
 
 							if (config != null)
 							{
-								config[FrameNumberID] = HudMain.FrameNumber;
+								config[FrameNumberID] = (uint)HudMain.FrameNumber;
 								needsUpdate = (config[StateID] & config[VisMaskID]) == config[VisMaskID];
 
 								// If invisible nodes are encountered, they need to be pruned at some point
@@ -386,15 +392,17 @@ namespace RichHudFramework
 					}
 				}
 
-				public void DrawNodes(List<FlatSubtree> subtrees)
+				public void DrawNodes(IReadOnlyList<FlatSubtree> subtrees, List<ulong> indices)
 				{
-					for (int i = 0; i < subtrees.Count; i++)
+					for (int i = 0; i < indices.Count; i++)
 					{
-						var active = subtrees[i].Active;
+						int index = (int)indices[i];
+						var subtree = subtrees[index];
+						var active = subtree.Active;
 
 						foreach (NodeHook drawUpdate in active.Hooks.DrawActions)
 						{
-							NodeState state = active.StateData[drawUpdate.NodeID];
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[drawUpdate.NodeID] : default(NodeState);
 							uint[] config = state.Config;
 							bool needsUpdate = true;
 
@@ -420,8 +428,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtrees[i].Owner.ReportExceptionFunc(e);
-									subtrees.RemoveAt(i); i--;
+									subtree.Owner.ReportExceptionFunc(e);
+									indices.RemoveAt(i); i--;
 									break;
 								}
 							}
@@ -429,18 +437,20 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeInputDepth(List<FlatSubtree> subtrees)
+				public void UpdateNodeInputDepth(IReadOnlyList<FlatSubtree> subtrees, List<ulong> indices)
 				{
 					if (HudMain.InputMode == HudInputMode.NoInput)
 						return;
 
-					for (int i = 0; i < subtrees.Count; i++)
+					for (int i = 0; i < indices.Count; i++)
 					{
-						var active = subtrees[i].Active;
+						int index = (int)indices[i];
+						var subtree = subtrees[index];
+						var active = subtree.Active;
 
 						foreach (NodeHook depthTest in active.Hooks.InputDepthActions)
 						{
-							NodeState state = active.StateData[depthTest.NodeID];
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[depthTest.NodeID] : default(NodeState);
 							uint[] config = state.Config;
 							bool needsUpdate = true;
 
@@ -475,8 +485,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtrees[i].Owner.ReportExceptionFunc(e);
-									subtrees.RemoveAt(i); i--;
+									subtree.Owner.ReportExceptionFunc(e);
+									indices.RemoveAt(i); i--;
 									break;
 								}
 							}
@@ -484,15 +494,17 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeInput(List<FlatSubtree> subtrees)
+				public void UpdateNodeInput(List<FlatSubtree> subtrees, List<ulong> indices)
 				{
-					for (int i = 0; i < subtrees.Count; i++)
+					for (int i = indices.Count - 1; i >= 0; i--)
 					{
-						var active = subtrees[i].Active;
+						int index = (int)indices[i];
+						var subtree = subtrees[index];
+						var active = subtree.Active;
 
 						foreach (NodeHook inputUpdate in active.Hooks.InputActions)
 						{
-							NodeState state = active.StateData[inputUpdate.NodeID];
+							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[inputUpdate.NodeID] : default(NodeState);
 							uint[] config = state.Config;
 							bool needsUpdate = true;
 
@@ -520,8 +532,8 @@ namespace RichHudFramework
 								}
 								catch (Exception e)
 								{
-									subtrees[i].Owner.ReportExceptionFunc(e);
-									subtrees.RemoveAt(i); i--;
+									subtrees[index].Owner.ReportExceptionFunc(e);
+									indices.RemoveAt(i); i--;
 									break;
 								}
 							}

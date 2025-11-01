@@ -307,8 +307,6 @@ namespace RichHudFramework.UI.Server
 				Config[ZOffsetID] = sbyte.MaxValue - 1;
 				Config[ZOffsetInnerID] = byte.MaxValue - 1;
 				Visible = false;
-
-				LayoutCallback = Layout;
 			}
 
 			public void SetMessage(StringBuilder message)
@@ -321,7 +319,7 @@ namespace RichHudFramework.UI.Server
 				subheader.Text = "Press and hold new combo";
 			}
 
-			protected void Layout()
+			protected override void Layout()
 			{
 				background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
 				ComboProgress = MathHelper.Clamp(ComboProgress, 0f, 1f);

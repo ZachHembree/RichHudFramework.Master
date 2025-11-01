@@ -160,7 +160,7 @@ namespace RichHudFramework
 						Registered = TreeManager.RegisterClient(this);
 					}
 
-					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, uint tick)
+					public void Update(HudNodeIterator nodeIterator, ObjectPool<FlatSubtree> bufferPool, int tick)
 					{
 						this.ReportExceptionFunc = owner?.ReportException ?? ExceptionHandler.ReportException;
 						IsPaused = owner?.GetIsPausedFunc?.Invoke() ?? ExceptionHandler.ClientsPaused;
@@ -176,6 +176,7 @@ namespace RichHudFramework
 								{
 									ElementsUpdating = nodeIterator.GetNodeData(RootNodeHandle, subtreeBuffers, bufferPool, this);
 									rootConfig[StateID] &= ~(uint)HudElementStates.IsStructureStale;
+									RichHudStats.UI.InternalCounters.SubtreeUpdates += subtreeBuffers.Count;
 								}
 							}
 						}
@@ -184,6 +185,8 @@ namespace RichHudFramework
 						{
 							if (GetUpdateAccessors != null)
 								ElementsUpdating = LegacyNodeUpdate(bufferPool);
+
+							RichHudStats.UI.InternalCounters.SubtreeUpdates += subtreeBuffers.Count;
 						}
 
 						SubtreesUpdating = subtreeBuffers.Count;

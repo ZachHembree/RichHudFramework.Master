@@ -126,7 +126,7 @@ namespace RichHudFramework
             /// <summary>
             /// Current frame number. Incremented after every frame. Used internally to track updates.
             /// </summary>
-            public static uint FrameNumber { get; private set; }
+            public static int FrameNumber { get; private set; }
 
             private static HudMain instance;
             private static TreeManager treeManager;
@@ -220,6 +220,7 @@ namespace RichHudFramework
                 treeManager.HandleInput();
 
 				FrameNumber++;
+                FrameNumber %= int.MaxValue;
 			}
 
 			/// <summary>
@@ -386,8 +387,8 @@ namespace RichHudFramework
 
 				public Func<Vector3D> GetNodeOriginFunc
 				{
-					get { return hudSpaceOriginFunc[0]; }
-					private set { hudSpaceOriginFunc[0] = value; }
+					get { return _dataHandle[0].Item2[0]; }
+					private set { _dataHandle[0].Item2[0] = value; }
 				}
 
 				public bool IsInFront { get; }
@@ -405,11 +406,9 @@ namespace RichHudFramework
                     GetNodeOriginFunc = () => PixelToWorldRef[0].Translation;
                     PlaneToWorldRef = PixelToWorldRef;
                     Config[StateID] |= (uint)HudElementStates.IsSpaceNode;
-
-                    LayoutCallback = Layout;
                 }
 
-                private void Layout()
+				protected override void Layout()
                 {
                     PlaneToWorldRef[0] = PixelToWorld;
                     CursorPos = new Vector3(Cursor.ScreenPos.X, Cursor.ScreenPos.Y, 0f);

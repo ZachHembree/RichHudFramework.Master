@@ -13,7 +13,7 @@ namespace RichHudFramework.Server
 	{
 		public class UI
 		{
-			private const int CategoryCount = 5;
+			private const int CategoryCount = 6;
 
 			private const int TimeWindowSize = 240;
 			private const int TimeOutlierTrim = 0;
@@ -36,6 +36,12 @@ namespace RichHudFramework.Server
 			/// Total number of node updates performed
 			/// </summary>
 			public static double NodeUpdate99th { get; private set; }
+
+			public static double SubtreeUpdateAvg { get; private set; }
+
+			public static double SubtreeUpdate50th { get; private set; }
+
+			public static double SubtreeUpdate99th { get; private set; }
 
 			public static double ElementSortAvgCount { get; private set; }
 
@@ -98,6 +104,8 @@ namespace RichHudFramework.Server
 
 				public static int SubtreesRegistered = 0;
 
+				public static long SubtreeUpdates;
+
 				public static int ElementsRegistered = 0;
 
 				public static long ElementSortingUpdates = 0;
@@ -123,6 +131,7 @@ namespace RichHudFramework.Server
 					ElementsRegistered = 0;
 					SubtreesRegistered = 0;
 
+					SubtreeUpdates = 0;
 					ElementSortingUpdates = 0;
 
 					SizingUpdates = 0;
@@ -135,6 +144,7 @@ namespace RichHudFramework.Server
 
 			private static UI instance;
 
+			private readonly CounterStats subtreeUpdateStats;
 			private readonly CounterStats elementSortStats;
 			private readonly CounterStats nodeStats;
 			private readonly List<long> sortBuffer;
@@ -156,6 +166,7 @@ namespace RichHudFramework.Server
 				timer = new Stopwatch();
 				timer.Start();
 
+				subtreeUpdateStats = new CounterStats(CounterWindowSize, CounterOutlierTrim);
 				elementSortStats = new CounterStats(CounterWindowSize, CounterOutlierTrim);
 				nodeStats = new CounterStats(CounterWindowSize, CounterOutlierTrim);
 				sortBuffer = new List<long>();
@@ -198,6 +209,7 @@ namespace RichHudFramework.Server
 				ElementsRegistered = InternalCounters.ElementsRegistered;
 				SubtreesRegistered = InternalCounters.SubtreesRegistered;
 
+				instance.subtreeUpdateStats.AddCount(InternalCounters.SubtreeUpdates);
 				instance.elementSortStats.AddCount(InternalCounters.ElementSortingUpdates);
 				instance.nodeStats.AddCount(InternalCounters.GetTotalUpdates());
 
@@ -237,6 +249,13 @@ namespace RichHudFramework.Server
 						ElementSortAvgCount = instance.elementSortStats.AvgCount;
 						ElementSort50th = instance.elementSortStats.Pct50th;
 						ElementSort99th = instance.elementSortStats.Pct99th;
+					}
+					else if (updateTick == 5)
+					{
+						instance.subtreeUpdateStats.Update(instance.sortBuffer);
+						SubtreeUpdateAvg = instance.subtreeUpdateStats.AvgCount;
+						SubtreeUpdate50th = instance.subtreeUpdateStats.Pct50th;
+						SubtreeUpdate99th = instance.subtreeUpdateStats.Pct99th;
 					}
 
 					TotalAvg = DrawAvg + InputAvg;

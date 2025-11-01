@@ -20,7 +20,7 @@ namespace RichHudFramework
 				/// Limits polling rate of legacy client UI trees. Higher values result in less
 				/// frequent polling.
 				/// </summary>
-				public const uint LegacyTreeRefreshRate = 5;
+				public const int LegacyTreeRefreshRate = 5;
 
 				/// <summary>
 				/// Inactive node thresholds for subtree pruning. Both thresholds must be met for pruning.
@@ -57,10 +57,10 @@ namespace RichHudFramework
 
 				private readonly HudNodeIterator nodeIterator;
 				private readonly List<FlatSubtree> activeSubtrees;
+				private readonly List<ulong> subtreeOrder;
 				private readonly ObjectPool<FlatSubtree> subtreePool;
 
 				// Sorting buffers
-				private readonly List<FlatSubtree> subtreeBuffer;
 				private readonly Dictionary<Func<Vector3D>, ushort> distMap;
 				private readonly HashSet<Func<Vector3D>> originFuncSet;
 				private readonly List<Func<Vector3D>> originFunctions;
@@ -88,7 +88,7 @@ namespace RichHudFramework
 
 					lateUpdateBuffer = new List<FlatSubtree>();
 					activeSubtrees = new List<FlatSubtree>();
-					subtreeBuffer = new List<FlatSubtree>();
+					subtreeOrder = new List<ulong>();
 
 					subtreePool = new ObjectPool<FlatSubtree>(() => new FlatSubtree(), x => x.Clear());
 					nodeIterator = new HudNodeIterator();
@@ -138,7 +138,7 @@ namespace RichHudFramework
 					// Update clients
 					for (int n = 0; n < clients.Count; n++)
 					{
-						uint clientTick = HudMain.FrameNumber + (uint)(n % LegacyTreeRefreshRate);
+						int clientTick = HudMain.FrameNumber + (n % LegacyTreeRefreshRate);
 						clients[n].Update(nodeIterator, subtreePool, clientTick);
 					}
 
@@ -211,7 +211,7 @@ namespace RichHudFramework
 					nodeIterator.UpdateNodeLayout(activeSubtrees, refreshLayout);
 
 					// Draw UI elements
-					nodeIterator.DrawNodes(activeSubtrees);
+					nodeIterator.DrawNodes(activeSubtrees, subtreeOrder);
 
 					// Try to exclude stats render time
 					RichHudStats.UI.Draw.PauseTick();
@@ -242,8 +242,8 @@ namespace RichHudFramework
 					for (int n = 0; n < clients.Count; n++)
 						clients[n].BeforeInputCallback?.Invoke();
 
-					nodeIterator.UpdateNodeInputDepth(activeSubtrees);
-					nodeIterator.UpdateNodeInput(activeSubtrees);
+					nodeIterator.UpdateNodeInputDepth(activeSubtrees, subtreeOrder);
+					nodeIterator.UpdateNodeInput(activeSubtrees, subtreeOrder);
 
 					// Invoke after input callbacks on clients
 					for (int n = 0; n < clients.Count; n++)
@@ -254,65 +254,53 @@ namespace RichHudFramework
 
 				private void SortSubtrees()
 				{
-					GatherSubtrees();
-					UpdateOriginDistanceMap();
-
-					// Build sorted active subtree list
-					indexBuffer.Clear();
-
-					// Create sorting keys using distance ranks
-					for (int i = 0; i < subtreeBuffer.Count; i++)
-					{
-						ulong zOffset = subtreeBuffer[i].InnerZLayer,
-							distance = distMap[subtreeBuffer[i].GetOriginFunc];
-
-						indexBuffer.Add((distance << 48) | (zOffset << 32) | (uint)i);
-					}
-
-					if (indexBuffer.Capacity > indexBuffer.Count * 3 && indexBuffer.Count > 200)
-						indexBuffer.TrimExcess();
-
-					// Sort in ascending order
-					indexBuffer.Sort();
+					// Gather subtrees
 					activeSubtrees.Clear();
-
-					for (int i = 0; i < indexBuffer.Count; i++)
-					{
-						int index = (int)indexBuffer[i];
-						activeSubtrees.Add(subtreeBuffer[index]);
-					}
-
-					SortSubtreeMembers();
-				}
-
-				private void GatherSubtrees()
-				{
-					subtreeBuffer.Clear();
-
-					int nodeCount = 0;
 
 					for (int i = 0; i < clients.Count; i++)
 					{
 						if (!clients[i].IsPaused) // Exclude paused clients
-							subtreeBuffer.AddRange(clients[i].Subtrees);
+							activeSubtrees.AddRange(clients[i].Subtrees);
 					}
 
-					// Manually append last elements after all clients
-					subtreeBuffer.AddRange(lateUpdateBuffer);
+					UpdateOriginDistanceMap();
 
-					activeCount = nodeCount;
+					// Build sorted active subtree list
+					subtreeOrder.Clear();
+
+					// Create sorting keys using distance ranks
+					for (int i = 0; i < activeSubtrees.Count; i++)
+					{
+						ulong zOffset = activeSubtrees[i].InnerZLayer,
+							distance = distMap[activeSubtrees[i].GetOriginFunc];
+
+						subtreeOrder.Add((distance << 48) | (zOffset << 32) | (uint)i);
+					}
+
+					// Sort indices in ascending order
+					subtreeOrder.Sort();
+
+					// Manually append last elements after all clients
+					int unsortedStart = activeSubtrees.Count;
+					activeSubtrees.AddRange(lateUpdateBuffer);
+
+					for (int i = 0; i < lateUpdateBuffer.Count; i++)
+						subtreeOrder.Add((ulong)(unsortedStart + i));
+
+					SortSubtreeMembers();
 				}
 
 				private void UpdateOriginDistanceMap()
 				{
 					// Clear update lists and rebuild accessor lists from HUD tree
 					originFuncSet.Clear();
+					activeCount = 0;
 
 					// Build distance func HashSet
-					for (int i = 0; i < subtreeBuffer.Count; i++)
+					for (int i = 0; i < activeSubtrees.Count; i++)
 					{
-						originFuncSet.Add(subtreeBuffer[i].GetOriginFunc);
-						activeCount += subtreeBuffer[i].Inactive.OuterOffsets.Count;
+						originFuncSet.Add(activeSubtrees[i].GetOriginFunc);
+						activeCount += activeSubtrees[i].Inactive.OuterOffsets.Count;
 					}
 
 					RichHudStats.UI.InternalCounters.ElementsRegistered = activeCount;
@@ -473,7 +461,6 @@ namespace RichHudFramework
 								}
 							}
 
-							subtree.Active.StateData.AddRange(subtree.Inactive.StateData);
 							subtree.IsActiveStale = false;
 						}
 					}

@@ -141,9 +141,6 @@ namespace RichHudFramework
                     Padding = new Vector2(54f);
                     Size = new Vector2(300f, 250f);
                     IsMasking = true;
-
-                    LayoutCallback = Layout;
-                    HandleInputCallback = HandleInput;
                 }
 
                 /// <summary>
@@ -154,12 +151,12 @@ namespace RichHudFramework
                     controls.Add(newControl);
                 }
 
-                private void Layout()
+				protected override void Layout()
                 {
                     background.Color = background.Color.SetAlphaPct(HudMain.UiBkOpacity);
                 }
 
-				private void HandleInput(Vector2 cursorPos)
+				protected override void HandleInput(Vector2 cursorPos)
                 {
                     for (int n = 0; n < controls.Collection.Count; n++)
                         controls.Collection[n].Update();
