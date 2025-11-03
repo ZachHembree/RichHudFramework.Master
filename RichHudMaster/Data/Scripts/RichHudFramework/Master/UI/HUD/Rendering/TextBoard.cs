@@ -813,10 +813,12 @@ namespace RichHudFramework
 
 							for (int ch = 0; ch < lines[ln].Count; ch++)
 							{
-								GlyphFormatMembers? nextFormat = null;
+								GlyphFormatMembers? nextFormat;
 
-								if (ch != line.Count - 1)
+								if (ch < line.Count - 1)
 									nextFormat = line.FormattedGlyphs[ch + 1].format.Data;
+								else
+									nextFormat = null;
 
 								bool formatEqual = nextFormat != null
 									&& formatData.Value.Item1 == nextFormat.Value.Item1
@@ -833,23 +835,35 @@ namespace RichHudFramework
 											startPos = line.GlyphBoards[startCh].bounds.Center,
 											endPos = line.GlyphBoards[ch].bounds.Center;
 
+										float leftExtent = startPos.X - 0.5f * startSize.X;
+										float rightExtent = endPos.X + 0.5f * endSize.X;
+
+										if (startCh > 0)
+										{
+											Vector2 lastSize = line.FormattedGlyphs[startCh - 1].chSize,
+												lastPos = line.GlyphBoards[startCh - 1].bounds.Center;
+											float lastExtent = (lastPos.X + 0.5f * lastSize.X);
+
+											leftExtent = Math.Max(leftExtent, lastExtent);
+										}
+
 										Vector2 pos = new Vector2
 										(
-											(startPos.X + endPos.X) * .5f,
+											0.5f * (leftExtent + rightExtent),
 											endPos.Y - (endSize.Y * .5f - (1f * formatData.Value.Item2))
 										);
 
 										Vector2 size = new Vector2
 										(
-											(endPos.X - startPos.X) + (endSize.X + startSize.X) * .5f,
+											rightExtent - leftExtent,
 											Math.Max((int)formatData.Value.Item2, 1)
 										);
 
 										Vector4 color = formatData.Value.Item4.GetBbColor() * .9f;
-										underlines.Add(new UnderlineBoard(size, pos, color));
+										underlines.Add(new UnderlineBoard { size = size, offset = pos, color = color });
 									}
 
-									startCh = ch;
+									startCh = ch + 1;
 									formatData = nextFormat;
 								}
 							}
@@ -962,13 +976,6 @@ namespace RichHudFramework
 					public Vector2 size;
 					public Vector2 offset;
 					public Vector4 color;
-
-					public UnderlineBoard(Vector2 size, Vector2 offset, Vector4 color)
-					{
-						this.size = size;
-						this.offset = offset;
-						this.color = color;
-					}
 				}
 			}
 		}
