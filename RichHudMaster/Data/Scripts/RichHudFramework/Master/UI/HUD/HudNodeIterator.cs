@@ -36,7 +36,7 @@ namespace RichHudFramework
 			public class HudNodeIterator
 			{
 				private const HudElementStates
-					nodeReadyFlags = HudElementStates.IsLayoutReady | HudElementStates.IsSpaceNodeReady,
+					nodeReadyFlags = HudElementStates.IsSpaceNodeReady,
 					nodeNotReadyFlags = HudElementStates.IsDisjoint;
 
 				private struct NodeStackData
@@ -338,8 +338,6 @@ namespace RichHudFramework
 									subtree.InactiveCount++;
 								else
 									subtree.ActiveCount++;
-
-								config[StateID] &= ~(uint)HudElementStates.IsLayoutReady;
 							}
 
 							// Update layout if needed
@@ -366,9 +364,6 @@ namespace RichHudFramework
 							// Propagate flags after layout
 							if (config != null)
 							{
-								if (needsUpdate)
-									config[StateID] |= (uint)HudElementStates.IsLayoutReady;
-
 								if (parentConfig != null)
 								{
 									var parentState = (HudElementStates)parentConfig[StateID];

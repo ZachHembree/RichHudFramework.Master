@@ -113,12 +113,6 @@ namespace RichHudFramework
 			WasParentInputEnabled = 1 << 13,
 
 			/// <summary>
-			/// Set after the element's layout (positioning, sizing, alignment) has been successfully updated in 
-			/// the current cycle. Used for synchronizing first update on initial invisible->visible state transitions.
-			/// </summary>
-			IsLayoutReady = 1 << 14,
-
-			/// <summary>
 			/// Indicates the element defines its own HUD space (coordinate system, e.g., via HudSpace for 
 			/// pixel-to-world transformations). If not set, it inherits from the parent. This affects origin 
 			/// functions and space readiness.
