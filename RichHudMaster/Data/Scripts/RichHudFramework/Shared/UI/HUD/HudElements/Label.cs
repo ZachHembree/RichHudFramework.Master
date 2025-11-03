@@ -56,7 +56,7 @@ namespace RichHudFramework.UI
 		public Label() : this(null)
 		{ }
 
-		protected override void UpdateSize()
+		protected override void Measure()
 		{
 			if (TextBoard.AutoResize)
 				UnpaddedSize = TextBoard.TextSize;

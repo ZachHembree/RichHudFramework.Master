@@ -247,7 +247,7 @@ namespace RichHudFramework.UI
 			}
 		}
 
-		protected override void UpdateSize()
+		protected override void Measure()
 		{
 			if ((SizingMode & HudChainSizingModes.IsSelfResizing) == 0 && (MinVisibleCount > 0 || MinLength > 0))
 				SizingMode |= HudChainSizingModes.FitChainAlignAxis;

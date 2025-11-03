@@ -303,7 +303,7 @@ namespace RichHudFramework
                 return listSize + Padding;
             }
 
-			protected override void UpdateSize()
+			protected override void Measure()
             {
                 // If self-resizing or size is uninitialized
                 if ((SizingMode & HudChainSizingModes.IsSelfResizing) > 0 || (UnpaddedSize.X == 0f || UnpaddedSize.Y == 0f))

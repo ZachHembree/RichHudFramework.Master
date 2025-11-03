@@ -56,7 +56,7 @@ namespace RichHudFramework
                 Color = Color.Gray;
             }
 
-            protected override void UpdateSize()
+            protected override void Measure()
             {
 				if (!AutoResize)
 				{
