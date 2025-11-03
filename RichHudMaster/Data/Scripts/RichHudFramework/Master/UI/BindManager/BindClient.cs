@@ -30,7 +30,7 @@ namespace RichHudFramework
                 /// </summary>
                 public IReadOnlyList<IBindGroup> Groups => bindGroups;
 
-                public SeBlacklistModes RequestBlacklistMode 
+                public SeBlacklistModes RequestedBlacklistMode 
                 { 
                     get { return _requestBlacklistMode | tmpBlacklist; } 
                     set { lastBlacklist = value; _requestBlacklistMode = value; } 
@@ -154,9 +154,9 @@ namespace RichHudFramework
                         case BindClientAccessors.RequestBlacklistMode:
                             {
                                 if (data != null)
-                                    { RequestBlacklistMode = (SeBlacklistModes)data; break; }
+                                    { RequestedBlacklistMode = (SeBlacklistModes)data; break; }
                                 else
-                                    return RequestBlacklistMode;
+                                    return RequestedBlacklistMode;
                             }
                         case BindClientAccessors.IsChatOpen:
                             return IsChatOpen;

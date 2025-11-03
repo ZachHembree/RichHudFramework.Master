@@ -396,7 +396,7 @@ namespace RichHudFramework.Server
                 return;
 
             statsBuilder.Append($"\t\tBindManager:\n");
-            statsBuilder.Append($"\t\t\tBlacklist Mode: {client.RequestBlacklistMode}\n");
+            statsBuilder.Append($"\t\t\tBlacklist Mode: {client.RequestedBlacklistMode}\n");
             statsBuilder.Append($"\t\t\tGroups: {client.Groups.Count}\n");
 
             var groupGrid = new string[bindGroups.Count + 1, 2];

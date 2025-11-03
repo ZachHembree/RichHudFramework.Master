@@ -44,13 +44,13 @@ namespace RichHudFramework
             /// </summary>
             public static SeBlacklistModes BlacklistMode
             {
-                get { if (_instance == null) Init(); return _instance.mainClient.RequestBlacklistMode; }
+                get { if (_instance == null) Init(); return _instance.mainClient.RequestedBlacklistMode; }
                 set
                 {
                     if (_instance == null)
                         Init();
 
-                    _instance.mainClient.RequestBlacklistMode = value;
+                    _instance.mainClient.RequestedBlacklistMode = value;
                 }
             }
 
@@ -183,6 +183,8 @@ namespace RichHudFramework
                 conIDbuf = new List<int>();
                 cHandleBuf = new MyTuple<List<int>, List<List<int>>>(new List<int>(), new List<List<int>>());
                 bindDefBuf = new List<BindDefinition>();
+
+                RichHudCore.LateMessageEntered += HandleChatBlacklist;
             }
 
             public static void Init()
@@ -255,15 +257,8 @@ namespace RichHudFramework
 
                 for (int n = 0; n < bindClients.Count; n++)
                 {
-                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.AllKeys) == SeBlacklistModes.AllKeys)
-                        CurrentBlacklistMode |= SeBlacklistModes.AllKeys;
-
-                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.Mouse) > 0)
-                        CurrentBlacklistMode |= SeBlacklistModes.Mouse;
-
-                    if ((bindClients[n].RequestBlacklistMode & SeBlacklistModes.CameraRot) > 0)
-                        CurrentBlacklistMode |= SeBlacklistModes.CameraRot;
-                }
+					CurrentBlacklistMode |= bindClients[n].RequestedBlacklistMode;
+				}
 
                 // Block/allow camera rotation due to user input
                 if ((CurrentBlacklistMode & SeBlacklistModes.CameraRot) > 0)
@@ -338,7 +333,13 @@ namespace RichHudFramework
                 }
             }
 
-            private static void SetBlacklist(string[] blacklist, bool value)
+			private void HandleChatBlacklist(string message, ref bool sendToOthers)
+			{
+				if ((CurrentBlacklistMode & SeBlacklistModes.Chat) > 0)
+					sendToOthers = false;
+			}
+
+			private static void SetBlacklist(string[] blacklist, bool value)
             {
                 BlacklistMessage message = new BlacklistMessage(blacklist, value);
                 byte[] data;
@@ -350,7 +351,8 @@ namespace RichHudFramework
             public override void Close()
             {
                 bindClients.Clear();
-                CurrentBlacklistMode = SeBlacklistModes.None;
+                RichHudCore.LateMessageEntered -= HandleChatBlacklist;
+				CurrentBlacklistMode = SeBlacklistModes.None;
                 UpdateBlacklist();
 
                 mainClient = null;

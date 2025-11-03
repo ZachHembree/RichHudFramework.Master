@@ -59,7 +59,6 @@ namespace RichHudFramework
                 {
                     settingsMenu = new TerminalWindow(HudMain.HighDpiRoot);
                     root = settingsMenu.AddModRoot("Rich HUD Master");
-                    RichHudCore.LateMessageEntered += MessageHandler;
                 }
 
                 /// <summary>
@@ -126,7 +125,6 @@ namespace RichHudFramework
 
                 public override void Close()
                 {
-                    MyAPIGateway.Utilities.MessageEntered -= MessageHandler;
                     _instance = null;
                 }
 
@@ -147,12 +145,6 @@ namespace RichHudFramework
                     };
 
                     return new MyTuple<object, HudElementBase>(data, newRoot.Element);
-                }
-
-                private void MessageHandler(string message, ref bool sendToOthers)
-                {
-                    if (Open)
-                        sendToOthers = false;
                 }
 
                 private static object GetOrSetMembers(object data, int memberEnum)
