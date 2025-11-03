@@ -183,8 +183,6 @@ namespace RichHudFramework
                 conIDbuf = new List<int>();
                 cHandleBuf = new MyTuple<List<int>, List<List<int>>>(new List<int>(), new List<List<int>>());
                 bindDefBuf = new List<BindDefinition>();
-
-                RichHudCore.LateMessageEntered += HandleChatBlacklist;
             }
 
             public static void Init()
@@ -196,7 +194,8 @@ namespace RichHudFramework
 
                 if (_instance.mainClient == null)
                 {
-                    _instance.mainClient = new Client();
+					RichHudCore.LateMessageEntered += _instance.HandleChatBlacklist;
+					_instance.mainClient = new Client();
                 }
             }
 
