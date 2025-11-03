@@ -507,6 +507,7 @@ namespace RichHudFramework
 				protected override void AfterTextUpdate(bool colorChange = false)
 				{
 					isTextSizeUpdateReq = !colorChange;
+					isUpdateEventPending = true;
 				}
 
 				/// <summary>
@@ -541,7 +542,6 @@ namespace RichHudFramework
 						isLineRangeStale = false;
 						areOffsetsStale = false;
 						isQuadCacheStale = false;
-						isUpdateEventPending = true;
 					}
 
 					lastTextOffset = _textOffset;

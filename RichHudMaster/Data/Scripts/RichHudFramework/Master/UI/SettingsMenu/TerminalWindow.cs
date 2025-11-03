@@ -18,7 +18,7 @@ namespace RichHudFramework
             /// <summary>
             /// Settings menu main window.
             /// </summary>
-            private class TerminalWindow : Window
+            private class TerminalWindow : WindowBase
             {
                 public override Color BorderColor
                 {
