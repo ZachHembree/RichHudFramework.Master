@@ -300,7 +300,7 @@ namespace RichHudFramework
                     listSize[alignAxis] += Spacing * (visCount - 1);
                 }
 
-                return listSize + Padding;
+                return listSize;
             }
 
 			protected override void Measure()
