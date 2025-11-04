@@ -57,7 +57,7 @@ namespace RichHudFramework
 
 				private readonly HudNodeIterator nodeIterator;
 				private readonly List<FlatSubtree> activeSubtrees;
-				private readonly List<ulong> subtreeOrder;
+				private readonly List<int> subtreeOrder;
 				private readonly ObjectPool<FlatSubtree> subtreePool;
 
 				// Sorting buffers
@@ -88,7 +88,7 @@ namespace RichHudFramework
 
 					lateUpdateBuffer = new List<FlatSubtree>();
 					activeSubtrees = new List<FlatSubtree>();
-					subtreeOrder = new List<ulong>();
+					subtreeOrder = new List<int>();
 
 					subtreePool = new ObjectPool<FlatSubtree>(() => new FlatSubtree(), x => x.Clear());
 					nodeIterator = new HudNodeIterator();
@@ -142,11 +142,12 @@ namespace RichHudFramework
 						clients[n].Update(nodeIterator, subtreePool, clientTick);
 					}
 
-					// Manually append cursor update list
-					nodeIterator.GetNodeData(Instance._cursor.DataHandle, lateUpdateBuffer, subtreePool, clients[0]);
+					// Manually update cursor update list
+					if (Instance._cursor.DrawCursor)
+						nodeIterator.GetNodeData(Instance._cursor.DataHandle, lateUpdateBuffer, subtreePool, clients[0]);
 
-					// Prepare active subtrees
-					SortSubtrees();
+					// Prepare active subtrees and update member-level sorting
+					GatherSortedSubtrees();
 
 					// Check if pruning is required
 					foreach (FlatSubtree subtree in activeSubtrees)
@@ -171,7 +172,7 @@ namespace RichHudFramework
 							subtree.PruneTick = 0;
 					}
 
-					RichHudStats.UI.Tree.EndTick();
+					RichHudStats.UI.Tree.PauseTick();
 				}
 
 				private void DrawUI()
@@ -209,6 +210,14 @@ namespace RichHudFramework
 
 					// Arrange/layout
 					nodeIterator.UpdateNodeLayout(activeSubtrees, refreshLayout);
+
+					// Try to keep tree and draw times separate
+					RichHudStats.UI.Draw.PauseTick();
+
+					// Apply inner/window sorting layers
+					UpdateInnerLayerSort();
+
+					RichHudStats.UI.Draw.ResumeTick();
 
 					// Draw UI elements
 					nodeIterator.DrawNodes(activeSubtrees, subtreeOrder);
@@ -252,10 +261,14 @@ namespace RichHudFramework
 					RichHudStats.UI.Input.EndTick();
 				}
 
-				private void SortSubtrees()
+				/// <summary>
+				/// Gathers subtree lists from all clients into one list and updates outer sorting
+				/// </summary>
+				private void GatherSortedSubtrees()
 				{
 					// Gather subtrees
 					activeSubtrees.Clear();
+					subtreeOrder.Clear();
 
 					for (int i = 0; i < clients.Count; i++)
 					{
@@ -263,10 +276,27 @@ namespace RichHudFramework
 							activeSubtrees.AddRange(clients[i].Subtrees);
 					}
 
+					// Manually append last elements after all clients
+					if (Instance._cursor.DrawCursor)
+					{
+						int unsortedStart = activeSubtrees.Count;
+						activeSubtrees.AddRange(lateUpdateBuffer);
+					}
+
+					SortSubtreeMembers();
+				}
+
+				/// <summary>
+				/// Applies inner layer/window sorting to subtrees
+				/// </summary>
+				private void UpdateInnerLayerSort()
+				{
+					RichHudStats.UI.Tree.ResumeTick();
+
 					UpdateOriginDistanceMap();
 
 					// Build sorted active subtree list
-					subtreeOrder.Clear();
+					indexBuffer.Clear();
 
 					// Create sorting keys using distance ranks
 					for (int i = 0; i < activeSubtrees.Count; i++)
@@ -274,20 +304,17 @@ namespace RichHudFramework
 						ulong zOffset = activeSubtrees[i].InnerZLayer,
 							distance = distMap[activeSubtrees[i].GetOriginFunc];
 
-						subtreeOrder.Add((distance << 48) | (zOffset << 32) | (uint)i);
+						indexBuffer.Add((distance << 48) | (zOffset << 32) | (uint)i);
 					}
 
 					// Sort indices in ascending order
-					subtreeOrder.Sort();
+					indexBuffer.Sort();
+					subtreeOrder.Clear();
 
-					// Manually append last elements after all clients
-					int unsortedStart = activeSubtrees.Count;
-					activeSubtrees.AddRange(lateUpdateBuffer);
+					for (int i = 0; i < indexBuffer.Count; i++)
+						subtreeOrder.Add((int)indexBuffer[i]);
 
-					for (int i = 0; i < lateUpdateBuffer.Count; i++)
-						subtreeOrder.Add((ulong)(unsortedStart + i));
-
-					SortSubtreeMembers();
+					RichHudStats.UI.Tree.EndTick();
 				}
 
 				private void UpdateOriginDistanceMap()
@@ -321,7 +348,7 @@ namespace RichHudFramework
 							throw new Exception("HUD Node origin cannot be null.");
 
 						Vector3D nodeOrigin = OriginFunc();
-						double dist = (float)Math.Round(Vector3D.Distance(nodeOrigin, camPos), 6);
+						double dist = (float)Math.Round(Vector3D.Distance(nodeOrigin, camPos), 5);
 						ulong index = (ulong)i,
 							// 32-bit converters unavailable
 							distBits = (ulong)BitConverter.DoubleToInt64Bits(dist),
@@ -331,6 +358,7 @@ namespace RichHudFramework
 							mantissa = (distBits & 0xFFFFFFFFFFFFF) >> (52 - 23);
 
 						// Reconstitute and encode fp32 distance in sort buffer
+						distBits &= ~(1ul << 63);
 						distBits = ((exponent << 23) | mantissa);
 						indexBuffer.Add((distBits << 32) | index);
 					}

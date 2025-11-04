@@ -129,7 +129,7 @@ namespace RichHudFramework
 									byte parentOuter = (byte)((parentFull & 0x00FF) + sbyte.MinValue);
 									ushort parentInner = (ushort)(parentFull & 0xFF00);
 
-									outerOffset = (byte)Math.Min((outerOffset + parentOuter), byte.MaxValue);
+									outerOffset = (byte)Math.Min(outerOffset + parentOuter, byte.MaxValue);
 									innerOffset = (ushort)Math.Min(innerOffset + parentInner, 0xFF00);
 								}
 
@@ -306,7 +306,7 @@ namespace RichHudFramework
 								catch (Exception e)
 								{
 									subtrees[i].Owner.ReportExceptionFunc(e);
-									subtrees.RemoveAt(i); i--;
+									subtrees.RemoveAt(i); i++;
 									break;
 								}
 							}
@@ -387,11 +387,11 @@ namespace RichHudFramework
 					}
 				}
 
-				public void DrawNodes(IReadOnlyList<FlatSubtree> subtrees, List<ulong> indices)
+				public void DrawNodes(IReadOnlyList<FlatSubtree> subtrees, List<int> indices)
 				{
 					for (int i = 0; i < indices.Count; i++)
 					{
-						int index = (int)indices[i];
+						int index = indices[i];
 						var subtree = subtrees[index];
 						var active = subtree.Active;
 
@@ -432,14 +432,14 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeInputDepth(IReadOnlyList<FlatSubtree> subtrees, List<ulong> indices)
+				public void UpdateNodeInputDepth(IReadOnlyList<FlatSubtree> subtrees, List<int> indices)
 				{
 					if (HudMain.InputMode == HudInputMode.NoInput)
 						return;
 
 					for (int i = 0; i < indices.Count; i++)
 					{
-						int index = (int)indices[i];
+						int index = indices[i];
 						var subtree = subtrees[index];
 						var active = subtree.Active;
 
@@ -489,11 +489,11 @@ namespace RichHudFramework
 					}
 				}
 
-				public void UpdateNodeInput(List<FlatSubtree> subtrees, List<ulong> indices)
+				public void UpdateNodeInput(List<FlatSubtree> subtrees, List<int> indices)
 				{
 					for (int i = indices.Count - 1; i >= 0; i--)
 					{
-						int index = (int)indices[i];
+						int index = indices[i];
 						var subtree = subtrees[index];
 						var active = subtree.Active;
 
@@ -528,7 +528,7 @@ namespace RichHudFramework
 								catch (Exception e)
 								{
 									subtrees[index].Owner.ReportExceptionFunc(e);
-									indices.RemoveAt(i); i--;
+									indices.RemoveAt(i); i++;
 									break;
 								}
 							}
