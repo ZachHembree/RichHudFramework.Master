@@ -393,19 +393,19 @@ namespace RichHudFramework.UI
 					else
 						element.Config[StateID] &= ~(uint)HudElementStates.IsSelectivelyMasked;
 
-					totalEnabledLength += elementSize + Spacing;
+					totalEnabledLength += elementSize;
 					EnabledCount++;
 				}
 			}
 
-			totalEnabledLength -= Spacing;
-			ScrollBar.Percent = (float)Math.Round(ScrollBar.Percent, 2);
-			ScrollBar.Max = (float)Math.Round(Math.Max(totalEnabledLength - maxLength, 0f), 2);
+			totalEnabledLength += (EnabledCount - 1) * Spacing;
+			ScrollBar.Percent = (float)Math.Round(ScrollBar.Percent, 6);
+			ScrollBar.Max = (float)Math.Round(Math.Max(totalEnabledLength - maxLength, 0f), 6);
 
 			// Calculate chain layout offset
 			float scrollCurrent = ScrollBar.Current,
-				epsilon = UseSmoothScrolling ? 1E-2f : 0f,
-				scrollDelta = (float)Math.Round(-scrollCurrent - maxLength + epsilon, 2);
+				epsilon = UseSmoothScrolling ? 1E-3f : 0f,
+				scrollDelta = (float)Math.Round(-scrollCurrent - maxLength + epsilon, 6);
 
 			_intEnd = -1;
 			scrollOffset = scrollCurrent;
