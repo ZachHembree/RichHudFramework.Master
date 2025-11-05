@@ -51,6 +51,7 @@ namespace RichHudFramework.UI
 		{
 			TextBoard = new TextBoard();
 			TextBoard.SetText("NewLabel", GlyphFormat.White);
+			UnpaddedSize = new Vector2(50f);
 		}
 
 		public Label() : this(null)
