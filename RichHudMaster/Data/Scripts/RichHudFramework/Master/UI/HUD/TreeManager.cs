@@ -20,7 +20,7 @@ namespace RichHudFramework
 				/// Limits polling rate of legacy client UI trees. Higher values result in less
 				/// frequent polling.
 				/// </summary>
-				public const int LegacyTreeRefreshRate = 5;
+				public const int LegacyTreeRefreshRate = 10;
 
 				/// <summary>
 				/// Inactive node thresholds for subtree pruning. Both thresholds must be met for pruning.

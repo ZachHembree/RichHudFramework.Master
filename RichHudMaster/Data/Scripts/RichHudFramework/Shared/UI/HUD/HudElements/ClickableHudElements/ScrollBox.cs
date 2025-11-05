@@ -249,11 +249,11 @@ namespace RichHudFramework.UI
 
 		protected override void Measure()
 		{
-			if ((SizingMode & HudChainSizingModes.IsSelfResizing) == 0 && (MinVisibleCount > 0 || MinLength > 0))
+			if ((SizingMode & chainAutoAlignAxisMask) == 0 && (MinVisibleCount > 0 || MinLength > 0))
 				SizingMode |= HudChainSizingModes.FitChainAlignAxis;
 
 			// If self-resizing or size is uninitialized
-			if ((SizingMode & HudChainSizingModes.IsSelfResizing) > 0 || (UnpaddedSize.X == 0f || UnpaddedSize.Y == 0f))
+			if ((SizingMode & chainSelfSizingMask) > 0 || (UnpaddedSize.X == 0f || UnpaddedSize.Y == 0f))
 			{
 				Vector2 rangeSize = Vector2.Zero;
 
@@ -283,29 +283,29 @@ namespace RichHudFramework.UI
 				}
 
 				rangeSize[offAxis] += scrollBarPadding;
-				Vector2 chainSize = UnpaddedSize;
+				Vector2 chainBounds = UnpaddedSize;
 
 				if (rangeSize[alignAxis] > 0f)
 				{
 					// Set align size equal to range size
-					if (chainSize[alignAxis] == 0f || (SizingMode & HudChainSizingModes.FitChainAlignAxis) == HudChainSizingModes.FitChainAlignAxis)
-						chainSize[alignAxis] = rangeSize[alignAxis];
+					if (chainBounds[alignAxis] == 0f || (SizingMode & HudChainSizingModes.FitChainAlignAxis) == HudChainSizingModes.FitChainAlignAxis)
+						chainBounds[alignAxis] = rangeSize[alignAxis];
 					// Keep align size at or above range size
 					else if ((SizingMode & HudChainSizingModes.ClampChainAlignAxis) == HudChainSizingModes.ClampChainAlignAxis)
-						chainSize[alignAxis] = Math.Max(chainSize[alignAxis], rangeSize[alignAxis]);
+						chainBounds[alignAxis] = Math.Max(chainBounds[alignAxis], rangeSize[alignAxis]);
 				}
 
 				if (rangeSize[offAxis] > 0f)
 				{
 					// Set off axis size equal to range size
-					if (chainSize[offAxis] == 0f || (SizingMode & HudChainSizingModes.FitChainOffAxis) == HudChainSizingModes.FitChainOffAxis)
-						chainSize[offAxis] = rangeSize[offAxis];
+					if (chainBounds[offAxis] == 0f || (SizingMode & HudChainSizingModes.FitChainOffAxis) == HudChainSizingModes.FitChainOffAxis)
+						chainBounds[offAxis] = rangeSize[offAxis];
 					// Keep off axis size at or above range size
 					else if ((SizingMode & HudChainSizingModes.ClampChainOffAxis) == HudChainSizingModes.ClampChainOffAxis)
-						chainSize[offAxis] = Math.Max(chainSize[offAxis], rangeSize[offAxis]);
+						chainBounds[offAxis] = Math.Max(chainBounds[offAxis], rangeSize[offAxis]);
 				}
 
-				UnpaddedSize = chainSize;
+				UnpaddedSize = chainBounds;
 			}
 		}
 
@@ -337,22 +337,22 @@ namespace RichHudFramework.UI
 				else
 					scrollOffset = 0f;
 
-				float elementSpanLength;
+				UpdateRangeSize(chainSize);
 
-				if (TryGetVisibleRange(chainSize[alignAxis], chainSize[offAxis], out elementSpanLength))
+				if (rangeLength > 0)
 				{
 					Vector2 startOffset, endOffset;
-					float rcpSpanLength = 1f / Math.Max(elementSpanLength, 1E-6f);
+					float rcpSpanLength = 1f / Math.Max(rangeSize[alignAxis], 1E-6f);
 
 					if (alignAxis == 1) // Vertical
 					{
 						startOffset = new Vector2(-.5f * scrollBarPadding, .5f * chainSize.Y + scrollOffset);
-						endOffset = new Vector2(startOffset.X, startOffset.Y - elementSpanLength);
+						endOffset = new Vector2(startOffset.X, startOffset.Y - rangeSize[alignAxis]);
 					}
 					else
 					{
 						startOffset = new Vector2(-.5f * chainSize.X - scrollOffset, .5f * scrollBarPadding);
-						endOffset = new Vector2(startOffset.X + elementSpanLength, startOffset.Y);
+						endOffset = new Vector2(startOffset.X + rangeSize[alignAxis], startOffset.Y);
 					}
 
 					UpdateMemberOffsets(startOffset, endOffset, rcpSpanLength);

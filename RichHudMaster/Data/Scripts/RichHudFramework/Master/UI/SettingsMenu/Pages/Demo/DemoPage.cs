@@ -122,7 +122,7 @@ namespace RichHudFramework
 
                     transformControls = new HudChain(false)
                     {
-                        SizingMode = HudChainSizingModes.ClampMembersOffAxis | HudChainSizingModes.AlignMembersCenter,
+                        SizingMode = HudChainSizingModes.AlignMembersCenter,
                         CollectionContainer = { transformCol1, transformCol2 },
                     };
 
