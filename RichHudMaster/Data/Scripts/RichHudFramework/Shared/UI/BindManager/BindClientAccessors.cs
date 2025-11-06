@@ -23,12 +23,12 @@ namespace RichHudFramework.UI
         /// Set flag to blacklist every blacklist-able bind. 
         /// Keep in mind that not every SE bind can be disabled.
         /// </summary>
-        AllKeys = 1 << 2 | Mouse,
+        AllKeys = 1 << 1 | Mouse,
 
         /// <summary>
         /// Set flag to disable camera rotation (does not disable look with alt)
         /// </summary>
-        CameraRot = 1 << 3,
+        CameraRot = 1 << 2,
 
         /// <summary>
         /// Set flag to disable mouse buttons as well as camera rotation.
@@ -43,7 +43,7 @@ namespace RichHudFramework.UI
         /// <summary>
         /// Set flag to intercept chat messages
         /// </summary>
-        Chat = 1 << 4,
+        Chat = 1 << 3,
 
         /// <summary>
         /// Set to blacklist every possible bind and intercept chat messages
