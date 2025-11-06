@@ -152,7 +152,7 @@ namespace RichHudFramework.Server
 
             ExceptionHandler.RecoveryLimit = 5;
             ExceptionHandler.ModName = modName;
-            ExceptionHandler.DebugLogging = true;
+            ExceptionHandler.DebugLogging = false;
 
             verRegData = new MasterRegData(new MasterVersionData(this, ExceptionHandler.ModName, modID, apiVID, versionID), VersionRegisteredCallback);
             regMessage = new MasterMessage(this, (byte)ModQueryTypes.RegisterInstance, verRegData);
