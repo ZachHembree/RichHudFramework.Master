@@ -487,7 +487,11 @@ namespace RichHudFramework.UI
 			for (int i = 0; i < hudCollectionList.Count; i++)
 			{
 				var element = hudCollectionList[i].Element;
-				element.Visible = (i >= _start && i <= _end) && hudCollectionList[i].Enabled;
+				bool isInRange = (i >= _start && i <= _end) && hudCollectionList[i].Enabled;
+				bool isVisible = (element.Config[StateID] & (uint)HudElementStates.IsVisible) > 0;
+
+				if (isVisible != isInRange)
+					element.Visible = isInRange;
 			}
 		}
 
@@ -580,7 +584,11 @@ namespace RichHudFramework.UI
 			for (int i = 0; i < hudCollectionList.Count; i++)
 			{
 				var element = hudCollectionList[i].Element;
-				element.Visible = (i >= _intStart && i <= _intEnd) && hudCollectionList[i].Enabled;
+				bool isInRange = (i >= _start && i <= _end) && hudCollectionList[i].Enabled;
+				bool isVisible = (element.Config[StateID] & (uint)HudElementStates.IsVisible) > 0;
+
+				if (isVisible != isInRange)
+					element.Visible = isInRange;
 			}
 		}
 

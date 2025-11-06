@@ -131,7 +131,13 @@ namespace RichHudFramework
 			/// (or effective bounds). This is an optimization flag set during alignment/masking updates to
 			/// skip processing for fully obscured or out-of-bounds elements (e.g., in UpdateAlignment).
 			/// </summary>
-			IsDisjoint = 1 << 17
+			IsDisjoint = 1 << 17,
+
+			/// <summary>
+			/// Internal flag used to tag inactive leaf nodes that need to be monitored for visibility
+			/// transitions.
+			/// </summary>
+			IsInactiveLeaf = 1 << 18
 		}
 
 		/// <summary>
