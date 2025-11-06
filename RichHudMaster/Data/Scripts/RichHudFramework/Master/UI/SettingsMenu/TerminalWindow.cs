@@ -246,7 +246,7 @@ namespace RichHudFramework
                     /// <summary>
                     /// Returns a read only list of mod root containers registered to the list
                     /// </summary>
-                    public IReadOnlyList<ModControlRoot> ModRoots => scrollBox.Collection;
+                    public IReadOnlyList<ModControlRoot> ModRoots { get; }
 
                     private readonly LabelBox header;
                     private readonly ScrollBox<ModControlRoot, LabelElementBase> scrollBox;
@@ -270,8 +270,9 @@ namespace RichHudFramework
                             Color = TerminalFormatting.DarkSlateGrey,
                             Padding = new Vector2(6f)
                         };
+						ModRoots = scrollBox.Collection;
 
-                        var layout = new HudChain(true, this)
+						var layout = new HudChain(true, this)
                         {
                             DimAlignment = DimAlignments.UnpaddedSize,
                             SizingMode = HudChainSizingModes.FitMembersOffAxis,
@@ -323,16 +324,6 @@ namespace RichHudFramework
                             SelectionChanged?.Invoke();
                             SelectedModRoot?.OnSelectionChanged(SelectedModRoot, EventArgs.Empty);
                         }
-
-                        Vector2 listSize = scrollBox.Size,
-                            listPos = scrollBox.Position;
-
-                        listSize.X -= scrollBox.ScrollBar.Width;
-                        listPos.X -= scrollBox.ScrollBar.Width;
-
-                        listInput.ListRange = scrollBox.ClipRange;
-                        listInput.ListPos = listPos;
-                        listInput.ListSize = listSize;
                     }
 
 					protected override void Layout()
@@ -342,7 +333,17 @@ namespace RichHudFramework
 
                         SliderBar slider = scrollBox.ScrollBar.slide;
                         slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
-                    }
+
+						Vector2 listSize = scrollBox.Size,
+							listPos = scrollBox.Position;
+
+						listSize.X -= scrollBox.ScrollBar.Width;
+						listPos.X -= scrollBox.ScrollBar.Width;
+
+						listInput.ListRange = scrollBox.ClipRange;
+						listInput.ListPos = listPos;
+						listInput.ListSize = listSize;
+					}
 
                     /// <summary>
                     /// Creates and returns a new control root with the name given.

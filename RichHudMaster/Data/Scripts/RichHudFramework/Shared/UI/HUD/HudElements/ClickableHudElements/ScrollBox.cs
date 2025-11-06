@@ -463,14 +463,16 @@ namespace RichHudFramework.UI
 			scrollOffset *= -1f;
 			_intStart = MathHelper.Clamp(_intStart, firstEnabled, max);
 			_intEnd = MathHelper.Clamp(_intEnd, _intStart, max);
+			_start = _intStart;
+			_end = _intEnd;
 
-			for (int i = _intStart - 1; i >= firstEnabled; i--)
+			for (int i = _start - 1; i >= firstEnabled; i--)
 			{
 				if (hudCollectionList[i].Enabled)
 				{ _start = i; break; }
 			}
 
-			for (int i = _intEnd + 1; i < hudCollectionList.Count; i++)
+			for (int i = _end + 1; i < hudCollectionList.Count; i++)
 			{
 				if (hudCollectionList[i].Enabled)
 				{ _end = i; break; }
@@ -485,13 +487,7 @@ namespace RichHudFramework.UI
 			for (int i = 0; i < hudCollectionList.Count; i++)
 			{
 				var element = hudCollectionList[i].Element;
-				element.Visible = (i >= _intStart && i <= _intEnd) && hudCollectionList[i].Enabled;
-			}
-
-			if (hudCollectionList.Count > 0)
-			{
-				hudCollectionList[_start].Element.Visible = true;
-				hudCollectionList[_end].Element.Visible = true;
+				element.Visible = (i >= _start && i <= _end) && hudCollectionList[i].Enabled;
 			}
 		}
 
