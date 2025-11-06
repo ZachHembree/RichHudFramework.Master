@@ -59,7 +59,7 @@ namespace RichHudFramework
 			{
 				private const int statsWindowSize = 240, sampleRateDiv = 5,
 					bufMinResizeThreshold = 4000,
-					bbBatchSize = 10;
+					bbBatchSize = 100;
 
 				private static BillBoardUtils instance;
 
@@ -666,55 +666,82 @@ namespace RichHudFramework
 							// Masking/clipping
 							if (mask != null)
 							{
-								BoundingBox2 bounds = new BoundingBox2(Vector2.Min(planePos.Point1, planePos.Point2), planePos.Point0),
-									texBounds = new BoundingBox2(Vector2.Min(texCoords.Point0, texCoords.Point2), Vector2.Max(texCoords.Point0, texCoords.Point1));
-								Vector2 size = bounds.Size,
-									pos = bounds.Center;
+								// Full min/max for bounds
+								float bbMinX = Math.Min(Math.Min(planePos.Point0.X, planePos.Point1.X), planePos.Point2.X);
+								float bbMinY = Math.Min(Math.Min(planePos.Point0.Y, planePos.Point1.Y), planePos.Point2.Y);
+								float bbMaxX = Math.Max(Math.Max(planePos.Point0.X, planePos.Point1.X), planePos.Point2.X);
+								float bbMaxY = Math.Max(Math.Max(planePos.Point0.Y, planePos.Point1.Y), planePos.Point2.Y);
 
-								bounds = bounds.Intersect(mask.Value);
-								planePos.Point0 = Vector2.Clamp(planePos.Point0, bounds.Min, bounds.Max);
-								planePos.Point1 = Vector2.Clamp(planePos.Point1, bounds.Min, bounds.Max);
-								planePos.Point2 = Vector2.Clamp(planePos.Point2, bounds.Min, bounds.Max);
+								// Inline Intersect
+								float interMinX = Math.Max(bbMinX, mask.Value.Min.X);
+								float interMinY = Math.Max(bbMinY, mask.Value.Min.Y);
+								float interMaxX = Math.Min(bbMaxX, mask.Value.Max.X);
+								float interMaxY = Math.Min(bbMaxY, mask.Value.Max.Y);
 
-								// Dont bother clipping texcoords for solid colors
+								// Size and pos as floats
+								float sizeX = bbMaxX - bbMinX;
+								float sizeY = bbMaxY - bbMinY;
+								float posX = bbMinX + sizeX * 0.5f;
+								float posY = bbMinY + sizeY * 0.5f;
+
+								// Min/Max-based Clamp for planePos points
+								planePos.Point0.X = Math.Max(interMinX, Math.Min(interMaxX, planePos.Point0.X));
+								planePos.Point0.Y = Math.Max(interMinY, Math.Min(interMaxY, planePos.Point0.Y));
+								planePos.Point1.X = Math.Max(interMinX, Math.Min(interMaxX, planePos.Point1.X));
+								planePos.Point1.Y = Math.Max(interMinY, Math.Min(interMaxY, planePos.Point1.Y));
+								planePos.Point2.X = Math.Max(interMinX, Math.Min(interMaxX, planePos.Point2.X));
+								planePos.Point2.Y = Math.Max(interMinY, Math.Min(interMaxY, planePos.Point2.Y));
+
 								if (bbData.Item3 != Material.Default.TextureID)
 								{
-									Vector2 clipSize = bounds.Size;
+									// Full min/max for texBounds
+									float texMinX = Math.Min(Math.Min(texCoords.Point0.X, texCoords.Point1.X), texCoords.Point2.X);
+									float texMinY = Math.Min(Math.Min(texCoords.Point0.Y, texCoords.Point1.Y), texCoords.Point2.Y);
+									float texMaxX = Math.Max(Math.Max(texCoords.Point0.X, texCoords.Point1.X), texCoords.Point2.X);
+									float texMaxY = Math.Max(Math.Max(texCoords.Point0.Y, texCoords.Point1.Y), texCoords.Point2.Y);
 
-									// Normalized cropped size and offset
-									Vector2 clipScale = clipSize / size,
-										clipOffset = (bounds.Center - pos) / size,
-										uvScale = texBounds.Size,
-										uvOffset = texBounds.Center;
+									float clipSizeX = interMaxX - interMinX;
+									float clipSizeY = interMaxY - interMinY;
 
-									pos += clipOffset * size; // Offset billboard to compensate for changes in size
-									size = clipSize; // Use cropped billboard size
-									clipOffset *= uvScale * new Vector2(1f, -1f); // Scale offset to fit material and flip Y-axis
+									float invSizeX = 1f / sizeX, invSizeY = 1f / sizeY;
+									float clipScaleX = clipSizeX * invSizeX;
+									float clipScaleY = clipSizeY * invSizeY;
 
-									// Recalculate texture coordinates to simulate clipping without affecting material alignment
-									texBounds.Min = ((texBounds.Min - uvOffset) * clipScale) + (uvOffset + clipOffset);
-									texBounds.Max = ((texBounds.Max - uvOffset) * clipScale) + (uvOffset + clipOffset);
+									float clipOffsetX = ((interMinX + clipSizeX * 0.5f) - posX) * invSizeX;
+									float clipOffsetY = ((interMinY + clipSizeY * 0.5f) - posY) * invSizeY;
 
-									texCoords.Point0 = Vector2.Clamp(texCoords.Point0, texBounds.Min, texBounds.Max);
-									texCoords.Point1 = Vector2.Clamp(texCoords.Point1, texBounds.Min, texBounds.Max);
-									texCoords.Point2 = Vector2.Clamp(texCoords.Point2, texBounds.Min, texBounds.Max);
+									float uvScaleX = texMaxX - texMinX;
+									float uvScaleY = texMaxY - texMinY;
+									float uvOffsetX = texMinX + uvScaleX * 0.5f;
+									float uvOffsetY = texMinY + uvScaleY * 0.5f;
+
+									clipOffsetX *= uvScaleX;
+									clipOffsetY *= -uvScaleY; // Flip Y
+
+									// Recalculate tex bounds inline
+									float newTexMinX = ((texMinX - uvOffsetX) * clipScaleX) + (uvOffsetX + clipOffsetX);
+									float newTexMinY = ((texMinY - uvOffsetY) * clipScaleY) + (uvOffsetY + clipOffsetY);
+									float newTexMaxX = ((texMaxX - uvOffsetX) * clipScaleX) + (uvOffsetX + clipOffsetX);
+									float newTexMaxY = ((texMaxY - uvOffsetY) * clipScaleY) + (uvOffsetY + clipOffsetY);
+
+									// Min/Max-based Clamp for texCoords
+									texCoords.Point0.X = Math.Max(newTexMinX, Math.Min(newTexMaxX, texCoords.Point0.X));
+									texCoords.Point0.Y = Math.Max(newTexMinY, Math.Min(newTexMaxY, texCoords.Point0.Y));
+									texCoords.Point1.X = Math.Max(newTexMinX, Math.Min(newTexMaxX, texCoords.Point1.X));
+									texCoords.Point1.Y = Math.Max(newTexMinY, Math.Min(newTexMaxY, texCoords.Point1.Y));
+									texCoords.Point2.X = Math.Max(newTexMinX, Math.Min(newTexMaxX, texCoords.Point2.X));
+									texCoords.Point2.Y = Math.Max(newTexMinY, Math.Min(newTexMaxY, texCoords.Point2.Y));
 								}
 							}
 
 							// Transform 2D planar positions into world space
 							MatrixD matrix = matrixBuf[bbData.Item2.Y];
-							TriangleD worldPos = new TriangleD
-							{
-								Point0 = matrix.Translation + (planePos.Point0.X * matrix.Right) + (planePos.Point0.Y * matrix.Up),
-								Point1 = matrix.Translation + (planePos.Point1.X * matrix.Right) + (planePos.Point1.Y * matrix.Up),
-								Point2 = matrix.Translation + (planePos.Point2.X * matrix.Right) + (planePos.Point2.Y * matrix.Up)
-							};
 
 							MyTriangleBillboard bb = flatTriPoolBack[0][bbData.Item2.X];
 							bb.BlendType = bbData.Item1;
-							bb.Position0 = worldPos.Point0;
-							bb.Position1 = worldPos.Point1;
-							bb.Position2 = worldPos.Point2;
+							bb.Position0 = matrix.Translation + (planePos.Point0.X * matrix.Right) + (planePos.Point0.Y * matrix.Up);
+							bb.Position1 = matrix.Translation + (planePos.Point1.X * matrix.Right) + (planePos.Point1.Y * matrix.Up);
+							bb.Position2 = matrix.Translation + (planePos.Point2.X * matrix.Right) + (planePos.Point2.Y * matrix.Up);
 							bb.UV0 = texCoords.Point0;
 							bb.UV1 = texCoords.Point1;
 							bb.UV2 = texCoords.Point2;
