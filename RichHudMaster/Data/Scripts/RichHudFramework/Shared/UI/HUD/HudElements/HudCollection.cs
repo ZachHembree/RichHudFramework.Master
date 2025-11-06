@@ -54,11 +54,6 @@ namespace RichHudFramework
 			/// </summary>
 			protected readonly List<TElementContainer> hudCollectionList;
 
-			/// <summary>
-			/// Used internally by HUD collection for bulk entry removal
-			/// </summary>
-			protected bool skipCollectionRemove;
-
 			public HudCollection(HudParentBase parent) : base(parent)
 			{
 				hudCollectionList = new List<TElementContainer>();
@@ -247,19 +242,14 @@ namespace RichHudFramework
 				{
 					childHandles.Remove(child.DataHandle);
 
-					if (!skipCollectionRemove)
+					for (int n = 0; n < hudCollectionList.Count; n++)
 					{
-						for (int n = 0; n < hudCollectionList.Count; n++)
+						if (hudCollectionList[n].Element == child)
 						{
-							if (hudCollectionList[n].Element == child)
-							{
-								hudCollectionList.RemoveAt(n);
-								break;
-							}
+							hudCollectionList.RemoveAt(n);
+							break;
 						}
 					}
-					else
-						skipCollectionRemove = false;
 
 					return true;
 				}
