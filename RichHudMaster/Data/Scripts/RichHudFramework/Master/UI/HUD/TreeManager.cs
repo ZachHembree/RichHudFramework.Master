@@ -117,6 +117,9 @@ namespace RichHudFramework
 
 				public static bool UnregisterClient(TreeClient client)
 				{
+					if (treeManager == null)
+						return true;
+
 					bool success = false;
 					success = treeManager.clients.Remove(client);
 					return success;
