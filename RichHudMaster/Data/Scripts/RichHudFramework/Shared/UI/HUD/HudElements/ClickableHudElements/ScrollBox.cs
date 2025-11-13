@@ -225,7 +225,7 @@ namespace RichHudFramework.UI
 
 		protected override void HandleInput(Vector2 cursorPos)
 		{
-			ScrollBar.MouseInput.InputEnabled = EnableScrolling;
+			ScrollBar.InputEnabled = EnableScrolling;
 			ShareCursor = ScrollBar.Max <= 0f;
 
 			if (hudCollectionList.Count > 0 && EnableScrolling && (IsMousedOver || ScrollBar.IsMousedOver))
@@ -269,8 +269,10 @@ namespace RichHudFramework.UI
 
 						if (entry.Enabled)
 						{
-							if (visCount >= MinVisibleCount && rangeSize[alignAxis] >= MinLength)
-								break;
+							if ((MinVisibleCount != 0 || MinLength != 0) &&
+								(MinVisibleCount == 0 || visCount >= MinVisibleCount) &&
+								(MinLength == 0 || rangeSize[alignAxis] >= MinLength))
+							{ break; }
 
 							Vector2 elementSize = element.UnpaddedSize + element.Padding;
 							rangeSize[offAxis] = Math.Max(rangeSize[offAxis], elementSize[offAxis]);

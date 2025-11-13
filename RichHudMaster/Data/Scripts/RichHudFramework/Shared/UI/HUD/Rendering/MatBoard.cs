@@ -12,10 +12,14 @@ namespace RichHudFramework
             using Client;
             using Server;
 
-            public class MatBoard
+			/// <summary>
+			/// Wrapper for drawing a textured rectangular billboard using the <see cref="VRage.Game.MyTransparentGeometry"/> API
+            /// and <see cref="Rendering.Material"/> for custom texturing.
+			/// </summary>
+			public class MatBoard
             {
                 /// <summary>
-                /// Coloring applied to the material.
+                /// Coloring applied to the material
                 /// </summary>
                 public Color Color
                 {
@@ -30,7 +34,7 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
-                /// Texture applied to the billboard.
+                /// Texture applied to the billboard
                 /// </summary>
                 public Material Material
                 {
@@ -41,13 +45,13 @@ namespace RichHudFramework
                         {
                             bbAspect = -1f;
                             matFrame.Material = value;
-                            minBoard.materialData.textureID = value.TextureID;
+                            minBoard.materialData.textureID = value.textureID;
                         }
                     }
                 }
 
                 /// <summary>
-                /// Determines how the texture scales with the MatBoard's dimensions.
+                /// Determines how the texture scales with the MatBoard's dimensions
                 /// </summary>
                 public MaterialAlignment MatAlignment
                 {
@@ -64,6 +68,7 @@ namespace RichHudFramework
 
                 private Color color;
                 private float bbAspect;
+                private Vector2 matScale;
 
                 private QuadBoard minBoard;
                 private readonly MaterialFrame matFrame;
@@ -85,12 +90,12 @@ namespace RichHudFramework
                 /// </summary>
                 public void Draw(ref MyQuadD quad)
                 {
-                    minBoard.Draw(ref quad);
-                }
+					BillBoardUtils.AddQuad(ref minBoard.materialData, ref quad);
+				}
 
                 /// <summary>
                 /// Draws a billboard in world space facing the +Z direction of the matrix given. Units in meters,
-                /// matrix transform notwithstanding. Dont forget to compensate for perspective scaling!
+                /// matrix scaling notwithstanding.
                 /// </summary
                 public void Draw(ref CroppedBox box, MatrixD[] matrixRef)
                 {
@@ -112,14 +117,40 @@ namespace RichHudFramework
                             Vector2 boxSize = box.bounds.Size;
                             float newAspect = (boxSize.X / boxSize.Y);
 
-                            if (Math.Abs(bbAspect - newAspect) > 1E-5f)
+							if (Math.Abs(bbAspect - newAspect) > 1E-5f)
                             {
-                                bbAspect = newAspect;
-                                minBoard.materialData.texBounds = matFrame.GetMaterialAlignment(bbAspect);
-                            }
-                        }
+								bbAspect = newAspect;
+								minBoard.materialData.texBounds = Material.uvBounds;
 
-                        minBoard.Draw(ref box, matrixRef);
+                                // Clip billboard to bound texture
+                                if (matFrame.Alignment != MaterialAlignment.StretchToFit)
+                                    matScale = matFrame.GetAlignmentScale(bbAspect);
+							}
+
+							if (matFrame.Alignment != MaterialAlignment.StretchToFit)
+								box.bounds.Scale(matScale);
+						}
+
+						FlatQuad quad = new FlatQuad()
+						{
+							Point0 = box.bounds.Max,
+							Point1 = new Vector2(box.bounds.Max.X, box.bounds.Min.Y),
+							Point2 = box.bounds.Min,
+							Point3 = new Vector2(box.bounds.Min.X, box.bounds.Max.Y),
+						};
+
+						if (minBoard.skewRatio != 0f)
+						{
+							Vector2 start = quad.Point0, end = quad.Point3,
+								offset = (end - start) * minBoard.skewRatio * .5f;
+
+							quad.Point0 = Vector2.Lerp(start, end, minBoard.skewRatio) - offset;
+							quad.Point3 = Vector2.Lerp(start, end, 1f + minBoard.skewRatio) - offset;
+							quad.Point1 -= offset;
+							quad.Point2 -= offset;
+						}
+
+						BillBoardUtils.AddQuad(ref quad, ref minBoard.materialData, matrixRef, box.mask);
                     }
                 }     
             }

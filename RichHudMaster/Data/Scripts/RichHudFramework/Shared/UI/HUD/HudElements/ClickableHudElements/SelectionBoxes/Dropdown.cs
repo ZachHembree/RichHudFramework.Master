@@ -58,10 +58,18 @@ namespace RichHudFramework.UI
             remove { listBox.SelectionChanged -= value; } 
         }
 
-        /// <summary>
-        /// List of entries in the dropdown.
-        /// </summary>
-        public IReadOnlyList<TContainer> EntryList => listBox.EntryList;
+		/// <summary>
+		/// Registers a selection update callback. Useful in initializers.
+		/// </summary>
+		public EventHandler SelectionChangedCallback
+		{
+			set { listBox.SelectionChanged += value; }
+		}
+
+		/// <summary>
+		/// List of entries in the dropdown.
+		/// </summary>
+		public IReadOnlyList<TContainer> EntryList => listBox.EntryList;
 
         /// <summary>
         /// Read-only collection of list entries.
@@ -149,6 +157,11 @@ namespace RichHudFramework.UI
         /// </summary>
         public int SelectionIndex => listBox.SelectionIndex;
 
+		/// <summary>
+		/// Interface used to manage the element's input focus state
+		/// </summary>
+		public IFocusHandler FocusHandler => display.FocusHandler;
+
         /// <summary>
         /// Mouse input for the dropdown display.
         /// </summary>
@@ -187,7 +200,8 @@ namespace RichHudFramework.UI
                 ParentAlignment = ParentAlignments.Bottom,
                 TabColor = new Color(0, 0, 0, 0),
             };
-            
+            listBox.FocusHandler.InputOwner = this;
+
             Size = new Vector2(331f, 43f);
             DropdownHeight = 100f;
 
@@ -205,7 +219,7 @@ namespace RichHudFramework.UI
 
             if (getDispFocus)
             {
-                display.MouseInput.GetInputFocus();
+                display.FocusHandler.GetInputFocus();
                 getDispFocus = false;
             }
         }
@@ -214,7 +228,7 @@ namespace RichHudFramework.UI
         {
             if (Selection != null)
             {
-                var fmt = display.MouseInput.HasFocus ? Format.WithColor(listBox.FocusTextColor) : Format;
+                var fmt = display.FocusHandler.HasFocus ? Format.WithColor(listBox.FocusTextColor) : Format;
                 display.name.TextBoard.SetText(Selection.Element.TextBoard.ToString(), fmt);
                 CloseList();
             }
@@ -237,7 +251,7 @@ namespace RichHudFramework.UI
             if (!listBox.Visible)
             {
                 listBox.Visible = true;
-                listBox.MouseInput.GetInputFocus();
+                listBox.FocusHandler.GetInputFocus();
             }
         }
 
@@ -409,13 +423,13 @@ namespace RichHudFramework.UI
                 HighlightEnabled = true;
                 UseFocusFormatting = true;
 
-                _mouseInput.GainedInputFocus += GainFocus;
-                _mouseInput.LostInputFocus += LoseFocus;
+                FocusHandler.GainedInputFocus += GainFocus;
+				FocusHandler.LostInputFocus += LoseFocus;
             }
 
 			protected override void HandleInput(Vector2 cursorPos)
             {
-				if (MouseInput.HasFocus)
+				if (FocusHandler.HasFocus)
                 {
                     if (SharedBinds.Space.IsNewPressed)
                     {
@@ -433,12 +447,12 @@ namespace RichHudFramework.UI
             {
                 if (HighlightEnabled)
                 {
-                    if (!UseFocusFormatting || !MouseInput.HasFocus)
+                    if (!UseFocusFormatting || !FocusHandler.HasFocus)
                         lastBackgroundColor = Color;
 
                     if (UseFocusFormatting)
                     {
-						if (!MouseInput.HasFocus)
+						if (!FocusHandler.HasFocus)
 							lastTextColor = name.Format.Color;
 
 						name.TextBoard.SetFormatting(name.Format.WithColor(lastTextColor));
@@ -454,7 +468,7 @@ namespace RichHudFramework.UI
             {
                 if (HighlightEnabled)
                 {
-                    if (UseFocusFormatting && MouseInput.HasFocus)
+                    if (UseFocusFormatting && FocusHandler.HasFocus)
                     {
                         Color = FocusColor;
                         name.TextBoard.SetFormatting(name.Format.WithColor(FocusTextColor));

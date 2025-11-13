@@ -98,11 +98,19 @@ namespace RichHudFramework.UI
             remove { listInput.SelectionChanged -= value; }
         }
 
-        /// <summary>
-        /// Used to allow the addition of list entries using collection-initializer syntax in
-        /// conjunction with normal initializers.
-        /// </summary>
-        public SelectionBoxBase<TChain, TContainer, TElement> ListContainer => this;
+		/// <summary>
+		/// Registers a selection update callback. Useful in initializers.
+		/// </summary>
+		public EventHandler SelectionChangedCallback
+		{
+			set { listInput.SelectionChanged += value; }
+		}
+
+		/// <summary>
+		/// Used to allow the addition of list entries using collection-initializer syntax in
+		/// conjunction with normal initializers.
+		/// </summary>
+		public SelectionBoxBase<TChain, TContainer, TElement> ListContainer => this;
 
         /// <summary>
         /// Read-only collection of list entries.
@@ -167,6 +175,11 @@ namespace RichHudFramework.UI
         /// </summary>
         public int Count => hudChain.Count;
 
+		/// <summary>
+		/// Interface used to manage the element's input focus state
+		/// </summary>
+		public IFocusHandler FocusHandler { get;}
+
         /// <summary>
         /// Mouse input element for the selection box
         /// </summary>
@@ -215,7 +228,8 @@ namespace RichHudFramework.UI
             selectionBox = new HighlightBox(hudChain) { Visible = false };
             highlightBox = new HighlightBox(hudChain) { Visible = false, CanDrawTab = false };
 
-            listInput = new ListInputElement<TContainer, TElement>(hudChain);
+            FocusHandler = new InputFocusHandler(this);
+            listInput = new ListInputElement<TContainer, TElement>(hudChain, this);
 
             HighlightColor = TerminalFormatting.Atomic;
             FocusColor = TerminalFormatting.Mint;
@@ -325,8 +339,7 @@ namespace RichHudFramework.UI
                 Vector2 offset = entry.Element.Position - highlightBox.Origin;
                 offset.X -= (ListSize.X - entryWidth - HighlightPadding.X) / 2f;
 
-                highlightBox.Visible = 
-                    (listInput.IsMousedOver || listInput.HasFocus) 
+                highlightBox.Visible = (listInput.IsMousedOver || FocusHandler.HasFocus) 
                     && entry.Element.Visible && entry.AllowHighlighting;
 
                 highlightBox.Height = entry.Element.Height - HighlightPadding.Y;

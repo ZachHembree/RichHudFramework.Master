@@ -8,10 +8,27 @@ namespace RichHudFramework.UI
     /// </summary>
     public class NamedCheckBox : HudElementBase, IClickableElement
     {
-        /// <summary>
-        /// Text rendered by the label.
-        /// </summary>
-        public RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
+		/// <summary>
+		/// Invoked when the current value changes
+		/// </summary>
+		public event EventHandler ValueChanged
+		{
+			add { checkbox.ValueChanged += value; }
+			remove { checkbox.ValueChanged -= value; }
+		}
+
+		/// <summary>
+		/// Registers a value update callback. Useful in initializers.
+		/// </summary>
+		public EventHandler UpdateValueCallback
+		{
+			set { checkbox.ValueChanged += value; }
+		}
+
+		/// <summary>
+		/// Text rendered by the label.
+		/// </summary>
+		public RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
 
         /// <summary>
         /// Default formatting used by the label.
@@ -56,10 +73,15 @@ namespace RichHudFramework.UI
         /// </summary>
         public ITextBuilder NameBuilder => name.TextBoard;
 
-        /// <summary>
-        /// Checkbox mouse input
-        /// </summary>
-        public IMouseInput MouseInput => checkbox.MouseInput;
+		/// <summary>
+		/// Interface for managing gaining/losing input focus
+		/// </summary>
+		public IFocusHandler FocusHandler => checkbox.FocusHandler;
+
+		/// <summary>
+		/// Checkbox mouse input
+		/// </summary>
+		public IMouseInput MouseInput => checkbox.MouseInput;
 
         /// <summary>
         /// Indicates whether or not the box is checked.
@@ -88,6 +110,7 @@ namespace RichHudFramework.UI
                 CollectionContainer = { { name, 0f }, { checkbox, 0f } }
             };
 
+            FocusHandler.InputOwner = this;
             AutoResize = true;
             Size = new Vector2(250f, 37f);
         }

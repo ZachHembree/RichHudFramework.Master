@@ -8,10 +8,27 @@ namespace RichHudFramework.UI
     /// </summary>
     public class ScrollBar : HudElementBase, IClickableElement
     {
-        /// <summary>
-        /// Minimum allowable value.
-        /// </summary>
-        public float Min
+		/// <summary>
+		/// Invoked when the current value changes
+		/// </summary>
+		public event EventHandler ValueChanged
+		{
+			add { slide.ValueChanged += value; }
+			remove { slide.ValueChanged -= value; }
+		}
+
+		/// <summary>
+		/// Registers a value update callback. Useful in initializers.
+		/// </summary>
+		public EventHandler UpdateValueCallback
+		{
+			set { slide.ValueChanged += value; }
+		}
+
+		/// <summary>
+		/// Minimum allowable value.
+		/// </summary>
+		public float Min
         {
             get { return slide.Min; }
             set { slide.Min = value; }
@@ -46,12 +63,21 @@ namespace RichHudFramework.UI
         /// </summary>
         public override bool IsMousedOver => slide.IsMousedOver;
 
-        public IMouseInput MouseInput => slide.MouseInput;
+		/// <summary>
+		/// Interface used to manage the element's input focus state
+		/// </summary>
+		public IFocusHandler FocusHandler { get; }
+
+		/// <summary>
+		/// Mouse input interface for this clickable element
+		/// </summary>
+		public IMouseInput MouseInput => slide.MouseInput;
 
         public readonly SliderBar slide;
 
         public ScrollBar(HudParentBase parent) : base(parent)
         {
+            FocusHandler = new InputFocusHandler(this);
             slide = new SliderBar(this)
             {
                 Reverse = true,

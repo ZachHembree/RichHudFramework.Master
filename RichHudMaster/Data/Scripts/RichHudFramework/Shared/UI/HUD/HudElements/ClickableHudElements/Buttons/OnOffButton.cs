@@ -11,11 +11,24 @@ namespace RichHudFramework.UI
     /// resemble on/off button used in the SE terminal, sans name tag.
     /// </summary>
     public class OnOffButton : HudElementBase, IClickableElement
-    {   
-        /// <summary>
-        /// Distance between the on and off buttons
-        /// </summary>
-        public float ButtonSpacing { get { return buttonChain.Spacing; } set { buttonChain.Spacing = value; } }
+    {
+		/// <summary>
+		/// Invoked when the current value changes
+		/// </summary>
+		public event EventHandler ValueChanged;
+
+		/// <summary>
+		/// Registers a value update callback. Useful in initializers.
+		/// </summary>
+		public EventHandler UpdateValueCallback
+		{
+			set { ValueChanged += value; }
+		}
+
+		/// <summary>
+		/// Distance between the on and off buttons
+		/// </summary>
+		public float ButtonSpacing { get { return buttonChain.Spacing; } set { buttonChain.Spacing = value; } }
 
         /// <summary>
         /// Color of the border surrounding the on and off buttons
@@ -91,10 +104,15 @@ namespace RichHudFramework.UI
         /// </summary>
         public virtual bool HighlightEnabled { get; set; }
 
-        /// <summary>
-        /// Mouse input element for the button
-        /// </summary>
-        public IMouseInput MouseInput => mouseInput;
+		/// <summary>
+		/// Interface for managing gaining/losing input focus
+		/// </summary>
+		public IFocusHandler FocusHandler { get; }
+
+		/// <summary>
+		/// Mouse input element for the button
+		/// </summary>
+		public IMouseInput MouseInput { get; }
 
         protected readonly LabelBox on, off;
         protected readonly BorderBox onBorder, offBorder;
@@ -103,12 +121,15 @@ namespace RichHudFramework.UI
         protected readonly TexturedBox background;
         protected readonly BorderBox bgBorder;
 
-        protected readonly MouseInputElement mouseInput;
+        protected readonly MouseInputElement _mouseInput;
         protected Color _backgroundColor;
+        protected bool lastValue;
 
         public OnOffButton(HudParentBase parent) : base(parent)
         {
-            mouseInput = new MouseInputElement(this);
+            FocusHandler = new InputFocusHandler(this);
+            _mouseInput = new MouseInputElement(this);
+            MouseInput = _mouseInput;
 
             background = new TexturedBox(this)
             {
@@ -170,7 +191,8 @@ namespace RichHudFramework.UI
             HighlightEnabled = true;
             UseFocusFormatting = true;
 
-            mouseInput.LeftClicked += LeftClick;
+            _mouseInput.LeftClicked += LeftClick;
+            lastValue = Value;
         }
 
         public OnOffButton() : this(null)
@@ -194,11 +216,11 @@ namespace RichHudFramework.UI
                 on.Color = UnselectedColor;
             }
 
-            if (HighlightEnabled && mouseInput.IsMousedOver)
+            if (HighlightEnabled && _mouseInput.IsMousedOver)
             {
                 background.Color = HighlightColor;
             }
-            else if (UseFocusFormatting && mouseInput.HasFocus)
+            else if (UseFocusFormatting && FocusHandler.HasFocus)
             {
                 background.Color = FocusColor;
             }
@@ -210,9 +232,15 @@ namespace RichHudFramework.UI
 
 		protected override void HandleInput(Vector2 cursorPos)
         {
-            if (mouseInput.HasFocus && SharedBinds.Space.IsNewPressed)
+            if (lastValue != Value)
             {
-                mouseInput.OnLeftClick();
+                ValueChanged?.Invoke(FocusHandler?.InputOwner, EventArgs.Empty);
+                lastValue = Value;
+            }
+
+            if (FocusHandler.HasFocus && SharedBinds.Space.IsNewPressed)
+            {
+                _mouseInput.OnLeftClick();
             }
         }
     }

@@ -85,13 +85,18 @@ namespace RichHudFramework.UI
         private int _highlightIndex;
         private int _focusIndex;
 
-        public ListInputElement(IReadOnlyHudCollection<TElementContainer, TElement> entries, HudElementBase parent = null) : base(parent)
+        public ListInputElement(
+            IReadOnlyHudCollection<TElementContainer, TElement> entries, 
+            HudElementBase parent = null, 
+            IClickableElement inputOwner = null
+        )  : base(parent)
         {
             Entries = entries;
             _selectionIndex = -1;
         }
 
-        public ListInputElement(HudChain<TElementContainer, TElement> parent = null) : this(parent, parent)
+        public ListInputElement(HudChain<TElementContainer, TElement> parent = null, IClickableElement inputOwner = null) 
+            : this(parent, parent, inputOwner)
         { }
 
         /// <summary>
@@ -198,7 +203,7 @@ namespace RichHudFramework.UI
                 _focusIndex = _selectionIndex;
 
             // Keyboard input
-            if (HasFocus)
+            if (FocusHandler?.HasFocus ?? true)
             {
                 if (SharedBinds.UpArrow.IsNewPressed || SharedBinds.UpArrow.IsPressedAndHeld)
                 {
@@ -280,7 +285,8 @@ namespace RichHudFramework.UI
                 }
             }
 
-            if ((listMousedOver && SharedBinds.LeftButton.IsNewPressed) || (HasFocus && SharedBinds.Space.IsNewPressed))
+            if ((listMousedOver && SharedBinds.LeftButton.IsNewPressed) || 
+                ((FocusHandler?.HasFocus ?? true) && SharedBinds.Space.IsNewPressed))
             {
                 _selectionIndex = _highlightIndex;
                 SelectionChanged?.Invoke(this, EventArgs.Empty);

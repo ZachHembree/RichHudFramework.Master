@@ -8,10 +8,27 @@ namespace RichHudFramework.UI
     /// </summary>
     public class SliderBox : HudElementBase, IClickableElement
     {
-        /// <summary>
-        /// Lower limit.
-        /// </summary>
-        public float Min { get { return slide.Min; } set { slide.Min = value; } }
+		/// <summary>
+		/// Invoked when the current value changes
+		/// </summary>
+		public event EventHandler ValueChanged
+        {
+            add { slide.ValueChanged += value; }
+            remove { slide.ValueChanged -= value; }
+        }
+
+		/// <summary>
+		/// Registers a value update callback. Useful in initializers.
+		/// </summary>
+		public EventHandler UpdateValueCallback
+		{
+			set { slide.ValueChanged += value; }
+		}
+
+		/// <summary>
+		/// Lower limit.
+		/// </summary>
+		public float Min { get { return slide.Min; } set { slide.Min = value; } }
 
         /// <summary>
         /// Upper limit.
@@ -88,9 +105,17 @@ namespace RichHudFramework.UI
         /// </summary>
         public bool UseFocusFormatting { get; set; }
 
-        public IMouseInput MouseInput => slide.MouseInput;
+		/// <summary>
+		/// Interface used to manage the element's input focus state
+		/// </summary>
+		public IFocusHandler FocusHandler { get; }
 
-        public override bool IsMousedOver => slide.IsMousedOver;
+		/// <summary>
+		/// Mouse input interface for this clickable element
+		/// </summary>
+		public IMouseInput MouseInput => slide.MouseInput;
+
+		public override bool IsMousedOver => slide.IsMousedOver;
 
         protected readonly TexturedBox background;
         protected readonly BorderBox border;
@@ -111,6 +136,7 @@ namespace RichHudFramework.UI
                 DimAlignment = DimAlignments.Size,
             };
 
+            FocusHandler = new InputFocusHandler(this);
             slide = new SliderBar(this)
             {
                 DimAlignment = DimAlignments.UnpaddedSize,
@@ -139,8 +165,8 @@ namespace RichHudFramework.UI
 
             slide.MouseInput.CursorEntered += CursorEnter;
             slide.MouseInput.CursorExited += CursorExit;
-            slide.MouseInput.GainedInputFocus += GainFocus;
-            slide.MouseInput.LostInputFocus += LoseFocus;
+            FocusHandler.GainedInputFocus += GainFocus;
+			FocusHandler.LostInputFocus += LoseFocus;
         }
 
         public SliderBox() : this(null)
@@ -148,7 +174,7 @@ namespace RichHudFramework.UI
 
 		protected override void HandleInput(Vector2 cursorPos)
         {
-            if (MouseInput.HasFocus)
+            if (FocusHandler.HasFocus)
             {
                 if (SharedBinds.LeftArrow.IsNewPressed || SharedBinds.LeftArrow.IsPressedAndHeld)
                 {
@@ -165,7 +191,7 @@ namespace RichHudFramework.UI
         {
             if (HighlightEnabled)
             {
-                if (!(UseFocusFormatting && slide.MouseInput.HasFocus))
+                if (!(UseFocusFormatting && FocusHandler.HasFocus))
                 {
                     lastBarColor = BarColor;
                     lastSliderColor = SliderColor;
@@ -182,7 +208,7 @@ namespace RichHudFramework.UI
         {
             if (HighlightEnabled)
             {
-                if (UseFocusFormatting && slide.MouseInput.HasFocus)
+                if (UseFocusFormatting && FocusHandler.HasFocus)
                 {
                     SliderColor = SliderFocusColor;
                     BarColor = BarFocusColor;

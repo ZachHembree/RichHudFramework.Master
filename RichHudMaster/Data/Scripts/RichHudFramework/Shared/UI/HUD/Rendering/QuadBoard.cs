@@ -66,7 +66,7 @@ namespace RichHudFramework
                 static QuadBoard()
                 {
                     var matFit = new BoundingBox2(new Vector2(0f, 0f), new Vector2(1f, 1f));
-                    Default = new QuadBoard(Material.Default.TextureID, matFit, Color.White);
+                    Default = new QuadBoard(Material.Default.textureID, matFit, Color.White);
                 }
 
                 public QuadBoard(MyStringId textureID, BoundingBox2 matFit, Vector4 bbColor, float skewRatio = 0f)
@@ -83,42 +83,6 @@ namespace RichHudFramework
                     materialData.texBounds = matFit;
                     materialData.bbColor = color.GetBbColor();
                     this.skewRatio = skewRatio;
-                }
-
-                /// <summary>
-                /// Draws a billboard in world space using the quad specified.
-                /// </summary>
-                public void Draw(ref MyQuadD quad)
-                {
-                    BillBoardUtils.AddQuad(ref materialData, ref quad);
-                }
-
-                /// <summary>
-                /// Draws a billboard in world space facing the +Z direction of the matrix specified. Units in meters, matrix
-                /// transform notwithstanding.
-                /// </summary>
-                public void Draw(ref CroppedBox box, MatrixD[] matrixRef)
-                {
-                    FlatQuad quad = new FlatQuad()
-                    {
-                        Point0 = box.bounds.Max,
-                        Point1 = new Vector2(box.bounds.Max.X, box.bounds.Min.Y),
-                        Point2 = box.bounds.Min,
-                        Point3 = new Vector2(box.bounds.Min.X, box.bounds.Max.Y),
-                    };
-
-                    if (skewRatio != 0f)
-                    {
-                        Vector2 start = quad.Point0, end = quad.Point3,
-                            offset = (end - start) * skewRatio * .5f;
-
-                        quad.Point0 = Vector2.Lerp(start, end, skewRatio) - offset;
-                        quad.Point3 = Vector2.Lerp(start, end, 1f + skewRatio) - offset;
-                        quad.Point1 -= offset;
-                        quad.Point2 -= offset;
-                    }
-
-                    BillBoardUtils.AddQuad(ref quad, ref materialData, matrixRef, box.mask);
                 }
             }
         }

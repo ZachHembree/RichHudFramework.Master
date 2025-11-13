@@ -9,10 +9,23 @@ namespace RichHudFramework.UI
     /// </summary>
     public class BorderedCheckBox : Button
     {
-        /// <summary>
-        /// Indicates whether or not the box is checked.
-        /// </summary>
-        public bool IsBoxChecked { get; set; }
+		/// <summary>
+		/// Invoked when the current value changes
+		/// </summary>
+		public event EventHandler ValueChanged;
+
+		/// <summary>
+		/// Registers a value update callback. Useful in initializers.
+		/// </summary>
+		public EventHandler UpdateValueCallback
+		{
+			set { ValueChanged += value; }
+		}
+
+		/// <summary>
+		/// Indicates whether or not the box is checked.
+		/// </summary>
+		public bool IsBoxChecked { get; set; }
 
         /// <summary>
         /// Color of the border surrounding the button
@@ -52,6 +65,7 @@ namespace RichHudFramework.UI
         protected readonly BorderBox border;
         protected readonly TexturedBox tickBox;
         protected Color lastTickColor;
+        protected bool lastValue;
 
         public BorderedCheckBox(HudParentBase parent) : base(parent)
         {
@@ -80,10 +94,11 @@ namespace RichHudFramework.UI
 
             BorderColor = TerminalFormatting.LimedSpruce;
             UseFocusFormatting = true;
+            lastValue = IsBoxChecked;
 
             MouseInput.LeftClicked += ToggleValue;
-            MouseInput.GainedInputFocus += GainFocus;
-            MouseInput.LostInputFocus += LoseFocus;
+            FocusHandler.GainedInputFocus += GainFocus;
+			FocusHandler.LostInputFocus += LoseFocus;
         }
 
         public BorderedCheckBox() : this(null)
@@ -93,12 +108,18 @@ namespace RichHudFramework.UI
         {
             tickBox.Visible = IsBoxChecked;
 
-            if (MouseInput.HasFocus)
+            if (FocusHandler.HasFocus)
             {
                 if (SharedBinds.Space.IsNewPressed)
                 {
                     _mouseInput.OnLeftClick();
                 }
+            }
+
+            if (lastValue != IsBoxChecked)
+            {
+                ValueChanged?.Invoke(FocusHandler?.InputOwner, EventArgs.Empty);
+                lastValue = IsBoxChecked;
             }
         }
 
@@ -111,7 +132,7 @@ namespace RichHudFramework.UI
         {
             if (HighlightEnabled)
             {
-                if (!(UseFocusFormatting && MouseInput.HasFocus))
+                if (!(UseFocusFormatting && FocusHandler.HasFocus))
                 {
                     lastBackgroundColor = Color;
                     lastTickColor = TickBoxColor;
@@ -126,7 +147,7 @@ namespace RichHudFramework.UI
         {
             if (HighlightEnabled)
             {
-                if (UseFocusFormatting && MouseInput.HasFocus)
+                if (UseFocusFormatting && FocusHandler.HasFocus)
                 {
                     Color = FocusColor;
                     TickBoxColor = TickBoxFocusColor;

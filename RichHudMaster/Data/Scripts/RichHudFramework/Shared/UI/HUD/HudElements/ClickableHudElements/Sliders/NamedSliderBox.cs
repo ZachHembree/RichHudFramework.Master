@@ -14,10 +14,27 @@ namespace RichHudFramework.UI
     /// </summary>
     public class NamedSliderBox : HudElementBase, IClickableElement
     {
+		/// <summary>
+		/// Invoked when the current value changes
+		/// </summary>
+		public event EventHandler ValueChanged
+		{
+			add { sliderBox.ValueChanged += value; }
+			remove { sliderBox.ValueChanged -= value; }
+		}
+
         /// <summary>
-        /// The name of the control
+        /// Registers a value update callback. Useful in initializers.
         /// </summary>
-        public RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
+        public EventHandler UpdateValueCallback
+        {
+            set { sliderBox.ValueChanged += value; }
+        }
+
+		/// <summary>
+		/// The name of the control
+		/// </summary>
+		public RichText Name { get { return name.TextBoard.GetText(); } set { name.TextBoard.SetText(value); } }
 
         /// <summary>
         /// Text indicating the current value of the slider. Does not automatically reflect changes to the slider value.
@@ -54,9 +71,17 @@ namespace RichHudFramework.UI
         /// </summary>
         public float Percent { get { return sliderBox.Percent; } set { sliderBox.Percent = value; } }
 
-        public IMouseInput MouseInput => sliderBox.MouseInput;
+		/// <summary>
+		/// Interface used to manage the element's input focus state
+		/// </summary>
+		public IFocusHandler FocusHandler => sliderBox.FocusHandler;
 
-        public override bool IsMousedOver => sliderBox.IsMousedOver;
+		/// <summary>
+		/// Mouse input interface for this clickable element
+		/// </summary>
+		public IMouseInput MouseInput => sliderBox.MouseInput;
+
+		public override bool IsMousedOver => sliderBox.IsMousedOver;
 
         protected readonly Label name, current;
         protected readonly SliderBox sliderBox;
@@ -88,6 +113,7 @@ namespace RichHudFramework.UI
                 ParentAlignment = ParentAlignments.PaddedInnerRight | ParentAlignments.Top
             };
 
+            FocusHandler.InputOwner = this;
             Padding = new Vector2(40f, 0f);
             Size = new Vector2(317f, 70f);
         }

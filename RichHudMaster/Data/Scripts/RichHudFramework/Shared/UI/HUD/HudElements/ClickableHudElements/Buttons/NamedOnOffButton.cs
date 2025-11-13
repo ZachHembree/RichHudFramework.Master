@@ -10,10 +10,27 @@ namespace RichHudFramework.UI
     /// </summary>
     public class NamedOnOffButton : HudElementBase, IClickableElement
     {
-        /// <summary>
-        /// The name of the control as it appears in the terminal.
-        /// </summary>
-        public RichText Name { get { return name.Text; } set { name.Text = value; } }
+		/// <summary>
+		/// Invoked when the current value changes
+		/// </summary>
+		public event EventHandler ValueChanged
+		{
+			add { onOffButton.ValueChanged += value; }
+			remove { onOffButton.ValueChanged -= value; }
+		}
+
+		/// <summary>
+		/// Registers a value update callback. Useful in initializers.
+		/// </summary>
+		public EventHandler UpdateValueCallback
+		{
+			set { onOffButton.ValueChanged += value; }
+		}
+
+		/// <summary>
+		/// The name of the control as it appears in the terminal.
+		/// </summary>
+		public RichText Name { get { return name.Text; } set { name.Text = value; } }
 
         /// <summary>
         /// Distance between the on and off buttons
@@ -50,10 +67,15 @@ namespace RichHudFramework.UI
         /// </summary>
         public bool Value { get { return onOffButton.Value; } set { onOffButton.Value = value; } }
 
-        /// <summary>
-        /// Mouse input element for the button
-        /// </summary>
-        public IMouseInput MouseInput => onOffButton.MouseInput;
+		/// <summary>
+		/// Interface used to manage the element's input focus state.
+		/// </summary>
+		public IFocusHandler FocusHandler => onOffButton.FocusHandler;
+
+		/// <summary>
+		/// Mouse input element for the button
+		/// </summary>
+		public IMouseInput MouseInput => onOffButton.MouseInput;
 
         protected readonly Label name;
         protected readonly OnOffButton onOffButton;
@@ -81,6 +103,7 @@ namespace RichHudFramework.UI
                 CollectionContainer = { { name , 0f }, { onOffButton, 1f } }
             };
 
+            FocusHandler.InputOwner = this;
             Padding = new Vector2(40f, 0f);
             Size = new Vector2(300f, 84f);
         }
