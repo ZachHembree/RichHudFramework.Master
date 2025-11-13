@@ -158,7 +158,7 @@ namespace RichHudFramework
 				_root = new HudRoot();
 				Root = _root;
 
-				_highDpiRoot = new ScaledSpaceNode(_root) { UpdateScaleFunc = () => ResScale };
+				_highDpiRoot = new HighDpiClientRoot();
 				HighDpiRoot = _highDpiRoot;
 
 				_cursor = new HudCursor();
@@ -312,7 +312,7 @@ namespace RichHudFramework
 			/// </summary>
 			public static void GetInputFocus(IFocusHandler handler)
 			{
-				if (handler != null && Instance.LoseInputFocusCallback.Target != handler)
+				if (handler != null && Instance.LoseInputFocusCallback?.Target != handler)
 				{
 					Instance.LoseInputFocusCallback?.Invoke();
 					Instance.LoseInputFocusCallback = new Action(handler.ReleaseFocus);
@@ -321,7 +321,7 @@ namespace RichHudFramework
 
 			private void GetInputFocusInternal(Action LoseFocusCallback)
 			{
-				if (LoseFocusCallback != null && LoseInputFocusCallback.Target != LoseFocusCallback.Target)
+				if (LoseFocusCallback != null && LoseInputFocusCallback?.Target != LoseFocusCallback.Target)
 				{
 					LoseInputFocusCallback?.Invoke();
 					LoseInputFocusCallback = LoseFocusCallback;
@@ -423,6 +423,21 @@ namespace RichHudFramework
 				{
 					PlaneToWorldRef[0] = PixelToWorld;
 					CursorPos = new Vector3(Cursor.ScreenPos.X, Cursor.ScreenPos.Y, 0f);
+					HudElementBase.ElementUtils.UpdateRootAnchoring(ScreenDim, children);
+				}
+			}
+
+			private class HighDpiClientRoot : ScaledSpaceNode
+			{
+				public HighDpiClientRoot() : base(Root)
+				{
+					UpdateScaleFunc = () => ResScale;
+				}
+
+				protected override void Layout()
+				{
+					base.Layout();
+					HudElementBase.ElementUtils.UpdateRootAnchoring(ScreenDimHighDPI, children);
 				}
 			}
 		}
