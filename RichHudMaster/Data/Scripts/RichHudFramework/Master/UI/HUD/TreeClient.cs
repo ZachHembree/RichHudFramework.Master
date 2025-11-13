@@ -262,7 +262,7 @@ namespace RichHudFramework
 							case HudMainAccessors.GetPixelSpaceOriginFunc:
 								return ((HudRoot)Instance._root).GetNodeOriginFunc;
 							case HudMainAccessors.GetInputFocus:
-								GetInputFocus(data as Action); break;
+								Instance.GetInputFocusInternal(data as Action); break;
 							case HudMainAccessors.InputMode:
 								return InputMode;
 							case HudMainAccessors.SetBeforeDrawCallback:

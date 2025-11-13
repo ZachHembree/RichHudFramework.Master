@@ -28,11 +28,11 @@ namespace RichHudFramework
 
                     var matFrame = new MaterialFrame()
                     {
-                        Material = new Material(atlas.TextureID, atlas.size, origin, size),
+                        Material = new Material(atlas.TextureID, atlas.Size, origin, size),
                         Alignment = MaterialAlignment.FitHorizontal,
                     };
 
-                    Vector2 bbSize = matFrame.Material.size;
+                    Vector2 bbSize = matFrame.Material.Size;
                     texBounds = matFrame.GetMaterialAlignment(bbSize.X / bbSize.Y);
                     MatFrame = matFrame;
                 }

@@ -4,6 +4,7 @@ using VRageMath;
 namespace RichHudFramework.UI
 {
 	using Client;
+	using Server;
 	using static NodeConfigIndices;
 
 	/// <summary>

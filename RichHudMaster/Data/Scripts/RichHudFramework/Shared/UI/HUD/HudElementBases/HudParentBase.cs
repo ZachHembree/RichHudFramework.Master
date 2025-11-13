@@ -26,6 +26,7 @@ namespace RichHudFramework
 	namespace UI
 	{
 		using Client;
+		using Server;
 		using Internal;
 		using System.Reflection;
 		using static RichHudFramework.UI.NodeConfigIndices;

@@ -5,6 +5,7 @@ namespace RichHudFramework
 	namespace UI
 	{
 		using Client;
+		using Server;
 
 		/// <summary>
 		/// Handles input focus for a UI node

@@ -678,7 +678,7 @@ namespace RichHudFramework
 								FormattedGlyph fGlyph = formattedGlyphs[i];
 								IFontStyle fontStyle = FontManager.GetFontStyle(fGlyph.format.Data.Item3);
 								float fontSize = fGlyph.format.Data.Item2 * fontStyle.FontScale;
-								Vector2 bbSize = Vector2.Max(fGlyph.glyph.MatFrame.Material.size * fontSize, fGlyph.chSize);
+								Vector2 bbSize = Vector2.Max(fGlyph.glyph.MatFrame.Material.Size * fontSize, fGlyph.chSize);
 
 								glyphBoards.Add(new BoundedQuadBoard
 								{
