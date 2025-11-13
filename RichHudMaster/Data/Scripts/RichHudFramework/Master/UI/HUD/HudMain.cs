@@ -315,7 +315,7 @@ namespace RichHudFramework
 				if (handler != null && Instance.LoseInputFocusCallback?.Target != handler)
 				{
 					Instance.LoseInputFocusCallback?.Invoke();
-					Instance.LoseInputFocusCallback = new Action(handler.ReleaseFocus);
+					Instance.LoseInputFocusCallback = handler.ReleaseFocus;
 				}
 			}
 

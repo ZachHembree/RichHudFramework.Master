@@ -287,7 +287,7 @@ namespace RichHudFramework.UI
 
             if (!InputOpen && textUpdatePending)
             {
-                TextChanged?.Invoke(this, EventArgs.Empty);
+                TextChanged?.Invoke(FocusHandler?.InputOwner, EventArgs.Empty);
                 textUpdatePending = false;
             }
 		}
