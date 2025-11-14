@@ -304,8 +304,8 @@ namespace RichHudFramework.UI.Server
 				Padding = new Vector2(372f, 0f);
 				Size = new Vector2(1210f, 288f);
 
-				Config[ZOffsetID] = sbyte.MaxValue - 1;
-				Config[ZOffsetInnerID] = byte.MaxValue - 1;
+				_config[ZOffsetID] = sbyte.MaxValue - 1;
+				_config[ZOffsetInnerID] = byte.MaxValue - 1;
 				Visible = false;
 			}
 

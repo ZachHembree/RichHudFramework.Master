@@ -160,7 +160,7 @@ namespace RichHudFramework.UI
 
 				if (mouseInBounds)
 				{
-					Config[StateID] |= (uint)HudElementStates.IsMouseInBounds;
+					_config[StateID] |= (uint)HudElementStates.IsMouseInBounds;
 					HudMain.Cursor.TryCaptureHudSpace(cursorPos.Z, HudSpace.GetHudSpaceFunc);
 				}
 			}

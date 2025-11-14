@@ -134,11 +134,11 @@ namespace RichHudFramework
                     IsInFront = true;
                     IsFacingCamera = true;
 
-                    Config[ZOffsetID] = (uint)sbyte.MaxValue;
-                    Config[ZOffsetInnerID] = byte.MaxValue;
-                    Config[FullZOffsetID] = ushort.MaxValue;
+                    _config[ZOffsetID] = (uint)sbyte.MaxValue;
+                    _config[ZOffsetInnerID] = byte.MaxValue;
+                    _config[FullZOffsetID] = ushort.MaxValue;
 
-					Config[StateID] |= (uint)HudElementStates.IsSpaceNode;
+					_config[StateID] |= (uint)HudElementStates.IsSpaceNode;
 
                     GetHudSpaceFunc = () => new HudSpaceData(true, 1f, PlaneToWorldRef[0]);
                     GetNodeOriginFunc = () => PlaneToWorldRef[0].Translation;
