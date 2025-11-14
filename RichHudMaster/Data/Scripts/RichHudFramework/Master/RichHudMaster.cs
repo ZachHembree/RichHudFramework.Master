@@ -50,7 +50,7 @@ namespace RichHudFramework.Server
         public const string 
             modName = "Rich HUD Master";
         public static readonly Vector4I 
-            versionID = new Vector4I(1, 3, 1, 0); // Major, Minor, Rev, Hotfix
+            versionID = new Vector4I(1, 3, 1, 1); // Major, Minor, Rev, Hotfix
         public static readonly string 
             versionString = $"{versionID.X}.{versionID.Y}.{versionID.Z}.{versionID.W} ({apiVID})";
 

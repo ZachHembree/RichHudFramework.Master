@@ -38,11 +38,21 @@ namespace RichHudFramework
 
                 public DemoBox(HudParentBase parent = null) : base(parent)
                 {
-                    // Spawn controls
-                    //
-                    // List of available control types
-                    typeList = new ListBox<DemoElements>();
-                    createButton = new BorderedButton() { Text = "Create", Padding = Vector2.Zero };
+					// Add list of supported test elements to the type list
+					typeList = new ListBox<DemoElements>();
+					var supportedTypes = Enum.GetValues(typeof(DemoElements)) as DemoElements[];
+
+					for (int n = 0; n < supportedTypes.Length; n++)
+						typeList.Add(supportedTypes[n].ToString(), supportedTypes[n]);
+
+					// Spawn controls
+					//
+					// List of available control types
+                    createButton = new BorderedButton() 
+                    { 
+                        Text = "Create", Padding = Vector2.Zero,
+                        MouseInput = { LeftClickedCallback = InstantiateSelectedType }
+                    };
 
                     typeColumn = new HudChain(true)
                     {
@@ -51,18 +61,18 @@ namespace RichHudFramework
                         Spacing = 8f
                     };
 
-                    // Add list of supported test elements to the type list
-                    var supportedTypes = Enum.GetValues(typeof(DemoElements)) as DemoElements[];
-
-                    for (int n = 0; n < supportedTypes.Length; n++)
-                        typeList.Add(supportedTypes[n].ToString(), supportedTypes[n]);
-
-                    createButton.MouseInput.LeftClicked += InstantiateSelectedType;
-
                     // Instance list
-                    instanceList = new ListBox<TestWindowNode>();
-                    removeButton = new BorderedButton() { Text = "Remove", Padding = Vector2.Zero };
-                    clearAllButton = new BorderedButton() { Text = "Clear All", Padding = Vector2.Zero };
+                    instanceList = new ListBox<TestWindowNode>() { SelectionChangedCallback = UpdateSelection };
+                    removeButton = new BorderedButton() 
+                    { 
+                        Text = "Remove", Padding = Vector2.Zero,
+                        MouseInput = { LeftClickedCallback = RemoveSelectedInstance }
+                    };
+                    clearAllButton = new BorderedButton() 
+                    { 
+                        Text = "Clear All", Padding = Vector2.Zero,
+                        MouseInput = { LeftClickedCallback = ClearInstances }
+                    };
 
                     instanceButtonRow = new HudChain(false)
                     {
@@ -79,18 +89,54 @@ namespace RichHudFramework
                         Spacing = 8f
                     };
 
-                    removeButton.MouseInput.LeftClicked += RemoveSelectedInstance;
-                    clearAllButton.MouseInput.LeftClicked += ClearInstances;
-                    instanceList.SelectionChanged += UpdateSelection;
-
                     // Transform controls
                     //
                     // Column 1
-                    screenSpaceToggle = new NamedCheckBox() { Name = "Screen Space" };
-                    xAxisBar = new NamedSliderBox() { Name = "AxisX", Padding = new Vector2(40f, 0f), Min = -1f, Max = 1f };
-                    yAxisBar = new NamedSliderBox() { Name = "AxisY", Padding = new Vector2(40f, 0f), Min = -1f, Max = 1f };
-                    zAxisBar = new NamedSliderBox() { Name = "AxisZ", Padding = new Vector2(40f, 0f), Min = -1f, Max = 1f };
-                    angleBar = new NamedSliderBox() { Name = "Angle", Padding = new Vector2(40f, 0f), Min = -(float)(Math.PI), Max = (float)(Math.PI) };
+                    screenSpaceToggle = new NamedCheckBox() 
+                    { 
+                        Name = "Screen Space", 
+                        MouseInput = { ToolTip = "Compensates for FOV and resolution scaling" }
+                    };
+					xAxisBar = new NamedSliderBox() 
+                    { 
+                        Name = "AxisX", 
+                        MouseInput = { ToolTip = "Quaternion rotation axis, X-component" },
+                        Padding = new Vector2(40f, 0f), Min = -1f, Max = 1f,
+						UpdateValueCallback = (obj, args) => 
+                        { 
+                            var slider = obj as NamedSliderBox; 
+                            slider.ValueText = $"{slider.Current:G5}"; 
+                        }
+					};
+					yAxisBar = new NamedSliderBox() 
+                    { 
+                        Name = "AxisY", 
+                        MouseInput = { ToolTip = "Quaternion rotation axis, Y-component" },
+                        Padding = new Vector2(40f, 0f), Min = -1f, Max = 1f,
+						UpdateValueCallback = (obj, args) =>
+						{
+							var slider = obj as NamedSliderBox;
+							slider.ValueText = $"{slider.Current:G5}";
+						}
+					};
+					zAxisBar = new NamedSliderBox() 
+                    { 
+                        Name = "AxisZ",
+                        MouseInput = { ToolTip = "Quaternion rotation axis, Z-component" },
+                        Padding = new Vector2(40f, 0f), Min = -1f, Max = 1f,
+						UpdateValueCallback = (obj, args) =>
+						{
+							var slider = obj as NamedSliderBox;
+							slider.ValueText = $"{slider.Current:G5}";
+						}
+					};
+                    angleBar = new NamedSliderBox() 
+                    { 
+                        Name = "Angle", 
+                        MouseInput = { ToolTip = "Rotation around the axis, seen above, from -pi to +pi" },
+                        Padding = new Vector2(40f, 0f), Min = -(float)(Math.PI), Max = (float)(Math.PI),
+						UpdateValueCallback = (obj, args) => { angleBar.ValueText = $"{angleBar.Current:G5} rad"; }
+					};
 
                     transformCol1 = new HudChain(true)
                     {
@@ -99,17 +145,58 @@ namespace RichHudFramework
                     };
 
                     // Column 2
-                    resScaleToggle = new NamedCheckBox() { Name = "High DPI Scaling" };
-                    scaleBar = new NamedSliderBox() { Name = "Scale", Padding = new Vector2(40f, 0f), Min = 0.01f, Max = 2f };
-                    xPosBar = new NamedSliderBox() { Name = "PosX", Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f };
-                    yPosBar = new NamedSliderBox() { Name = "PosY", Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f };
-                    zPosBar = new NamedSliderBox() { Name = "PosZ", Padding = new Vector2(40f, 0f), Min = -.2f * 1E3f, Max = -.05f * 1E3f };
+                    resScaleToggle = new NamedCheckBox() 
+                    { 
+                        Name = "High DPI Scaling" 
+                    };
+                    scaleBar = new NamedSliderBox() 
+                    { 
+                        Name = "Scale", 
+                        Padding = new Vector2(40f, 0f), Min = 0.01f, Max = 2f,
+						UpdateValueCallback = (obj, args) =>
+						{
+							var slider = obj as NamedSliderBox;
+							slider.ValueText = $"{slider.Current:P1}";
+						}
+					};
+                    xPosBar = new NamedSliderBox() 
+                    { 
+                        Name = "PosX", 
+                        MouseInput = { ToolTip = "Matrix translation offset from camera, in meters. X-direction" },
+                        Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f,
+						UpdateValueCallback = (obj, args) =>
+						{
+							var slider = obj as NamedSliderBox;
+							slider.ValueText = $"{slider.Current:G5}m";
+						}
+					};
+                    yPosBar = new NamedSliderBox() 
+                    { 
+                        Name = "PosY",
+						MouseInput = { ToolTip = "Matrix translation offset from camera, in meters. Y-direction" },
+						Padding = new Vector2(40f, 0f), Min = -.5f, Max = .5f,
+						UpdateValueCallback = (obj, args) =>
+						{
+							var slider = obj as NamedSliderBox;
+							slider.ValueText = $"{slider.Current:G5}m";
+						}
+					};
+                    zPosBar = new NamedSliderBox() 
+                    { 
+                        Name = "PosZ",
+						MouseInput = { ToolTip = "Matrix translation offset from camera, in meters. Z-direction" },
+						Padding = new Vector2(40f, 0f), Min = -.2f * 1E3f, Max = -.05f * 1E3f,
+						UpdateValueCallback = (obj, args) =>
+						{
+							var slider = obj as NamedSliderBox;
+							slider.ValueText = $"{slider.Current:G5}mm";
+						}
+					};
 
                     transformCol2 = new HudChain(true)
                     {
                         Spacing = 10f,
-                        CollectionContainer = { resScaleToggle, scaleBar, xPosBar, yPosBar, zPosBar },
-                        
+                        CollectionContainer = { resScaleToggle, scaleBar, xPosBar, yPosBar, zPosBar }
                     };
 
                     spawnControls = new HudChain(false)
@@ -141,7 +228,6 @@ namespace RichHudFramework
 
 				protected override void HandleInput(Vector2 cursorPos)
                 {
-                    UpdateSliderValueText();
                     UpdateInstanceNames();
 
                     // Update matrix transform based on input
@@ -161,58 +247,6 @@ namespace RichHudFramework
                         // Translation
                         node.TransformOffset = new Vector3D(xPosBar.Current, yPosBar.Current, zPosBar.Current * 1E-3f);
                     }
-
-                    if (screenSpaceToggle.MouseInput.IsMousedOver)
-                    {
-                        HudMain.Cursor.RegisterToolTip("Compensates for FOV and resolution scaling");
-                    }
-                    if (xAxisBar.IsMousedOver)
-                    {
-                        HudMain.Cursor.RegisterToolTip("Quaternion rotation axis, X-component");
-                    }
-                    if (yAxisBar.IsMousedOver)
-                    {
-                        HudMain.Cursor.RegisterToolTip("Quaternion rotation axis, Y-component");
-                    }
-                    if (zAxisBar.IsMousedOver)
-                    {
-                        HudMain.Cursor.RegisterToolTip("Quaternion rotation axis, Z-component");
-                    }
-
-                    if (angleBar.IsMousedOver)
-                    {
-                        HudMain.Cursor.RegisterToolTip("Rotation around the axis, seen above, from -pi to +pi");
-                    }
-                    if (xPosBar.IsMousedOver)
-                    {
-                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in meters. X-direction");
-                    }
-                    if (yPosBar.IsMousedOver)
-                    {
-                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in meters. Y-direction");
-                    }
-                    if (zPosBar.IsMousedOver)
-                    {
-                        HudMain.Cursor.RegisterToolTip("Matrix translation offset from camera, in millimeters. Z-direction");
-                    }
-                }
-
-                /// <summary>
-                /// Updates slider value text readout to show their current values.
-                /// </summary>
-                private void UpdateSliderValueText()
-                {
-                    // Update col 1 slider value text
-                    angleBar.ValueText = $"{angleBar.Current:G5} rad";
-                    xAxisBar.ValueText = $"{xAxisBar.Current:G5}";
-                    yAxisBar.ValueText = $"{yAxisBar.Current:G5}";
-                    zAxisBar.ValueText = $"{zAxisBar.Current:G5}";
-
-                    // Update col 2 slider value text
-                    scaleBar.ValueText = $"{scaleBar.Current:G5}";
-                    xPosBar.ValueText = $"{xPosBar.Current:G5}m";
-                    yPosBar.ValueText = $"{yPosBar.Current:G5}m";
-                    zPosBar.ValueText = $"{zPosBar.Current:G5}mm";
                 }
 
                 /// <summary>
