@@ -423,25 +423,25 @@ namespace RichHudFramework
 					}
 
 					// Mask bounding check. Null mask if not intersecting.
-					BoundingBox2? maskBox = box.mask;
-					ContainmentType containment = ContainmentType.Contains;
+					bool isDisjoint = false;
 
-					if (maskBox != null)
+					if (box.mask != null)
 					{
 						BoundingBox2 bounds = new BoundingBox2(quad.Point2, quad.Point0);
-						maskBox.Value.Contains(ref bounds, out containment);
-
-						if (containment == ContainmentType.Contains)
-							maskBox = null;
+						isDisjoint =
+							(bounds.Max.X < box.mask.Value.Min.X) ||
+							(bounds.Min.X > box.mask.Value.Max.X) ||
+							(bounds.Max.Y < box.mask.Value.Min.Y) ||
+							(bounds.Min.Y > box.mask.Value.Max.Y);
 					}
 
-					if (containment != ContainmentType.Disjoint)
+					if (!isDisjoint)
 					{
 						var bbL = new FlatTriangleBillboardData
 						{
 							Item1 = BlendTypeEnum.PostPP,
 							Item3 = qb.materialData.textureID,
-							Item4 = new MyTuple<Vector4, BoundingBox2?>(qb.materialData.bbColor, maskBox),
+							Item4 = new MyTuple<Vector4, BoundingBox2?>(qb.materialData.bbColor, box.mask),
 							Item5 = new MyTuple<Vector2, Vector2, Vector2>
 							(
 								new Vector2(qb.materialData.texBounds.Max.X, qb.materialData.texBounds.Min.Y), // 1
@@ -459,7 +459,7 @@ namespace RichHudFramework
 						{
 							Item1 = BlendTypeEnum.PostPP,
 							Item3 = qb.materialData.textureID,
-							Item4 = new MyTuple<Vector4, BoundingBox2?>(qb.materialData.bbColor, maskBox),
+							Item4 = new MyTuple<Vector4, BoundingBox2?>(qb.materialData.bbColor, box.mask),
 							Item5 = new MyTuple<Vector2, Vector2, Vector2>
 							(
 								new Vector2(qb.materialData.texBounds.Max.X, qb.materialData.texBounds.Min.Y), // 1
@@ -718,19 +718,19 @@ namespace RichHudFramework
 					}
 
 					// Mask bounding check. Null mask if not intersecting.
-					BoundingBox2? maskBox = mask;
-					ContainmentType containment = ContainmentType.Contains;
+					bool isDisjoint = false;
 
-					if (maskBox != null)
+					if (mask != null)
 					{
 						BoundingBox2 bounds = new BoundingBox2(quad.Point2, quad.Point0);
-						maskBox.Value.Contains(ref bounds, out containment);
-
-						if (containment == ContainmentType.Contains)
-							maskBox = null;
+						isDisjoint =
+							(bounds.Max.X < mask.Value.Min.X) ||
+							(bounds.Min.X > mask.Value.Max.X) ||
+							(bounds.Max.Y < mask.Value.Min.Y) ||
+							(bounds.Min.Y > mask.Value.Max.Y);
 					}
 
-					if (containment != ContainmentType.Disjoint)
+					if (!isDisjoint)
 					{
 						int indexL = bbDataBack.Count,
 							indexR = bbDataBack.Count + 1;
@@ -740,7 +740,7 @@ namespace RichHudFramework
 							Item1 = BlendTypeEnum.PostPP,
 							Item2 = new Vector2I(indexL, matrixID),
 							Item3 = mat.textureID,
-							Item4 = new MyTuple<Vector4, BoundingBox2?>(mat.bbColor, maskBox),
+							Item4 = new MyTuple<Vector4, BoundingBox2?>(mat.bbColor, mask),
 							Item5 = new MyTuple<Vector2, Vector2, Vector2>
 							(
 								new Vector2(mat.texBounds.Max.X, mat.texBounds.Min.Y), // 1
@@ -759,7 +759,7 @@ namespace RichHudFramework
 							Item1 = BlendTypeEnum.PostPP,
 							Item2 = new Vector2I(indexR, matrixID),
 							Item3 = mat.textureID,
-							Item4 = new MyTuple<Vector4, BoundingBox2?>(mat.bbColor, maskBox),
+							Item4 = new MyTuple<Vector4, BoundingBox2?>(mat.bbColor, mask),
 							Item5 = new MyTuple<Vector2, Vector2, Vector2>
 							(
 								new Vector2(mat.texBounds.Max.X, mat.texBounds.Min.Y), // 1
