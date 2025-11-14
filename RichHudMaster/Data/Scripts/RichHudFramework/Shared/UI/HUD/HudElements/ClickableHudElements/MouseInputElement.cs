@@ -49,6 +49,35 @@ namespace RichHudFramework.UI
 		public event EventHandler RightReleased;
 
 		/// <summary>
+		/// Invoked when the mouse cursor enters the element's interactive area. Event initializer.
+		/// </summary>
+		public EventHandler CursorEnteredCallback { set { CursorEntered += value; } }
+
+		/// <summary>
+		/// Invoked when the mouse cursor leaves the element's interactive area. Event initializer.
+		/// </summary>
+		public EventHandler CursorExitedCallback { set { CursorExited += value; } }
+		/// <summary>
+		/// Invoked when the element is clicked with the left mouse button. Event initializer.
+		/// </summary>
+		public EventHandler LeftClickedCallback { set { LeftClicked += value; } }
+
+		/// <summary>
+		/// Invoked when the left mouse button is released over the element. Event initializer.
+		/// </summary>
+		public EventHandler LeftReleasedCallback { set { LeftReleased += value; } }
+
+		/// <summary>
+		/// Invoked when the element is clicked with the right mouse button. Event initializer.
+		/// </summary>
+		public EventHandler RightClickedCallback { set { RightClicked += value; } }
+
+		/// <summary>
+		/// Invoked when the right mouse button is released over the element. Event initializer.
+		/// </summary>
+		public EventHandler RightReleasedCallback { set { RightReleased += value; } }
+
+		/// <summary>
 		/// Optional tooltip text shown when the element is moused over.
 		/// </summary>
 		public ToolTip ToolTip { get; set; }
