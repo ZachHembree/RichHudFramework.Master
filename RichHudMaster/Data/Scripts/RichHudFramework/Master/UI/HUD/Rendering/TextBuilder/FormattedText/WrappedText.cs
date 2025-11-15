@@ -95,11 +95,10 @@ namespace RichHudFramework.UI.Rendering.Server
             public override void RemoveRange(Vector2I start, Vector2I end)
             {
                 base.RemoveRange(start, end);
-                int index = start.X;
-
-                while (index < lines.Count - 1 && TryPullToLine(index))
-                    index++;
-            }
+				start = ClampIndex(start);
+				end = ClampIndex(end);
+				RewrapRange(start.X, end.X);
+			}
 
             /// <summary>
             /// Regenerates text wrapping for the entire document.
@@ -130,10 +129,15 @@ namespace RichHudFramework.UI.Rendering.Server
             /// </summary>
             private void RewrapRange(int start, int end)
             {
-                int charCount = 0;
+				if (lines.Count == 0 || lines.Count == 1 && lines[0].Count == 0)
+					return;
+
+				int charCount = 0;
 
 				if (start > 0)
 					start--;
+
+                end = Math.Min(end, lines.Count - 1);
 
 				for (int n = start; n <= end; n++)
                     charCount += lines.PooledLines[n].Count;
