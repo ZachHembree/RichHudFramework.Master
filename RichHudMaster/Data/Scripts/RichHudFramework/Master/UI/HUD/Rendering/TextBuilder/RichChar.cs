@@ -14,7 +14,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Wrapper used to facilitate access to rich character members.
                 /// </summary>
-                private struct RichChar : IRichChar
+                private class RichChar : IRichChar
                 {
                     /// <summary>
                     /// The character associated with the <see cref="RichChar"/>

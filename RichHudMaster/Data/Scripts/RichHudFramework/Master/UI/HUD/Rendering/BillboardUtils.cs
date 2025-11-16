@@ -451,41 +451,41 @@ namespace RichHudFramework
 							if (mask != null)
 							{
 								// Full min/max for bounds
-								float bbMinX = Math.Min(Math.Min(planePos.Point0.X, planePos.Point1.X), planePos.Point2.X);
-								float bbMinY = Math.Min(Math.Min(planePos.Point0.Y, planePos.Point1.Y), planePos.Point2.Y);
-								float bbMaxX = Math.Max(Math.Max(planePos.Point0.X, planePos.Point1.X), planePos.Point2.X);
-								float bbMaxY = Math.Max(Math.Max(planePos.Point0.Y, planePos.Point1.Y), planePos.Point2.Y);
+								float bbMinX = (planePos.Point0.X < planePos.Point1.X) ? planePos.Point0.X : planePos.Point1.X;
+								float bbMinY = (planePos.Point0.Y < planePos.Point1.Y) ? planePos.Point0.Y : planePos.Point1.Y;
+								float bbMaxX = (planePos.Point0.X > planePos.Point1.X) ? planePos.Point0.X : planePos.Point1.X;
+								float bbMaxY = (planePos.Point0.Y > planePos.Point1.Y) ? planePos.Point0.Y : planePos.Point1.Y;
+								bbMinX = (bbMinX < planePos.Point2.X) ? bbMinX : planePos.Point2.X;
+								bbMinY = (bbMinY < planePos.Point2.Y) ? bbMinY : planePos.Point2.Y;
+								bbMaxX = (bbMaxX > planePos.Point2.X) ? bbMaxX : planePos.Point2.X;
+								bbMaxY = (bbMaxY > planePos.Point2.Y) ? bbMaxY : planePos.Point2.Y;
 
 								// Inline Intersect
-								float interMinX = Math.Max(bbMinX, mask.Value.Min.X);
-								float interMinY = Math.Max(bbMinY, mask.Value.Min.Y);
-								float interMaxX = Math.Min(bbMaxX, mask.Value.Max.X);
-								float interMaxY = Math.Min(bbMaxY, mask.Value.Max.Y);
-
-								// Size and pos as floats
-								float sizeX = bbMaxX - bbMinX;
-								float sizeY = bbMaxY - bbMinY;
-								float posX = bbMinX + sizeX * 0.5f;
-								float posY = bbMinY + sizeY * 0.5f;
-
-								// Min/Max-based Clamp for planePos points
-								planePos.Point0.X = Math.Max(interMinX, Math.Min(interMaxX, planePos.Point0.X));
-								planePos.Point0.Y = Math.Max(interMinY, Math.Min(interMaxY, planePos.Point0.Y));
-								planePos.Point1.X = Math.Max(interMinX, Math.Min(interMaxX, planePos.Point1.X));
-								planePos.Point1.Y = Math.Max(interMinY, Math.Min(interMaxY, planePos.Point1.Y));
-								planePos.Point2.X = Math.Max(interMinX, Math.Min(interMaxX, planePos.Point2.X));
-								planePos.Point2.Y = Math.Max(interMinY, Math.Min(interMaxY, planePos.Point2.Y));
+								float interMinX = (bbMinX > mask.Value.Min.X) ? bbMinX : mask.Value.Min.X;
+								float interMinY = (bbMinY > mask.Value.Min.Y) ? bbMinY : mask.Value.Min.Y;
+								float interMaxX = (bbMaxX < mask.Value.Max.X) ? bbMaxX : mask.Value.Max.X;
+								float interMaxY = (bbMaxY < mask.Value.Max.Y) ? bbMaxY : mask.Value.Max.Y;					
 
 								if (bbData.Item3 != Material.Default.TextureID)
 								{
 									// Full min/max for texBounds
-									float texMinX = Math.Min(Math.Min(texCoords.Point0.X, texCoords.Point1.X), texCoords.Point2.X);
-									float texMinY = Math.Min(Math.Min(texCoords.Point0.Y, texCoords.Point1.Y), texCoords.Point2.Y);
-									float texMaxX = Math.Max(Math.Max(texCoords.Point0.X, texCoords.Point1.X), texCoords.Point2.X);
-									float texMaxY = Math.Max(Math.Max(texCoords.Point0.Y, texCoords.Point1.Y), texCoords.Point2.Y);
+									float texMinX = (texCoords.Point0.X < texCoords.Point1.X) ? texCoords.Point0.X : texCoords.Point1.X;
+									float texMinY = (texCoords.Point0.Y < texCoords.Point1.Y) ? texCoords.Point0.Y : texCoords.Point1.Y;
+									float texMaxX = (texCoords.Point0.X > texCoords.Point1.X) ? texCoords.Point0.X : texCoords.Point1.X;
+									float texMaxY = (texCoords.Point0.Y > texCoords.Point1.Y) ? texCoords.Point0.Y : texCoords.Point1.Y;
+									texMinX = (texMinX < texCoords.Point2.X) ? texMinX : texCoords.Point2.X;
+									texMinY = (texMinY < texCoords.Point2.Y) ? texMinY : texCoords.Point2.Y;
+									texMaxX = (texMaxX > texCoords.Point2.X) ? texMaxX : texCoords.Point2.X;
+									texMaxY = (texMaxY > texCoords.Point2.Y) ? texMaxY : texCoords.Point2.Y;
 
 									float clipSizeX = interMaxX - interMinX;
 									float clipSizeY = interMaxY - interMinY;
+
+									// Size and pos as floats
+									float sizeX = bbMaxX - bbMinX;
+									float sizeY = bbMaxY - bbMinY;
+									float posX = bbMinX + sizeX * 0.5f;
+									float posY = bbMinY + sizeY * 0.5f;
 
 									float invSizeX = 1f / sizeX, invSizeY = 1f / sizeY;
 									float clipScaleX = clipSizeX * invSizeX;
@@ -509,13 +509,21 @@ namespace RichHudFramework
 									float newTexMaxY = ((texMaxY - uvOffsetY) * clipScaleY) + (uvOffsetY + clipOffsetY);
 
 									// Min/Max-based Clamp for texCoords
-									texCoords.Point0.X = Math.Max(newTexMinX, Math.Min(newTexMaxX, texCoords.Point0.X));
-									texCoords.Point0.Y = Math.Max(newTexMinY, Math.Min(newTexMaxY, texCoords.Point0.Y));
-									texCoords.Point1.X = Math.Max(newTexMinX, Math.Min(newTexMaxX, texCoords.Point1.X));
-									texCoords.Point1.Y = Math.Max(newTexMinY, Math.Min(newTexMaxY, texCoords.Point1.Y));
-									texCoords.Point2.X = Math.Max(newTexMinX, Math.Min(newTexMaxX, texCoords.Point2.X));
-									texCoords.Point2.Y = Math.Max(newTexMinY, Math.Min(newTexMaxY, texCoords.Point2.Y));
+									texCoords.Point0.X = MathHelper.Clamp(texCoords.Point0.X, newTexMinX, newTexMaxX);
+									texCoords.Point0.Y = MathHelper.Clamp(texCoords.Point0.Y, newTexMinY, newTexMaxY);
+									texCoords.Point1.X = MathHelper.Clamp(texCoords.Point1.X, newTexMinX, newTexMaxX);
+									texCoords.Point1.Y = MathHelper.Clamp(texCoords.Point1.Y, newTexMinY, newTexMaxY);
+									texCoords.Point2.X = MathHelper.Clamp(texCoords.Point2.X, newTexMinX, newTexMaxX);
+									texCoords.Point2.Y = MathHelper.Clamp(texCoords.Point2.Y, newTexMinY, newTexMaxY);
 								}
+
+								// Min/Max-based Clamp for planePos points
+								planePos.Point0.X = MathHelper.Clamp(planePos.Point0.X, interMinX, interMaxX);
+								planePos.Point0.Y = MathHelper.Clamp(planePos.Point0.Y, interMinY, interMaxY);
+								planePos.Point1.X = MathHelper.Clamp(planePos.Point1.X, interMinX, interMaxX);
+								planePos.Point1.Y = MathHelper.Clamp(planePos.Point1.Y, interMinY, interMaxY);
+								planePos.Point2.X = MathHelper.Clamp(planePos.Point2.X, interMinX, interMaxX);
+								planePos.Point2.Y = MathHelper.Clamp(planePos.Point2.Y, interMinY, interMaxY);
 							}
 
 							// Transform 2D planar positions into world space
