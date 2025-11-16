@@ -137,6 +137,7 @@ namespace RichHudFramework
 					lastTextOffset;
 				private bool
 					isUpdateEventPending,
+					wasTextUpdated,
 					areOffsetsStale,
 					isQuadCacheStale,
 					isLineRangeStale,
@@ -507,7 +508,7 @@ namespace RichHudFramework
 				protected override void AfterTextUpdate(bool colorChange = false)
 				{
 					isTextSizeUpdateReq = !colorChange;
-					isUpdateEventPending = true;
+					wasTextUpdated = true;
 				}
 
 				/// <summary>
@@ -535,9 +536,11 @@ namespace RichHudFramework
 						areOffsetsStale = true;
 					}
 
+					isUpdateEventPending = wasTextUpdated && (isQuadCacheStale || areOffsetsStale);
+
 					if (isQuadCacheStale || areOffsetsStale || isLineRangeStale)
 					{
-						UpdateVisibleRange();
+						UpdateVisibleRange();	
 
 						isLineRangeStale = false;
 						areOffsetsStale = false;
@@ -548,6 +551,7 @@ namespace RichHudFramework
 					lastTextSize = _textSize;
 					lastFixedSize = _fixedSize;
 					LineWrapWidth = _fixedSize.X;
+					wasTextUpdated = false;
 				}
 
 				/// <summary>
