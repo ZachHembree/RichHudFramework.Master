@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Text;
 using VRage;
 using VRageMath;
-using ApiMemberAccessor = System.Func<object, int, object>;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework
@@ -105,35 +104,37 @@ namespace RichHudFramework
                 /// </summary>
                 public ITextBuilder TextBuilder => textBox.TextBoard;
 
+                // Child elements
+                private readonly Label header;
+                private readonly Label subheader;
                 private readonly TextBox textBox;
-                private readonly Label header, subheader;
                 private readonly ScrollBar verticalScroll;
-                private readonly TexturedBox headerDivider, scrollDivider;
+                private readonly BindInputElement scrollBinds;
 
                 public ScrollableTextBox(HudParentBase parent = null) : base(parent)
                 {
-                    header = new Label(this)
+                    // Header label (topmost)
+                    header = new Label()
                     {
-                        ParentAlignment = ParentAlignments.Top | ParentAlignments.Left | ParentAlignments.Inner,
                         Height = 24f,
                         AutoResize = false,
                         Format = new GlyphFormat(Color.White, TextAlignment.Center)
                     };
 
-                    subheader = new Label(header)
+                    // Subheader placed below header
+                    subheader = new Label()
                     {
-                        ParentAlignment = ParentAlignments.Bottom,
                         Height = 20f,
                         Padding = new Vector2(0f, 10f),
                         BuilderMode = TextBuilderModes.Wrapped,
                         AutoResize = false,
                         VertCenterText = false,
-                        Format = new GlyphFormat(Color.White, TextAlignment.Center, .8f),
+                        Format = new GlyphFormat(Color.White, TextAlignment.Center, 0.8f)
                     };
 
-                    textBox = new TextBox(subheader)
+                    // Main scrollable text area
+                    textBox = new TextBox()
                     {
-                        ParentAlignment = ParentAlignments.Bottom | ParentAlignments.Left | ParentAlignments.InnerH,
                         Padding = new Vector2(8f, 8f),
                         BuilderMode = TextBuilderModes.Wrapped,
                         AutoResize = false,
@@ -144,31 +145,65 @@ namespace RichHudFramework
                         ClearSelectionOnLoseFocus = true
                     };
 
-                    headerDivider = new TexturedBox(textBox)
+                    // Horizontal divider below header/subheader area
+                    var headerDivider = new TexturedBox(textBox)
                     {
                         Color = new Color(53, 66, 75),
                         ParentAlignment = ParentAlignments.Top,
                         DimAlignment = DimAlignments.Width,
                         Padding = new Vector2(0f, 2f),
-                        Height = 1f,
+                        Height = 1f
                     };
 
-                    verticalScroll = new ScrollBar(textBox)
+                    var vChain = new HudChain()
                     {
-                        ParentAlignment = ParentAlignments.Right,
-                        DimAlignment = DimAlignments.Height | DimAlignments.IgnorePadding,
-                        Vertical = true,
+                        AlignVertical = true,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        CollectionContainer =
+                        {
+                            header,
+                            subheader,
+                            { textBox, 1f }
+                        }
                     };
 
-                    scrollDivider = new TexturedBox(verticalScroll)
+                    // Vertical scrollbar
+                    verticalScroll = new ScrollBar()
+                    {
+                        Vertical = true,
+                        UpdateValueCallback = UpdateScrollOffset
+                    };
+
+                    // Vertical divider between text and scrollbar
+                    var scrollDivider = new TexturedBox(verticalScroll)
                     {
                         Color = new Color(53, 66, 75),
-                        ParentAlignment = ParentAlignments.Left | ParentAlignments.InnerH,
+                        ParentAlignment = ParentAlignments.InnerLeft,
                         DimAlignment = DimAlignments.Height,
                         Padding = new Vector2(2f, 0f),
-                        Width = 1f,
+                        Width = 1f
                     };
 
+                    // Keyboard/mouse wheel input bindings
+                    scrollBinds = new BindInputElement(this)
+                    {
+                        { SharedBinds.MousewheelUp,   ScrollUp },
+                        { SharedBinds.UpArrow,        ScrollUp,   ScrollUp },
+                        { SharedBinds.MousewheelDown, ScrollDown },
+                        { SharedBinds.DownArrow,      ScrollDown, ScrollDown },
+                        { SharedBinds.PageUp,         PageUp,     PageUp },
+                        { SharedBinds.PageDown,       PageDown,   PageDown }
+                    };
+
+                    var hChain = new HudChain(this)
+                    {
+                        AlignVertical = false,
+                        DimAlignment = DimAlignments.UnpaddedSize,
+                        SizingMode = HudChainSizingModes.FitMembersOffAxis,
+                        CollectionContainer = { { vChain, 1f }, verticalScroll }
+                    };
+
+                    // Default content
                     HeaderText = "Text Page Header";
                     SubHeaderText = "Subheading\nLine 1\nLine 2\nLine 3\nLine 4";
 
@@ -176,56 +211,62 @@ namespace RichHudFramework
                     ShareCursor = true;
                 }
 
-				protected override void Layout()
+                protected override void Layout()
                 {
-                    ITextBoard textBoard = textBox.TextBoard;
+                    ITextBoard board = textBox.TextBoard;
 
-                    SliderBar slider = verticalScroll.SlideInput;
-                    slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
-                    slider.SliderHeight = (textBoard.Size.Y / textBoard.TextSize.Y) * verticalScroll.Height;
-
-                    textBox.Height = Height - header.Height - subheader.Height - Padding.Y;
-                    textBox.Width = Width - verticalScroll.Width - Padding.X;
-
-                    header.Width = textBox.Width;
-                    subheader.Width = textBox.Width;
+                    // Update scrollbar appearance and thumb size
+                    verticalScroll.SlideInput.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
+                    // Update maximum scroll range
+                    verticalScroll.Max = Math.Max(0f, board.TextSize.Y - board.Size.Y);
+                    // Set scroll offset to current text offset
+                    verticalScroll.Current = board.TextOffset.Y;
+                    verticalScroll.VisiblePercent = (board.Size.Y / board.TextSize.Y);
                 }
 
-				protected override void HandleInput(Vector2 cursorPos)
+                protected override void HandleInput(Vector2 cursorPos)
                 {
-                    ITextBoard textBoard = textBox.TextBoard;
-                    IMouseInput vertControl = verticalScroll.SlideInput.MouseInput;
+                    bool scrollbarCaptured = verticalScroll.SlideInput.IsLeftClicked;
+                    scrollBinds.InputEnabled = !scrollbarCaptured && (IsMousedOver || verticalScroll.IsMousedOver);
+                }
 
-                    verticalScroll.Max = Math.Max(0f, textBoard.TextSize.Y - textBoard.Size.Y);
+                private void UpdateScrollOffset(object sender, EventArgs args)
+                {
+                    ITextBoard board = textBox.TextBoard;
+                    // Set text offset to current scroll offset
+                    board.TextOffset = new Vector2(board.TextOffset.X, verticalScroll.Current);
+                }
 
-                    // Update the ScrollBar positions to represent the current offset unless they're being clicked.
-                    if (!vertControl.IsLeftClicked)
-                    {
-                        if (IsMousedOver || verticalScroll.IsMousedOver)
-                        {
-                            Vector2I lineRange = textBoard.VisibleLineRange;
+                private void ScrollUp(object sender, EventArgs args)
+                {
+                    ITextBoard board = textBox.TextBoard;
+                    Vector2I range = board.VisibleLineRange;
+                    board.MoveToChar(new Vector2I(range.X - 1, 0));
+                }
 
-                            if (SharedBinds.MousewheelUp.IsPressed || SharedBinds.UpArrow.IsNewPressed || SharedBinds.UpArrow.IsPressedAndHeld)
-                                textBoard.MoveToChar(new Vector2I(lineRange.X - 1, 0));
-                            else if (SharedBinds.MousewheelDown.IsPressed || SharedBinds.DownArrow.IsNewPressed || SharedBinds.DownArrow.IsPressedAndHeld)
-                                textBoard.MoveToChar(new Vector2I(lineRange.Y + 1, 0));
-                            else if (SharedBinds.PageUp.IsNewPressed || SharedBinds.PageUp.IsPressedAndHeld)
-                            {
-                                // A hacky, somewhat inefficient solution, but it works well
-                                textBoard.MoveToChar(new Vector2I(0, 0));
-                                textBoard.MoveToChar(new Vector2I(lineRange.X - 1, 0));
-                            }
-                            else if (SharedBinds.PageDown.IsNewPressed || SharedBinds.PageDown.IsPressedAndHeld)
-                            {
-                                textBoard.MoveToChar(new Vector2I(textBoard.Count - 1, 0));
-                                textBoard.MoveToChar(new Vector2I(lineRange.Y + 1, 0));
-                            }
-                        }
+                private void ScrollDown(object sender, EventArgs args)
+                {
+                    ITextBoard board = textBox.TextBoard;
+                    Vector2I range = board.VisibleLineRange;
+                    board.MoveToChar(new Vector2I(range.Y + 1, 0));
+                }
 
-                        verticalScroll.Current = textBoard.TextOffset.Y;
-                    }
+                private void PageUp(object sender, EventArgs args)
+                {
+                    ITextBoard board = textBox.TextBoard;
+                    Vector2I range = board.VisibleLineRange;
+                    // Jump to top, then move down to the beginning of the visible range
+                    board.MoveToChar(new Vector2I(0, 0));
+                    board.MoveToChar(new Vector2I(range.X - 1, 0));
+                }
 
-                    textBoard.TextOffset = new Vector2(0, verticalScroll.Current);
+                private void PageDown(object sender, EventArgs args)
+                {
+                    ITextBoard board = textBox.TextBoard;
+                    Vector2I range = board.VisibleLineRange;
+                    // Jump to bottom, then move up to the end of the visible range
+                    board.MoveToChar(new Vector2I(board.Count - 1, 0));
+                    board.MoveToChar(new Vector2I(range.Y + 1, 0));
                 }
             }
         }

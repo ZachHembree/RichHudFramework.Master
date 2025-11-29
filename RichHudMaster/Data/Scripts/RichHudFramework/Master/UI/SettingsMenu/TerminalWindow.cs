@@ -66,6 +66,7 @@ namespace RichHudFramework
                         DimAlignment = DimAlignments.Width,
                         Padding = new Vector2(80f, 0f),
                         Height = 1f,
+                        CanIgnoreMasking = true
                     };
 
                     modList = new ModList()
