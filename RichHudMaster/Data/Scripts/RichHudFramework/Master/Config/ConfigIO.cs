@@ -178,12 +178,12 @@ namespace RichHudFramework.IO
                         exceptions += e.ToString();
                     }
 
-                    LogIO.WriteToLogStart(exceptions);
+                    ExceptionHandler.WriteToLog(exceptions);
                 }
 
                 if (unknown != null)
                 {
-                    LogIO.WriteToLogStart("\nConfig operation failed.\n" + unknown.ToString());
+                    ExceptionHandler.WriteToLog("\nConfig operation failed.\n" + unknown.ToString());
                     ExceptionHandler.SendChatMessage("Config operation failed.");
                     SaveInProgress = false;
 
@@ -217,7 +217,7 @@ namespace RichHudFramework.IO
                     TrySave(cfg);
 
                     if (loadException != null)
-                        LogIO.TryWriteToLog(loadException.ToString());
+                        ExceptionHandler.WriteToLog(loadException.ToString());
                     else if (!silent)
                         ExceptionHandler.SendChatMessage("Configuration loaded.");
                 }

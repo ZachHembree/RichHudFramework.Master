@@ -144,7 +144,7 @@ namespace RichHudFramework
                 {
                     base.Layout();
 
-                    SliderBar slider = ScrollBar.slide;
+                    SliderBar slider = ScrollBar.SlideInput;
                     slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                 }
             }

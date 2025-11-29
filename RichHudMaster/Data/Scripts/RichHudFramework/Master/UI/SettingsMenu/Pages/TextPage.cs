@@ -180,7 +180,7 @@ namespace RichHudFramework
                 {
                     ITextBoard textBoard = textBox.TextBoard;
 
-                    SliderBar slider = verticalScroll.slide;
+                    SliderBar slider = verticalScroll.SlideInput;
                     slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                     slider.SliderHeight = (textBoard.Size.Y / textBoard.TextSize.Y) * verticalScroll.Height;
 
@@ -194,7 +194,7 @@ namespace RichHudFramework
 				protected override void HandleInput(Vector2 cursorPos)
                 {
                     ITextBoard textBoard = textBox.TextBoard;
-                    IMouseInput vertControl = verticalScroll.slide.MouseInput;
+                    IMouseInput vertControl = verticalScroll.SlideInput.MouseInput;
 
                     verticalScroll.Max = Math.Max(0f, textBoard.TextSize.Y - textBoard.Size.Y);
 

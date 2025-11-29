@@ -57,7 +57,7 @@ namespace RichHudFramework
                 {
                     HeaderBuilder.Format = TerminalFormatting.HeaderFormat;
                     HeaderBuilder.SetText("Rich HUD Terminal");
-                    header.background.Visible = false;
+                    header.Background.Visible = false;
                     header.Height = 60f;
 
                     topDivider = new TexturedBox(header)
@@ -331,7 +331,7 @@ namespace RichHudFramework
                         header.Color = TerminalFormatting.Dark.SetAlphaPct(HudMain.UiBkOpacity);
                         scrollBox.Color = TerminalFormatting.DarkSlateGrey.SetAlphaPct(HudMain.UiBkOpacity);
 
-                        SliderBar slider = scrollBox.ScrollBar.slide;
+                        SliderBar slider = scrollBox.ScrollBar.SlideInput;
                         slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
 
 						Vector2 listSize = scrollBox.Size,

@@ -255,7 +255,7 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateInstanceNames()
                 {
-                    var instanceCollection = instanceList.HudCollection;
+                    var instanceCollection = instanceList.EntryList;
 
                     for (int n = 0; n < instanceCollection.Count; n++)
                     {
@@ -325,7 +325,7 @@ namespace RichHudFramework
                     {
                         ListBoxEntry<TestWindowNode> selection = instanceList.Selection;
                         TestWindowNode testNode = selection.AssocMember;
-                        var instanceCollection = instanceList.HudCollection;
+                        var instanceCollection = instanceList.EntryChain;
 
                         int index = instanceCollection.FindIndex(x => x.AssocMember == testNode);
                         instanceList.RemoveAt(index);

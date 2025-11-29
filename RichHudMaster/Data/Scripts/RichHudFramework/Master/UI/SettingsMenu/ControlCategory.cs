@@ -23,45 +23,6 @@ namespace RichHudFramework
             object // ID
         >;
 
-        public class VertControlCategory : ControlCategory<TerminalControlBase>, IVertControlCategory
-        {
-            /// <summary>
-            /// Read only collection of <see cref="TerminalControlBase"/>s assigned to this category
-            /// </summary>
-            public IReadOnlyList<TerminalControlBase> Controls => categoryElement.Members;
-
-            /// <summary>
-            /// Used to allow the addition of controls to vertical categories using collection-initializer syntax in
-            /// conjunction with normal initializers.
-            /// </summary>
-            public IVertControlCategory ControlContainer => this;
-
-            public VertControlCategory() : base(true)
-            {
-                var scrollBox = categoryElement.scrollBox;
-
-                scrollBox.Padding = new Vector2(16f);
-                scrollBox.Spacing = 30f;
-            }
-
-            /// <summary>
-            /// Retrieves information used by the Framework API
-            /// </summary>
-            public override ControlContainerMembers GetApiData()
-            {
-                return new ControlContainerMembers()
-                {
-                    Item1 = GetOrSetMember,
-                    Item2 = new MyTuple<object, Func<int>>
-                    {
-                        Item1 = (Func<int, ControlMembers>)(x => categoryElement.Members[x].GetApiData()),
-                        Item2 = () => categoryElement.Members.Count
-                    },
-                    Item3 = this
-                };
-            }
-        }
-
         public class ControlCategory : ControlCategory<ControlTile>, IControlCategory
         {
             /// <summary>
@@ -262,7 +223,7 @@ namespace RichHudFramework
 
 				protected override void Layout()
                 {
-                    SliderBar slider = scrollBox.ScrollBar.slide;
+                    SliderBar slider = scrollBox.ScrollBar.SlideInput;
                     slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                 }
             }

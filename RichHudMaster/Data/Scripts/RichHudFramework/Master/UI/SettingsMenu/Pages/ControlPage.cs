@@ -3,15 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using VRage;
-using VRageMath;
-using RichHudFramework.UI.Rendering;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using GlyphFormatMembers = VRage.MyTuple<byte, float, VRageMath.Vector2I, VRageMath.Color>;
 
 namespace RichHudFramework
 {
-    using RichStringMembers = MyTuple<StringBuilder, GlyphFormatMembers>;
-
     namespace UI.Server
     {
         using ControlContainerMembers = MyTuple<
@@ -21,30 +17,12 @@ namespace RichHudFramework
         >;
 
         /// <summary>
-        /// Interactable list of vertically scrolling control categories
-        /// </summary>
-        public interface IVertControlPage : IControlPage<VertControlCategory, TerminalControlBase>
-        { }
-
-
-        /// <summary>
         /// Interactable collection of horizontally scrolling control categories
         /// </summary>
         public class ControlPage : ControlPage<ControlCategory, ControlTile>, IControlPage
         {
             public ControlPage() : base(true)
             { }
-        }
-
-        /// <summary>
-        /// Interactable collection of vertically scrolling control categories
-        /// </summary>
-        public class VertControlPage : ControlPage<VertControlCategory, TerminalControlBase>, IVertControlPage
-        {
-            public VertControlPage() : base(false)
-            {
-                catBox.Spacing = 0f;
-            }
         }
 
         public abstract class ControlPage<TCategory, TMember> : TerminalPageBase, IControlPage<TCategory, TMember>
@@ -64,7 +42,7 @@ namespace RichHudFramework
 
             protected readonly CategoryScrollBox catBox;
 
-            public ControlPage(bool alignVertical) : base (new CategoryScrollBox(alignVertical))
+            public ControlPage(bool alignVertical) : base(new CategoryScrollBox(alignVertical))
             {
                 catBox = AssocMember as CategoryScrollBox;
             }
@@ -109,7 +87,7 @@ namespace RichHudFramework
             }
 
             protected class CategoryScrollBox : ScrollBox<TCategory>
-            { 
+            {
                 public CategoryScrollBox(bool alignVertical = true, HudParentBase parent = null) : base(alignVertical, parent)
                 {
                     Spacing = 30f;
@@ -121,7 +99,7 @@ namespace RichHudFramework
                 {
                     base.Layout();
 
-                    SliderBar slider = ScrollBar.slide;
+                    SliderBar slider = ScrollBar.SlideInput;
                     slider.BarColor = TerminalFormatting.OuterSpace.SetAlphaPct(HudMain.UiBkOpacity);
                 }
             }

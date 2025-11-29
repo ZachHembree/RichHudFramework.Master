@@ -147,7 +147,6 @@ namespace RichHudFramework.Server
             else
                 throw new Exception("Only one instance of RichHudMaster can exist at any given time.");
 
-            LogIO.FileName = "RichHudMasterLog.txt";
             MasterConfig.FileName = "RichHudMasterConfig.xml";
 
             ExceptionHandler.RecoveryLimit = 5;

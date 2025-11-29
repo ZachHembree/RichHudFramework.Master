@@ -48,7 +48,7 @@ namespace RichHudFramework.UI.Server
         {
             base.Update();
 
-            if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && subtype.dropdown.Display.IsMousedOver)
+            if (ToolTip != null && !HudMain.Cursor.IsToolTipRegistered && subtype.dropdown.IsMousedOver)
                 HudMain.Cursor.RegisterToolTip(ToolTip);
         }
 
