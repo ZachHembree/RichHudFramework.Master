@@ -34,7 +34,7 @@ namespace RichHudFramework
 		using HudNodeDataHandle = IReadOnlyList<HudNodeData>;
 
 		/// <summary>
-		/// Base class for HUD elements to which other elements are parented. Types deriving from this class cannot be
+		/// Abstract base for HUD elements to which other elements are parented. Types deriving from this class cannot be
 		/// parented to other elements; only types of <see cref="HudNodeBase"/> can be parented.
 		/// </summary>
 		public abstract partial class HudParentBase : IReadOnlyHudParent
@@ -60,7 +60,7 @@ namespace RichHudFramework
 			}
 
 			/// <summary>
-			/// Returns true if input is enabled can update
+			/// Returns true if input is enabled
 			/// </summary>
 			public bool InputEnabled
 			{
@@ -75,7 +75,7 @@ namespace RichHudFramework
 			}
 
 			/// <summary>
-			/// Moves the UI element up or down in draw order. -1 will darw an element behind its immediate 
+			/// Moves the UI element up or down in draw order. -1 will draw an element behind its immediate 
 			/// parent. +1 will draw it on top of siblings. Higher values will allow it to draw behind or over 
 			/// more distantly related elements.
 			/// </summary>
@@ -106,32 +106,38 @@ namespace RichHudFramework
 			/// <summary>
 			/// Handle to node data used for registering with the Tree Manager. Do not modify.
 			/// </summary>
+			/// <exclude/>
 			public HudNodeDataHandle DataHandle { get; }
 
 			/// <summary>
 			/// Internal configuration and state. Do not modify.
 			/// </summary>
+			/// <exclude/>
 			public IReadOnlyList<uint> Config { get; }
 
 			/// <summary>
 			/// Internal configuration and state. Do not modify.
 			/// </summary>
+			/// <exclude/>
 			protected readonly uint[] _config;
 
 			/// <summary>
 			/// Handle to node data used for registering with the Tree Manager. Do not modify.
 			/// </summary>
+			/// <exclude/>
 			protected readonly HudNodeData[] _dataHandle;
 
 			/// <summary>
 			/// References to child API handles. Parallel with children list.
 			/// Do not modify.
 			/// </summary>
+			/// <exclude/>
 			protected readonly List<object> childHandles;
 
 			/// <summary>
 			/// Registered chlid nodes. Do not modify.
 			/// </summary>
+			/// <exclude/>
 			protected readonly List<HudNodeBase> children;
 
 			/// <summary>
@@ -316,6 +322,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Wraps HandleInput() input polling hook. Override HandleInput() for customization.
 			/// </summary>
+			/// <exclude/>
 			protected virtual void BeginInput()
 			{
 				if ((Config[StateID] & (uint)HudElementStates.IsInputHandlerCustom) > 0)
@@ -328,6 +335,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Updates internal state. Override Layout() for customization. Do not override.
 			/// </summary>
+			/// <exclude/>
 			protected virtual void BeginLayout(bool _)
 			{
 				if (HudSpace != null)
@@ -442,6 +450,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Internal debugging method
 			/// </summary>
+			/// <exclude/>
 			protected virtual object GetOrSetApiMember(object data, int memberEnum)
 			{
 				switch ((HudElementAccessors)memberEnum)

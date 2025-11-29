@@ -1,15 +1,12 @@
 using RichHudFramework.UI.Rendering;
-using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using VRageMath;
 
 namespace RichHudFramework.UI
 {
 	using Client;
-	using Server;
 
 	/// <summary>
 	/// Interactive, clickable text box with caret and highlighting. Text only, no background or
@@ -25,7 +22,7 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Registers a text update callback. For use in object initializers.
 		/// </summary>
-		public EventHandler TextUpdateCallback { set { TextChanged += value; } }
+		public EventHandler TextChangedCallback { set { TextChanged += value; } }
 
 		/// <summary>
 		/// Determines whether or not the textbox will allow the user to edit its contents
@@ -77,25 +74,23 @@ namespace RichHudFramework.UI
 		/// </summary>
 		public char NewLineChar { get; set; }
 
-		/// <summary>
-		/// Interface used to manage the element's input focus state
-		/// </summary>
 		public IFocusHandler FocusHandler { get; }
 
 		/// <summary>
-		/// Custom bind input interface for this element
+		/// Custom bind input interface for this element.
+		/// Handles input events for cut, copy, paste, etc.
 		/// </summary>
 		public IBindInput BindInput { get; }
 
-		/// <summary>
-		/// Mouse input interface for this clickable element
-		/// </summary>
 		public IMouseInput MouseInput { get; }
 
 		public override bool IsMousedOver => MouseInput.IsMousedOver;
 
+		/// <exclude/>
 		protected readonly MouseInputElement _mouseInput;
+		/// <exclude/>
 		protected readonly BindInputElement _bindInput;
+		/// <exclude/>
 		protected readonly ToolTip warningToolTip;
 
 		private readonly TextInput textInput;
@@ -104,14 +99,15 @@ namespace RichHudFramework.UI
 		private bool canHighlight, isHighlighting, allowInput, textUpdatePending;
 		private Vector2I lastCaretIndex;
 
+		/// <exclude/>
 		protected static readonly Vector2I caretMin = new Vector2I(0, -1);
 
 		public TextBox(HudParentBase parent) : base(parent)
 		{
-			FocusHandler = new InputFocusHandler(this) 
+			FocusHandler = new InputFocusHandler(this)
 			{
-				GainedInputFocusCallback = GainFocus,
-				LostInputFocusCallback = LoseFocus
+				GainedInputFocusCallback = OnGainFocus,
+				LostInputFocusCallback = OnLoseFocus
 			};
 			_mouseInput = new MouseInputElement(this)
 			{
@@ -137,7 +133,7 @@ namespace RichHudFramework.UI
 			warningToolTip = new ToolTip()
 			{
 				text = "Open Chat to Enable Text Editing",
-				bgColor = ToolTip.orangeWarningBG
+				bgColor = ToolTip.OrangeWarningBG
 			};
 
 			TextBoard.TextChanged += OnTextChanged;
@@ -211,7 +207,7 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Handles gaining input focus. Moves caret to end if configured to do so.
 		/// </summary>
-		protected virtual void GainFocus(object sender, EventArgs args)
+		protected virtual void OnGainFocus(object sender, EventArgs args)
 		{
 			if (MoveToEndOnGainFocus)
 				caret.SetPosition(int.MaxValue);
@@ -220,7 +216,7 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Handles losing input focus. Clears selection if configured to do so.
 		/// </summary>
-		protected virtual void LoseFocus(object sender, EventArgs args)
+		protected virtual void OnLoseFocus(object sender, EventArgs args)
 		{
 			if (ClearSelectionOnLoseFocus)
 				ClearSelection();
@@ -362,6 +358,7 @@ namespace RichHudFramework.UI
 			InputOpen = useInput && (EnableHighlighting || EnableEditing);
 		}
 
+		/// <exclude/>
 		protected override void HandleInput(Vector2 cursorPos)
 		{
 			bool useInput = allowInput || (FocusHandler.HasFocus && HudMain.InputMode == HudInputMode.Full);

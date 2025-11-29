@@ -4,18 +4,21 @@ using VRageMath;
 namespace RichHudFramework.UI
 {
 	/// <summary>
-	/// Generic clickable slider bar. Can be oriented vertically or horizontally. Current value
-	/// automatically clamped between min and max.
+	/// A clickable slider bar consisting of a track (Bar) and a movable thumb (Slider), based on <see cref="MouseInputElement"/>. 
+	/// It can be oriented vertically or horizontally, and the current value is automatically clamped between min and max.
+	/// <para>
+	/// Size is determined by the slider and bar, not <see cref="HudElementBase.Size"/> or <see cref="HudElementBase.UnpaddedSize"/>.
+	/// </para>
 	/// </summary>
 	public class SliderBar : MouseInputElement, IClickableElement
 	{
 		/// <summary>
-		/// Invoked when the current value changes
+		/// Invoked when the <see cref="Current"/> value changes.
 		/// </summary>
 		public event EventHandler ValueChanged;
 
 		/// <summary>
-		/// Registers a value update callback. Useful in initializers.
+		/// Helper property for registering a <see cref="Current"/> value update callback during initialization.
 		/// </summary>
 		public EventHandler UpdateValueCallback
 		{
@@ -23,7 +26,7 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Lower limit.
+		/// The lower limit of the value range.
 		/// </summary>
 		public float Min
 		{
@@ -40,7 +43,7 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Upper limit for the slider.
+		/// The upper limit of the value range.
 		/// </summary>
 		public float Max
 		{
@@ -57,7 +60,7 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Currently selected value bounded by the given Min and Max values.
+		/// The currently selected value, bounded by the Min and Max values.
 		/// </summary>
 		public float Current
 		{
@@ -72,8 +75,8 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Position of the slider given as a percentage. At 0, the slider will be at its minimum value;
-		/// at 1, the slider will be at the given maximum value.
+		/// The position of the slider thumb expressed as a percentage (0 to 1). 
+		/// At 0, the slider is at the minimum value; at 1, it is at the maximum.
 		/// </summary>
 		public float Percent
 		{
@@ -86,32 +89,32 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// If true then the slider will change to its set highlight color when moused over.
+		/// If true, the slider thumb (and optionally the track bar) will change to their highlight colors when moused over.
 		/// </summary>
 		public bool EnableHighlight { get; set; }
 
 		/// <summary>
-		/// Color of the slider bar
+		/// The color of the track bar (background).
 		/// </summary>
 		public Color BarColor { get; set; }
 
 		/// <summary>
-		/// Bar color when moused over
+		/// The color of the track bar when moused over.
 		/// </summary>
 		public Color BarHighlight { get; set; }
 
 		/// <summary>
-		/// Color of the slider box when not moused over
+		/// The color of the slider thumb (button) when not moused over.
 		/// </summary>
 		public Color SliderColor { get; set; }
 
 		/// <summary>
-		/// Color of the slider button when moused over
+		/// The color of the slider thumb (button) when moused over.
 		/// </summary>
 		public Color SliderHighlight { get; set; }
 
 		/// <summary>
-		/// Size of the slider bar
+		/// The size of the track bar (background).
 		/// </summary>
 		public Vector2 BarSize
 		{
@@ -124,7 +127,7 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Width of the slider bar
+		/// The width of the track bar.
 		/// </summary>
 		public float BarWidth
 		{
@@ -138,7 +141,7 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Height of the slider bar
+		/// The height of the track bar.
 		/// </summary>
 		public float BarHeight
 		{
@@ -152,7 +155,7 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Size of the slider button
+		/// The size of the slider thumb (movable button).
 		/// </summary>
 		public Vector2 SliderSize
 		{
@@ -165,7 +168,7 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Width of the slider button.
+		/// The width of the slider thumb (movable button).
 		/// </summary>
 		public float SliderWidth
 		{
@@ -179,7 +182,7 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Height of the slider button
+		/// The height of the slider thumb (movable button).
 		/// </summary>
 		public float SliderHeight
 		{
@@ -193,30 +196,53 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Determines whether or not the slider button is currently visible
+		/// Determines whether the slider thumb (button) is currently visible.
 		/// </summary>
 		public bool SliderVisible { get; set; }
 
 		/// <summary>
-		/// If true, the slider will be oriented vertically s.t. the slider moves up and down.
+		/// If true, the slider will be oriented vertically (moves up/down). If false, it is horizontal.
 		/// </summary>
 		public bool Vertical { get; set; }
 
 		/// <summary>
-		/// Reverses the direction of the slider w/respect to its value.
+		/// Reverses the direction of the slider value. 
+		/// <para>Normal: Left/Top is Min, Right/Bottom is Max. Reverse: Left/Top is Max, Right/Bottom is Min.</para>
 		/// </summary>
 		public bool Reverse { get; set; }
 
 		/// <summary>
-		/// Handles mouse input for the slider bar
+		/// Handles mouse input for the slider bar.
 		/// </summary>
 		public IMouseInput MouseInput { get; }
 
+		/// <summary>
+		/// Textured boxes for rendering the slider thumb and the track bar.
+		/// </summary>
+		/// <exclude/>
 		protected readonly TexturedBox slider, bar;
-		protected Vector2 _barSize, _sliderSize;
-		protected Vector2 startCursorOffset, lastPos;
 
+		/// <exclude/>
+		protected Vector2 _barSize, _sliderSize;
+
+		/// <summary>
+		/// Cursor position when first clicked, used to prevent the slider from 
+		/// jumping when the drag begins.
+		/// </summary>
+		/// <exclude/>
+		protected Vector2 startCursorOffset;
+
+		/// <summary>
+		/// Cursor position when the slider was last dragged. 
+		/// Used for calculating movement deltas.
+		/// </summary>
+		/// <exclude/>
+		protected Vector2 lastPos;
+
+		/// <exclude/>
 		protected float _min, _max, _current, _percent, lastValue;
+
+		/// <exclude/>
 		protected bool canMoveSlider;
 
 		public SliderBar(HudParentBase parent) : base(parent)
@@ -247,11 +273,16 @@ namespace RichHudFramework.UI
 
 			ShareCursor = false;
 			UseCursor = true;
+			DimAlignment = DimAlignments.None;
 		}
 
 		public SliderBar() : this(null)
 		{ }
 
+		/// <summary>
+		/// Updates slider dragging logic, value calculation, and cursor sharing.
+		/// </summary>
+		/// <exclude/>
 		protected override void HandleInput(Vector2 cursorPos)
 		{
 			base.HandleInput(cursorPos);
@@ -304,6 +335,10 @@ namespace RichHudFramework.UI
 			}
 		}
 
+		/// <summary>
+		/// Updates slider visibility, highlighting colors, sizing, and the position of the thumb.
+		/// </summary>
+		/// <exclude/>
 		protected override void Layout()
 		{
 			slider.Visible = SliderVisible;
@@ -345,12 +380,15 @@ namespace RichHudFramework.UI
 				_barSize.Y = Math.Min(_sliderSize.Y, _barSize.Y);
 			}
 
-			bar.Size = _barSize;
-			slider.Size = _sliderSize;
+			bar.UnpaddedSize = _barSize;
+			slider.UnpaddedSize = _sliderSize;
 
 			UpdateButtonOffset();
 		}
 
+		/// <summary>
+		/// Calculates and updates the visual offset of the slider thumb based on the current Percent.
+		/// </summary>
 		private void UpdateButtonOffset()
 		{
 			if (Vertical)

@@ -3,13 +3,15 @@ using VRageMath;
 
 namespace RichHudFramework.UI
 {
-    /// <summary>
-    /// Named checkbox designed to mimic the appearance of checkboxes used in the SE terminal.
-    /// </summary>
-    public class NamedCheckBox : HudElementBase, IClickableElement
+	/// <summary>
+	/// Named checkbox designed to mimic the appearance of checkboxes used in the SE terminal.
+	/// <para>Adds a label to <see cref="BorderedCheckBox"/>.</para>
+	/// <para>Formatting temporarily changes when it gains input focus.</para>
+	/// </summary>
+	public class NamedCheckBox : HudElementBase, IClickableElement
     {
 		/// <summary>
-		/// Invoked when the current value changes
+		/// Invoked when the current value (<see cref="IsBoxChecked"/>) changes
 		/// </summary>
 		public event EventHandler ValueChanged
 		{
@@ -18,7 +20,7 @@ namespace RichHudFramework.UI
 		}
 
 		/// <summary>
-		/// Registers a value update callback. Useful in initializers.
+		/// Registers a value (<see cref="IsBoxChecked"/>) update callback. Useful in initializers.
 		/// </summary>
 		public EventHandler UpdateValueCallback
 		{
@@ -88,9 +90,23 @@ namespace RichHudFramework.UI
         /// </summary>
         public bool IsBoxChecked { get { return checkbox.IsBoxChecked; } set { checkbox.IsBoxChecked = value; } }
 
-        private readonly Label name;
-        private readonly BorderedCheckBox checkbox;
-        private readonly HudChain layout;
+        /// <summary>
+        /// Label to the left of the checkbox
+        /// </summary>
+        /// <exclude/>
+        protected readonly Label name;
+
+        /// <summary>
+        /// Checkbox button
+        /// </summary>
+        /// <exclude/>
+		protected readonly BorderedCheckBox checkbox;
+
+        /// <summary>
+        /// Stacking container for name and checkbox layout
+        /// </summary>
+        /// <exclude/>
+		protected readonly HudChain layout;
 
         public NamedCheckBox(HudParentBase parent) : base(parent)
         {
@@ -115,13 +131,17 @@ namespace RichHudFramework.UI
             Size = new Vector2(250f, 37f);
         }
 
-        protected override void Measure()
+		public NamedCheckBox() : this(null)
+		{ }
+
+		/// <summary>
+		/// Updates the size of the element to fit the checkbox and label if autoresize is enabled
+		/// </summary>
+		/// <exclude/>
+		protected override void Measure()
         {
             if (AutoResize)
-                UnpaddedSize = layout.GetRangeSize();
+                UnpaddedSize = layout.UnpaddedSize + layout.Padding;
         }
-
-        public NamedCheckBox() : this(null)
-        { }
     }
 }

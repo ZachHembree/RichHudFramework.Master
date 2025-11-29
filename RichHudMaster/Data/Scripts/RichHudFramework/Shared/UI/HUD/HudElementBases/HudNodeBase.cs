@@ -1,5 +1,4 @@
 using System;
-using VRageMath;
 
 namespace RichHudFramework
 {
@@ -8,16 +7,23 @@ namespace RichHudFramework
 		using static RichHudFramework.UI.NodeConfigIndices;
 		using Server;
 		using Client;
-		using Internal;
 
 		/// <summary>
-		/// Base class for hud elements that can be parented to other elements.
+		/// Abstract base for hud elements that can be parented to other elements.
 		/// </summary>
 		public abstract partial class HudNodeBase : HudParentBase, IReadOnlyHudNode
 		{
-			protected const uint
-				nodeVisible = (uint)(HudElementStates.IsVisible | HudElementStates.WasParentVisible | HudElementStates.IsRegistered),
-				nodeInputEnabled = (uint)(HudElementStates.IsInputEnabled | HudElementStates.WasParentInputEnabled);
+			/// <summary>
+			/// Default node visibility mask
+			/// </summary>
+			/// <exclude/>
+			protected const uint nodeVisible = (uint)(HudElementStates.IsVisible | HudElementStates.WasParentVisible | HudElementStates.IsRegistered);
+
+			/// <summary>
+			/// Default node input enabled mask
+			/// </summary>
+			/// <exclude/>
+			protected const uint nodeInputEnabled = (uint)(HudElementStates.IsInputEnabled | HudElementStates.WasParentInputEnabled);
 
 			/// <summary>
 			/// Read-only reference to the node's parent
@@ -79,6 +85,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Updates internal state. Override Layout() for customization.
 			/// </summary>
+			/// <exclude/>
 			protected override void BeginLayout(bool _)
 			{
 				if ((Config[StateID] & (uint)HudElementStates.IsSpaceNode) == 0)

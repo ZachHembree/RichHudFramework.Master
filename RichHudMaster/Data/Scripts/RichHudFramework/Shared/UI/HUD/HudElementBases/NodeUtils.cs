@@ -13,6 +13,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Collection of utilities used internally to manage HUD nodes
 			/// </summary>
+			/// <exclude/>
 			protected static class NodeUtils
 			{
 				/// <summary>
@@ -160,9 +161,10 @@ namespace RichHudFramework
 				}
 			}
 		}
-
+		
 		public abstract partial class HudElementBase
 		{
+			/// <exclude/>
 			public static class ElementUtils
 			{
 				public static void UpdateRootAnchoring(Vector2 size, IReadOnlyList<HudNodeBase> children)

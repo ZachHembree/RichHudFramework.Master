@@ -7,15 +7,17 @@ namespace RichHudFramework
 		using static RichHudFramework.UI.NodeConfigIndices;
 		using Server;
 		using Client;
-		using Internal;
-		using System.Collections.Generic;
 
 		/// <summary>
-		/// Base type for all UI elements with definite size and position. Extends HudParentBase and HudNodeBase.
+		/// Abstract base for all UI elements with definite size and position. Extends HudParentBase and HudNodeBase.
 		/// </summary>
 		public abstract partial class HudElementBase : HudNodeBase, IReadOnlyHudElement
 		{
-			protected const float minMouseBounds = 8f;
+			/// <summary>
+			/// Minimum size used for cursor hitbox
+			/// </summary>
+			/// <exclude/>
+			protected const float MinMouseBounds = 8f;
 
 			/// <summary>
 			/// Size of the element. Units in pixels with HudMain.Root.
@@ -36,7 +38,7 @@ namespace RichHudFramework
 			}
 
 			/// <summary>
-			/// Width of the element. Units in pixels by HudMain.Root.
+			/// Width of the element. Units in pixels with HudMain.Root.
 			/// </summary>
 			public float Width
 			{
@@ -51,7 +53,7 @@ namespace RichHudFramework
 			}
 
 			/// <summary>
-			/// Height of the element. Units in pixels by HudMain.Root.
+			/// Height of the element. Units in pixels with HudMain.Root.
 			/// </summary>
 			public float Height
 			{
@@ -76,7 +78,7 @@ namespace RichHudFramework
 			public Vector2 UnpaddedSize { get; set; }
 
 			/// <summary>
-			/// Starting position of the hud element. Starts in the center of the parent node 
+			/// Starting/anchoring position of the hud element. Starts in the center of the parent node 
 			/// by default. This behavior can be modified with ParentAlignment flags.
 			/// </summary>
 			public Vector2 Origin { get; private set; }
@@ -92,7 +94,7 @@ namespace RichHudFramework
 			public Vector2 Position { get; private set; }
 
 			/// <summary>
-			/// Determines the starting position of the hud element relative to its parent.
+			/// Determines the starting position/anchoring behavior of the hud element relative to its parent.
 			/// </summary>
 			public ParentAlignments ParentAlignment { get; set; }
 
@@ -168,7 +170,7 @@ namespace RichHudFramework
 
 			/// <summary>
 			/// If set to true, then the element can ignore any bounding masks imposed by its parents.
-			/// Superceeds selective masking flag.
+			/// Supersedes selective masking flag.
 			/// </summary>
 			public bool CanIgnoreMasking
 			{
@@ -197,7 +199,10 @@ namespace RichHudFramework
 			/// </summary>
 			protected Vector2 OriginAlignment { get; private set; }
 
-			protected BoundingBox2? maskingBox;
+			/// <summary>
+			/// Defines the clipping mask applied to the element and its children.
+			/// </summary>
+			protected BoundingBox2? MaskingBox { get; private set; }
 
 			/// <summary>
 			/// Initializes a new UI element attached to the given parent.
@@ -218,19 +223,20 @@ namespace RichHudFramework
 			/// Updates in back-to-front order after Draw(). Elements on the bottom update first, and elements 
 			/// on top update last.
 			/// </summary>
+			/// <exclude/>
 			protected override void InputDepth()
 			{
 				if (HudSpace.IsFacingCamera)
 				{
 					Vector3 cursorPos = HudSpace.CursorPos;
-					Vector2 halfSize = Vector2.Max(CachedSize, new Vector2(minMouseBounds)) * .5f;
+					Vector2 halfSize = Vector2.Max(CachedSize, new Vector2(MinMouseBounds)) * .5f;
 					BoundingBox2 box = new BoundingBox2(Position - halfSize, Position + halfSize);
 					bool mouseInBounds;
 
-					if (maskingBox == null)
+					if (MaskingBox == null)
 						mouseInBounds = box.Contains(new Vector2(cursorPos.X, cursorPos.Y)) == ContainmentType.Contains;
 					else
-						mouseInBounds = box.Intersect(maskingBox.Value).Contains(new Vector2(cursorPos.X, cursorPos.Y)) == ContainmentType.Contains;
+						mouseInBounds = box.Intersect(MaskingBox.Value).Contains(new Vector2(cursorPos.X, cursorPos.Y)) == ContainmentType.Contains;
 
 					if (mouseInBounds)
 					{
@@ -244,6 +250,7 @@ namespace RichHudFramework
 			/// Updates input for the element and attempts to capture the cursor if mouse input is enabled.
 			/// Override HandleInput() for customization.
 			/// </summary>
+			/// <exclude/>
 			protected sealed override void BeginInput()
 			{
 				Vector3 cursorPos = HudSpace.CursorPos;
@@ -262,7 +269,7 @@ namespace RichHudFramework
 						HandleInput(new Vector2(cursorPos.X, cursorPos.Y));
 
 					if (!canShareCursor)
-						HudMain.Cursor.Capture(DataHandle[0].Item3.Item1);
+						HudMain.Cursor.TryCapture(DataHandle[0].Item3.Item1);
 				}
 				else if ((Config[StateID] & (uint)HudElementStates.IsInputHandlerCustom) > 0)
 				{
@@ -273,6 +280,7 @@ namespace RichHudFramework
 			/// <summary>
 			/// Updates internal state and child alignment. Override Layout() for customization.
 			/// </summary>
+			/// <exclude/>
 			protected sealed override void BeginLayout(bool _)
 			{
 				var parentFull = Parent as HudElementBase;
@@ -311,22 +319,22 @@ namespace RichHudFramework
 					UpdateMasking();
 				}
 				else if ((Config[StateID] & (uint)HudElementStates.IsMasked) > 0)
-					maskingBox = parentFull?.maskingBox;
+					MaskingBox = parentFull?.MaskingBox;
 				else
-					maskingBox = null;
+					MaskingBox = null;
 
 				// Check if masking results in no area
 				bool isDisjoint = false;
 
-				if ((Config[StateID] & (uint)HudElementStates.IsMasking) > 0 && maskingBox != null)
+				if ((Config[StateID] & (uint)HudElementStates.IsMasking) > 0 && MaskingBox != null)
 				{
 					Vector2 halfSize = CachedSize * .5f;
 					var bounds = new BoundingBox2(Position - halfSize, Position + halfSize);
 					isDisjoint =
-						(bounds.Max.X < maskingBox.Value.Min.X) ||
-						(bounds.Min.X > maskingBox.Value.Max.X) ||
-						(bounds.Max.Y < maskingBox.Value.Min.Y) ||
-						(bounds.Min.Y > maskingBox.Value.Max.Y);
+						(bounds.Max.X < MaskingBox.Value.Min.X) ||
+						(bounds.Min.X > MaskingBox.Value.Max.X) ||
+						(bounds.Max.Y < MaskingBox.Value.Min.Y) ||
+						(bounds.Min.Y > MaskingBox.Value.Max.Y);
 				}
 
 				if (isDisjoint)
@@ -355,8 +363,6 @@ namespace RichHudFramework
 
 					if (child != null && (child.Config[StateID] & (child.Config[VisMaskID])) == child.Config[VisMaskID])
 					{
-						child.Padding = child.Padding;
-
 						Vector2 childSize = child.UnpaddedSize + child.Padding;
 						DimAlignments sizeFlags = child.DimAlignment;
 
@@ -455,11 +461,11 @@ namespace RichHudFramework
 						halfParent + parentFull.Position
 					);
 
-					if (parentFull.maskingBox != null)
-						parentBox = parentBox.Value.Intersect(parentFull.maskingBox.Value);
+					if (parentFull.MaskingBox != null)
+						parentBox = parentBox.Value.Intersect(parentFull.MaskingBox.Value);
 				}
 				else
-					parentBox = parentFull?.maskingBox;
+					parentBox = parentFull?.MaskingBox;
 
 				if ((Config[StateID] & (uint)HudElementStates.IsMasking) > 0)
 				{
@@ -475,12 +481,13 @@ namespace RichHudFramework
 				else if (box == null)
 					box = parentBox;
 
-				maskingBox = box;
+				MaskingBox = box;
 			}
 
 			/// <summary>
 			/// Internal debugging method
 			/// </summary>
+			/// <exclude/>
 			protected override object GetOrSetApiMember(object data, int memberEnum)
 			{
 				switch ((HudElementAccessors)memberEnum)

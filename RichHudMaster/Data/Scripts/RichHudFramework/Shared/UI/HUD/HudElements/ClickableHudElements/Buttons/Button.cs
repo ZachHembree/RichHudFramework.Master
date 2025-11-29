@@ -3,10 +3,11 @@ using System;
 
 namespace RichHudFramework.UI
 {
-    /// <summary>
-    /// Clickable button with a textured background.
-    /// </summary>
-    public class Button : TexturedBox, IClickableElement
+	/// <summary>
+	/// Clickable button with a textured background.
+	/// <para>No styling by default; it's just a clickable <see cref="TexturedBox"/> with highlighting.</para>
+	/// </summary>
+	public class Button : TexturedBox, IClickableElement
     {
         /// <summary>
         /// Indicates whether or not the cursor is currently positioned over the button.
@@ -33,8 +34,14 @@ namespace RichHudFramework.UI
         /// </summary>
         public Color HighlightColor { get; set; }
 
+        /// <exclude/>
         protected readonly MouseInputElement _mouseInput;
-        protected Color lastBackgroundColor;
+
+		/// <summary>
+		/// Last background color used before highlighting
+		/// </summary>
+		/// <exclude/>
+		protected Color lastBackgroundColor;
 
         public Button(HudParentBase parent) : base(parent)
         {
@@ -45,14 +52,18 @@ namespace RichHudFramework.UI
             HighlightColor = new Color(125, 125, 125, 255);
             HighlightEnabled = true;
 
-			MouseInput.CursorEntered += CursorEnter;
-			MouseInput.CursorExited += CursorExit;
+			MouseInput.CursorEntered += OnCursorEnter;
+			MouseInput.CursorExited += OnCursorExit;
         }
 
         public Button() : this(null)
         { }
 
-        protected virtual void CursorEnter(object sender, EventArgs args)
+		/// <summary>
+		/// Handles highlighting when the cursor enters the button
+		/// </summary>
+		/// <exclude/>
+		protected virtual void OnCursorEnter(object sender, EventArgs args)
         {
             if (HighlightEnabled)
             {
@@ -61,7 +72,11 @@ namespace RichHudFramework.UI
             }
         }
 
-        protected virtual void CursorExit(object sender, EventArgs args)
+		/// <summary>
+		/// Resets highlighting when the cursor leaves the button
+		/// </summary>
+		/// <exclude/>
+		protected virtual void OnCursorExit(object sender, EventArgs args)
         {
             if (HighlightEnabled)
             {

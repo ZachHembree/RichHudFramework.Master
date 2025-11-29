@@ -8,13 +8,13 @@ namespace RichHudFramework.UI
 	using static NodeConfigIndices;
 
 	/// <summary>
-	/// A clickable box. Doesn't render any textures or text. Must be used in conjunction with other elements.
-	/// Events return the parent object, or InputOwner if specified.
+	/// Core mouse interaction component for clickable UI elements.
+	/// Handles cursor enter/exit, left/right clicks, tooltip registration, and automatic focus acquisition on click.
 	/// </summary>
 	public class MouseInputElement : HudElementBase, IMouseInput
 	{
 		/// <summary>
-		/// Element that owns this input, used for event callbacks.
+		/// UI element that owns the input, used for event callbacks.
 		/// </summary>
 		public IFocusHandler FocusHandler { get; protected set; }
 
@@ -138,23 +138,27 @@ namespace RichHudFramework.UI
 			RightReleased = null;
 		}
 
+		/// <summary>
+		/// Updates cursor hit testing for the element
+		/// </summary>
+		/// <exclude/>
 		protected override void InputDepth()
 		{
 			if (HudSpace.IsFacingCamera)
 			{
 				Vector3 cursorPos = HudSpace.CursorPos;
-				Vector2 halfSize = Vector2.Max(CachedSize, new Vector2(minMouseBounds)) * .5f;
+				Vector2 halfSize = Vector2.Max(CachedSize, new Vector2(MinMouseBounds)) * .5f;
 				BoundingBox2 box = new BoundingBox2(Position - halfSize, Position + halfSize);
 				bool mouseInBounds;
 
-				if (maskingBox == null)
+				if (MaskingBox == null)
 				{
 					mouseInBounds = box.Contains(new Vector2(cursorPos.X, cursorPos.Y)) == ContainmentType.Contains
 						|| (IsLeftClicked || IsRightClicked);
 				}
 				else
 				{
-					mouseInBounds = box.Intersect(maskingBox.Value).Contains(new Vector2(cursorPos.X, cursorPos.Y)) == ContainmentType.Contains
+					mouseInBounds = box.Intersect(MaskingBox.Value).Contains(new Vector2(cursorPos.X, cursorPos.Y)) == ContainmentType.Contains
 						|| (IsLeftClicked || IsRightClicked);
 				}
 
@@ -166,6 +170,10 @@ namespace RichHudFramework.UI
 			}
 		}
 
+		/// <summary>
+		/// Updates click input state and fires input events
+		/// </summary>
+		/// <exclude/>
 		protected override void HandleInput(Vector2 cursorPos)
 		{
 			FocusHandler = (Parent as IFocusableElement)?.FocusHandler;
