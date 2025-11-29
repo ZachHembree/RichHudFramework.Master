@@ -205,7 +205,7 @@ namespace RichHudFramework
 							{
 								UpdateGlyphs();
 
-								if (index.X < lineRange.X || index.X > lineRange.Y)
+								if (index.X <= lineRange.X || index.X >= lineRange.Y)
 								{
 									if (BuilderMode != TextBuilderModes.Unlined)
 										UpdateVerticalOffset(index.X);
@@ -235,7 +235,7 @@ namespace RichHudFramework
 						_textOffset.Y += VertCenterText ? _textSize.Y * .5f : _fixedSize.Y * .5f;
 						_textOffset.Y -= (_fixedSize.Y - line.UnscaledSize.Y);
 					}
-					else if (index < lineRange.X) // Scroll up
+					else
 					{
 						_textOffset.Y = -line._verticalOffset;
 						_textOffset.Y += VertCenterText ? _textSize.Y * .5f : _fixedSize.Y * .5f;
