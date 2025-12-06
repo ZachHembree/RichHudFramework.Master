@@ -165,6 +165,9 @@ namespace RichHudFramework
 						this.ReportExceptionFunc = owner?.ReportException ?? ExceptionHandler.ReportException;
 						IsPaused = owner?.GetIsPausedFunc?.Invoke() ?? ExceptionHandler.ClientsPaused;
 
+						if (IsPaused)
+							return;
+
 						if (ApiVersion >= (int)APIVersionTable.HudNodeHandleSupport)
 						{
 							if (RootNodeHandle != null)
@@ -191,6 +194,12 @@ namespace RichHudFramework
 
 						SubtreesUpdating = subtreeBuffers.Count;
 					}
+
+					public void ClearSubtrees(ObjectPool<FlatSubtree> bufferPool)
+					{
+						bufferPool.ReturnRange(subtreeBuffers);
+						subtreeBuffers.Clear();
+                    }
 
 					/// <summary>
 					/// Unregisters the client from HudMain

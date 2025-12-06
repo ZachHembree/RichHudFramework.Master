@@ -121,6 +121,7 @@ namespace RichHudFramework
 						return true;
 
 					bool success = false;
+					client.ClearSubtrees(treeManager.subtreePool);
 					success = treeManager.clients.Remove(client);
 					return success;
 				}
