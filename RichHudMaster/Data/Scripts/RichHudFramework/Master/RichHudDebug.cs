@@ -222,7 +222,7 @@ namespace RichHudFramework.Server
 
             if (EnableDebug && enableOverlay)
             {
-                var offset = HudMain.GetPixelVector(overlayPos) / HudMain.ResScale;
+                var offset = (overlayPos * HudMain.ScreenDimHighDPI);
 
                 if (offset.X < 0f)
                     offset.X += overlay.Size.X * .5f;

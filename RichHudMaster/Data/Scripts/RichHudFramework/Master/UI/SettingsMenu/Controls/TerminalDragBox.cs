@@ -46,8 +46,8 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public Vector2 BoxSize
         {
-            get { return HudMain.GetAbsoluteVector(window.Size); }
-            set { window.Size = HudMain.GetPixelVector(value); }
+            get { return window.Size / HudMain.ScreenDim; }
+            set { window.Size = value * HudMain.ScreenDim; }
         }
 
         private readonly BorderedButton openButton;
@@ -177,7 +177,7 @@ namespace RichHudFramework.UI.Server
 				base.Layout();
 
 				// Recalculate offset from last normalized position
-				Offset = HudMain.GetPixelVector(AbsolutePosition) / HudMain.ResScale - Origin - alignment;
+				Offset = (AbsolutePosition * HudMain.ScreenDimHighDPI) - Origin - alignment;
 			}
 
             protected override void HandleInput(Vector2 cursorPos)
@@ -194,7 +194,7 @@ namespace RichHudFramework.UI.Server
 					UpdateAlignment();
 
 					// Calculate next normalized position from last position
-					Vector2 nextPos = HudMain.GetAbsoluteVector((Position + alignment) * HudMain.ResScale);
+					Vector2 nextPos = ((Position + alignment) / HudMain.ScreenDim) * HudMain.ResScale;
 					nextPos = new Vector2((float)Math.Round(nextPos.X, 4), (float)Math.Round(nextPos.Y, 4));
 
 					AbsolutePosition = nextPos;

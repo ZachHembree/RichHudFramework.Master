@@ -142,6 +142,7 @@ namespace RichHudFramework
 			private Action<byte> LoseFocusCallback;
 			private Action LoseInputFocusCallback;
 			private byte unfocusedOffset;
+			private bool enableCursorTemp;
 
 			static HudMain()
 			{
@@ -187,10 +188,47 @@ namespace RichHudFramework
 				HighDpiRoot = null;
 			}
 
-			/// <summary>
-			/// Draw UI elements
-			/// </summary>
-			public override void Draw()
+            /// <summary>
+            /// Temporarily enables the cursor until the next frame.
+            /// </summary>
+            public static void EnableCursorTemp()
+            {
+                Instance.enableCursorTemp = true;
+            }
+
+            /// <summary>
+            /// Retrieves a overlay offset for layering a focused UI window and registers
+            /// a callback that will be invoked if another element gains focus, passing the new offset.
+            /// This helps manage UI overlap and depth sorting in 3D HUD space.
+            /// 
+            /// <para>Layering updates and callbacks are handled automatically in <see cref="WindowBase"/>.</para>
+            /// </summary>
+            public static byte GetFocusOffset(Action<byte> LoseFocusCallback)
+            {
+                return Instance.GetFocusOffsetInternal(LoseFocusCallback);
+            }
+
+            /// <summary>
+            /// Registers a callback for changes in input focus on UI elements. The callback is invoked
+            /// whenever another element (e.g., a game menu or different mod UI) takes input focus away
+            /// from the registered element.
+            /// 
+            /// <para>Input focus is typically handled automatically in <see cref="MouseInputElement"/> and 
+            /// standard library UI.</para>
+            /// </summary>
+            public static void GetInputFocus(IFocusHandler handler)
+            {
+                if (handler != null && Instance.LoseInputFocusCallback?.Target != handler)
+                {
+                    Instance.LoseInputFocusCallback?.Invoke();
+                    Instance.LoseInputFocusCallback = handler.ReleaseFocus;
+                }
+            }
+
+            /// <summary>
+            /// Draw UI elements
+            /// </summary>
+            public override void Draw()
 			{
 				EnqueueAction(() =>
 				{
@@ -294,31 +332,6 @@ namespace RichHudFramework
 				FovScale = (float)(0.1f * Math.Tan(Fov / 2d));
 			}
 
-			/// <summary>
-			/// Returns the ZOffset for focusing a window and registers a callback
-			/// for when another object takes focus.
-			/// </summary>
-			public static byte GetFocusOffset(Action<byte> LoseFocusCallback)
-			{
-				if (Instance == null)
-					Init();
-
-				return Instance.GetFocusOffsetInternal(LoseFocusCallback);
-			}
-
-			/// <summary>
-			/// Registers a callback for UI elements taking input focus. Callback
-			/// invoked when another element takes focus.
-			/// </summary>
-			public static void GetInputFocus(IFocusHandler handler)
-			{
-				if (handler != null && Instance.LoseInputFocusCallback?.Target != handler)
-				{
-					Instance.LoseInputFocusCallback?.Invoke();
-					Instance.LoseInputFocusCallback = handler.ReleaseFocus;
-				}
-			}
-
 			private void GetInputFocusInternal(Action LoseFocusCallback)
 			{
 				if (LoseFocusCallback != null && LoseInputFocusCallback?.Target != LoseFocusCallback.Target)
@@ -347,36 +360,6 @@ namespace RichHudFramework
 				}
 				else
 					return 0;
-			}
-
-			/// <summary>
-			/// Converts from a position in normalized screen space coordinates to a position in pixels.
-			/// </summary>
-			public static Vector2 GetPixelVector(Vector2 scaledVec)
-			{
-				if (Instance == null)
-					Init();
-
-				return new Vector2
-				(
-					(int)(scaledVec.X * ScreenWidth),
-					(int)(scaledVec.Y * ScreenHeight)
-				);
-			}
-
-			/// <summary>
-			/// Converts from a coordinate given in pixels to a position in normalized units.
-			/// </summary>
-			public static Vector2 GetAbsoluteVector(Vector2 pixelVec)
-			{
-				if (Instance == null)
-					Init();
-
-				return new Vector2
-				(
-					pixelVec.X / ScreenWidth,
-					pixelVec.Y / ScreenHeight
-				);
 			}
 
 			/// <summary>

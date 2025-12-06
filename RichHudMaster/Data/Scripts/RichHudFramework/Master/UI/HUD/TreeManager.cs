@@ -186,7 +186,7 @@ namespace RichHudFramework
 
 					float resScale = ResScale;
 
-					clients[0].EnableCursor = EnableCursor;
+					clients[0].EnableCursor = EnableCursor | Instance.enableCursorTemp;
 					Instance._cursor.DrawCursor = false;
 
 					for (int n = 0; n < clients.Count; n++)
@@ -250,6 +250,8 @@ namespace RichHudFramework
 				public void HandleInput()
 				{
 					RichHudStats.UI.Input.BeginTick();
+
+					Instance.enableCursorTemp = false;
 
 					// Invoke before input callbacks on clients
 					for (int n = 0; n < clients.Count; n++)
