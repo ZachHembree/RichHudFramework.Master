@@ -5,6 +5,9 @@ using VRageMath;
 
 namespace RichHudFramework.UI
 {
+	using Client;
+	using Server;
+
 	/// <summary>
 	/// Attaches custom control-bind (key/combo) event handling to a UI element.
 	/// Allows arbitrary <see cref="IBind"/> definitions to trigger NewPressed/PressedAndHeld/Released events
@@ -30,8 +33,21 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// If true, bind events will only fire when the parent element has input focus.
 		/// Default = false.
+		/// <para>Only applies if the parent/InputOwner implements <see cref="IFocusableElement"/>.</para>
 		/// </summary>
 		public bool IsFocusRequired { get; set; }
+
+        /// <summary>
+        /// If defined, bind events will only fire when the predicate returns true.
+        /// </summary>
+        public Func<bool> InputPredicate { get; set; }
+
+        /// <summary>
+        /// If set, the input groups indicated by the flags will be temporarily blocked 
+        /// until the BintInputElement is disabled. 
+        /// <para>Uses <see cref="BindManager.RequestTempBlacklist(SeBlacklistModes)"/>.</para>
+        /// </summary>
+        public SeBlacklistModes InputFilterFlags { get; set; }
 
 		/// <summary>
 		/// Internal Bind-EventProxy map
@@ -92,16 +108,24 @@ namespace RichHudFramework.UI
 			if (IsFocusRequired && !(FocusHandler?.HasFocus ?? false))
 				return;
 
+			if (!InputPredicate?.Invoke() ?? false)
+				return;
+
+			if (InputFilterFlags != SeBlacklistModes.None)
+				BindManager.RequestTempBlacklist(InputFilterFlags);
+
+			var owner = (object)(FocusHandler?.InputOwner) ?? Parent;
+
 			foreach (KeyValuePair<IBind, BindEventProxy> pair in binds)
 			{
 				if (pair.Key.IsNewPressed)
-					pair.Value.InvokeNewPressed(FocusHandler, EventArgs.Empty);
+					pair.Value.InvokeNewPressed(owner, EventArgs.Empty);
 
 				if (pair.Key.IsPressedAndHeld)
-					pair.Value.InvokePressedAndHeld(FocusHandler, EventArgs.Empty);
+					pair.Value.InvokePressedAndHeld(owner, EventArgs.Empty);
 
 				if (pair.Key.IsReleased)
-					pair.Value.InvokeReleased(FocusHandler, EventArgs.Empty);
+					pair.Value.InvokeReleased(owner, EventArgs.Empty);
 			}
 		}
 

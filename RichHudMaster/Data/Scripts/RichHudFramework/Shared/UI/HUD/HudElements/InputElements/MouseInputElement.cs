@@ -77,10 +77,16 @@ namespace RichHudFramework.UI
 		/// </summary>
 		public EventHandler RightReleasedCallback { set { RightReleased += value; } }
 
-		/// <summary>
-		/// Optional tooltip text shown when the element is moused over.
-		/// </summary>
-		public ToolTip ToolTip { get; set; }
+        /// <summary>
+        /// If true, the input element will temporarily show the cursor while it's enabled.
+		/// <para>Uses <see cref="HudMain.EnableCursorTemp"></see>.</para>
+        /// </summary>
+        public bool RequestCursor { get; set; }
+
+        /// <summary>
+        /// Optional tooltip text shown when the element is moused over.
+        /// </summary>
+        public ToolTip ToolTip { get; set; }
 
 		/// <summary>
 		/// Returns true if the element is currently being held down with the left mouse button.
@@ -177,19 +183,23 @@ namespace RichHudFramework.UI
 		protected override void HandleInput(Vector2 cursorPos)
 		{
 			FocusHandler = (Parent as IFocusableElement)?.FocusHandler;
+            var owner = (object)(FocusHandler?.InputOwner) ?? Parent;
 
-			if (IsMousedOver)
+			if (RequestCursor)
+				HudMain.EnableCursorTemp();
+
+            if (IsMousedOver)
 			{
 				if (!mouseCursorEntered)
 				{
 					mouseCursorEntered = true;
-					CursorEntered?.Invoke(FocusHandler?.InputOwner, EventArgs.Empty);
+					CursorEntered?.Invoke(owner, EventArgs.Empty);
 				}
 
 				if (SharedBinds.LeftButton.IsNewPressed)
 				{
 					FocusHandler?.GetInputFocus();
-					OnLeftClick();
+					LeftClick();
 				}
 				else
 					IsNewLeftClicked = false;
@@ -197,7 +207,7 @@ namespace RichHudFramework.UI
 				if (SharedBinds.RightButton.IsNewPressed)
 				{
 					FocusHandler?.GetInputFocus();
-					OnRightClick();
+					RightClick();
 				}
 				else
 					IsNewRightClicked = false;
@@ -210,7 +220,7 @@ namespace RichHudFramework.UI
 				if (mouseCursorEntered)
 				{
 					mouseCursorEntered = false;
-					CursorExited?.Invoke(FocusHandler?.InputOwner, EventArgs.Empty);
+					CursorExited?.Invoke(owner, EventArgs.Empty);
 				}
 
 				bool hasFocus = FocusHandler?.HasFocus ?? false;
@@ -224,7 +234,7 @@ namespace RichHudFramework.UI
 
 			if (!SharedBinds.LeftButton.IsPressed && IsLeftClicked)
 			{
-				LeftReleased?.Invoke(FocusHandler?.InputOwner, EventArgs.Empty);
+				LeftReleased?.Invoke(owner, EventArgs.Empty);
 				IsLeftReleased = true;
 				IsLeftClicked = false;
 			}
@@ -233,7 +243,7 @@ namespace RichHudFramework.UI
 
 			if (!SharedBinds.RightButton.IsPressed && IsRightClicked)
 			{
-				RightReleased?.Invoke(FocusHandler?.InputOwner, EventArgs.Empty);
+				RightReleased?.Invoke(owner, EventArgs.Empty);
 				IsRightReleased = true;
 				IsRightClicked = false;
 			}
@@ -244,9 +254,10 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Invokes left click event
 		/// </summary>
-		public virtual void OnLeftClick()
+		public virtual void LeftClick()
 		{
-			LeftClicked?.Invoke(FocusHandler?.InputOwner, EventArgs.Empty);
+            var owner = (object)(FocusHandler?.InputOwner) ?? Parent;
+            LeftClicked?.Invoke(owner, EventArgs.Empty);
 			IsLeftClicked = true;
 			IsNewLeftClicked = true;
 			IsLeftReleased = false;
@@ -255,9 +266,10 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Invokes right click event
 		/// </summary>
-		public virtual void OnRightClick()
+		public virtual void RightClick()
 		{
-			RightClicked?.Invoke(FocusHandler?.InputOwner, EventArgs.Empty);
+            var owner = (object)(FocusHandler?.InputOwner) ?? Parent;
+            RightClicked?.Invoke(owner, EventArgs.Empty);
 			IsRightClicked = true;
 			IsNewRightClicked = true;
 			IsRightReleased = false;

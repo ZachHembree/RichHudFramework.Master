@@ -7,7 +7,7 @@ using VRageMath;
 namespace RichHudFramework.UI
 {
 	using Client;
-	using Server;
+    using Server;
 
 	/// <summary>
 	/// Interactive, clickable text box with caret and highlighting. Text only, no background or
@@ -44,6 +44,11 @@ namespace RichHudFramework.UI
 		/// Used to restrict the range of characters allowed for input.
 		/// </summary>
 		public Func<char, bool> CharFilterFunc { get; set; }
+
+        /// <summary>
+        /// Index of the character currently selected by the caret.
+        /// </summary>
+        public Vector2I CaretPosition => Vector2I.Max(caret.CaretIndex, Vector2I.Zero);
 
 		/// <summary>
 		/// Index of the first character in the selected range.
@@ -107,22 +112,27 @@ namespace RichHudFramework.UI
 		{
 			FocusHandler = new InputFocusHandler(this)
 			{
-				GainedInputFocusCallback = OnGainFocus,
-				LostInputFocusCallback = OnLoseFocus
+				GainedInputFocusCallback = GainFocus,
+				LostInputFocusCallback = LoseFocus
 			};
 			_mouseInput = new MouseInputElement(this)
 			{
 				ShareCursor = true,
 				ZOffset = 1,
-				LeftClickedCallback = OnClearSelection
+				LeftClickedCallback = ClearSelection
 			};
 			_bindInput = new BindInputElement(this)
 			{
-				{ SharedBinds.Copy, OnCopyText },
-				{ SharedBinds.Cut, OnCutText },
-				{ SharedBinds.Paste, OnPasteText },
-				{ SharedBinds.SelectAll, OnSelectAllText },
-				{ SharedBinds.Escape, OnClearSelection }
+				InputPredicate = GetCanAllowInput,
+				InputFilterFlags = SeBlacklistModes.Chat,
+				CollectionInitializer = 
+				{
+                    { SharedBinds.Copy, CopyText },
+					{ SharedBinds.Cut, CutText },
+					{ SharedBinds.Paste, PasteText },
+					{ SharedBinds.SelectAll, SelectAllText },
+					{ SharedBinds.Escape, ClearSelection }
+                }
 			};
 
 			MouseInput = _mouseInput;
@@ -137,7 +147,7 @@ namespace RichHudFramework.UI
 				bgColor = ToolTip.OrangeWarningBG
 			};
 
-			TextBoard.TextChanged += OnTextChanged;
+			TextBoard.TextChanged += HandleTextChange;
 
 			EnableEditing = true;
 			EnableHighlighting = true;
@@ -182,13 +192,16 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Clears selected text range.
 		/// </summary>
-		public void ClearSelection() =>
-			selectionBox.ClearSelection();
+		public void ClearSelection()
+		{
+            selectionBox.ClearSelection();
+            isHighlighting = false;
+		}
 
 		/// <summary>
 		/// Marks a text change as pending invocation of the TextChanged event.
 		/// </summary>
-		protected virtual void OnTextChanged()
+		protected virtual void HandleTextChange()
 		{
 			if (TextChanged != null)
 				textUpdatePending = true;
@@ -208,7 +221,7 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Handles gaining input focus. Moves caret to end if configured to do so.
 		/// </summary>
-		protected virtual void OnGainFocus(object sender, EventArgs args)
+		protected virtual void GainFocus(object sender, EventArgs args)
 		{
 			if (MoveToEndOnGainFocus)
 				caret.SetPosition(int.MaxValue);
@@ -217,7 +230,7 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Handles losing input focus. Clears selection if configured to do so.
 		/// </summary>
-		protected virtual void OnLoseFocus(object sender, EventArgs args)
+		protected virtual void LoseFocus(object sender, EventArgs args)
 		{
 			if (ClearSelectionOnLoseFocus)
 				ClearSelection();
@@ -226,7 +239,7 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Copies the currently selected text to the clipboard if input is allowed and highlighting is enabled.
 		/// </summary>
-		protected virtual void OnCopyText(object sender, EventArgs args)
+		protected virtual void CopyText(object sender, EventArgs args)
 		{
 			if (EnableHighlighting && !selectionBox.Empty)
 			{
@@ -238,7 +251,7 @@ namespace RichHudFramework.UI
 		/// Cuts the currently selected text to the clipboard if input is allowed, editing is enabled, and highlighting is enabled.
 		/// Deletes the selection and adjusts the caret position accordingly.
 		/// </summary>
-		protected virtual void OnCutText(object sender, EventArgs args)
+		protected virtual void CutText(object sender, EventArgs args)
 		{
 			if (EnableEditing && !selectionBox.Empty && EnableHighlighting)
 			{
@@ -253,7 +266,7 @@ namespace RichHudFramework.UI
 		/// Pastes the clipboard text at the caret position if input is allowed and editing is enabled.
 		/// Replaces any existing selection and adjusts the caret position.
 		/// </summary>
-		protected virtual void OnPasteText(object sender, EventArgs args)
+		protected virtual void PasteText(object sender, EventArgs args)
 		{
 			if (EnableEditing)
 			{
@@ -278,7 +291,7 @@ namespace RichHudFramework.UI
 		/// Selects all text in the textbox if input is allowed and highlighting is enabled.
 		/// Moves the caret to the end and sets the full text range as the selection.
 		/// </summary>
-		protected virtual void OnSelectAllText(object sender, EventArgs args)
+		protected virtual void SelectAllText(object sender, EventArgs args)
 		{
 			if (EnableHighlighting)
 			{
@@ -292,13 +305,10 @@ namespace RichHudFramework.UI
 		/// <summary>
 		/// Handles clearing selection on left click or escape
 		/// </summary>
-		protected virtual void OnClearSelection(object sender, EventArgs args)
+		protected virtual void ClearSelection(object sender, EventArgs args)
 		{
 			if (EnableHighlighting)
-			{
-				isHighlighting = false;
-				selectionBox.ClearSelection();
-			}
+				ClearSelection();
 		}
 
 		/// <summary>
@@ -324,14 +334,14 @@ namespace RichHudFramework.UI
 		{
 			if (TextBoard.Count > 0 && TextBoard[caret.CaretIndex.X].Count > 0 && caret.CaretIndex != caretMin)
 			{
-				if (isHighlighting)
+                if (isHighlighting)
 					DeleteSelection();
 				else
 				{
 					ClearSelection();
 
-					if (caret.CaretIndex.Y >= 0)
-						TextBoard.RemoveAt(ClampIndex(caret.CaretIndex, TextBoard));
+                    if (caret.CaretIndex.Y >= 0)
+                        TextBoard.RemoveAt(ClampIndex(caret.CaretIndex, TextBoard));
 
 					caret.Move(new Vector2I(0, -1));
 				}
@@ -344,33 +354,31 @@ namespace RichHudFramework.UI
 		private void DeleteSelection()
 		{
 			if (!selectionBox.Empty)
-			{
 				TextBoard.RemoveRange(selectionBox.Start, selectionBox.End);
-				selectionBox.ClearSelection();
-			}
-		}
+
+            ClearSelection();
+        }
+
+		private bool GetCanAllowInput() =>
+			(allowInput || (FocusHandler.HasFocus && HudMain.InputMode == HudInputMode.Full));
 
 		/// <summary>
 		/// Updates the InputOpen state based on allowInput, focus, and enabled features.
 		/// </summary>
-		private void UpdateInputOpen()
-		{
-			bool useInput = allowInput || (FocusHandler.HasFocus && HudMain.InputMode == HudInputMode.Full);
-			InputOpen = useInput && (EnableHighlighting || EnableEditing);
-		}
+		private void UpdateInputOpen() =>
+			InputOpen = GetCanAllowInput() && (EnableHighlighting || EnableEditing);
 
 		/// <exclude/>
 		protected override void HandleInput(Vector2 cursorPos)
 		{
-			bool useInput = allowInput || (FocusHandler.HasFocus && HudMain.InputMode == HudInputMode.Full);
-			_bindInput.Visible = useInput;
+			bool useInput = GetCanAllowInput();
 
 			if (EnableEditing && MouseInput.IsMousedOver && HudMain.InputMode == HudInputMode.CursorOnly)
 				HudMain.Cursor.RegisterToolTip(warningToolTip);
 
 			// Editing
 			if (useInput && EnableEditing)
-				textInput.HandleInput();
+                textInput.HandleInput();
 
 			UpdateInputOpen();
 			caret.Visible = InputOpen;
@@ -405,10 +413,7 @@ namespace RichHudFramework.UI
 
 			// Stop highlighting
 			if (!canHighlight && lastCaretIndex != caret.CaretIndex)
-			{
-				isHighlighting = false;
-				selectionBox.ClearSelection();
-			}
+				ClearSelection();
 
 			lastCaretIndex = caret.CaretIndex;
 			selectionBox.Visible = isHighlighting;
@@ -558,12 +563,10 @@ namespace RichHudFramework.UI
 			/// <summary>
 			/// Sets the caret position based on the total character offset from the start of the text.
 			/// </summary>
-			public void SetPosition(int offset)
-			{
-				SetPosition(GetIndexFromOffset(offset));
-			}
+			public void SetPosition(int offset) =>
+                SetPosition(GetIndexFromOffset(offset));
 
-			protected override void Draw()
+            protected override void Draw()
 			{
 				if (ShowCaret)
 				{
@@ -835,10 +838,11 @@ namespace RichHudFramework.UI
 				if (text.Count > 0)
 				{
 					Vector2I caretIndex = caret.CaretIndex;
+					bool wasSelecting = selectionAnchor != -Vector2I.One;
 
-					// Set anchor on new selection
-					if (selectionAnchor == -Vector2I.One)
-						selectionAnchor = caretIndex;
+                    // Set anchor on new selection
+                    if (!wasSelecting)
+                        selectionAnchor = caretIndex;
 
 					bool isAfterAnchor;
 
@@ -852,23 +856,23 @@ namespace RichHudFramework.UI
 					// If the caret is after the anchor, anchor Start
 					if (isAfterAnchor)
 					{
-						Start = selectionAnchor;
+                        Start = selectionAnchor;
 						End = caretIndex;
-					}
+                    }
 					else
 					{
-						Start = caretIndex;
-						End = selectionAnchor;
+                        Start = caretIndex;
+						End = selectionAnchor;                       
+                    }
 
-						if (Start.Y < text[Start.X].Count - 1)
-							Start += new Vector2I(0, 1);
-					}
+                    if (Start.Y < text[Start.X].Count - 1)
+                        Start += new Vector2I(0, 1);
 
-					Start = ClampIndex(Start, text);
+                    Start = ClampIndex(Start, text);
 					End = ClampIndex(End, text);
-					selectionAnchor = ClampIndex(selectionAnchor, text);
 				}
-				else
+
+                else
 				{
 					Start = -Vector2I.One;
 					End = -Vector2I.One;
