@@ -101,16 +101,15 @@ namespace RichHudFramework
 						lastDepth = stack.depth;
 
 						uint[] config = stack.node[0].Item1;
-						var state = (HudElementStates)config[StateID];
-						var visMask = (HudElementStates)config[VisMaskID];
-						state |= HudElementStates.WasParentVisible;
-
 						var parent = (HudNodeDataHandle)stack.node[0].Item4;
 
-						// Propagate HUD Space Node pos func
-						if (parent != null && (state & HudElementStates.IsSpaceNode) == 0)
+						if (parent != null)
 						{
-							stack.node[0].Item2[0] = parent[0].Item2[0];
+                            config[StateID] |= (uint)HudElementStates.WasParentVisible;
+
+                            // Propagate HUD Space Node pos func
+                            if ((config[StateID] & (uint)HudElementStates.IsSpaceNode) == 0)
+								stack.node[0].Item2[0] = parent[0].Item2[0];
 						}
 
 						// Update combined ZOffset for layer sorting
@@ -232,7 +231,7 @@ namespace RichHudFramework
 						nodeCount++;
 
 						// Check visibility
-						if ((state & visMask) == visMask)
+						if ((config[StateID] & config[VisMaskID]) == config[VisMaskID])
 						{
 							config[StateID] &= ~(uint)HudElementStates.IsInactiveLeaf;
 
@@ -275,7 +274,7 @@ namespace RichHudFramework
 					return nodeCount;
 				}
 
-				public void UpdateNodeSizing(List<FlatSubtree> subtrees)
+				public void UpdateNodeMeasure(List<FlatSubtree> subtrees)
 				{
 					for (int i = subtrees.Count - 1; i >= 0; i--)
 					{
@@ -291,10 +290,10 @@ namespace RichHudFramework
 							if (config != null)
 							{
 								var flags = (HudElementStates)config[StateID];
-								var visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags;
+                                var visMask = (HudElementStates)config[VisMaskID] | nodeReadyFlags;
 
-								// Check visibility
-								needsUpdate = (flags & visMask) == visMask;
+                                // Check visibility
+                                needsUpdate = (flags & visMask) == visMask;
 							}
 
 							// Update sizing if needed
@@ -329,7 +328,6 @@ namespace RichHudFramework
 						for (int j = 0; j < active.Hooks.LayoutActions.Count; j++)
 						{
 							NodeState state = (subtree.StateData.Count != 0) ? subtree.StateData[j] : default(NodeState);
-							IReadOnlyList<uint> parentConfig = state.ParentConfig;
 							uint[] config = state.Config;
 							bool needsUpdate = true;
 
@@ -374,17 +372,16 @@ namespace RichHudFramework
 								}
 							}
 
-							// Propagate flags after layout
 							if (config != null)
 							{
-								if (parentConfig != null)
+                                IReadOnlyList<uint> parentConfig = state.ParentConfig;
+
+                                if (parentConfig != null)
 								{
 									var parentState = (HudElementStates)parentConfig[StateID];
 									var parentVisMask = (HudElementStates)parentConfig[VisMaskID];
 									var parentInputMask = (HudElementStates)parentConfig[InputMaskID];
 
-									// Parent visibility flags need to propagate in top-down order, meaning they can only be evaluated
-									// during Layout/Arrange, but Layout should not run without UpdateSize. They need to be delayed.
 									if ((parentState & parentVisMask) == parentVisMask)
 										config[StateID] |= (uint)HudElementStates.WasParentVisible;
 									else

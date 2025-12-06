@@ -204,7 +204,7 @@ namespace RichHudFramework
 						subtree.ResetCounters();
 
 					// Sizing - vID 13+ only
-					nodeIterator.UpdateNodeSizing(activeSubtrees);
+					nodeIterator.UpdateNodeMeasure(activeSubtrees);
 
 					// Older clients (1.0.3-) node spaces require layout refreshes to function
 					// Flag no longer used for vID 13+ (1.3+).
