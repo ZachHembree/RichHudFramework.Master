@@ -188,9 +188,6 @@ namespace RichHudFramework
 
                 protected override void HandleInput(Vector2 cursorPos)
                 {
-                    if (HudMain.InputMode == HudInputMode.Full)
-                        BindManager.RequestTempBlacklist(SeBlacklistModes.Chat);
-
                     if (MyAPIGateway.Gui.IsCursorVisible)
                         CloseMenu();
 

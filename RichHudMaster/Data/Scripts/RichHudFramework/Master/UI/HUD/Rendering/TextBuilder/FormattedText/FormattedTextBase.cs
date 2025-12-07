@@ -107,32 +107,37 @@ namespace RichHudFramework.UI.Rendering.Server
             /// <summary>
             /// Removes characters within a specified range.
             /// </summary>
+            /// <param name="start">X = line; Y = ch</param>
             public virtual void RemoveRange(Vector2I start, Vector2I end)
             {
                 if (start.X < lines.Count && lines.PooledLines[start.X].Count > 0)
                 {
-                    if (end.X > start.X)
+                    if (end.X > start.X) // Multi-line removal
                     {
-                        if (end.Y == (lines.PooledLines[end.X].Count - 1))
-                            lines.RemoveAt(end.X);
-                        else
-                        {
-                            lines.PooledLines[end.X].RemoveRange(0, lines.PooledLines[end.X].Count - end.Y);
-                            lines.PooledLines[end.X].UpdateSize();
-                        }
+                        int prefixCount = end.Y + 1;
 
-                        if (start.X + 1 < end.X)
-                            lines.RemoveRange(start.X + 1, end.X - start.X - 1);
+                        if (prefixCount > lines.PooledLines[end.X].Count)
+                            prefixCount = lines.PooledLines[end.X].Count;
 
-                        if (start.X > 0)
-                            lines.RemoveAt(start.X);
-                        else
+                        lines.PooledLines[end.X].RemoveRange(0, prefixCount);
+                        lines.PooledLines[end.X].UpdateSize();
+
+                        // Start Line
+                        int suffixCount = lines.PooledLines[start.X].Count - start.Y;
+
+                        if (suffixCount > 0)
                         {
-                            lines.PooledLines[start.X].RemoveRange(start.Y, lines.PooledLines[start.X].Count - start.Y);
+                            lines.PooledLines[start.X].RemoveRange(start.Y, suffixCount);
                             lines.PooledLines[start.X].UpdateSize();
                         }
+
+                        // 3. Remove middle
+                        int linesToRemove = end.X - start.X - 1;
+
+                        if (linesToRemove > 0)
+                            lines.RemoveRange(start.X + 1, linesToRemove);
                     }
-                    else
+                    else // One line removal
                     {
                         if (start.X > 0 && start.Y == 0 && end.Y == (lines.PooledLines[start.X].Count - 1))
                             lines.RemoveAt(start.X);
