@@ -414,8 +414,7 @@ namespace RichHudFramework
 						if (_builderMode == TextBuilderModes.Wrapped)
 							base.SetWrapWidth(_fixedSize.X);
 
-						if (!AutoResize)
-							UpdateGlyphs();
+						UpdateGlyphs();
 
 						// Update bb data cache
 						if (isBbCacheStale)
@@ -428,11 +427,6 @@ namespace RichHudFramework
 							BillBoardUtils.AddTriangleData(bbCache, textMatrixRef);
 						else
 							BillBoardUtils.AddTriangleData(bbCache, matrixRef);
-
-						// If self-resizing, then defer glyph updates to allow the rest of the UI
-						// time to catch up
-						if (AutoResize)
-							UpdateGlyphs();
 
 						// Invoke update callback
 						if (isUpdateEventPending && (eventTimer.ElapsedTicks / TimeSpan.TicksPerMillisecond) > TextChangeEventPeriodMS)
