@@ -1,15 +1,10 @@
 using RichHudFramework.Internal;
-using RichHudFramework.IO;
 using RichHudFramework.UI;
-using RichHudFramework.UI.Rendering;
 using Sandbox.ModAPI;
 using System;
-using System.Reflection;
 using System.Collections.Generic;
 using VRage;
-using VRage.Game;
 using VRage.Game.Components;
-using VRage.Game.ModAPI;
 using VRageMath;
 using ApiMemberAccessor = System.Func<object, int, object>;
 using ClientData = VRage.MyTuple<string, System.Action<int, object>, System.Action, int>;
@@ -19,8 +14,7 @@ namespace RichHudFramework.Server
 {
     using UI.Rendering.Server;
     using UI.Server;
-	using VRage.ModAPI;
-	using ExtendedClientData = MyTuple<ClientData, Action<Action>, ApiMemberAccessor>;
+    using ExtendedClientData = MyTuple<ClientData, Action<Action>, ApiMemberAccessor>;
     using MasterMessage = MyTuple<object, byte, object>; // { object sender, queryTypeEnum, object message }
     using MasterRegData = MyTuple<MasterVersionData, Action<object>>; // { Name, ModID, ApiVID, VersionID, Callback(object) }
     using SetVersionFunc = Action<MyTuple<MasterVersionData, Action<object>>>;
@@ -41,17 +35,17 @@ namespace RichHudFramework.Server
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
     public sealed partial class RichHudMaster : ModBase
     {
-        public const long 
-            modID = 1965654081, 
+        public const long
+            modID = 1965654081,
             queueID = 1314086443;
-        public const int 
-            apiVID = (int)APIVersionTable.Latest, 
+        public const int
+            apiVID = (int)APIVersionTable.Latest,
             minApiVID = (int)APIVersionTable.Version1Base;
-        public const string 
+        public const string
             modName = "Rich HUD Master";
-        public static readonly Vector4I 
-            versionID = new Vector4I(1, 3, 1, 1); // Major, Minor, Rev, Hotfix
-        public static readonly string 
+        public static readonly Vector4I
+            versionID = new Vector4I(1, 3, 2, 0); // Major, Minor, Rev, Hotfix
+        public static readonly string
             versionString = $"{versionID.X}.{versionID.Y}.{versionID.Z}.{versionID.W} ({apiVID})";
 
         class MasterRegEntry
@@ -139,7 +133,7 @@ namespace RichHudFramework.Server
         private readonly List<ModClient> clients;
         private TerminalPageCategory demoCategory;
         private ICommandGroup _commands;
-        
+
         public RichHudMaster() : base(true, true)
         {
             if (Instance == null)
@@ -158,7 +152,7 @@ namespace RichHudFramework.Server
             versionPriorityList = new List<MasterRegEntry>();
             hasPriority = false;
 
-			clients = new List<ModClient>();
+            clients = new List<ModClient>();
         }
 
         protected override void AfterLoadData()
@@ -212,7 +206,7 @@ namespace RichHudFramework.Server
                     {
                         // Build list of RHM versions to prioritize and inform them of the instance handling negotiation
                         case ModQueryTypes.RegisterInstance:
-                        {
+                            {
                                 if (!hasPriority)
                                 {
                                     var instanceVersion = (MasterRegData)msg.Item3;
@@ -230,7 +224,7 @@ namespace RichHudFramework.Server
                                     RegCallback(response);
                                 }
                                 break;
-                        }
+                            }
                         // Retrieve final prioritized instance and/or transfer priority
                         case ModQueryTypes.GetPriorityInstance:
                             {
@@ -475,12 +469,12 @@ namespace RichHudFramework.Server
         public override void BeforeClose()
         {
             if (hasPriority)
-            {           
+            {
                 MasterConfig.Save();
             }
 
-			UnregisterVersionHandler();
-			UnregisterMessageHandler();
+            UnregisterVersionHandler();
+            UnregisterMessageHandler();
             MasterConfig.ClearSubscribers();
 
             if (ExceptionHandler.Reloading)
@@ -495,7 +489,7 @@ namespace RichHudFramework.Server
         public override void Close()
         {
             base.Close();
-			Instance = null;
-		}
+            Instance = null;
+        }
     }
 }
