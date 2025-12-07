@@ -58,7 +58,7 @@ namespace RichHudFramework.UI.Server
         /// <summary>
         /// Value currently set on the slider.
         /// </summary>
-        public override float Value { get { return sliderBox.Current; } set { sliderBox.Current = value; } }
+        public override float Value { get { return sliderBox.Value; } set { sliderBox.Value = value; } }
 
         /// <summary>
         /// Current slider value expreseed as a percentage between the min and maximum values.

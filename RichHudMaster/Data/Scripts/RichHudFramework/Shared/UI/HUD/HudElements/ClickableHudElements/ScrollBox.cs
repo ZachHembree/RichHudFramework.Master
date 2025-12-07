@@ -37,7 +37,7 @@ namespace RichHudFramework.UI
                 if (value != _intStart)
                 {
                     _intStart = MathHelper.Clamp(value, 0, hudCollectionList.Count - 1);
-                    ScrollBar.Current = GetMinScrollOffset(_intStart, false);
+                    ScrollBar.Value = GetMinScrollOffset(_intStart, false);
                 }
             }
         }
@@ -54,7 +54,7 @@ namespace RichHudFramework.UI
                 if (value != _intEnd)
                 {
                     _intEnd = MathHelper.Clamp(value, 0, hudCollectionList.Count - 1);
-                    ScrollBar.Current = GetMinScrollOffset(_intEnd, true);
+                    ScrollBar.Value = GetMinScrollOffset(_intEnd, true);
                 }
             }
         }
@@ -278,9 +278,9 @@ namespace RichHudFramework.UI
                 if (UseSmoothScrolling)
                 {
                     if (SharedBinds.MousewheelUp.IsPressed)
-                        ScrollBar.Current -= hudCollectionList[_intEnd].Element.Size[alignAxis] + Spacing;
+                        ScrollBar.Value -= hudCollectionList[_intEnd].Element.Size[alignAxis] + Spacing;
                     else if (SharedBinds.MousewheelDown.IsPressed)
-                        ScrollBar.Current += hudCollectionList[_intStart].Element.Size[alignAxis] + Spacing;
+                        ScrollBar.Value += hudCollectionList[_intStart].Element.Size[alignAxis] + Spacing;
                 }
                 else
                 {
@@ -484,7 +484,7 @@ namespace RichHudFramework.UI
             ScrollBar.Max = (float)Math.Round(Math.Max(totalEnabledLength - maxLength, 0f), 6);
 
             // Calculate chain layout offset
-            float scrollCurrent = ScrollBar.Current,
+            float scrollCurrent = ScrollBar.Value,
                 epsilon = 1E-3f,
                 viewTop = scrollCurrent,
                 viewBottom = scrollCurrent + maxLength - epsilon;
@@ -623,7 +623,7 @@ namespace RichHudFramework.UI
 
             // 3a. Find the logical END of the visible range
             // Start with the scroll position offset by the view length.
-            float currentScroll = ScrollBar.Current;
+            float currentScroll = ScrollBar.Value;
             float relativePos = (float)Math.Round(-currentScroll - maxLength, 5);
 
             for (int i = 0; i < hudCollectionList.Count; i++)

@@ -53,7 +53,7 @@ namespace RichHudFramework.UI.Server
             textElement = new NamedTextField();
             SetElement(textElement);
 
-            textElement.textField.TextChanged += OnTextFieldChanged;
+            textElement.textField.ValueChanged += OnTextFieldChanged;
         }
 
         public override void Update()

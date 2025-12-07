@@ -38,7 +38,7 @@ namespace RichHudFramework
                 {
                     get
                     {
-                        var selection = treeBox.Selection;
+                        var selection = treeBox.Value;
 
                         if (selection != null)
                         {
@@ -57,7 +57,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Currently selected <see cref="TerminalPageCategoryBase"/>.
                 /// </summary>
-                public TerminalPageCategoryBase SelectedSubcategory => treeBox.Selection as TerminalPageCategoryBase;
+                public TerminalPageCategoryBase SelectedSubcategory => treeBox.Value as TerminalPageCategoryBase;
 
                 /// <summary>
                 /// Page subcategories attached to the mod root

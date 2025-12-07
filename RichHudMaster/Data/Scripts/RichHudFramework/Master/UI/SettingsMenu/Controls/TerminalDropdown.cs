@@ -89,7 +89,7 @@ namespace RichHudFramework.UI.Server
             /// <summary>
             /// Currently selected list member.
             /// </summary>
-            public ListBoxEntry<T> Selection => dropdown.Selection;
+            public ListBoxEntry<T> Selection => dropdown.Value;
 
             public readonly Dropdown<T> dropdown;
 

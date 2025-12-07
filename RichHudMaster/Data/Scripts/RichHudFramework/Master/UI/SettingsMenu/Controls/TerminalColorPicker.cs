@@ -14,7 +14,7 @@ namespace RichHudFramework.UI.Server
         /// </summary>
         public override string Name { get { return colorPicker.NameBuilder.ToString(); } set { colorPicker.NameBuilder.SetText(value); } }
 
-        public override Color Value { get { return colorPicker.Color; } set { colorPicker.Color = value; } }
+        public override Color Value { get { return colorPicker.Value; } set { colorPicker.Value = value; } }
 
         /// <summary>
         /// Used to periodically update the value associated with the control. Optional.

@@ -62,7 +62,7 @@ namespace RichHudFramework
                     };
 
                     // Instance list
-                    instanceList = new ListBox<TestWindowNode>() { SelectionChangedCallback = UpdateSelection };
+                    instanceList = new ListBox<TestWindowNode>() { UpdateValueCallback = UpdateSelection };
                     removeButton = new BorderedButton() 
                     { 
                         Text = "Remove", Padding = Vector2.Zero,
@@ -105,7 +105,7 @@ namespace RichHudFramework
 						UpdateValueCallback = (obj, args) => 
                         { 
                             var slider = obj as NamedSliderBox; 
-                            slider.ValueText = $"{slider.Current:G5}"; 
+                            slider.ValueText = $"{slider.Value:G5}"; 
                         }
 					};
 					yAxisBar = new NamedSliderBox() 
@@ -116,7 +116,7 @@ namespace RichHudFramework
 						UpdateValueCallback = (obj, args) =>
 						{
 							var slider = obj as NamedSliderBox;
-							slider.ValueText = $"{slider.Current:G5}";
+							slider.ValueText = $"{slider.Value:G5}";
 						}
 					};
 					zAxisBar = new NamedSliderBox() 
@@ -127,7 +127,7 @@ namespace RichHudFramework
 						UpdateValueCallback = (obj, args) =>
 						{
 							var slider = obj as NamedSliderBox;
-							slider.ValueText = $"{slider.Current:G5}";
+							slider.ValueText = $"{slider.Value:G5}";
 						}
 					};
                     angleBar = new NamedSliderBox() 
@@ -135,7 +135,7 @@ namespace RichHudFramework
                         Name = "Angle", 
                         MouseInput = { ToolTip = "Rotation around the axis, seen above, from -pi to +pi" },
                         Padding = new Vector2(40f, 0f), Min = -(float)(Math.PI), Max = (float)(Math.PI),
-						UpdateValueCallback = (obj, args) => { angleBar.ValueText = $"{angleBar.Current:G5} rad"; }
+						UpdateValueCallback = (obj, args) => { angleBar.ValueText = $"{angleBar.Value:G5} rad"; }
 					};
 
                     transformCol1 = new HudChain(true)
@@ -156,7 +156,7 @@ namespace RichHudFramework
 						UpdateValueCallback = (obj, args) =>
 						{
 							var slider = obj as NamedSliderBox;
-							slider.ValueText = $"{slider.Current:P1}";
+							slider.ValueText = $"{slider.Value:P1}";
 						}
 					};
                     xPosBar = new NamedSliderBox() 
@@ -167,7 +167,7 @@ namespace RichHudFramework
 						UpdateValueCallback = (obj, args) =>
 						{
 							var slider = obj as NamedSliderBox;
-							slider.ValueText = $"{slider.Current:G5}m";
+							slider.ValueText = $"{slider.Value:G5}m";
 						}
 					};
                     yPosBar = new NamedSliderBox() 
@@ -178,7 +178,7 @@ namespace RichHudFramework
 						UpdateValueCallback = (obj, args) =>
 						{
 							var slider = obj as NamedSliderBox;
-							slider.ValueText = $"{slider.Current:G5}m";
+							slider.ValueText = $"{slider.Value:G5}m";
 						}
 					};
                     zPosBar = new NamedSliderBox() 
@@ -189,7 +189,7 @@ namespace RichHudFramework
 						UpdateValueCallback = (obj, args) =>
 						{
 							var slider = obj as NamedSliderBox;
-							slider.ValueText = $"{slider.Current:G5}mm";
+							slider.ValueText = $"{slider.Value:G5}mm";
 						}
 					};
 
@@ -231,21 +231,21 @@ namespace RichHudFramework
                     UpdateInstanceNames();
 
                     // Update matrix transform based on input
-                    if (instanceList.Selection != null)
+                    if (instanceList.Value != null)
                     {
-                        CamSpaceNode node = instanceList.Selection.AssocMember.cameraNode;
+                        CamSpaceNode node = instanceList.Value.AssocMember.cameraNode;
 
                         // Scale
-                        node.IsScreenSpace = screenSpaceToggle.IsBoxChecked;
-                        node.UseResScaling = resScaleToggle.IsBoxChecked;
-                        node.PlaneScale = scaleBar.Current;
+                        node.IsScreenSpace = screenSpaceToggle.Value;
+                        node.UseResScaling = resScaleToggle.Value;
+                        node.PlaneScale = scaleBar.Value;
 
                         // Rotation
-                        node.RotationAxis = new Vector3(xAxisBar.Current, yAxisBar.Current, zAxisBar.Current);
-                        node.RotationAngle = angleBar.Current;
+                        node.RotationAxis = new Vector3(xAxisBar.Value, yAxisBar.Value, zAxisBar.Value);
+                        node.RotationAngle = angleBar.Value;
 
                         // Translation
-                        node.TransformOffset = new Vector3D(xPosBar.Current, yPosBar.Current, zPosBar.Current * 1E-3f);
+                        node.TransformOffset = new Vector3D(xPosBar.Value, yPosBar.Value, zPosBar.Value * 1E-3f);
                     }
                 }
 
@@ -274,25 +274,25 @@ namespace RichHudFramework
                 /// </summary>
                 private void UpdateSelection(object sender, EventArgs args)
                 {
-                    if (instanceList.Selection != null)
+                    if (instanceList.Value != null)
                     {
-                        CamSpaceNode node = instanceList.Selection.AssocMember.cameraNode;
+                        CamSpaceNode node = instanceList.Value.AssocMember.cameraNode;
 
                         // Scale
-                        screenSpaceToggle.IsBoxChecked = node.IsScreenSpace;
-                        resScaleToggle.IsBoxChecked = node.UseResScaling;
-                        scaleBar.Current = (float)node.PlaneScale;
+                        screenSpaceToggle.Value = node.IsScreenSpace;
+                        resScaleToggle.Value = node.UseResScaling;
+                        scaleBar.Value = (float)node.PlaneScale;
 
                         // Rotation
-                        angleBar.Current = node.RotationAngle;
-                        xAxisBar.Current = node.RotationAxis.X;
-                        yAxisBar.Current = node.RotationAxis.Y;
-                        zAxisBar.Current = node.RotationAxis.Z;
+                        angleBar.Value = node.RotationAngle;
+                        xAxisBar.Value = node.RotationAxis.X;
+                        yAxisBar.Value = node.RotationAxis.Y;
+                        zAxisBar.Value = node.RotationAxis.Z;
 
                         // Translation
-                        xPosBar.Current = (float)node.TransformOffset.X;
-                        yPosBar.Current = (float)node.TransformOffset.Y;
-                        zPosBar.Current = (float)node.TransformOffset.Z * 1E3f;
+                        xPosBar.Value = (float)node.TransformOffset.X;
+                        yPosBar.Value = (float)node.TransformOffset.Y;
+                        zPosBar.Value = (float)node.TransformOffset.Z * 1E3f;
                     }
                 }
 
@@ -302,16 +302,16 @@ namespace RichHudFramework
                 /// </summary>
                 private void InstantiateSelectedType(object sender, EventArgs args)
                 {
-                    if (typeList.Selection != null)
+                    if (typeList.Value != null)
                     {
-                        DemoElements selection = typeList.Selection.AssocMember;
+                        DemoElements selection = typeList.Value.AssocMember;
                         var testElement = new TestWindowNode(selection);
 
                         demoRoot.Add(testElement);
                         instanceList.Add($"[#{instanceList.EntryList.Count}] {selection}", testElement);
 
                         // If selection is empty set selection to new element
-                        if (instanceList.Selection == null)
+                        if (instanceList.Value == null)
                             instanceList.SetSelection(testElement);
                     }
                 }
@@ -321,9 +321,9 @@ namespace RichHudFramework
                 /// </summary>
                 private void RemoveSelectedInstance(object sender, EventArgs args)
                 {
-                    if (instanceList.Selection != null)
+                    if (instanceList.Value != null)
                     {
-                        ListBoxEntry<TestWindowNode> selection = instanceList.Selection;
+                        ListBoxEntry<TestWindowNode> selection = instanceList.Value;
                         TestWindowNode testNode = selection.AssocMember;
                         var instanceCollection = instanceList.EntryChain;
 

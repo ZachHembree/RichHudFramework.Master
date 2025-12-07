@@ -220,7 +220,7 @@ namespace RichHudFramework
                     // Update maximum scroll range
                     verticalScroll.Max = Math.Max(0f, board.TextSize.Y - board.Size.Y);
                     // Set scroll offset to current text offset
-                    verticalScroll.Current = board.TextOffset.Y;
+                    verticalScroll.Value = board.TextOffset.Y;
                     verticalScroll.VisiblePercent = (board.Size.Y / board.TextSize.Y);
                 }
 
@@ -234,7 +234,7 @@ namespace RichHudFramework
                 {
                     ITextBoard board = textBox.TextBoard;
                     // Set text offset to current scroll offset
-                    board.TextOffset = new Vector2(board.TextOffset.X, verticalScroll.Current);
+                    board.TextOffset = new Vector2(board.TextOffset.X, verticalScroll.Value);
                 }
 
                 private void ScrollUp(object sender, EventArgs args)
