@@ -66,7 +66,8 @@ namespace RichHudFramework.UI.Server
             window = new DragWindow(Update)
             {
                 Size = new Vector2(300f, 250f),
-                Visible = false
+                Visible = false,
+                MouseInput = { RequestCursor = true }
             };
 
             openButton.MouseInput.LeftClicked += Open;
@@ -83,7 +84,6 @@ namespace RichHudFramework.UI.Server
         private void Open(object sender, EventArgs args)
         {
             RichHudTerminal.CloseMenu();
-            HudMain.EnableCursor = true;
             window.Visible = true;
             window.GetWindowFocus();
         }

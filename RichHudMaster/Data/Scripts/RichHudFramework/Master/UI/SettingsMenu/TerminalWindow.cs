@@ -115,9 +115,9 @@ namespace RichHudFramework
                     MasterBinds.ToggleTerminalOld.NewPressed += (sender, args) => { if(MyAPIGateway.Gui.ChatEntryVisible) ToggleMenu(); };
                     MasterBinds.ToggleTerminal.NewPressed += (sender, args) => ToggleMenu();
 
+                    MouseInput.RequestCursor = true;
                     BodyColor = new Color(37, 46, 53);
                     BorderColor = new Color(84, 98, 107);
-
                     MinimumSize = new Vector2(1044f, 500f);
                     Size = new Vector2(1044f, 850f);
 
@@ -163,7 +163,6 @@ namespace RichHudFramework
                     if (!Visible)
                     {
                         Visible = true;
-                        HudMain.EnableCursor = true;
 						GetWindowFocus();
                     }
                 }
@@ -176,7 +175,6 @@ namespace RichHudFramework
                     if (Visible)
                     {
                         Visible = false;
-                        HudMain.EnableCursor = false;
                     }
                 }
 
