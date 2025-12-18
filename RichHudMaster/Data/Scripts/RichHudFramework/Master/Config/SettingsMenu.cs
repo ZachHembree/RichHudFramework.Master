@@ -1,12 +1,6 @@
 ﻿using RichHudFramework.Internal;
 using RichHudFramework.UI;
 using RichHudFramework.UI.Server;
-using RichHudFramework;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using VRage;
-using VRageMath;
 
 namespace RichHudFramework.Server
 {
@@ -18,7 +12,7 @@ namespace RichHudFramework.Server
             var debugCategory = RichHudDebug.GetDebugCategory();
 
             RichHudTerminal.Root.Enabled = true;
-            RichHudTerminal.Root.AddRange(new IModRootMember[] 
+            RichHudTerminal.Root.AddRange(new IModRootMember[]
             {
                 new RebindPage()
                 {
@@ -29,8 +23,8 @@ namespace RichHudFramework.Server
                 debugCategory
             });
 
-            _commands["toggleDebug"].CommandInvoked += x => 
-            { 
+            _commands["toggleDebug"].CommandInvoked += x =>
+            {
                 demoCategory.Enabled = RichHudDebug.EnableDebug;
                 debugCategory.Enabled = RichHudDebug.EnableDebug;
             };
@@ -47,7 +41,7 @@ namespace RichHudFramework.Server
                         {
                             HeaderText = "ControlCategory",
                             SubheaderText = "Contains terminal controls grouped into ControlTiles",
-                            TileContainer = 
+                            TileContainer =
                             {
                                 new ControlTile()
                                 {

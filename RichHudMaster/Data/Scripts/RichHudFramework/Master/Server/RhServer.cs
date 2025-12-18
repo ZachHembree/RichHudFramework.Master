@@ -1,11 +1,8 @@
-﻿using RichHudFramework;
-using RichHudFramework.UI;
-using RichHudFramework.Internal;
+﻿using RichHudFramework.Internal;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using VRage;
-using VRage.ModAPI;
 using SecureMsgHandler = System.Action<ushort, byte[], ulong, bool>;
 
 namespace RichHudFramework.Server
@@ -86,7 +83,7 @@ namespace RichHudFramework.Server
                 else
                     throw new Exception($"Callback missing for {actionID}");
             }
-            
+
             instance.clientOutgoing.Add(new ServerMessage(actionID, message, callbackID));
         }
 
@@ -240,7 +237,7 @@ namespace RichHudFramework.Server
                     if (id != 0 && Utils.ProtoBuf.TryDeserialize(message.Item2.message, out blacklistMessage) == null)
                     {
                         BlacklistManager.SetBlacklist(id, blacklistMessage.blacklist, blacklistMessage.value);
-                    }                    
+                    }
                 }
             }
         }

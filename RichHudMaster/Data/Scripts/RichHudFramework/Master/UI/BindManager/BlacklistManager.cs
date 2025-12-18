@@ -1,18 +1,6 @@
-﻿using RichHudFramework.Internal;
-using RichHudFramework.UI;
+﻿using ProtoBuf;
+using RichHudFramework.Internal;
 using Sandbox.Game;
-using Sandbox.ModAPI;
-using System;
-using System.Diagnostics;
-using System.Collections.Generic;
-using VRage;
-using VRage.Input;
-using VRage.Utils;
-using VRage.Game;
-using VRage.Game.ModAPI;
-using VRageMath;
-using ProtoBuf;
-using IMyControllableEntity = VRage.Game.ModAPI.Interfaces.IMyControllableEntity;
 
 namespace RichHudFramework.Server
 {
@@ -55,7 +43,7 @@ namespace RichHudFramework.Server
     }
 
     [ProtoContract]
-    internal struct BlacklistMessage 
+    internal struct BlacklistMessage
     {
         [ProtoMember(1)]
         public string[] blacklist;
