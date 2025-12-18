@@ -114,10 +114,18 @@ namespace RichHudFramework
 			{
 				if (color == default(Color))
 					color = Color.Black;
-				if (font == null)
-					font = FontManager.GetFont(FontManager.Default.X);
 
-				Data = new GlyphFormatMembers((byte)alignment, textSize, font.GetStyleIndex(style), color);
+				if (font == null && style == FontStyles.Regular)
+				{
+                    Data = new GlyphFormatMembers((byte)alignment, textSize, Vector2I.Zero, color);
+                }
+				else
+				{
+                    if (font == null)
+                        font = FontManager.GetFont(FontManager.Default.X);
+
+                    Data = new GlyphFormatMembers((byte)alignment, textSize, font.GetStyleIndex(style), color);
+                }
 			}
 
 			/// <summary>
