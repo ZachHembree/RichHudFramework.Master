@@ -194,8 +194,8 @@ namespace RichHudFramework
 
                 if (_instance.mainClient == null)
                 {
-					RichHudCore.LateMessageEntered += _instance.HandleChatBlacklist;
-					_instance.mainClient = new Client();
+                    RichHudCore.LateMessageEntered += _instance.HandleChatBlacklist;
+                    _instance.mainClient = new Client();
                 }
             }
 
@@ -256,8 +256,8 @@ namespace RichHudFramework
 
                 for (int n = 0; n < bindClients.Count; n++)
                 {
-					CurrentBlacklistMode |= bindClients[n].RequestedBlacklistMode;
-				}
+                    CurrentBlacklistMode |= bindClients[n].RequestedBlacklistMode;
+                }
 
                 // Block/allow camera rotation due to user input
                 if ((CurrentBlacklistMode & SeBlacklistModes.CameraRot) > 0)
@@ -332,13 +332,13 @@ namespace RichHudFramework
                 }
             }
 
-			private void HandleChatBlacklist(string message, ref bool sendToOthers)
-			{
-				if ((CurrentBlacklistMode & SeBlacklistModes.Chat) > 0)
-					sendToOthers = false;
-			}
+            private void HandleChatBlacklist(string message, ref bool sendToOthers)
+            {
+                if ((CurrentBlacklistMode & SeBlacklistModes.Chat) > 0)
+                    sendToOthers = false;
+            }
 
-			private static void SetBlacklist(string[] blacklist, bool value)
+            private static void SetBlacklist(string[] blacklist, bool value)
             {
                 BlacklistMessage message = new BlacklistMessage(blacklist, value);
                 byte[] data;
@@ -351,7 +351,7 @@ namespace RichHudFramework
             {
                 bindClients.Clear();
                 RichHudCore.LateMessageEntered -= HandleChatBlacklist;
-				CurrentBlacklistMode = SeBlacklistModes.None;
+                CurrentBlacklistMode = SeBlacklistModes.None;
                 UpdateBlacklist();
 
                 mainClient = null;
@@ -702,30 +702,44 @@ namespace RichHudFramework
 
             private void GetControlStringIDs(MyKeys[] keys, out string[] allControls, out string[] mouseControls)
             {
-                var mouseButtons = Enum.GetValues(typeof(MyMouseButtonsEnum)) as MyMouseButtonsEnum[];
-                List<string> controlIDs = new List<string>(keys.Length),
-                    mouseControlIDs = new List<string>(mouseButtons.Length);
+                // Use HashSets to automatically handle duplicates and improve lookup speed
+                HashSet<string> controlIDSet = new HashSet<string>(BuiltInBinds);
+                HashSet<string> mouseControlIDSet = new HashSet<string>();
 
+                // Add any additional controls bound to keys that might not be in BuiltInBinds
                 foreach (MyKeys key in keys)
                 {
-                    MyStringId? id = MyAPIGateway.Input.GetControl(key)?.GetGameControlEnum();
-                    string stringID = id?.ToString();
+                    var control = MyAPIGateway.Input.GetControl(key);
+                    string stringID = control?.GetGameControlEnum().ToString();
 
-                    if (stringID != null && stringID.Length > 0)
-                        controlIDs.Add(stringID);
+                    if (!string.IsNullOrEmpty(stringID) && stringID != "None")
+                        controlIDSet.Add(stringID);
                 }
 
-                foreach (MyMouseButtonsEnum key in mouseButtons)
+                // Identify which controls are assigned to mouse buttons
+                var mouseButtons = Enum.GetValues(typeof(MyMouseButtonsEnum)) as MyMouseButtonsEnum[];
+
+                foreach (MyMouseButtonsEnum mouseBtn in mouseButtons)
                 {
-                    MyStringId? id = MyAPIGateway.Input.GetControl(key)?.GetGameControlEnum();
-                    string stringID = id?.ToString();
+                    var control = MyAPIGateway.Input.GetControl(mouseBtn);
+                    string stringID = control?.GetGameControlEnum().ToString();
 
-                    if (stringID != null && stringID.Length > 0 && stringID != "FORWARD") // WTH is FORWARD in there?
-                        mouseControlIDs.Add(stringID);
+                    // "FORWARD" appears in mouse control lists?
+                    if (!string.IsNullOrEmpty(stringID) && stringID != "None" && stringID != "FORWARD")
+                    {
+                        mouseControlIDSet.Add(stringID);
+
+                        // Ensure any control discovered via mouse is also in the master list
+                        controlIDSet.Add(stringID);
+                    }
                 }
 
-                allControls = controlIDs.ToArray();
-                mouseControls = mouseControlIDs.ToArray();
+                // Convert back to arrays for the out parameters
+                allControls = new string[controlIDSet.Count];
+                controlIDSet.CopyTo(allControls);
+
+                mouseControls = new string[mouseControlIDSet.Count];
+                mouseControlIDSet.CopyTo(mouseControls);
             }
 
             /// <summary>

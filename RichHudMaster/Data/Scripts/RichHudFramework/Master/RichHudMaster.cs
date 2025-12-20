@@ -44,7 +44,7 @@ namespace RichHudFramework.Server
         public const string
             modName = "Rich HUD Master";
         public static readonly Vector4I
-            versionID = new Vector4I(1, 3, 2, 0); // Major, Minor, Rev, Hotfix
+            versionID = new Vector4I(1, 3, 3, 0); // Major, Minor, Rev, Hotfix
         public static readonly string
             versionString = $"{versionID.X}.{versionID.Y}.{versionID.Z}.{versionID.W} ({apiVID})";
 
@@ -361,9 +361,9 @@ namespace RichHudFramework.Server
 
                 if (ExceptionHandler.IsClient)
                 {
-                    RichHudStats.Init();
                     FontManager.Init();
                     BindManager.Init();
+                    RichHudStats.Init();
                     MasterConfig.Load(true);
 
                     HudMain.Init();

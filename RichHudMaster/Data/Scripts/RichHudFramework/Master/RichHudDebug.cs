@@ -113,6 +113,7 @@ namespace RichHudFramework.Server
             };
 
             controlCategory.Add(CreateOverlayControlTile());
+            controlCategory.Add(CreateInputControlTile());
             controlCategory.Add(CreateCacheControlTile());
 
             settingsPage.CategoryContainer.Add(controlCategory);
@@ -155,6 +156,33 @@ namespace RichHudFramework.Server
                     Name = "Clear Tare",
                     ControlChangedHandler = (obj, args) => { RichHudStats.UI.ClearTare(); },
                     ToolTip = "Resets timer tare to zero."
+                }
+            };
+        }
+
+        private ControlTile CreateInputControlTile()
+        {
+            return new ControlTile 
+            {
+                new TerminalDropdown<SeBlacklistModes> 
+                {
+                    Name = "Blacklist Mode",
+                    ControlChangedHandler = (obj, args) =>
+                    {
+                        var sender = (TerminalDropdown<SeBlacklistModes>)obj;
+                        BindManager.BlacklistMode = sender.Value.AssocMember;
+                    },
+                    List = 
+                    {
+                        { SeBlacklistModes.None.ToString(), SeBlacklistModes.None },
+                        { SeBlacklistModes.Mouse.ToString(), SeBlacklistModes.Mouse },
+                        { SeBlacklistModes.AllKeys.ToString(), SeBlacklistModes.AllKeys },
+                        { SeBlacklistModes.CameraRot.ToString(), SeBlacklistModes.CameraRot },
+                        { SeBlacklistModes.MouseAndCam.ToString(), SeBlacklistModes.MouseAndCam },
+                        { SeBlacklistModes.Full.ToString(), SeBlacklistModes.Full },
+                        { SeBlacklistModes.Chat.ToString(), SeBlacklistModes.Chat },
+                        { SeBlacklistModes.FullWithChat.ToString(), SeBlacklistModes.FullWithChat }
+                    }
                 }
             };
         }

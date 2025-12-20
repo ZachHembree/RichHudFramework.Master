@@ -244,7 +244,8 @@ namespace RichHudFramework
 			{
 				if (Instance._cursor.DrawCursor)
 				{
-					if (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible)
+					if (MyAPIGateway.Gui.ChatEntryVisible || MyAPIGateway.Gui.IsCursorVisible || 
+						(BindManager.CurrentBlacklistMode & SeBlacklistModes.Full) == SeBlacklistModes.Full)
 						InputMode = HudInputMode.Full;
 					else
 						InputMode = HudInputMode.CursorOnly;
