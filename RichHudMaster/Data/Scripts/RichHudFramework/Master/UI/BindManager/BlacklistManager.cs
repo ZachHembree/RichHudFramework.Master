@@ -1,5 +1,6 @@
 ﻿using ProtoBuf;
 using RichHudFramework.Internal;
+using RichHudFramework.UI.Server;
 using Sandbox.Game;
 
 namespace RichHudFramework.Server
@@ -27,18 +28,46 @@ namespace RichHudFramework.Server
             instance = null;
         }
 
-        public static void SetBlacklist(long identID, string[] blacklist, bool value)
+        public static void SetBlacklist(long identID, BindRange[] blacklist, bool value)
         {
             instance.SetBlacklistInternal(identID, blacklist, value);
         }
 
-        private void SetBlacklistInternal(long identID, string[] blacklist, bool value)
+        private void SetBlacklistInternal(long identID, BindRange[] ranges, bool value)
         {
-            if (blacklist != null)
+            if (ranges == null) return;
+
+            for (int n = 0; n < ranges.Length; n++)
             {
-                foreach (string control in blacklist)
-                    MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(control, identID, !value);
+                BindRange range = ranges[n];
+                int end = range.Start + range.Count;
+
+                for (int i = range.Start; i < end; i++)
+                {
+                    // Direct index access - no search or mapping needed
+                    if (i >= 0 && i < BindManager.BuiltInBinds.Length)
+                    {
+                        string controlName = BindManager.BuiltInBinds[i];
+                        MyVisualScriptLogicProvider.SetPlayerInputBlacklistState(controlName, identID, !value);
+                    }
+                }
             }
+        }
+    }
+
+    [ProtoContract]
+    internal struct BindRange
+    {
+        [ProtoMember(1)]
+        public int Start; // Starting index in BuiltInBinds
+
+        [ProtoMember(2)]
+        public int Count; // Number of contiguous elements
+
+        public BindRange(int start, int count)
+        {
+            Start = start;
+            Count = count;
         }
     }
 
@@ -46,14 +75,14 @@ namespace RichHudFramework.Server
     internal struct BlacklistMessage
     {
         [ProtoMember(1)]
-        public string[] blacklist;
+        public BindRange[] ranges;
 
         [ProtoMember(2)]
         public bool value;
 
-        public BlacklistMessage(string[] blacklist, bool value)
+        public BlacklistMessage(BindRange[] ranges, bool value)
         {
-            this.blacklist = blacklist;
+            this.ranges = ranges;
             this.value = value;
         }
     }

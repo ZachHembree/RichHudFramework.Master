@@ -7,13 +7,12 @@ namespace RichHudFramework.Server
     public enum ServerActions : ulong
     {
         None =                      0x00000000,
-        Action =                    0x00000001,
+        Action =                    1 << 1,
+        SetBlacklist =              1 << 16 | Action | BlacklistManager,
 
-        SetBlacklist =              0x00010000 | Action | BlacklistManager,
-
-        BlacklistManager =          0x02000000,
-        GetOrSendData =             0x04000000,
-        RequireReply =              0x08000000  | GetOrSendData,
+        BlacklistManager =          1 << 25,
+        GetOrSendData =             1 << 26,
+        RequireReply =              1 << 27  | GetOrSendData,
     }
 
     public sealed partial class RhServer

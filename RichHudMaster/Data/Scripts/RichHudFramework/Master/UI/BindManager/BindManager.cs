@@ -19,6 +19,8 @@ namespace RichHudFramework
         /// </summary>
         public sealed partial class BindManager : RichHudComponentBase
         {
+            #region Public API Properties
+
             /// <summary>
             /// Read-only collection of bind groups registered to the main client
             /// </summary>
@@ -44,12 +46,14 @@ namespace RichHudFramework
             /// </summary>
             public static SeBlacklistModes BlacklistMode
             {
-                get { if (_instance == null) Init(); return _instance.mainClient.RequestedBlacklistMode; }
+                get
+                {
+                    if (_instance == null) Init();
+                    return _instance.mainClient.RequestedBlacklistMode;
+                }
                 set
                 {
-                    if (_instance == null)
-                        Init();
-
+                    if (_instance == null) Init();
                     _instance.mainClient.RequestedBlacklistMode = value;
                 }
             }
@@ -64,12 +68,30 @@ namespace RichHudFramework
             /// <summary>
             /// Read-only list of all controls bound to a key
             /// </summary>
-            public static IReadOnlyList<string> SeControlIDs { get { if (_instance == null) Init(); return _instance.seControlIDs; } }
+            public static IReadOnlyList<string> SeControlIDs
+            {
+                get
+                {
+                    if (_instance == null) Init();
+                    return _instance.seControlIDs;
+                }
+            }
 
             /// <summary>
             /// Read-only list of all controls bound to a mouse key
             /// </summary>
-            public static IReadOnlyList<string> SeMouseControlIDs { get { if (_instance == null) Init(); return _instance.seMouseControlIDs; } }
+            public static IReadOnlyList<string> SeMouseControlIDs
+            {
+                get
+                {
+                    if (_instance == null) Init();
+                    return _instance.seMouseControlIDs;
+                }
+            }
+
+            #endregion
+
+            #region Constants & Static Data
 
             private static BindManager Instance
             {
@@ -78,6 +100,7 @@ namespace RichHudFramework
             }
             private static BindManager _instance;
 
+            // Blacklist for controls that should not be bound (modifiers, etc)
             private static readonly HashSet<ControlHandle> controlBlacklist = new HashSet<ControlHandle>()
             {
                 MyKeys.None,
@@ -92,6 +115,7 @@ namespace RichHudFramework
                 MyJoystickButtonsEnum.None
             };
 
+            // Map generic modifiers to specific left/right keys
             private static readonly IReadOnlyDictionary<ControlHandle, ControlHandle[]> controlAliases = new Dictionary<ControlHandle, ControlHandle[]>
             {
                 { MyKeys.Alt, new ControlHandle[] { MyKeys.LeftAlt, MyKeys.RightAlt } },
@@ -99,64 +123,81 @@ namespace RichHudFramework
                 { MyKeys.Control, new ControlHandle[] { MyKeys.LeftControl, MyKeys.RightControl } }
             };
 
+            // Mapping for gamepad buttons to unicode characters for display
             private static readonly IReadOnlyDictionary<MyJoystickButtonsEnum, string> gamepadBtnCodes = new Dictionary<MyJoystickButtonsEnum, string>
             {
-                { MyJoystickButtonsEnum.J01, ((char)0xE001).ToString() }, // A
-                { MyJoystickButtonsEnum.J02, ((char)0xE003).ToString() }, // B
-                { MyJoystickButtonsEnum.J03, ((char)0xE002).ToString() }, // X
-                { MyJoystickButtonsEnum.J04, ((char)0xE004).ToString() }, // Y
-                { MyJoystickButtonsEnum.J05, ((char)0xE005).ToString() }, // LB
-                { MyJoystickButtonsEnum.J06, ((char)0xE006).ToString() }, // RB
-                { MyJoystickButtonsEnum.J07, ((char)0xE00D).ToString() }, // View
-                { MyJoystickButtonsEnum.J08, ((char)0xE00E).ToString() }, // Menu
-                { MyJoystickButtonsEnum.J09, ((char)0xE00B).ToString() }, // Left Stick Btn
-                { MyJoystickButtonsEnum.J10, ((char)0xE00C).ToString() }, // Right Stick Btn
-
-                { MyJoystickButtonsEnum.JDUp, ((char)0xE011).ToString() }, // D-Pad Up
-                { MyJoystickButtonsEnum.JDLeft, ((char)0xE010).ToString() }, // D-Pad Left
-                { MyJoystickButtonsEnum.JDRight, ((char)0xE012).ToString() }, // D-Pad Right
-                { MyJoystickButtonsEnum.JDDown, ((char)0xE013).ToString() }, // D-Pad Down
+                { MyJoystickButtonsEnum.J01, "\uE001" }, // A
+                { MyJoystickButtonsEnum.J02, "\uE003" }, // B
+                { MyJoystickButtonsEnum.J03, "\uE002" }, // X
+                { MyJoystickButtonsEnum.J04, "\uE004" }, // Y
+                { MyJoystickButtonsEnum.J05, "\uE005" }, // LB
+                { MyJoystickButtonsEnum.J06, "\uE006" }, // RB
+                { MyJoystickButtonsEnum.J07, "\uE00D" }, // View
+                { MyJoystickButtonsEnum.J08, "\uE00E" }, // Menu
+                { MyJoystickButtonsEnum.J09, "\uE00B" }, // Left Stick Btn
+                { MyJoystickButtonsEnum.J10, "\uE00C" }, // Right Stick Btn
+                { MyJoystickButtonsEnum.JDUp, "\uE011" }, // D-Pad Up
+                { MyJoystickButtonsEnum.JDLeft, "\uE010" }, // D-Pad Left
+                { MyJoystickButtonsEnum.JDRight, "\uE012" }, // D-Pad Right
+                { MyJoystickButtonsEnum.JDDown, "\uE013" }, // D-Pad Down
             };
 
+            // Custom internal controls mapping
             public static readonly IReadOnlyDictionary<RichHudControls, string> customConNames = new Dictionary<RichHudControls, string>
             {
                 { RichHudControls.MousewheelUp, "MwUp" },
                 { RichHudControls.MousewheelDown, "MwDn" },
 
-                { RichHudControls.LeftStickLeft, ((char)0xE015).ToString() },
-                { RichHudControls.LeftStickRight, ((char)0xE016).ToString() },
-                { RichHudControls.LeftStickUp, ((char)0xE017).ToString() },
-                { RichHudControls.LeftStickDown, ((char)0xE014).ToString() },
+                { RichHudControls.LeftStickLeft, "\uE015" },
+                { RichHudControls.LeftStickRight, "\uE016" },
+                { RichHudControls.LeftStickUp, "\uE017" },
+                { RichHudControls.LeftStickDown, "\uE014" },
 
-                { RichHudControls.LeftStickX, ((char)0xE022).ToString() },
-                { RichHudControls.LeftStickY, ((char)0xE023).ToString() },
+                { RichHudControls.LeftStickX, "\uE022" },
+                { RichHudControls.LeftStickY, "\uE023" },
 
-                { RichHudControls.RightStickLeft, ((char)0xE019).ToString() },
-                { RichHudControls.RightStickRight, ((char)0xE020).ToString() },
-                { RichHudControls.RightStickUp, ((char)0xE021).ToString() },
-                { RichHudControls.RightStickDown, ((char)0xE018).ToString() },
+                { RichHudControls.RightStickLeft, "\uE019" },
+                { RichHudControls.RightStickRight, "\uE020" },
+                { RichHudControls.RightStickUp, "\uE021" },
+                { RichHudControls.RightStickDown, "\uE018" },
 
-                { RichHudControls.RightStickX, ((char)0xE024).ToString() },
-                { RichHudControls.RightStickY, ((char)0xE025).ToString() },
+                { RichHudControls.RightStickX, "\uE024" },
+                { RichHudControls.RightStickY, "\uE025" },
 
-                { RichHudControls.RightTrigger, ((char)0xE007).ToString() },
-                { RichHudControls.LeftTrigger, ((char)0xE008).ToString() },
+                { RichHudControls.RightTrigger, "\uE007" },
+                { RichHudControls.LeftTrigger, "\uE008" },
             };
+
+            #endregion
+
+            #region Instance Fields
 
             private readonly Control[] controls;
             private readonly List<ControlHandle> controlHandles;
             private readonly string[] seControlIDs, seMouseControlIDs;
-            private readonly Dictionary<string, IControl> controlDict, controlDictFriendly;
+
+            // Dictionaries using OrdinalIgnoreCase to avoid ToLower() allocations on lookup
+            private readonly Dictionary<string, IControl> controlDict;
+            private readonly Dictionary<string, IControl> controlDictFriendly;
+
             private readonly List<Client> bindClients;
+
+            // Reusable buffers to avoid heap allocations during updates
             private readonly List<int> conIDbuf;
             private readonly MyTuple<List<int>, List<List<int>>> cHandleBuf;
             private readonly List<BindDefinition> bindDefBuf;
+            private readonly Dictionary<string, int> bindToIndex = new Dictionary<string, int>();
 
+            private BindRange[] allControlRanges, mouseControlRanges;
             private Client mainClient;
             private bool areControlsBlacklisted, areMouseControlsBlacklisted;
             private int chatInputTick;
             private MySpectatorCameraMovementEnum? lastSpecMode;
             private Vector2 lastSpecSpeeds;
+
+            #endregion
+
+            #region Initialization
 
             private BindManager() : base(false, true)
             {
@@ -165,14 +206,18 @@ namespace RichHudFramework
                 int conCount = ControlHandle.GPKeysStart + (int)MyJoystickButtonsEnum.J16 + 1;
 
                 controls = new Control[conCount];
-                controlDict = new Dictionary<string, IControl>(conCount);
-                controlDictFriendly = new Dictionary<string, IControl>(conCount);
+
+                // Initialize dictionaries with Case-Insensitive comparers to avoid allocs later
+                controlDict = new Dictionary<string, IControl>(conCount, StringComparer.OrdinalIgnoreCase);
+                controlDictFriendly = new Dictionary<string, IControl>(conCount, StringComparer.OrdinalIgnoreCase);
 
                 GenerateControls(kbmKeys, gpKeys);
                 GetControlStringIDs(kbmKeys, out seControlIDs, out seMouseControlIDs);
+                InitializeBindIndices();
 
                 controlHandles = new List<ControlHandle>(conCount);
 
+                // Use for-loop to avoid enumerator boxing
                 for (int i = 0; i < controls.Length; i++)
                 {
                     if (i == controls[i].Index)
@@ -199,6 +244,10 @@ namespace RichHudFramework
                 }
             }
 
+            #endregion
+
+            #region Lifecycle & Update
+
             public override void HandleInput()
             {
                 UpdateControls();
@@ -207,11 +256,12 @@ namespace RichHudFramework
                 // Update client input
                 if (!RebindDialog.Open)
                 {
+                    // Use for-loop to avoid enumerator allocation
                     for (int n = 0; n < bindClients.Count; n++)
                         bindClients[n].HandleInput();
                 }
 
-                // Synchronize with actual value every second or so
+                // Synchronize with actual value periodically
                 if (chatInputTick == 0)
                 {
                     IsChatOpen = MyAPIGateway.Gui.ChatEntryVisible;
@@ -240,7 +290,7 @@ namespace RichHudFramework
                 for (int i = 0; i < controls.Length; i++)
                 {
                     var con = controls[i];
-
+                    // Direct index check faster than property access if in hot path
                     if (con != Control.Default && con.Index == i)
                     {
                         con.Update();
@@ -254,6 +304,7 @@ namespace RichHudFramework
                 IMyControllableEntity conEnt = MyAPIGateway.Session.ControlledObject;
                 var specCon = MyAPIGateway.Session.CameraController as MySpectator;
 
+                // Aggregate requested blacklists
                 for (int n = 0; n < bindClients.Count; n++)
                 {
                     CurrentBlacklistMode |= bindClients[n].RequestedBlacklistMode;
@@ -304,14 +355,14 @@ namespace RichHudFramework
                     {
                         areControlsBlacklisted = true;
                         areMouseControlsBlacklisted = true;
-                        SetBlacklist(seControlIDs, true); // Enable full blacklist
+                        SetBlacklist(allControlRanges, true);
                     }
                 }
                 else
                 {
                     if (areControlsBlacklisted)
                     {
-                        SetBlacklist(seControlIDs, false); // Disable full blacklist
+                        SetBlacklist(allControlRanges, false);
                         areControlsBlacklisted = false;
                         areMouseControlsBlacklisted = false;
                     }
@@ -321,30 +372,15 @@ namespace RichHudFramework
                         if (!areMouseControlsBlacklisted)
                         {
                             areMouseControlsBlacklisted = true;
-                            SetBlacklist(seMouseControlIDs, true); // Enable mouse button blacklist
+                            SetBlacklist(mouseControlRanges, true);
                         }
                     }
                     else if (areMouseControlsBlacklisted)
                     {
-                        SetBlacklist(seMouseControlIDs, false); // Disable mouse button blacklist
+                        SetBlacklist(mouseControlRanges, false);
                         areMouseControlsBlacklisted = false;
                     }
                 }
-            }
-
-            private void HandleChatBlacklist(string message, ref bool sendToOthers)
-            {
-                if ((CurrentBlacklistMode & SeBlacklistModes.Chat) > 0)
-                    sendToOthers = false;
-            }
-
-            private static void SetBlacklist(string[] blacklist, bool value)
-            {
-                BlacklistMessage message = new BlacklistMessage(blacklist, value);
-                byte[] data;
-
-                if (Utils.ProtoBuf.TrySerialize(message, out data) == null)
-                    RhServer.SendActionToServer(ServerActions.SetBlacklist, data);
             }
 
             public override void Close()
@@ -359,6 +395,10 @@ namespace RichHudFramework
                 if (ExceptionHandler.Unloading)
                     _instance = null;
             }
+
+            #endregion
+
+            #region Public API Methods
 
             /// <summary>
             /// Sets a temporary control blacklist cleared after every frame. Blacklists set via
@@ -390,9 +430,9 @@ namespace RichHudFramework
                 Init();
                 IControl con;
 
-                if (_instance.controlDict.TryGetValue(name.ToLower(), out con))
+                if (_instance.controlDict.TryGetValue(name, out con))
                     return new ControlHandle(con.Index);
-                else if (_instance.controlDictFriendly.TryGetValue(name.ToLower(), out con))
+                else if (_instance.controlDictFriendly.TryGetValue(name, out con))
                     return new ControlHandle(con.Index);
 
                 return new ControlHandle(0);
@@ -451,6 +491,83 @@ namespace RichHudFramework
             }
 
             /// <summary>
+            /// Generates a list of control indices using a list of control names.
+            /// </summary>
+            public static void GetComboIndices(IReadOnlyList<string> names, List<int> indices, bool sanitize = true)
+            {
+                indices.Clear();
+
+                // Loop count checked once
+                int count = names?.Count ?? 0;
+                for (int n = 0; n < count; n++)
+                    indices.Add(GetControl(names[n]));
+
+                if (sanitize)
+                    SanitizeCombo(indices);
+            }
+
+            /// <summary>
+            /// Generates a list of control indices from a list of <see cref="ControlHandle"/>s.
+            /// </summary>
+            public static void GetComboIndices(IReadOnlyList<ControlHandle> controls, List<int> combo, bool sanitize = true)
+            {
+                combo.Clear();
+
+                for (int n = 0; n < controls.Count; n++)
+                    combo.Add(controls[n].id);
+
+                if (sanitize)
+                    SanitizeCombo(combo);
+            }
+
+            #endregion
+
+            #region Internal Implementation & Helpers
+
+            private void HandleChatBlacklist(string message, ref bool sendToOthers)
+            {
+                if ((CurrentBlacklistMode & SeBlacklistModes.Chat) > 0)
+                    sendToOthers = false;
+            }
+
+            private static BindRange[] GetRangesFromIndices(List<int> indices)
+            {
+                if (indices.Count == 0) return new BindRange[0];
+                indices.Sort();
+
+                // Use a local list to build ranges, then convert to array
+                // Since this runs only during init, local allocation is acceptable
+                List<BindRange> ranges = new List<BindRange>();
+                int start = indices[0];
+                int count = 1;
+
+                for (int i = 1; i < indices.Count; i++)
+                {
+                    if (indices[i] == start + count)
+                    {
+                        count++;
+                    }
+                    else
+                    {
+                        ranges.Add(new BindRange(start, count));
+                        start = indices[i];
+                        count = 1;
+                    }
+                }
+                ranges.Add(new BindRange(start, count));
+                return ranges.ToArray();
+            }
+
+            private static void SetBlacklist(BindRange[] ranges, bool value)
+            {
+                BlacklistMessage message = new BlacklistMessage(ranges, value);
+                byte[] data;
+
+                if (Utils.ProtoBuf.TrySerialize(message, out data) == null)
+                    RhServer.SendActionToServer(ServerActions.SetBlacklist, data);
+            }
+
+            /// <summary>
             /// Builds dictionary of controls from the set of MyKeys enums and a couple custom controls for the mouse wheel.
             /// </summary>
             private void GenerateControls(MyKeys[] kbmKeys, MyJoystickButtonsEnum[] gpKeys)
@@ -468,8 +585,8 @@ namespace RichHudFramework
                     if (!controlBlacklist.Contains(seKey))
                     {
                         Control con = new Control(seKey, index);
-                        string name = con.Name.ToLower(),
-                            friendlyName = con.DisplayName.ToLower();
+                        string name = con.Name;
+                        string friendlyName = con.DisplayName;
 
                         if (!controlDict.ContainsKey(name))
                         {
@@ -493,8 +610,8 @@ namespace RichHudFramework
                     if (!controlBlacklist.Contains(seKey))
                     {
                         Control con = new Control(seKey, index);
-                        string name = con.Name.ToLower(),
-                            friendlyName = con.DisplayName.ToLower();
+                        string name = con.Name;
+                        string friendlyName = con.DisplayName;
 
                         if (!controlDict.ContainsKey(name))
                         {
@@ -515,9 +632,10 @@ namespace RichHudFramework
                 foreach (KeyValuePair<ControlHandle, ControlHandle[]> controlAliasPair in controlAliases)
                 {
                     Control con = controls[controlAliasPair.Key.id];
+                    var aliases = controlAliasPair.Value;
 
-                    foreach (ControlHandle key in controlAliasPair.Value)
-                        controls[key.id] = con;
+                    for (int k = 0; k < aliases.Length; k++)
+                        controls[aliases[k].id] = con;
                 }
             }
 
@@ -525,12 +643,13 @@ namespace RichHudFramework
             {
                 var con = new Control(conEnum, IsPressed, GetAnalogValue);
                 controls[con.Index] = con;
-                controlDict.Add(con.Name.ToLower(), con);
-                controlDictFriendly.Add(con.DisplayName.ToLower(), con);
+                controlDict.Add(con.Name, con);
+                controlDictFriendly.Add(con.DisplayName, con);
             }
 
             private void GenerateCustomControls()
             {
+                // Lambdas capture closures; these allocate once during Init.
                 AddCustomControl(RichHudControls.MousewheelUp,
                     () => MyAPIGateway.Input.DeltaMouseScrollWheelValue() > 0,
                     () => Math.Abs(MyAPIGateway.Input.DeltaMouseScrollWheelValue())
@@ -542,8 +661,6 @@ namespace RichHudFramework
 
                 // Add gamepad axes
                 // Left Stick
-
-                // Left Stick Directions
                 AddCustomControl(RichHudControls.LeftStickLeft,
                     () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xneg) > .01f,
                     () => MyAPIGateway.Input.GetJoystickAxisStateForGameplay(MyJoystickAxesEnum.Xneg)
@@ -707,9 +824,9 @@ namespace RichHudFramework
                 HashSet<string> mouseControlIDSet = new HashSet<string>();
 
                 // Add any additional controls bound to keys that might not be in BuiltInBinds
-                foreach (MyKeys key in keys)
+                for (int i = 0; i < keys.Length; i++)
                 {
-                    var control = MyAPIGateway.Input.GetControl(key);
+                    var control = MyAPIGateway.Input.GetControl(keys[i]);
                     string stringID = control?.GetGameControlEnum().ToString();
 
                     if (!string.IsNullOrEmpty(stringID) && stringID != "None")
@@ -719,16 +836,15 @@ namespace RichHudFramework
                 // Identify which controls are assigned to mouse buttons
                 var mouseButtons = Enum.GetValues(typeof(MyMouseButtonsEnum)) as MyMouseButtonsEnum[];
 
-                foreach (MyMouseButtonsEnum mouseBtn in mouseButtons)
+                for (int i = 0; i < mouseButtons.Length; i++)
                 {
-                    var control = MyAPIGateway.Input.GetControl(mouseBtn);
+                    var control = MyAPIGateway.Input.GetControl(mouseButtons[i]);
                     string stringID = control?.GetGameControlEnum().ToString();
 
                     // "FORWARD" appears in mouse control lists?
                     if (!string.IsNullOrEmpty(stringID) && stringID != "None" && stringID != "FORWARD")
                     {
                         mouseControlIDSet.Add(stringID);
-
                         // Ensure any control discovered via mouse is also in the master list
                         controlIDSet.Add(stringID);
                     }
@@ -742,32 +858,32 @@ namespace RichHudFramework
                 mouseControlIDSet.CopyTo(mouseControls);
             }
 
-            /// <summary>
-            /// Generates a list of control indices using a list of control names.
-            /// </summary>
-            public static void GetComboIndices(IReadOnlyList<string> names, List<int> indices, bool sanitize = true)
+            private void InitializeBindIndices()
             {
-                indices.Clear();
+                // Map BuiltInBinds strings to their indices once
+                bindToIndex.Clear();
 
-                for (int n = 0; n < (names?.Count ?? 0); n++)
-                    indices.Add(GetControl(names[n]));
+                for (int i = 0; i < BuiltInBinds.Length; i++)
+                    bindToIndex[BuiltInBinds[i]] = i;
 
-                if (sanitize)
-                    SanitizeCombo(indices);
-            }
+                // Pre-calculate "All Controls" range (0 to Length)
+                allControlRanges = new BindRange[] { new BindRange(0, BuiltInBinds.Length) };
 
-            /// <summary>
-            /// Generates a list of control indices from a list of <see cref="ControlHandle"/>s.
-            /// </summary>
-            public static void GetComboIndices(IReadOnlyList<ControlHandle> controls, List<int> combo, bool sanitize = true)
-            {
-                combo.Clear();
+                // Identify mouse control indices
+                List<int> mouseIndices = new List<int>();
+                var mouseButtons = Enum.GetValues(typeof(MyMouseButtonsEnum)) as MyMouseButtonsEnum[];
 
-                for (int n = 0; n < controls.Count; n++)
-                    combo.Add(controls[n].id);
+                for (int i = 0; i < mouseButtons.Length; i++)
+                {
+                    var control = MyAPIGateway.Input.GetControl(mouseButtons[i]);
+                    string stringID = control?.GetGameControlEnum().ToString();
 
-                if (sanitize)
-                    SanitizeCombo(combo);
+                    int index;
+                    if (!string.IsNullOrEmpty(stringID) && bindToIndex.TryGetValue(stringID, out index))
+                        mouseIndices.Add(index);
+                }
+
+                mouseControlRanges = GetRangesFromIndices(mouseIndices);
             }
 
             private static void AddHandlesToConBuf(IReadOnlyList<ControlHandle> combo = null,
@@ -777,24 +893,33 @@ namespace RichHudFramework
                 var cBuf = hBuf.Item1;
                 var aliasBuf = hBuf.Item2;
 
-                foreach (ControlHandle con in combo)
-                    cBuf.Add(con.id);
-
-                for (int i = 0; i < aliases.Count; i++)
+                // Use for-loop to iterate over interface list to avoid enumerator
+                if (combo != null)
                 {
-                    List<int> aliasCons;
-                    var alias = aliases[i];
+                    int count = combo.Count;
+                    for (int i = 0; i < count; i++)
+                        cBuf.Add(combo[i].id);
+                }
 
-                    if (i >= aliasBuf.Count)
+                if (aliases != null)
+                {
+                    for (int i = 0; i < aliases.Count; i++)
                     {
-                        aliasCons = new List<int>();
-                        aliasBuf.Add(aliasCons);
-                    }
-                    else
-                        aliasCons = aliasBuf[i];
+                        List<int> aliasCons;
+                        var alias = aliases[i];
 
-                    foreach (ControlHandle con in alias)
-                        aliasCons.Add(con.id);
+                        if (i >= aliasBuf.Count)
+                        {
+                            aliasCons = new List<int>();
+                            aliasBuf.Add(aliasCons);
+                        }
+                        else
+                            aliasCons = aliasBuf[i];
+
+                        int aliasCount = alias.Count;
+                        for (int k = 0; k < aliasCount; k++)
+                            aliasCons.Add(alias[k].id);
+                    }
                 }
             }
 
@@ -803,14 +928,16 @@ namespace RichHudFramework
                 var hBuf = _instance.cHandleBuf;
                 hBuf.Item1.Clear();
 
-                foreach (var combo in hBuf.Item2)
-                    combo.Clear();
+                var aliasLists = hBuf.Item2;
+                for (int i = 0; i < aliasLists.Count; i++)
+                    aliasLists[i].Clear();
             }
 
             private static IReadOnlyList<int> GetSanitizedComboTemp(IEnumerable<int> combo)
             {
                 var buf = _instance.conIDbuf;
 
+                // Basic equality check to avoid copy if already correct buffer
                 if (buf != combo)
                 {
                     buf.Clear();
@@ -837,6 +964,8 @@ namespace RichHudFramework
                 if (combo.Count > 0 && combo[0] == 0)
                     combo.RemoveAt(0);
             }
+
+            #endregion
         }
     }
 }

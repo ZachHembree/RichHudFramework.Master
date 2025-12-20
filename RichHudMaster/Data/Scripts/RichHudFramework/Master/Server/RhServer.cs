@@ -236,7 +236,7 @@ namespace RichHudFramework.Server
 
                     if (id != 0 && Utils.ProtoBuf.TryDeserialize(message.Item2.message, out blacklistMessage) == null)
                     {
-                        BlacklistManager.SetBlacklist(id, blacklistMessage.blacklist, blacklistMessage.value);
+                        BlacklistManager.SetBlacklist(id, blacklistMessage.ranges, blacklistMessage.value);
                     }
                 }
             }
