@@ -1,16 +1,21 @@
-﻿using System;
+﻿using RichHudFramework.UI.FontData;
+using System;
 using System.Collections.Generic;
 using VRage;
+using VRage.Game;
 using VRageMath;
-using RichHudFramework.UI.FontData;
+using ApiMemberAccessor = System.Func<object, int, object>;
 using AtlasMembers = VRage.MyTuple<string, VRageMath.Vector2>;
 using GlyphMembers = VRage.MyTuple<int, VRageMath.Vector2, VRageMath.Vector2, float, float>;
-using ApiMemberAccessor = System.Func<object, int, object>;
 
 namespace RichHudFramework
 {
+    using FontGen;
     using Internal;
-    using FontMembers = MyTuple<
+    using RichHudFramework.IO;
+    using RichHudFramework.Server;
+    using Sandbox.ModAPI;
+    using FontAPIMembers = MyTuple<
         string, // Name
         int, // Index
         float, // PtSize
@@ -18,7 +23,7 @@ namespace RichHudFramework
         Func<int, bool>, // IsStyleDefined
         ApiMemberAccessor
     >;
-    using FontStyleDefinition = MyTuple<
+    using FontStyleData = MyTuple<
         int, // styleID
         float, // height
         float, // baseline
@@ -29,18 +34,18 @@ namespace RichHudFramework
 
     namespace UI
     {
-        using FontDefinition = MyTuple<
+        using FontDefData = MyTuple<
             string, // Name
             float, // PtSize
-            FontStyleDefinition[] // styles
+            FontStyleData[] // styles
         >;
 
         namespace Rendering.Server
         {
-            using FontManagerMembers = MyTuple<
-                MyTuple<Func<int, FontMembers>, Func<int>>, // Font List
-                Func<FontDefinition, FontMembers?>, // TryAddFont
-                Func<string, FontMembers?>, // GetFont
+            using FontManagerAPIMembers = MyTuple<
+                MyTuple<Func<int, FontAPIMembers>, Func<int>>, // Font List
+                Func<FontDefData, FontAPIMembers?>, // TryAddFont
+                Func<string, FontAPIMembers?>, // GetFont
                 ApiMemberAccessor
             >;
 
@@ -59,15 +64,8 @@ namespace RichHudFramework
                 /// </summary>
                 public static IReadOnlyList<IFont> Fonts => Instance._fonts;
 
-                private static FontManager Instance
-                {
-                    get { Init(); return _instance; }
-                    set { _instance = value; }
-                }
-                private static FontManager _instance;
-
+                public static FontManager Instance { get; private set; }
                 private readonly List<IFont> _fonts;
-
                 private FontManager() : base(false, true)
                 {
                     _fonts = new List<IFont>();
@@ -75,13 +73,13 @@ namespace RichHudFramework
 
                 public static void Init()
                 {
-                    if (_instance == null)
+                    if (Instance == null)
                     {
-                        _instance = new FontManager();
+                        Instance = new FontManager();
                         InitializeFonts();
                     }
-                    else if (_instance.Parent == null)
-                        _instance.RegisterComponent(RichHudCore.Instance);
+                    else if (Instance.Parent == null)
+                        Instance.RegisterComponent(RichHudCore.Instance);
                 }
 
                 private static void InitializeFonts()
@@ -90,12 +88,56 @@ namespace RichHudFramework
                     TryAddFont(MonoFont.GetFontData());
                     TryAddFont(AbhayaLibreMedium.GetFontData());
                     TryAddFont(BitstreamVeraSans.GetFontData());
+
+                    ExceptionHandler.WriteToLog($"Loading font manifests...", true);
+                    List<MyObjectBuilder_Checkpoint.ModItem> modList = RichHudMaster.Instance?.Session?.Mods;
+
+                    foreach (var mod in modList)
+                    {
+                        const string manifestPath = "Data\\Fonts\\RHFFontManifest.xml";
+
+                        if (MyAPIGateway.Utilities.FileExistsInModLocation(manifestPath, mod))
+                        {
+                            var manifestIO = new ReadOnlyModFileIO(manifestPath, mod);
+                            string xml;
+                            KnownException err = manifestIO.TryRead(out xml);
+                            FontManifest manifest = null;
+
+                            if (err == null)
+                                err = Utils.Xml.TryDeserialize(xml, out manifest);
+
+                            if (err == null && manifest != null)
+                            {
+                                ExceptionHandler.WriteToLog($"Font Manifest Loaded. Loading {manifest.Paths.Count} fonts from: {mod.Name}");
+
+                                foreach (string path in manifest.Paths)
+                                {
+                                    var fontFile = new ReadOnlyModFileIO(path, mod);
+                                    string fontXml;
+                                    KnownException fontErr = fontFile.TryRead(out fontXml);
+
+                                    if (fontErr == null)
+                                    {
+                                        FontDefinition fontDef;
+
+                                        if (Utils.Xml.TryDeserialize(fontXml, out fontDef) == null)
+                                        {
+                                            if (TryAddFont(fontDef))
+                                                ExceptionHandler.WriteToLog($"Loaded font: {fontDef.Name}");
+                                        }
+                                    }
+                                    else
+                                        ExceptionHandler.WriteToLog($"Failed to read font at: {path}. Error: {fontErr.Message}");
+                                }
+                            }
+                        }
+                    }
                 }
 
                 public override void Close()
                 {
                     if (ExceptionHandler.Unloading)
-                        _instance = null;
+                        Instance = null;
                 }
 
                 /// <summary>
@@ -130,7 +172,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Attempts to register a new font using API data.
                 /// </summary>
-                public static bool TryAddFont(FontDefinition fontData)
+                public static bool TryAddFont(FontDefData fontData)
                 {
                     IFont font;
                     return TryAddFont(fontData, out font);
@@ -139,7 +181,7 @@ namespace RichHudFramework
                 /// <summary>
                 /// Attempts to register a new font using API data. Returns the font created.
                 /// </summary>
-                public static bool TryAddFont(FontDefinition fontData, out IFont font)
+                public static bool TryAddFont(FontDefData fontData, out IFont font)
                 {
                     if (!Instance._fonts.Exists(x => x.Name == fontData.Item1))
                     {
@@ -156,9 +198,37 @@ namespace RichHudFramework
                 }
 
                 /// <summary>
+                /// Attempts to register a new font using XML data.
+                /// </summary>
+                public static bool TryAddFont(FontGen.FontDefinition fontData)
+                {
+                    IFont font;
+                    return TryAddFont(fontData, out font);
+                }
+
+                /// <summary>
+                /// Attempts to register a new font using XML data. Returns the font created.
+                /// </summary>
+                public static bool TryAddFont(FontDefinition fontData, out IFont font)
+                {
+                    if (!Instance._fonts.Exists(x => x.Name == fontData.Name))
+                    {
+                        font = new Font(fontData, Instance._fonts.Count);
+                        Instance._fonts.Add(font);
+
+                        return true;
+                    }
+                    else
+                    {
+                        font = null;
+                        return false;
+                    }
+                }
+
+                /// <summary>
                 /// Used publicly to register a new font via the API. Returns font accessors.
                 /// </summary>
-                private static FontMembers? TryAddApiFont(FontDefinition fontData)
+                private static FontAPIMembers? TryAddApiFont(FontDefData fontData)
                 {
                     IFont font;
 
@@ -187,10 +257,7 @@ namespace RichHudFramework
                 /// </summary>
                 public static IFont GetFont(int index)
                 {
-                    if (_instance == null)
-                        Init();
-
-                    return _instance._fonts[index];
+                    return Instance._fonts[index];
                 }
 
                 /// <summary>
@@ -198,10 +265,7 @@ namespace RichHudFramework
                 /// </summary>
                 public static IFontStyle GetFontStyle(Vector2I index)
                 {
-                    if (_instance == null)
-                        Init();
-
-                    return _instance._fonts[index.X].AtlasStyles[index.Y & 1];
+                    return Instance._fonts[index.X].AtlasStyles[index.Y & 1];
                 }
 
                 /// <summary>
@@ -210,9 +274,6 @@ namespace RichHudFramework
                 /// </summary>
                 public static void SetFormattedGlyphs(IList<char> chars, IList<FormattedGlyph> formattedGlyphs, int start = 0, int count = -1)
                 {
-                    if (_instance == null)
-                        Init();
-
                     if (count == -1)
                         count = formattedGlyphs.Count;
 
@@ -222,7 +283,7 @@ namespace RichHudFramework
                         {
                             GlyphFormat format = formattedGlyphs[i].format;
                             Vector2I index = format.Data.Item3;
-                            IFontStyle fontStyle = _instance._fonts[index.X].AtlasStyles[index.Y & 1];
+                            IFontStyle fontStyle = Instance._fonts[index.X].AtlasStyles[index.Y & 1];
                             float fontSize = format.Data.Item2 * fontStyle.FontScale;
                             Glyph glyph = fontStyle[chars[i]];
                             Vector2 glyphSize = new Vector2(glyph.advanceWidth, fontStyle.Height) * fontSize;
@@ -249,21 +310,20 @@ namespace RichHudFramework
                 /// <summary>
                 /// Retrieves the API data for the font with the given name.
                 /// </summary>
-                private static FontMembers? GetApiFont(string name)
+                private static FontAPIMembers? GetApiFont(string name)
                 {
                     IFont font = GetFont(name);
-
                     return font?.GetApiData();
                 }
 
                 /// <summary>
                 /// Retrieves members needed to access the font manager via the Framework API.
                 /// </summary>
-                public static FontManagerMembers GetApiData()
+                public static FontManagerAPIMembers GetApiData()
                 {
-                    return new FontManagerMembers()
+                    return new FontManagerAPIMembers()
                     {
-                        Item1 = new MyTuple<Func<int, FontMembers>, Func<int>>(x => _instance._fonts[x].GetApiData(), () => _instance._fonts.Count),
+                        Item1 = new MyTuple<Func<int, FontAPIMembers>, Func<int>>(x => Instance._fonts[x].GetApiData(), () => Instance._fonts.Count),
                         Item2 = TryAddApiFont,
                         Item3 = GetApiFont
                     };
